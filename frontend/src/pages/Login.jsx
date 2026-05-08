@@ -26,11 +26,16 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      // Adiciona 55 se não tiver código do Brasil
-      const tel = telefone.startsWith("55") ? telefone : `55${telefone}`;
-      const res = await api.post("/api/auth/request-otp", { telefone: tel });
+      // Normaliza: remove tudo que não é dígito, garante que começa com 55
+      let digits = telefone.replace(/\D/g, "");
+      if (digits.startsWith("55") && digits.length > 11) {
+        // já tem o 55, mantém
+      } else if (!digits.startsWith("55")) {
+        digits = "55" + digits;
+      }
+      const res = await api.post("/api/auth/request-otp", { telefone: digits });
       setNomeUsuario(res.data.nome);
-      setTelefone(tel);
+      setTelefone(digits);
       setStep("otp");
     } catch (err) {
       setErro(err.response?.data?.error || "Erro ao enviar código. Tente novamente.");
