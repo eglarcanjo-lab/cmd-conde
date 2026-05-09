@@ -86,7 +86,7 @@ async function ensureTab(tabName) {
 // Inicializa todas as abas necessárias com seus cabeçalhos
 async function initializeSheets() {
   const tabs = {
-    usuarios: ["cod", "nome", "telefone", "perfil", "gv", "ativo", "criado_em"],
+    usuarios: ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"],
     otp_sessions: ["telefone", "codigo", "expira_em", "usado"],
     cobertura: ["setor", "dia_semana", "data", "categoria", "pdvs_visitados", "pdvs_total", "meta"],
     visitas_hoje: ["setor", "data", "cod_pdv", "nome_pdv", "endereco", "rota"],
