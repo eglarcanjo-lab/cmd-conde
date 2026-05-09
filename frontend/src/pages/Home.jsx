@@ -6,7 +6,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   const modulos = [
-    { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: false },
+    { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true },
     { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: false },
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
     { icon: "✅", label: "Tasks", route: "/tasks", ativo: false },
@@ -48,30 +48,13 @@ export default function Home() {
 }
 
 const styles = {
-  root: {
-    minHeight: "100vh",
-    background: "#0a0f1e",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
-    padding: "32px 24px",
-    maxWidth: "900px",
-    margin: "0 auto",
-  },
+  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "32px 24px", maxWidth: "900px", margin: "0 auto" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" },
   headerRight: { display: "flex", gap: "10px", alignItems: "center" },
   greeting: { color: "rgba(255,255,255,0.4)", margin: "0 0 2px", fontSize: "0.85rem" },
   nome: { color: "#fff", margin: "0 0 6px", fontSize: "1.4rem", fontWeight: "700" },
   badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "3px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" },
-  adminBtn: {
-    background: "rgba(251,185,0,0.12)",
-    border: "1px solid rgba(251,185,0,0.3)",
-    color: "#fbb900",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "0.85rem",
-    fontFamily: "inherit",
-    fontWeight: "600",
-  },
+  adminBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
   logout: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "16px" },
   card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", transition: "all 0.2s" },

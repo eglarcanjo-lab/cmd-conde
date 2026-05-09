@@ -4,6 +4,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import Cobertura from "./pages/Cobertura";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
           <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><Admin /></PrivateRoute>} />
+          <Route path="/cobertura" element={<PrivateRoute><Cobertura /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
