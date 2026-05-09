@@ -118,4 +118,10 @@ router.get("/me", require("../middleware/auth").authMiddleware, (req, res) => {
   return res.json({ usuario: req.user });
 });
 
+// GET /api/auth/debug-usuarios — TEMPORÁRIO, remover após teste
+router.get("/debug-usuarios", async (req, res) => {
+  const usuarios = await readSheet("usuarios");
+  return res.json(usuarios);
+});
+
 module.exports = router;
