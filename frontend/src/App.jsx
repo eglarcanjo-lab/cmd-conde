@@ -3,13 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
-// Fases futuras — descomente conforme forem construídas:
-// import Cobertura from "./pages/Cobertura";
-// import PDVs from "./pages/PDVs";
-// import Tasks from "./pages/Tasks";
-// import Incidentes from "./pages/Incidentes";
-// import RV from "./pages/RV";
-// import Admin from "./pages/Admin";
+import Admin from "./pages/Admin";
 
 export default function App() {
   return (
@@ -17,26 +11,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Fase 2+ */}
-          {/*
-          <Route path="/cobertura" element={<PrivateRoute><Cobertura /></PrivateRoute>} />
-          <Route path="/pdvs" element={<PrivateRoute><PDVs /></PrivateRoute>} />
-          <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
-          <Route path="/incidentes" element={<PrivateRoute><Incidentes /></PrivateRoute>} />
-          <Route path="/rv" element={<PrivateRoute><RV /></PrivateRoute>} />
+          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
           <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><Admin /></PrivateRoute>} />
-          */}
-
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -7,36 +7,19 @@ const headers = () => ({
   "Content-Type": "application/json",
 });
 
-// Gera código OTP de 6 dígitos
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Envia OTP via template de autenticação da Meta
-// O template deve estar aprovado na sua conta como categoria "AUTHENTICATION"
 async function sendOTP(phone, code) {
   const payload = {
     messaging_product: "whatsapp",
     to: phone,
-    type: "template",
-    template: {
-      name: process.env.WHATSAPP_OTP_TEMPLATE || "otp_autenticacao",
-      language: { code: "pt_BR" },
-      components: [
-        {
-          type: "body",
-          parameters: [{ type: "text", text: code }],
-        },
-        {
-          type: "button",
-          sub_type: "url",
-          index: "0",
-          parameters: [{ type: "text", text: code }],
-        },
-      ],
+    type: "text",
+    text: {
+      body: `🔐 *CMD Ambev · Conde*\n\nSeu código de acesso é:\n\n*${code}*\n\nVálido por 10 minutos. Não compartilhe.`,
     },
   };
-
   try {
     const res = await axios.post(BASE_URL, payload, { headers: headers() });
     return { success: true, messageId: res.data.messages?.[0]?.id };
@@ -46,7 +29,6 @@ async function sendOTP(phone, code) {
   }
 }
 
-// Envia mensagem de texto simples (para notificações de incidentes e respostas)
 async function sendText(phone, message) {
   const payload = {
     messaging_product: "whatsapp",
@@ -54,7 +36,6 @@ async function sendText(phone, message) {
     type: "text",
     text: { body: message },
   };
-
   try {
     const res = await axios.post(BASE_URL, payload, { headers: headers() });
     return { success: true, messageId: res.data.messages?.[0]?.id };
@@ -64,7 +45,6 @@ async function sendText(phone, message) {
   }
 }
 
-// Notifica o admin sobre novo incidente
 async function notifyAdminIncident(incident) {
   const msg =
     `🚨 *Novo Incidente Registrado*\n\n` +
@@ -72,18 +52,15 @@ async function notifyAdminIncident(incident) {
     `*Descrição:* ${incident.descricao}\n` +
     `*Horário:* ${new Date().toLocaleString("pt-BR")}\n\n` +
     `Acesse o painel para responder.`;
-
   return sendText(process.env.ADMIN_WHATSAPP, msg);
 }
 
-// Envia resposta do admin para o RN
 async function sendIncidentResponse(phone, resposta, nomeRn) {
   const msg =
     `✅ *Resposta ao seu incidente*\n\n` +
     `Olá ${nomeRn},\n\n` +
     `${resposta}\n\n` +
     `— Equipe CMD Ambev`;
-
   return sendText(phone, msg);
 }
 
