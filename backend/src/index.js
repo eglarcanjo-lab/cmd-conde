@@ -44,6 +44,7 @@ app.use("/api/admin", require("./routes/admin"));
 // app.use("/api/cobertura", require("./routes/cobertura"));
 // app.use("/api/pdvs", require("./routes/pdvs"));
 // app.use("/api/tasks", require("./routes/tasks"));
+app.use("/api/arquivos", require("./routes/arquivos"));
 // app.use("/api/incidentes", require("./routes/incidentes"));
 // app.use("/api/rv", require("./routes/rv"));
 
