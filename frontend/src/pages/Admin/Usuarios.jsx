@@ -135,7 +135,7 @@ export default function Usuarios() {
     if (!confirm(`Resetar senha de ${u.nome} para o padrão?`)) return;
     try {
       await api.put(`/api/admin/usuarios/${u.cod}`, { senha: "" });
-      alert(`Senha de ${u.nome} resetada para Cmd@${u.cpf?.slice(0, 4) || "????'}`);
+      alert(`Senha de ${u.nome} resetada para Cmd@${u.cpf?.slice(0, 4) || "????"}`);
     } catch {
       alert("Erro ao resetar senha.");
     }
