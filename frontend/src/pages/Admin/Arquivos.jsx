@@ -76,8 +76,9 @@ export default function Arquivos() {
 
     try {
       const form = new FormData();
-      if (temClientes) form.append("clientes", arquivos.clientes);
-      if (temPedidos) form.append("pedidos", arquivos.pedidos);
+      ARQUIVOS_CONFIG.forEach((cfg) => {
+        if (arquivos[cfg.campo]) form.append(cfg.campo, arquivos[cfg.campo]);
+      });
 
       const res = await api.post("/api/arquivos/processar", form, {
         headers: { "Content-Type": "multipart/form-data" },
