@@ -21,6 +21,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📦",
   },
   {
+    id: "tasks",
+    campo: "tasks",
+    rotulo: "Tasks (BI)",
+    descricao: "Tasks do BI — VALID, INVALID, OPEN por PDV",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "Diária",
+    icon: "✅",
+  },
+  {
     id: "inadimplencia",
     campo: "inadimplencia",
     rotulo: "Inadimplência",

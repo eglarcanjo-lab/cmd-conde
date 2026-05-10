@@ -9,7 +9,7 @@ export default function Home() {
     { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true },
     { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: true },
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
-    { icon: "✅", label: "Tasks", route: "/tasks", ativo: false },
+    { icon: "✅", label: "Tasks", route: "/tasks", ativo: true },
     { icon: "💰", label: "Remuneração", route: "/rv", ativo: false },
     { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: false },
   ];

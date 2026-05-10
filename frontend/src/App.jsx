@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Cobertura from "./pages/Cobertura";
 import PDVs from "./pages/PDVs";
+import Tasks from "./pages/Tasks";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><Admin /></PrivateRoute>} />
           <Route path="/cobertura" element={<PrivateRoute><Cobertura /></PrivateRoute>} />
           <Route path="/pdvs" element={<PrivateRoute><PDVs /></PrivateRoute>} />
+          <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
