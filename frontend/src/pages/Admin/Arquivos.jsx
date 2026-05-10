@@ -63,10 +63,9 @@ export default function Arquivos() {
   }
 
   async function processar() {
-    const temClientes = !!arquivos.clientes;
-    const temPedidos = !!arquivos.pedidos;
+    const selecionados = Object.values(arquivos).filter(Boolean);
 
-    if (!temClientes && !temPedidos) {
+    if (selecionados.length === 0) {
       setErro("Selecione pelo menos um arquivo para processar.");
       return;
     }
