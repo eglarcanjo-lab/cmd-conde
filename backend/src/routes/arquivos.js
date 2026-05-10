@@ -15,7 +15,7 @@ router.use(authMiddleware, adminOnly);
 // POST /api/arquivos/processar — envia arquivos para o processador Python
 router.post(
   "/processar",
-  upload.fields([{ name: "clientes" }, { name: "pedidos" }]),
+  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }]),
   async (req, res) => {
     try {
       const form = new FormData();
