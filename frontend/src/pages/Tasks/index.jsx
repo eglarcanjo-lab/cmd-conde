@@ -85,12 +85,12 @@ export default function Tasks() {
     return true;
   });
 
-  // Filtra pelo dia de visita do PDV
+  // Filtra pelo dia de visita do PDV — mostra apenas OPEN
   const tasksDia = tasksFiltradas.filter((t) => {
     const pdv = mapaPdv[t.cod_pdv];
     if (!pdv) return false;
     const dia = String(pdv.dia_visita || "").trim().toUpperCase().split("/")[0].trim();
-    return dia === diaFiltro;
+    return dia === diaFiltro && t.status === "OPEN";
   });
 
   // Aplica filtros adicionais
