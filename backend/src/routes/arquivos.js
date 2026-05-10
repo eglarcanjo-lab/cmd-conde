@@ -18,6 +18,7 @@ router.post(
   upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }]),
   async (req, res) => {
     try {
+      console.log("Arquivos recebidos:", Object.keys(req.files || {}));
       const form = new FormData();
 
       if (req.files?.clientes?.[0]) {
