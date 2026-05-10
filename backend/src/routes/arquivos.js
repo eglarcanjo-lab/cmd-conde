@@ -29,6 +29,14 @@ router.post(
         const f = req.files.pedidos[0];
         form.append("pedidos", f.buffer, { filename: f.originalname, contentType: f.mimetype });
       }
+      if (req.files?.tasks?.[0]) {
+        const f = req.files.tasks[0];
+        form.append("tasks", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.inadimplencia?.[0]) {
+        const f = req.files.inadimplencia[0];
+        form.append("inadimplencia", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
 
       const response = await axios.post(`${PROCESSOR_URL}/api/processar/ambos`, form, {
         headers: {
