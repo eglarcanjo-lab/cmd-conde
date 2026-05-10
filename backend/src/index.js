@@ -42,6 +42,7 @@ app.use("/api/admin", require("./routes/admin"));
 
 // Placeholder das rotas que vêm nas próximas fases
 app.use("/api/cobertura", require("./routes/cobertura"));
+app.use("/api/pdvs", require("./routes/pdvs"));
 // app.use("/api/cobertura", require("./routes/cobertura"));
 // app.use("/api/pdvs", require("./routes/pdvs"));
 // app.use("/api/tasks", require("./routes/tasks"));

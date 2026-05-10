@@ -20,6 +20,15 @@ const ARQUIVOS_CONFIG = [
     periodicidade: "Diária",
     icon: "📦",
   },
+  {
+    id: "inadimplencia",
+    campo: "inadimplencia",
+    rotulo: "Inadimplência",
+    descricao: "121601 — Títulos vencidos por PDV",
+    extensoes: ".csv,.inf,.txt",
+    periodicidade: "Diária",
+    icon: "⚠️",
+  },
 ];
 
 export default function Arquivos() {

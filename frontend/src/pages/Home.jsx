@@ -7,7 +7,7 @@ export default function Home() {
 
   const modulos = [
     { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true },
-    { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: false },
+    { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: true },
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
     { icon: "✅", label: "Tasks", route: "/tasks", ativo: false },
     { icon: "💰", label: "Remuneração", route: "/rv", ativo: false },
