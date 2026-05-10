@@ -4,18 +4,19 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const CATEGORIAS = [
-  { key: "CERVEJA",                      label: "CERVEJA",    short: "CERV" },
-  { key: "CERVEJA ZERO",                 label: "CERV ZERO",  short: "C.0" },
-  { key: "GIRO RGB",                     label: "GIRO RGB",   short: "RGB" },
-  { key: "HE",                           label: "HE",         short: "HE" },
-  { key: "TRIMARCA RGB HE (Original)",   label: "ORIGINAL",   short: "ORI" },
-  { key: "TRIMARCA RGB HE (Stella)",     label: "STELLA",     short: "STE" },
-  { key: "TRIMARCA RGB HE (Spaten)",     label: "SPATEN",     short: "SPA" },
-  { key: "NAB",                          label: "NAB",        short: "NAB" },
-  { key: "NAB ZERO",                     label: "NAB ZERO",   short: "N.0" },
-  { key: "MATCH",                        label: "MATCH",      short: "MAT" },
-  { key: "LITRINHO",                     label: "LITRINHO",   short: "LIT" },
-  { key: "MKTP",                         label: "MKTP",       short: "MKT" },
+  { key: "GIRO RGB",                   label: "GIRO RGB" },
+  { key: "CERVEJA",                    label: "CERVEJA" },
+  { key: "CERVEJA ZERO",               label: "CERVEJA ZERO" },
+  { key: "NAB",                        label: "NAB" },
+  { key: "NAB ZERO",                   label: "NAB ZERO" },
+  { key: "MATCH",                      label: "MATCH" },
+  { key: "LITRINHO",                   label: "LITRINHO" },
+  { key: "HE",                         label: "HE" },
+  { key: "MKTP",                       label: "MKTP" },
+  { key: "CERVEJA MULTIPACK",          label: "CERVEJA MULTIPACK" },
+  { key: "TRIMARCA RGB HE (Original)", label: "TRIMARCA RGB HE (Original)" },
+  { key: "TRIMARCA RGB HE (Stella)",   label: "TRIMARCA RGB HE (Stella)" },
+  { key: "TRIMARCA RGB HE (Spaten)",   label: "TRIMARCA RGB HE (Spaten)" },
 ];
 
 const DIAS = [
@@ -242,7 +243,7 @@ export default function Cobertura() {
                     <th style={{ ...styles.th, minWidth: "180px" }}>Nome</th>
                     <th style={styles.th}>Cidade</th>
                     {CATEGORIAS.map((c) => (
-                      <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.short}</th>
+                      <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
                     ))}
                   </tr>
                 </thead>
@@ -309,7 +310,7 @@ const styles = {
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   tableWrap: { overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" },
   table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" },
+  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.70rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.03em", padding: "8px 6px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "normal", lineHeight: "1.3", maxWidth: "80px" },
   thFixed: { textAlign: "left", padding: "10px 12px" },
   thCat: { minWidth: "60px" },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
