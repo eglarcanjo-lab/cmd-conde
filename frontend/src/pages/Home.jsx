@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import Sininho from "../components/Sininho";
 
 export default function Home() {
   const { usuario, logout } = useAuth();
@@ -11,7 +12,7 @@ export default function Home() {
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
     { icon: "✅", label: "Tasks", route: "/tasks", ativo: true },
     { icon: "💰", label: "Remuneração", route: "/rv", ativo: false },
-    { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: false },
+    { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true },
   ];
 
   return (
@@ -23,6 +24,7 @@ export default function Home() {
           <span style={styles.badge}>{usuario?.perfil?.toUpperCase()} · Setor {usuario?.cod}</span>
         </div>
         <div style={styles.headerRight}>
+          <Sininho />
           {usuario?.perfil === "admin" && (
             <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>
           )}
