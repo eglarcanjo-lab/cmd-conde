@@ -3,8 +3,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 {/*import Usuarios from "./Usuarios";*/}
 {/*import Metas from "./Metas";*/}
-import Arquivos from "./Arquivos";
-import Configuracoes from "./Configuracoes";
+{/*mport Arquivos from "./Arquivos";*/}
+{/*import Configuracoes from "./Configuracoes";*/}
 import Incidentes from "./Incidentes";
 
 const TABS = [
