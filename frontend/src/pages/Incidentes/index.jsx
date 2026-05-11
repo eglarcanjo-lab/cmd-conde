@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-{/*import Usuarios from "./Usuarios";*/}
-{/*import Metas from "./Metas";*/}
-{/*mport Arquivos from "./Arquivos";*/}
-{/*import Configuracoes from "./Configuracoes";*/}
-{/*import Incidentes from "./Incidentes";*/}
+import Usuarios from "./Usuarios";
+import Metas from "./Metas";
+import Arquivos from "./Arquivos";
+import Configuracoes from "./Configuracoes";
+import Incidentes from "./Incidentes";
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
