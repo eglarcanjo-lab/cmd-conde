@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 {/*import Metas from "./Metas";*/}
 {/*mport Arquivos from "./Arquivos";*/}
 {/*import Configuracoes from "./Configuracoes";*/}
-import Incidentes from "./Incidentes";
+{/*import Incidentes from "./Incidentes";*/}
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
