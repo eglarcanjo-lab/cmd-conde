@@ -35,7 +35,7 @@ router.post("/usuarios", async (req, res) => {
 
     const criado_em = new Date().toISOString();
     // Ordem: cod, nome, cpf, telefone, perfil, gv, ativo, senha, criado_em
-    await appendRow("usuarios", [cod, nome, cpfLimpo, telefone?.replace(/\D/g, "") || "", perfil, gv || "", "true", "", criado_em]);
+    await appendRow("usuarios", [cod, nome, cpfLimpo, telefone?.replace(/\D/g, "") || "", perfil, gv || "", "true", "", criado_em]); // always lowercase true
 
     return res.json({ success: true, message: "Usuário cadastrado com sucesso." });
   } catch (err) {

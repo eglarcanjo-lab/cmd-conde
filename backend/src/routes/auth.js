@@ -22,7 +22,7 @@ router.post("/login", async (req, res) => {
     // Busca usuário na planilha
     const usuarios = await readSheet("usuarios");
     const usuario = usuarios.find(
-      (u) => u.cpf?.replace(/\D/g, "") === cpfLimpo && u.ativo === "true"
+      (u) => u.cpf?.replace(/\D/g, "") === cpfLimpo && u.ativo?.toLowerCase() === "true"
     );
 
     if (!usuario) {
