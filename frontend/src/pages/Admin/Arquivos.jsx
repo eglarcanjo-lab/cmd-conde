@@ -33,7 +33,7 @@ const ARQUIVOS_CONFIG = [
     id: "inadimplencia",
     campo: "inadimplencia",
     rotulo: "Inadimplência",
-    descricao: "121601 — Títulos vencidos por PDV",
+    descricao: "120601 — Títulos vencidos por PDV",
     extensoes: ".csv,.inf,.txt",
     periodicidade: "Diária",
     icon: "⚠️",
