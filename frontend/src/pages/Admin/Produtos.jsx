@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 
 const CATEGORIAS = [
-  "",
   "GIRO RGB",
   "CERVEJA",
   "CERVEJA ZERO",
@@ -19,6 +18,84 @@ const CATEGORIAS = [
   "MKTP",
 ];
 
+const CAT_COLORS = {
+  "GIRO RGB":                    { bg: "rgba(251,185,0,0.15)",  color: "#fbb900" },
+  "CERVEJA":                     { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
+  "CERVEJA ZERO":                { bg: "rgba(96,165,250,0.1)",  color: "#93c5fd" },
+  "CERVEJA MULTIPACK":           { bg: "rgba(96,165,250,0.1)",  color: "#bfdbfe" },
+  "HE":                          { bg: "rgba(167,139,250,0.15)",color: "#a78bfa" },
+  "HE RGB":                      { bg: "rgba(167,139,250,0.12)",color: "#c4b5fd" },
+  "TRIMARCA RGB HE (Original)":  { bg: "rgba(251,185,0,0.12)", color: "#fcd34d" },
+  "TRIMARCA RGB HE (Stella)":    { bg: "rgba(251,185,0,0.10)", color: "#fde68a" },
+  "TRIMARCA RGB HE (Spaten)":    { bg: "rgba(251,185,0,0.08)", color: "#fef3c7" },
+  "NAB":                         { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
+  "NAB ZERO":                    { bg: "rgba(34,197,94,0.1)",   color: "#86efac" },
+  "MATCH":                       { bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
+  "LITRINHO":                    { bg: "rgba(251,185,0,0.15)",  color: "#fbbf24" },
+  "MKTP":                        { bg: "rgba(255,255,255,0.08)",color: "rgba(255,255,255,0.6)" },
+};
+
+function TagsEditor({ categoriaStr, onSave, onCancel }) {
+  const [selecionadas, setSelecionadas] = useState(
+    categoriaStr ? categoriaStr.split("|").map(c => c.trim()).filter(Boolean) : []
+  );
+
+  function toggle(cat) {
+    setSelecionadas(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  }
+
+  return (
+    <div style={styles.tagsEditor}>
+      <div style={styles.tagsGrid}>
+        {CATEGORIAS.map(cat => {
+          const ativo = selecionadas.includes(cat);
+          const clr = CAT_COLORS[cat] || { bg: "rgba(255,255,255,0.08)", color: "#fff" };
+          return (
+            <button
+              key={cat}
+              style={{
+                ...styles.tagToggle,
+                background: ativo ? clr.bg : "rgba(255,255,255,0.04)",
+                color: ativo ? clr.color : "rgba(255,255,255,0.3)",
+                border: ativo ? `1px solid ${clr.color}40` : "1px solid rgba(255,255,255,0.08)",
+                fontWeight: ativo ? "700" : "400",
+              }}
+              onClick={() => toggle(cat)}
+            >
+              {ativo ? "✓ " : ""}{cat}
+            </button>
+          );
+        })}
+      </div>
+      <div style={styles.tagsActions}>
+        <button style={styles.btnCancelar} onClick={onCancel}>Cancelar</button>
+        <button style={styles.btnSalvar} onClick={() => onSave(selecionadas.join("|"))}>
+          Salvar ({selecionadas.length} categorias)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CategoriasTags({ categoriaStr }) {
+  if (!categoriaStr) return <span style={styles.semCat}>⚠️ sem categoria</span>;
+  const cats = categoriaStr.split("|").map(c => c.trim()).filter(Boolean);
+  return (
+    <div style={styles.tagsRow}>
+      {cats.map(cat => {
+        const clr = CAT_COLORS[cat] || { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" };
+        return (
+          <span key={cat} style={{ ...styles.catTag, background: clr.bg, color: clr.color }}>
+            {cat}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Produtos() {
   const [produtos, setProdutos] = useState([]);
   const [semCat, setSemCat] = useState([]);
@@ -26,7 +103,6 @@ export default function Produtos() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
   const [editando, setEditando] = useState(null);
-  const [catEdit, setCatEdit] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [sucesso, setSucesso] = useState("");
   const [aba, setAba] = useState("base");
@@ -49,10 +125,10 @@ export default function Produtos() {
     }
   }
 
-  async function salvarCategoria(cod, categoria) {
+  async function salvarCategoria(cod, categorias) {
     setSalvando(true);
     try {
-      await api.put(`/api/admin/produtos/${cod}`, { categoria });
+      await api.put(`/api/admin/produtos/${cod}`, { categoria: categorias });
       setSucesso(`Produto ${cod} atualizado.`);
       setEditando(null);
       await carregar();
@@ -64,35 +140,27 @@ export default function Produtos() {
     }
   }
 
-  const lista = aba === "base" ? produtos : semCat;
+  const lista = aba === "base" ? produtos : semCat.map(s => ({
+    cod: s.cod_prod, nome: s.nome_prod, categorias: s.categoria || ""
+  }));
 
   const filtrados = lista.filter((p) => {
     const buscaOk = !busca ||
       p.cod?.toString().includes(busca) ||
-      p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-      p.descricao?.toLowerCase().includes(busca.toLowerCase());
-
+      p.nome?.toLowerCase().includes(busca.toLowerCase());
     const filtroOk = filtro === "todos" ||
-      (filtro === "sem_cat" && !p.categoria) ||
-      (filtro === "com_cat" && p.categoria);
-
+      (filtro === "sem_cat" && !p.categorias) ||
+      (filtro === "com_cat" && p.categorias);
     return buscaOk && filtroOk;
   });
 
   return (
     <div>
-      {/* Abas */}
       <div style={styles.abas}>
-        <button
-          style={{ ...styles.abaBtn, ...(aba === "base" ? styles.abaBtnAtivo : {}) }}
-          onClick={() => setAba("base")}
-        >
+        <button style={{ ...styles.abaBtn, ...(aba === "base" ? styles.abaBtnAtivo : {}) }} onClick={() => setAba("base")}>
           📦 Base de Produtos
         </button>
-        <button
-          style={{ ...styles.abaBtn, ...(aba === "sem_cat" ? styles.abaBtnAtivo : {}) }}
-          onClick={() => setAba("sem_cat")}
-        >
+        <button style={{ ...styles.abaBtn, ...(aba === "sem_cat" ? styles.abaBtnAtivo : {}) }} onClick={() => setAba("sem_cat")}>
           ⚠️ Sem Categoria
           {semCat.length > 0 && <span style={styles.badge}>{semCat.length}</span>}
         </button>
@@ -100,7 +168,6 @@ export default function Produtos() {
 
       {sucesso && <p style={styles.sucesso}>{sucesso}</p>}
 
-      {/* Filtros */}
       <div style={styles.filtrosRow}>
         <input
           style={styles.inputFiltro}
@@ -118,73 +185,38 @@ export default function Produtos() {
         <span style={styles.countLabel}>{filtrados.length} produtos</span>
       </div>
 
-      {/* Tabela */}
       {loading ? (
         <p style={styles.msg}>Carregando...</p>
       ) : filtrados.length === 0 ? (
         <p style={styles.msg}>Nenhum produto encontrado.</p>
       ) : (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {["Cód", "Nome / Descrição", "Categoria", "Ação"].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((p) => (
-                <tr key={p.cod} style={styles.tr}>
-                  <td style={styles.td}>
-                    <span style={styles.codBadge}>{p.cod}</span>
-                  </td>
-                  <td style={{ ...styles.td, textAlign: "left", fontSize: "0.82rem" }}>
-                    {p.nome || p.descricao || "—"}
-                  </td>
-                  <td style={styles.td}>
-                    {editando === p.cod ? (
-                      <select
-                        style={styles.selectInline}
-                        value={catEdit}
-                        onChange={(e) => setCatEdit(e.target.value)}
-                        autoFocus
-                      >
-                        {CATEGORIAS.map((c) => (
-                          <option key={c} value={c}>{c || "— sem categoria —"}</option>
-                        ))}
-                      </select>
-                    ) : p.categoria ? (
-                      <span style={styles.catTag}>{p.categoria}</span>
-                    ) : (
-                      <span style={styles.semCat}>⚠️ sem categoria</span>
-                    )}
-                  </td>
-                  <td style={styles.td}>
-                    {editando === p.cod ? (
-                      <div style={styles.acoes}>
-                        <button
-                          style={styles.btnSalvar}
-                          onClick={() => salvarCategoria(p.cod, catEdit)}
-                          disabled={salvando}
-                        >
-                          {salvando ? "..." : "✓"}
-                        </button>
-                        <button style={styles.btnCancelar} onClick={() => setEditando(null)}>✕</button>
-                      </div>
-                    ) : (
-                      <button
-                        style={styles.btnEditar}
-                        onClick={() => { setEditando(p.cod); setCatEdit(p.categoria || ""); }}
-                      >
-                        ✏️
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={styles.lista}>
+          {filtrados.map((p) => {
+            const catField = p.categorias || p.categoria || "";
+            const isEditando = editando === p.cod;
+            return (
+              <div key={p.cod} style={{ ...styles.prodRow, ...(isEditando ? styles.prodRowAtivo : {}) }}>
+                <div style={styles.prodInfo}>
+                  <span style={styles.codBadge}>{p.cod}</span>
+                  <span style={styles.prodNome}>{p.nome || "—"}</span>
+                </div>
+                <div style={styles.prodCats}>
+                  {isEditando ? (
+                    <TagsEditor
+                      categoriaStr={catField}
+                      onSave={(cats) => salvarCategoria(p.cod, cats)}
+                      onCancel={() => setEditando(null)}
+                    />
+                  ) : (
+                    <div style={styles.prodCatsRow}>
+                      <CategoriasTags categoriaStr={catField} />
+                      <button style={styles.btnEditar} onClick={() => setEditando(p.cod)}>✏️</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -201,17 +233,22 @@ const styles = {
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
-  tableWrap: { overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" },
-  tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
-  td: { padding: "9px 12px", color: "rgba(255,255,255,0.8)", fontSize: "0.85rem", textAlign: "center" },
-  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
-  catTag: { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem" },
+  lista: { display: "flex", flexDirection: "column", gap: "6px" },
+  prodRow: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" },
+  prodRowAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.03)" },
+  prodInfo: { display: "flex", alignItems: "center", gap: "10px", minWidth: "220px" },
+  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700", whiteSpace: "nowrap" },
+  prodNome: { color: "rgba(255,255,255,0.75)", fontSize: "0.83rem" },
+  prodCats: { flex: 1 },
+  prodCatsRow: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
+  tagsRow: { display: "flex", flexWrap: "wrap", gap: "4px" },
+  catTag: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: "600", whiteSpace: "nowrap" },
   semCat: { color: "#f87171", fontSize: "0.78rem" },
-  selectInline: { background: "#1a2235", border: "1px solid rgba(251,185,0,0.4)", borderRadius: "6px", color: "#fff", padding: "4px 8px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none", cursor: "pointer" },
-  acoes: { display: "flex", gap: "4px", justifyContent: "center" },
-  btnEditar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "0.82rem" },
-  btnSalvar: { background: "rgba(34,197,94,0.2)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontWeight: "700", fontFamily: "inherit" },
-  btnCancelar: { background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" },
+  btnEditar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "3px 8px", cursor: "pointer", fontSize: "0.8rem", whiteSpace: "nowrap" },
+  tagsEditor: { display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
+  tagsGrid: { display: "flex", flexWrap: "wrap", gap: "6px" },
+  tagToggle: { border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", transition: "all 0.15s" },
+  tagsActions: { display: "flex", gap: "8px", justifyContent: "flex-end" },
+  btnSalvar: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "7px 16px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnCancelar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
 };
