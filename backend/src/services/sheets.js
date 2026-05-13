@@ -97,7 +97,7 @@ async function initializeSheets() {
     rank_clientes: ["setor", "cod_pdv", "nome_pdv", "volume_4m_hl", "devolucoes"],
     tasks: ["setor", "cod_pdv", "nome_pdv", "descricao", "status", "data_abertura", "data_atualizacao"],
     faltas: ["setor", "produto", "qtd_faltas", "mes_referencia"],
-    metas: ["setor", "categoria", "meta_volume", "mes_referencia", "peso"],
+    metas: ["setor", "categoria", "meta_volume", "mes_referencia", "peso", "volume_tri", "meta_aplicada"],
     incidentes: ["id", "setor", "cod_rn", "nome_rn", "descricao", "imagem_url", "status", "resposta", "criado_em", "respondido_em"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
   };

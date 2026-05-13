@@ -41,18 +41,19 @@ router.post("/", upload.single("evidencia"), async (req, res) => {
     const criado_em = new Date().toLocaleString("pt-BR");
     const data = data_ocorrido || new Date().toISOString().split("T")[0];
 
+    // Ordem: data_criacao | id | setor | nome_rn | descricao | evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn
     await appendRow("incidentes", [
+      criado_em,
       id,
       req.user.cod,
       req.user.nome,
-      req.user.perfil,
       descricao.trim(),
       resultado.secure_url,
       "Aguardando",
       "",
-      data,
-      criado_em,
       "",
+      data,
+      req.user.perfil,
     ]);
 
     return res.json({ success: true, message: "Solicitação registrada com sucesso." });
@@ -114,11 +115,19 @@ router.post("/:id/responder", adminOnly, async (req, res) => {
     const inc = todos[idx];
     const respondido_em = new Date().toLocaleString("pt-BR");
 
+    // Mesma ordem: data_criacao | id | setor | nome_rn | descricao | evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn
     const updated = [
-      inc.id, inc.cod_rn, inc.nome_rn, inc.perfil_rn,
-      inc.descricao, inc.evidencia_url,
-      "Respondido", resposta.trim(),
-      inc.data_ocorrido, inc.criado_em, respondido_em,
+      inc.data_criacao || inc.criado_em,
+      inc.id,
+      inc.setor || inc.cod_rn,
+      inc.nome_rn,
+      inc.descricao,
+      inc.evidencia_url,
+      "Respondido",
+      resposta.trim(),
+      respondido_em,
+      inc.data_ocorrido,
+      inc.perfil_rn,
     ];
 
     await updateRow("incidentes", idx + 1, updated);
