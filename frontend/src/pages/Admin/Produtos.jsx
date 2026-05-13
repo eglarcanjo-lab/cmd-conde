@@ -16,6 +16,7 @@ const CATEGORIAS = [
   "MATCH",
   "LITRINHO",
   "MKTP",
+  "BALANCED CHOICE",
 ];
 
 const CAT_COLORS = {
@@ -33,6 +34,7 @@ const CAT_COLORS = {
   "MATCH":                       { bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
   "LITRINHO":                    { bg: "rgba(251,185,0,0.15)",  color: "#fbbf24" },
   "MKTP":                        { bg: "rgba(255,255,255,0.08)",color: "rgba(255,255,255,0.6)" },
+  "BALANCED CHOICE":             { bg: "rgba(20,184,166,0.15)",  color: "#2dd4bf" },
 };
 
 function TagsEditor({ categoriaStr, onSave, onCancel }) {
