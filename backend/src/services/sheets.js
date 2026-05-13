@@ -95,10 +95,10 @@ async function initializeSheets() {
     sem_compra: ["setor", "cod_pdv", "nome_pdv", "dias_sem_compra", "ultimo_produto"],
     inadimplentes: ["setor", "cod_pdv", "nome_pdv", "valor_aberto", "dias_atraso"],
     rank_clientes: ["setor", "cod_pdv", "nome_pdv", "volume_4m_hl", "devolucoes"],
-    tasks: ["setor", "cod_pdv", "nome_pdv", "descricao", "status", "data_abertura", "data_atualizacao"],
+    tasks: ["mes_ano", "setor", "cod_pdv", "data_visita", "data_criacao", "data_conclusao", "geo", "comercial", "unb", "operacao", "gv", "cluster_primario", "tipo", "mensal_diaria", "id_task", "categoria", "status", "qtd_solicitada", "qtd_comprada", "descricao", "completa", "validada", "pre_validada", "pontuacao", "justificativa"],
     faltas: ["setor", "produto", "qtd_faltas", "mes_referencia"],
     metas: ["setor", "categoria", "meta_volume", "mes_referencia", "peso", "volume_tri", "meta_aplicada"],
-    incidentes: ["id", "setor", "cod_rn", "nome_rn", "descricao", "imagem_url", "status", "resposta", "criado_em", "respondido_em"],
+    incidentes: ["data_criacao", "id", "setor", "nome_rn", "descricao", "evidencia_url", "status", "resposta", "finalizado_em", "data_ocorrido", "perfil_rn"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
   };
 
