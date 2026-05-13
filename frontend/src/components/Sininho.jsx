@@ -6,37 +6,65 @@ import api from "../services/api";
 export default function Sininho() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [pendentes, setPendentes] = useState(0);
+  const [incidentes, setIncidentes] = useState(0);
+  const [semCat, setSemCat] = useState(0);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const isGestor = ["admin", "director", "gv1", "gv3"].includes(usuario?.perfil);
 
   useEffect(() => {
     if (!isGestor) return;
-    buscarPendentes();
-    const interval = setInterval(buscarPendentes, 60000); // atualiza a cada 1 min
+    buscar();
+    const interval = setInterval(buscar, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  async function buscarPendentes() {
+  async function buscar() {
     try {
-      const res = await api.get("/api/incidentes/pendentes");
-      setPendentes(res.data.pendentes || 0);
+      const [resInc, resSem] = await Promise.all([
+        api.get("/api/incidentes/pendentes"),
+        api.get("/api/admin/produtos/sem-categoria"),
+      ]);
+      setIncidentes(resInc.data.pendentes || 0);
+      setSemCat(Array.isArray(resSem.data) ? resSem.data.filter(p => !p.categoria).length : 0);
     } catch { }
   }
 
   if (!isGestor) return null;
 
+  const total = incidentes + semCat;
+
   return (
-    <button
-      style={styles.btn}
-      onClick={() => navigate("/admin?tab=incidentes")}
-      title={`${pendentes} incidente(s) pendente(s)`}
+    <div style={{ position: "relative" }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
     >
-      🔔
-      {pendentes > 0 && (
-        <span style={styles.badge}>{pendentes > 9 ? "9+" : pendentes}</span>
+      <button
+        style={styles.btn}
+        onClick={() => navigate("/admin?tab=incidentes")}
+      >
+        🔔
+        {total > 0 && (
+          <span style={styles.badge}>{total > 9 ? "9+" : total}</span>
+        )}
+      </button>
+
+      {/* Tooltip */}
+      {showTooltip && total > 0 && (
+        <div style={styles.tooltip}>
+          {incidentes > 0 && (
+            <div style={styles.tooltipItem}>
+              <span>🚨 {incidentes} incidente{incidentes > 1 ? "s" : ""} pendente{incidentes > 1 ? "s" : ""}</span>
+            </div>
+          )}
+          {semCat > 0 && (
+            <div style={styles.tooltipItem}>
+              <span>⚠️ {semCat} produto{semCat > 1 ? "s" : ""} sem categoria</span>
+            </div>
+          )}
+        </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -64,5 +92,22 @@ const styles = {
     minWidth: "16px",
     textAlign: "center",
     fontFamily: "'Segoe UI', system-ui, sans-serif",
+  },
+  tooltip: {
+    position: "absolute",
+    top: "calc(100% + 8px)",
+    right: 0,
+    background: "#1a2235",
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: "8px",
+    padding: "8px 12px",
+    minWidth: "220px",
+    zIndex: 100,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+  },
+  tooltipItem: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: "0.82rem",
+    padding: "3px 0",
   },
 };
