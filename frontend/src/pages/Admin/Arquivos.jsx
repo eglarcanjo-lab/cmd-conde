@@ -21,6 +21,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📦",
   },
   {
+    id: "produtos_base",
+    campo: "produtos_base",
+    rotulo: "Base de Produtos",
+    descricao: "0111 — Catálogo completo de produtos",
+    extensoes: ".csv,.inf,.txt",
+    periodicidade: "Semanal",
+    icon: "🗂️",
+  },
+  {
     id: "tasks",
     campo: "tasks",
     rotulo: "Tasks (BI)",
