@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
+import TemaToggle from "../components/TemaToggle";
 
 export default function Home() {
   const { usuario, logout } = useAuth();
@@ -24,6 +25,7 @@ export default function Home() {
           <span style={styles.badge}>{usuario?.perfil?.toUpperCase()} · Setor {usuario?.cod}</span>
         </div>
         <div style={styles.headerRight}>
+          <TemaToggle />
           <Sininho />
           {usuario?.perfil === "admin" && (
             <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>
