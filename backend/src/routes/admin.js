@@ -93,7 +93,7 @@ router.post("/metas", async (req, res) => {
     if (!setor || !categoria || !meta_volume || !mes_referencia) {
       return res.status(400).json({ error: "Campos obrigatórios: setor, categoria, meta_volume, mes_referencia." });
     }
-    await appendRow("metas", [setor, categoria, meta_volume, mes_referencia, peso || ""]);
+    await appendRow("metas", [setor, categoria, meta_volume, mes_referencia, peso || "", "", ""]);
     return res.json({ success: true, message: "Meta cadastrada." });
   } catch {
     return res.status(500).json({ error: "Erro ao cadastrar meta." });
@@ -113,7 +113,7 @@ router.post("/metas/import", async (req, res) => {
         erros.push(`Linha inválida: ${JSON.stringify(m)}`);
         continue;
       }
-      await appendRow("metas", [m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || ""]);
+      await appendRow("metas", [m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || "", m.volume_tri || "", m.meta_aplicada || ""]);
       importadas++;
     }
     return res.json({ success: true, importadas, erros: erros.length > 0 ? erros : undefined });
