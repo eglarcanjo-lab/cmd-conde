@@ -77,26 +77,40 @@ export default function Metas() {
     setErro(""); setSucesso("");
     try {
       const data = await file.arrayBuffer();
-      const wb = XLSX.read(data);
+      // cellFormula: false força leitura dos valores calculados, não das fórmulas
+      const wb = XLSX.read(data, { cellFormula: false, cellNF: false, raw: false });
 
       // Tenta ler a aba "Metas para Importar" primeiro, senão usa a primeira aba
       const nomeAba = wb.SheetNames.includes("Metas para Importar")
         ? "Metas para Importar"
         : wb.SheetNames[0];
       const ws = wb.Sheets[nomeAba];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
 
       const metas = rows
         .filter(r => r.setor && r.categoria && r.mes_referencia)
-        .map((r) => ({
-          setor:          String(r.setor || "").trim(),
-          categoria:      String(r.categoria || "").trim(),
-          meta_volume:    String(r.meta_aplicada || r.meta_volume || "").trim(),  // meta_aplicada tem prioridade
-          mes_referencia: String(r.mes_referencia || "").trim(),
-          peso:           String(r.peso || "").trim(),
-          volume_tri:     String(r.volume_tri || "").trim(),
-          meta_aplicada:  String(r.meta_aplicada || "").trim(),
-        }));
+        .map((r) => {
+          // Converte peso: pode vir como "25.59%" ou "0.2559" — normaliza para decimal
+          let peso = String(r.peso || "").trim().replace(",", ".");
+          if (peso.includes("%")) {
+            peso = String(parseFloat(peso) / 100);
+          } else if (parseFloat(peso) > 1) {
+            peso = String(parseFloat(peso) / 100);
+          }
+
+          // meta_aplicada tem prioridade sobre meta_volume
+          let meta = String(r.meta_aplicada || r.meta_volume || "").trim().replace(",", ".");
+
+          return {
+            setor:          String(r.setor || "").trim(),
+            categoria:      String(r.categoria || "").trim(),
+            meta_volume:    meta,
+            mes_referencia: String(r.mes_referencia || "").trim(),
+            peso:           peso,
+            volume_tri:     String(r.volume_tri || "").trim().replace(",", "."),
+            meta_aplicada:  meta,
+          };
+        });
 
       if (metas.length === 0) {
         setErro("Nenhuma linha válida encontrada. Verifique se a aba 'Metas para Importar' está preenchida.");
