@@ -78,37 +78,54 @@ export default function Metas() {
     try {
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data);
-      const ws = wb.Sheets[wb.SheetNames[0]];
+
+      // Tenta ler a aba "Metas para Importar" primeiro, senão usa a primeira aba
+      const nomeAba = wb.SheetNames.includes("Metas para Importar")
+        ? "Metas para Importar"
+        : wb.SheetNames[0];
+      const ws = wb.Sheets[nomeAba];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-      const metas = rows.map((r) => ({
-        setor: String(r.setor || r.Setor || ""),
-        categoria: String(r.categoria || r.Categoria || ""),
-        meta_volume: String(r.meta_volume || r["Meta Volume"] || ""),
-        mes_referencia: String(r.mes_referencia || r["Mês"] || ""),
-        peso: String(r.peso || r.Peso || ""),
-      }));
+      const metas = rows
+        .filter(r => r.setor && r.categoria && r.mes_referencia)
+        .map((r) => ({
+          setor:          String(r.setor || "").trim(),
+          categoria:      String(r.categoria || "").trim(),
+          meta_volume:    String(r.meta_aplicada || r.meta_volume || "").trim(),  // meta_aplicada tem prioridade
+          mes_referencia: String(r.mes_referencia || "").trim(),
+          peso:           String(r.peso || "").trim(),
+          volume_tri:     String(r.volume_tri || "").trim(),
+          meta_aplicada:  String(r.meta_aplicada || "").trim(),
+        }));
+
+      if (metas.length === 0) {
+        setErro("Nenhuma linha válida encontrada. Verifique se a aba 'Metas para Importar' está preenchida.");
+        return;
+      }
 
       const res = await api.post("/api/admin/metas/import", { metas });
-      setSucesso(`${res.data.importadas} metas importadas com sucesso.`);
-      if (res.data.erros?.length) setErro(`Erros: ${res.data.erros.join(", ")}`);
+      setSucesso(`✅ ${res.data.importadas} metas importadas da aba "${nomeAba}".`);
+      if (res.data.erros?.length) setErro(`Atenção: ${res.data.erros.slice(0, 3).join(" | ")}`);
       await carregar();
     } catch (err) {
-      setErro("Erro ao importar planilha. Verifique o formato.");
+      setErro("Erro ao importar planilha. Verifique o arquivo.");
+      console.error(err);
     } finally {
       setImportando(false);
-      fileRef.current.value = "";
+      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
   function baixarModelo() {
     const modelo = [
-      { setor: "101", categoria: "CERVEJA (VOLUME)", meta_volume: "3200", mes_referencia: getMesAtual(), peso: "" },
-      { setor: "101", categoria: "NAB (VOLUME)", meta_volume: "1500", mes_referencia: getMesAtual(), peso: "" },
+      { setor: "101", categoria: "CERVEJA (VOLUME)", meta_volume: "3200", mes_referencia: getMesAtual(), peso: "0.25", volume_tri: "2500", meta_aplicada: "3200" },
+      { setor: "101", categoria: "NAB (VOLUME)", meta_volume: "280", mes_referencia: getMesAtual(), peso: "0.24", volume_tri: "556", meta_aplicada: "280" },
+      { setor: "101", categoria: "MATCH (VOLUME)", meta_volume: "3.35", mes_referencia: getMesAtual(), peso: "0.14", volume_tri: "5.02", meta_aplicada: "3.35" },
+      { setor: "101", categoria: "PONTOS FORCE", meta_volume: "100000", mes_referencia: getMesAtual(), peso: "0.5", volume_tri: "100000", meta_aplicada: "100000" },
     ];
     const ws = XLSX.utils.json_to_sheet(modelo);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "metas");
+    XLSX.utils.book_append_sheet(wb, ws, "Metas para Importar");
     XLSX.writeFile(wb, "modelo_metas.xlsx");
   }
 

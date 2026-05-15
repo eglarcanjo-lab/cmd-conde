@@ -38,16 +38,7 @@ const ARQUIVOS_CONFIG = [
     periodicidade: "Diária",
     icon: "✅",
   },
-  {
-    id: "faturamento_mktp",
-    campo: "faturamento_mktp",
-    rotulo: "Faturamento Mktp",
-    descricao: "030509 — Faturamento consolidado por cliente/produto",
-    extensoes: ".csv,.inf,.txt",
-    periodicidade: "Mensal",
-    icon: "💳",
-  },
-  {
+{
     id: "pontos_bees",
     campo: "pontos_bees",
     rotulo: "Pontos Bees",
