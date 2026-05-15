@@ -1,4 +1,4 @@
-// v2.1 - fix importacao metas
+// v2.2 - fix arredondamento meta
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 import * as XLSX from "xlsx";
@@ -100,7 +100,12 @@ export default function Metas() {
           }
 
           // meta_aplicada tem prioridade sobre meta_volume
-          let meta = String(r.meta_aplicada || r.meta_volume || "").trim().replace(",", ".");
+          const metaRaw = r.meta_aplicada || r.meta_volume || "";
+          const metaNum = parseFloat(String(metaRaw).replace(",", "."));
+          const meta = isNaN(metaNum) ? "" : String(Math.round(metaNum * 100) / 100);
+
+          const volRaw = parseFloat(String(r.volume_tri || "").replace(",", "."));
+          const vol = isNaN(volRaw) ? "" : String(Math.round(volRaw * 100) / 100);
 
           return {
             setor:          String(r.setor || "").trim(),
@@ -108,7 +113,7 @@ export default function Metas() {
             meta_volume:    meta,
             mes_referencia: String(r.mes_referencia || "").trim(),
             peso:           peso,
-            volume_tri:     String(r.volume_tri || "").trim().replace(",", "."),
+            volume_tri:     vol,
             meta_aplicada:  meta,
           };
         });
