@@ -8,6 +8,7 @@ import Cobertura from "./pages/Cobertura";
 import PDVs from "./pages/PDVs";
 import Tasks from "./pages/Tasks";
 import Incidentes from "./pages/Incidentes";
+import RV from "./pages/RV";
 
 export default function App() {
   return (
@@ -21,7 +22,8 @@ export default function App() {
           <Route path="/cobertura" element={<PrivateRoute><Cobertura /></PrivateRoute>} />
           <Route path="/pdvs" element={<PrivateRoute><PDVs /></PrivateRoute>} />
           <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
-          <Route path="/incidentes" element={<PrivateRoute><Incidentes /></PrivateRoute>} />
+          <Route path="/rv" element={<PrivateRoute><RV /></PrivateRoute>} />
+            <Route path="/incidentes" element={<PrivateRoute><Incidentes /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

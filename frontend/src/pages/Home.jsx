@@ -11,7 +11,7 @@ export default function Home() {
     { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: true },
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
     { icon: "✅", label: "Tasks", route: "/tasks", ativo: true },
-    { icon: "💰", label: "Remuneração", route: "/rv", ativo: false },
+    { icon: "💰", label: "Remuneração", route: "/rv", ativo: true },
     { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true },
   ];
 

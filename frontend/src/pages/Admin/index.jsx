@@ -7,12 +7,14 @@ import Arquivos from "./Arquivos";
 import Configuracoes from "./Configuracoes";
 import Incidentes from "./Incidentes";
 import Produtos from "./Produtos";
+import AtendimentoProdutivo from "./AtendimentoProdutivo";
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
   { id: "metas", label: "🎯 Metas" },
   { id: "arquivos", label: "📁 Arquivos" },
   { id: "produtos", label: "📦 Produtos" },
+  { id: "ap", label: "🎯 AT. Produtivo" },
   { id: "incidentes", label: "🚨 Solicitações" },
   { id: "configuracoes", label: "⚙️ Configurações" },
 ];
@@ -57,6 +59,7 @@ export default function Admin() {
         {tab === "metas" && <Metas />}
         {tab === "arquivos" && <Arquivos />}
         {tab === "produtos" && <Produtos />}
+        {tab === "ap" && <AtendimentoProdutivo />}
         {tab === "incidentes" && <Incidentes />}
         {tab === "configuracoes" && <Configuracoes />}
       </div>
