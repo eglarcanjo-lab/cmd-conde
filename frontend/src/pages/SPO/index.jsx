@@ -54,6 +54,7 @@ export default function SPO() {
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
+  const [filtroDia, setFiltroDia] = useState("todos");
 
   useEffect(() => { carregar(); }, []);
 
@@ -80,10 +81,12 @@ export default function SPO() {
     const buscaOk = !busca || d.cod_pdv?.includes(busca) || d.nome_pdv?.toLowerCase().includes(busca.toLowerCase());
     const gvOk = filtroGv === "todos" || d.gv === filtroGv;
     const stOk = filtroStatus === "todos" || (filtroStatus === "ok" && d.valida === "SIM") || (filtroStatus === "nok" && d.valida === "NÃO");
-    return buscaOk && gvOk && stOk;
+    const diaOk = filtroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(filtroDia.toUpperCase());
+    return buscaOk && gvOk && stOk && diaOk;
   });
 
   const gvsUnicos = [...new Set(detalhe.map((d) => d.gv))].sort();
+  const diasUnicos = [...new Set(detalhe.map((d) => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort();
 
   return (
     <div style={styles.root}>
@@ -194,6 +197,10 @@ export default function SPO() {
                     <option value="todos">Todos</option>
                     <option value="ok">✅ Válidas</option>
                     <option value="nok">❌ Inválidas</option>
+                  </select>
+                  <select style={styles.inputFiltro} value={filtroDia} onChange={(e) => setFiltroDia(e.target.value)}>
+                    <option value="todos">Todos os dias</option>
+                    {diasUnicos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <span style={styles.countLabel}>{detalheFiltrado.length} visitas</span>
                 </div>
