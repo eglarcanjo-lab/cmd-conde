@@ -61,6 +61,22 @@ router.get("/visitacao-gv/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/promo/resumo
+router.get("/promo/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_promo_resumo");
+    return res.json(filtrarPorPerfil(dados, req.user, "setor"));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/promo/detalhe
+router.get("/promo/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_promo_detalhe");
+    return res.json(filtrarPorPerfil(dados, req.user, "setor"));
+  } catch { return res.json([]); }
+});
+
 // GET /api/spo/dto
 router.get("/dto", async (req, res) => {
   try {

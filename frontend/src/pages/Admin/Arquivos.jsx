@@ -39,6 +39,15 @@ const ARQUIVOS_CONFIG = [
     icon: "✅",
   },
 {
+    id: "spo_promo",
+    campo: "spo_promo",
+    rotulo: "SPO — Aba Promoção BEES",
+    descricao: "Item 7 — % PDVs abrindo aba de Promoção no BEES",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🏷️",
+  },
+  {
     id: "spo_dto",
     campo: "spo_dto",
     rotulo: "SPO — DTO GC",
