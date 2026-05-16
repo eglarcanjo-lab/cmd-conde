@@ -11,7 +11,7 @@ const SPO_ITEMS = [
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
-  // v2.9 promo fix
+  // v3.0 promo dia filter
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: false },
@@ -63,6 +63,7 @@ export default function SPO() {
   const [promoDetalhe, setPromoDetalhe] = useState([]);
   const [promoBusca, setPromoBusca] = useState("");
   const [promoFiltroSetor, setPromoFiltroSetor] = useState("todos");
+  const [promoFiltroDia, setPromoFiltroDia] = useState("todos");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -369,7 +370,11 @@ export default function SPO() {
                           <option value="todos">Todos os setores</option>
                           {[...new Set(promoDetalhe.filter(d => d.setor).map(d => d.setor))].sort().map(s => <option key={s} value={s}>Setor {s}</option>)}
                         </select>
-                        <span style={styles.countLabel}>{promoDetalhe.filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor)).length} PDVs</span>
+                        <select style={styles.inputFiltro} value={promoFiltroDia} onChange={(e) => setPromoFiltroDia(e.target.value)}>
+                          <option value="todos">Todos os dias</option>
+                          {[...new Set(promoDetalhe.map(d => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                        <span style={styles.countLabel}>{promoDetalhe.filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase()))).length} PDVs</span>
                       </div>
                       <div style={styles.tableWrap}>
                         <table style={styles.table}>
@@ -378,7 +383,7 @@ export default function SPO() {
                           </thead>
                           <tbody>
                             {promoDetalhe
-                              .filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor))
+                              .filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase())))
                               .slice(0, 100)
                               .map((d, i) => {
                                 const pct = parseFloat(d.pct || 0);
