@@ -11,9 +11,9 @@ const SPO_ITEMS = [
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
-  // v2.8 dto fix
+  // v2.9 promo fix
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
-  { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: false },
+  { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: false },
   { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: false },
   { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: false },
@@ -59,6 +59,10 @@ export default function SPO() {
   const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
   const [desafios, setDesafios] = useState([]);
   const [dto, setDto] = useState(null);
+  const [promo, setPromo] = useState([]);
+  const [promoDetalhe, setPromoDetalhe] = useState([]);
+  const [promoBusca, setPromoBusca] = useState("");
+  const [promoFiltroSetor, setPromoFiltroSetor] = useState("todos");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -69,7 +73,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
         api.get("/api/spo/coaching/resumo"),
@@ -77,6 +81,8 @@ export default function SPO() {
         api.get("/api/spo/dias-rota/resumo"),
         api.get(`/api/spo/desafios?mes=${new Date().toISOString().slice(0,7)}`),
         api.get("/api/spo/dto"),
+        api.get("/api/spo/promo/resumo"),
+        api.get("/api/spo/promo/detalhe"),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -86,6 +92,10 @@ export default function SPO() {
       setDesafios(resDesafios?.data || []);
       const dtoData = resDto?.data || [];
       setDto(Array.isArray(dtoData) && dtoData.length > 0 ? dtoData[0] : (dtoData && !Array.isArray(dtoData) ? dtoData : null));
+      const promoData = resPromo?.data || [];
+      setPromo(Array.isArray(promoData) ? promoData : []);
+      const promoDetData = resPromoDetalhe?.data || [];
+      setPromoDetalhe(Array.isArray(promoDetData) ? promoDetData : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -315,6 +325,80 @@ export default function SPO() {
                       );
                     })}
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* ABA PROMOÇÃO */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 7 — % PDVs abrindo Aba de Promoção no BEES</h3>
+              {promo.length === 0 ? (
+                <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Aba Promoção BEES.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Cards por setor */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                    {promo.map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 10 ? "#4ade80" : pct >= 7 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                              {isOp ? "🏭 Operação Total" : `Setor ${r.setor}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct * 10} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.acesso_promo}/{r.visitas} visitas</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 10%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe por PDV */}
+                  {promoDetalhe.length > 0 && (
+                    <div>
+                      <div style={styles.filtrosRow}>
+                        <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={promoBusca} onChange={(e) => setPromoBusca(e.target.value)} />
+                        <select style={styles.inputFiltro} value={promoFiltroSetor} onChange={(e) => setPromoFiltroSetor(e.target.value)}>
+                          <option value="todos">Todos os setores</option>
+                          {[...new Set(promoDetalhe.filter(d => d.setor).map(d => d.setor))].sort().map(s => <option key={s} value={s}>Setor {s}</option>)}
+                        </select>
+                        <span style={styles.countLabel}>{promoDetalhe.filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor)).length} PDVs</span>
+                      </div>
+                      <div style={styles.tableWrap}>
+                        <table style={styles.table}>
+                          <thead>
+                            <tr>{["Setor","PDV","Dia Visita","Visitas","Acesso Promo","%"].map(h => <th key={h} style={styles.th}>{h}</th>)}</tr>
+                          </thead>
+                          <tbody>
+                            {promoDetalhe
+                              .filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor))
+                              .slice(0, 100)
+                              .map((d, i) => {
+                                const pct = parseFloat(d.pct || 0);
+                                const cor = pct >= 10 ? "#4ade80" : pct >= 5 ? "#fbb900" : "#f87171";
+                                return (
+                                  <tr key={i} style={styles.tr}>
+                                    <td style={styles.td}>{d.setor || "—"}</td>
+                                    <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
+                                    <td style={styles.td}>{d.dia_visita || "—"}</td>
+                                    <td style={styles.td}>{d.visitas}</td>
+                                    <td style={styles.td}>{d.acesso_promo}</td>
+                                    <td style={styles.td}><span style={{ color: cor, fontWeight: "700" }}>{pct}%</span></td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
