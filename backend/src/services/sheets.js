@@ -105,7 +105,8 @@ async function initializeSheets() {
     spo_visitacao_gv: ["gv","setor","cod_pdv","nome_pdv","dia_visita","visita_ok","gps_ok","valida","mes_referencia"],
     spo_visitacao_gv_resumo: ["gv","meta","visitados","pct","mes_referencia"],
     spo_coaching_detalhe: ["gv","setor","data_visita","mes_referencia","coaching_ok","tmv_rota","coachings_validos","validacao_segmento"],
-    spo_coaching_resumo: ["gv","coachings_validos","meta","pct","rns_cobertos","total_rns_sala","gv_ok","mes_referencia"],
+    spo_coaching_resumo: ["gv","periodo","mes_referencia","coachings_validos","meta","pct","rns_cobertos","total_rns_sala","gv_ok"],
+    spo_coaching_sem_coaching: ["gv","setor","mes_referencia"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
   };

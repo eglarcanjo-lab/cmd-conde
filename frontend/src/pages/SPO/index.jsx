@@ -53,6 +53,7 @@ export default function SPO() {
   const [loading, setLoading] = useState(true);
   const [coaching, setCoaching] = useState([]);
   const [periodoCoaching, setPeriodoCoaching] = useState("trimestral");
+  const [semCoaching, setSemCoaching] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -63,14 +64,16 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
         api.get("/api/spo/coaching/resumo"),
+        api.get("/api/spo/coaching/sem-coaching"),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
       setCoaching(resCoaching.data || []);
+      setSemCoaching(resSemCoaching?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -128,9 +131,9 @@ export default function SPO() {
 
         {/* Abas de visão */}
         <div style={styles.abas}>
-          {["operacao", "gv", "detalhe"].map((a) => (
+          {["operacao", "gv", "detalhe", "sem_coaching"].map((a) => (
             <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
-              {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : "📋 Detalhe"}
+              {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
             </button>
           ))}
         </div>
@@ -223,6 +226,37 @@ export default function SPO() {
                   })}
                   {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
                 </div>
+              </div>
+            )}
+
+            {/* SEM COACHING */}
+            {aba === "sem_coaching" && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>RNs sem Coaching no Trimestre</h3>
+                {semCoaching.length === 0 ? (
+                  <p style={{ ...styles.msg, color: "#4ade80" }}>✅ Todos os RNs receberam coaching no trimestre!</p>
+                ) : (
+                  <div style={styles.tableWrap}>
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          {["GV", "Setor", "Último mês de dados"].map((h) => (
+                            <th key={h} style={styles.th}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {semCoaching.map((r, i) => (
+                          <tr key={i} style={styles.tr}>
+                            <td style={styles.td}>{r.gv}</td>
+                            <td style={styles.td}><span style={styles.codBadge}>{r.setor}</span></td>
+                            <td style={styles.td}>{r.mes_referencia}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 

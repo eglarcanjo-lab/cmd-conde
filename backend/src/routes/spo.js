@@ -28,6 +28,14 @@ router.get("/coaching/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/coaching/sem-coaching
+router.get("/coaching/sem-coaching", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_coaching_sem_coaching");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 // GET /api/spo/coaching/detalhe
 router.get("/coaching/detalhe", async (req, res) => {
   try {
