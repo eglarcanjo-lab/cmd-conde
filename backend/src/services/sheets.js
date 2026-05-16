@@ -108,6 +108,7 @@ async function initializeSheets() {
     spo_coaching_resumo: ["gv","periodo","mes_referencia","coachings_validos","meta","pct","rns_cobertos","total_rns_sala","gv_ok"],
     spo_coaching_sem_coaching: ["gv","setor","mes_referencia"],
     spo_dias_rota_resumo: ["gv","periodo","mes_referencia","dias_validos","meta","pct","gv_ok"],
+    spo_desafios: ["gv","dia","mes_referencia","status"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
   };

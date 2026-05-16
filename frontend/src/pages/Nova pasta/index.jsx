@@ -9,7 +9,7 @@ const SPO_ITEMS = [
   { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
   { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
-  { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
+  { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: false },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: false },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: false },
@@ -56,7 +56,6 @@ export default function SPO() {
   const [semCoaching, setSemCoaching] = useState([]);
   const [diasRota, setDiasRota] = useState([]);
   const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
-  const [desafios, setDesafios] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -67,20 +66,18 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
         api.get("/api/spo/coaching/resumo"),
         api.get("/api/spo/coaching/sem-coaching"),
         api.get("/api/spo/dias-rota/resumo"),
-        api.get(`/api/spo/desafios?mes=${new Date().toISOString().slice(0,7)}`),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
       setCoaching(resCoaching.data || []);
       setSemCoaching(resSemCoaching?.data || []);
       setDiasRota(resDiasRota?.data || []);
-      setDesafios(resDesafios?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -240,37 +237,6 @@ export default function SPO() {
                 {diasRota.filter(d => d.periodo === periodoDiasRota).length === 0 && (
                   <p style={styles.msg}>Importe o relatório de Rota Coaching — os dias em rota são calculados automaticamente.</p>
                 )}
-              </div>
-            </div>
-
-            {/* DESAFIOS DIÁRIOS */}
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Item 4 — Abertura de Desafios Diários</h3>
-              <div style={styles.gvGrid}>
-                {["1","3"].map((gv) => {
-                  const dias = desafios.filter(d => d.gv === gv);
-                  const ok = dias.filter(d => d.status === "OK").length;
-                  const total = dias.length;
-                  const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
-                  const cor = pct >= 90 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-                  return (
-                    <div key={gv} style={styles.gvCard}>
-                      <div style={styles.gvHeader}>
-                        <span style={styles.gvLabel}>GV {gv}</span>
-                        <span style={{ ...styles.apBadge, background: pct >= 90 ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: pct >= 90 ? "#4ade80" : "#f87171" }}>{pct >= 90 ? "OK" : "NOK"}</span>
-                      </div>
-                      <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", margin: "8px 0" }}>
-                        <div style={{ height: "100%", width: `${Math.min(pct,100)}%`, background: cor, borderRadius: "3px" }} />
-                      </div>
-                      <div style={styles.gvFooter}>
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{ok} / {total} dias com desafio</span>
-                        <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                      </div>
-                      <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.72rem" }}>Meta: ≥ 90% dos dias úteis</p>
-                    </div>
-                  );
-                })}
-                {desafios.length === 0 && <p style={styles.msg}>Preencha em Admin → SPO Desafios.</p>}
               </div>
             </div>
 

@@ -60,4 +60,52 @@ router.get("/visitacao-gv/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/desafios
+router.get("/desafios", async (req, res) => {
+  try {
+    const { mes } = req.query;
+    const dados = await readSheet("spo_desafios");
+    const filtrado = mes ? dados.filter((r) => r.mes_referencia === mes) : dados;
+    return res.json(filtrarGV(filtrado, req.user));
+  } catch { return res.json([]); }
+});
+
+// POST /api/spo/desafios
+router.post("/desafios", async (req, res) => {
+  try {
+    const { linhas } = req.body;
+    if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie array de linhas." });
+
+    const { google } = require("googleapis");
+    const auth = new google.auth.JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+    const sheets = google.sheets({ version: "v4", auth });
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+    const headers = ["gv", "dia", "mes_referencia", "status"];
+
+    // Remove mês atual e regrava
+    const todos = await readSheet("spo_desafios");
+    const mesRef = linhas[0]?.mes_referencia;
+    const outros = todos.filter((r) => r.mes_referencia !== mesRef);
+    const novos = [...outros, ...linhas.filter((l) => l.status)];
+
+    await sheets.spreadsheets.values.clear({ spreadsheetId: sheetId, range: "spo_desafios" });
+    const rows = [headers, ...novos.map((l) => headers.map((h) => l[h] ?? ""))];
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "spo_desafios!A1",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: rows },
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao salvar desafios." });
+  }
+});
+
 module.exports = router;
