@@ -11,7 +11,8 @@ const SPO_ITEMS = [
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
-  { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: false },
+  // v2.8 dto fix
+  { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: false },
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: false },
   { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: false },
@@ -57,6 +58,7 @@ export default function SPO() {
   const [diasRota, setDiasRota] = useState([]);
   const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
   const [desafios, setDesafios] = useState([]);
+  const [dto, setDto] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -67,13 +69,14 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
         api.get("/api/spo/coaching/resumo"),
         api.get("/api/spo/coaching/sem-coaching"),
         api.get("/api/spo/dias-rota/resumo"),
         api.get(`/api/spo/desafios?mes=${new Date().toISOString().slice(0,7)}`),
+        api.get("/api/spo/dto"),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -81,6 +84,8 @@ export default function SPO() {
       setSemCoaching(resSemCoaching?.data || []);
       setDiasRota(resDiasRota?.data || []);
       setDesafios(resDesafios?.data || []);
+      const dtoData = resDto?.data || [];
+      setDto(Array.isArray(dtoData) && dtoData.length > 0 ? dtoData[0] : (dtoData && !Array.isArray(dtoData) ? dtoData : null));
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -272,6 +277,46 @@ export default function SPO() {
                 })}
                 {desafios.length === 0 && <p style={styles.msg}>Preencha em Admin → SPO Desafios.</p>}
               </div>
+            </div>
+
+            {/* DTO GC */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 6 — DTO GC x GV</h3>
+              {!dto ? (
+                <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO DTO GC.</p>
+              ) : (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{dto.mes_referencia}</span>
+                    <span style={{ ...styles.apBadge, background: dto.status_final === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: dto.status_final === "OK" ? "#4ade80" : "#f87171" }}>
+                      {dto.status_final === "OK" ? "✅ OK" : "❌ NOK"}
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px" }}>
+                    {[
+                      { label: "Matinal", real: dto.matinal_real, meta: dto.matinal_meta, pct: dto.matinal_pct, status: dto.matinal_status },
+                      { label: "Vespertina", real: dto.vespertina_real, meta: dto.vespertina_meta, pct: dto.vespertina_pct, status: dto.vespertina_status },
+                      { label: "Rota Coaching", real: dto.coaching_real, meta: dto.coaching_meta, pct: dto.coaching_pct, status: dto.coaching_status },
+                    ].map((item) => {
+                      const pct = parseFloat(item.pct || 0);
+                      const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      return (
+                        <div key={item.label} style={styles.gvCard}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontSize: "0.88rem", fontWeight: "600" }}>{item.label}</span>
+                            <span style={{ ...styles.apBadge, background: item.status === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: item.status === "OK" ? "#4ade80" : "#f87171", fontSize: "0.72rem" }}>{item.status}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{item.real} / {item.meta}</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* POR GV */}
