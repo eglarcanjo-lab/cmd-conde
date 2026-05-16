@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+// v2.3 - SPO ativo
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 
@@ -12,6 +13,7 @@ export default function Home() {
     { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
     { icon: "✅", label: "Tasks", route: "/tasks", ativo: true },
     { icon: "💰", label: "Remuneração", route: "/rv", ativo: true },
+    { icon: "📊", label: "SPO", route: "/spo", ativo: true },
     { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true },
   ];
 
