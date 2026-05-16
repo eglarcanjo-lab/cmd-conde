@@ -39,6 +39,15 @@ const ARQUIVOS_CONFIG = [
     icon: "✅",
   },
 {
+    id: "spo_visitacao_gv",
+    campo: "spo_visitacao_gv",
+    rotulo: "SPO — Visitação GV",
+    descricao: "Item 1 — PDVs visitados pelo GV na base foco",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🗺️",
+  },
+  {
     id: "pontos_bees",
     campo: "pontos_bees",
     rotulo: "Pontos Bees",
