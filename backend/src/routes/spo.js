@@ -12,6 +12,14 @@ function filtrarGV(dados, usuario) {
   return dados.filter((r) => String(r.setor) === String(usuario.cod));
 }
 
+// GET /api/spo/dias-rota/resumo
+router.get("/dias-rota/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_dias_rota_resumo");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 // GET /api/spo/visitacao-gv/resumo
 router.get("/visitacao-gv/resumo", async (req, res) => {
   try {

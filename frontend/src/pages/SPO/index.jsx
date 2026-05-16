@@ -8,7 +8,7 @@ const META_GV = 36;
 const SPO_ITEMS = [
   { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
   { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
-  { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: false },
+  { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: false },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: false },
@@ -54,6 +54,8 @@ export default function SPO() {
   const [coaching, setCoaching] = useState([]);
   const [periodoCoaching, setPeriodoCoaching] = useState("trimestral");
   const [semCoaching, setSemCoaching] = useState([]);
+  const [diasRota, setDiasRota] = useState([]);
+  const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -64,16 +66,18 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
         api.get("/api/spo/coaching/resumo"),
         api.get("/api/spo/coaching/sem-coaching"),
+        api.get("/api/spo/dias-rota/resumo"),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
       setCoaching(resCoaching.data || []);
       setSemCoaching(resSemCoaching?.data || []);
+      setDiasRota(resDiasRota?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -196,6 +200,42 @@ export default function SPO() {
                 })}
                 {coaching.filter(c => c.periodo === periodoCoaching).length === 0 && (
                   <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Rota Coaching.</p>
+                )}
+              </div>
+            </div>
+
+            {/* DIAS EM ROTA TT */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 3 — TT Dias com Rotas</h3>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                {["mensal", "trimestral"].map((p) => (
+                  <button key={p} onClick={() => setPeriodoDiasRota(p)}
+                    style={{ ...styles.abaBtn, ...(periodoDiasRota === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoDiasRota === p ? "rgba(251,185,0,0.12)" : "rgba(255,255,255,0.04)" }}>
+                    {p === "mensal" ? "📅 Mensal" : "📊 Trimestral"}
+                  </button>
+                ))}
+              </div>
+              <div style={styles.gvGrid}>
+                {diasRota.filter(d => d.periodo === periodoDiasRota).map((d) => {
+                  const pct = parseFloat(d.pct || 0);
+                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  return (
+                    <div key={`${d.gv}-${d.periodo}-${d.mes_referencia}`} style={styles.gvCard}>
+                      <div style={styles.gvHeader}>
+                        <span style={styles.gvLabel}>GV {d.gv}</span>
+                        <span style={{ ...styles.apBadge, background: d.gv_ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: d.gv_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.gv_ok}</span>
+                      </div>
+                      <BarraProgresso pct={pct} cor={cor} />
+                      <div style={styles.gvFooter}>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{d.dias_validos} / {d.meta} dias</span>
+                        <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>{d.mes_referencia}</div>
+                    </div>
+                  );
+                })}
+                {diasRota.filter(d => d.periodo === periodoDiasRota).length === 0 && (
+                  <p style={styles.msg}>Importe o relatório de Rota Coaching — os dias em rota são calculados automaticamente.</p>
                 )}
               </div>
             </div>
