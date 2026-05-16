@@ -39,6 +39,15 @@ const ARQUIVOS_CONFIG = [
     icon: "✅",
   },
 {
+    id: "spo_coaching",
+    campo: "spo_coaching",
+    rotulo: "SPO — Rota Coaching",
+    descricao: "Item 2 — Detalhamento de visitas de coaching por GV",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🎯",
+  },
+  {
     id: "spo_visitacao_gv",
     campo: "spo_visitacao_gv",
     rotulo: "SPO — Visitação GV",

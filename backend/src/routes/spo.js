@@ -20,6 +20,22 @@ router.get("/visitacao-gv/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/coaching/resumo
+router.get("/coaching/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_coaching_resumo");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/coaching/detalhe
+router.get("/coaching/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_coaching_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 // GET /api/spo/visitacao-gv/detalhe
 router.get("/visitacao-gv/detalhe", async (req, res) => {
   try {

@@ -7,7 +7,7 @@ const META_GV = 36;
 
 const SPO_ITEMS = [
   { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
-  { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: false },
+  { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: false },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: false },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
@@ -51,6 +51,8 @@ export default function SPO() {
   const [resumo, setResumo] = useState([]);
   const [detalhe, setDetalhe] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [coaching, setCoaching] = useState([]);
+  const [periodoCoaching, setPeriodoCoaching] = useState("trimestral");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -61,12 +63,14 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo"),
         api.get("/api/spo/visitacao-gv/detalhe"),
+        api.get("/api/spo/coaching/resumo"),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
+      setCoaching(resCoaching.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -153,6 +157,45 @@ export default function SPO() {
                 <BarraProgresso pct={pctOp} />
               </div>
             )}
+
+            {/* COACHING */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 2 — Rota Coaching</h3>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                {["mensal", "trimestral"].map((p) => (
+                  <button key={p} onClick={() => setPeriodoCoaching(p)}
+                    style={{ ...styles.abaBtn, ...(periodoCoaching === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoCoaching === p ? "rgba(251,185,0,0.12)" : "rgba(255,255,255,0.04)" }}>
+                    {p === "mensal" ? "📅 Mensal" : "📊 Trimestral"}
+                  </button>
+                ))}
+              </div>
+              <div style={styles.gvGrid}>
+                {coaching.filter(c => c.periodo === periodoCoaching).map((c) => {
+                  const pct = parseFloat(c.pct || 0);
+                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  return (
+                    <div key={`${c.gv}-${c.periodo}-${c.mes_referencia}`} style={styles.gvCard}>
+                      <div style={styles.gvHeader}>
+                        <span style={styles.gvLabel}>GV {c.gv}</span>
+                        <span style={{ ...styles.apBadge, background: c.gv_ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: c.gv_ok === "OK" ? "#4ade80" : "#f87171" }}>{c.gv_ok}</span>
+                      </div>
+                      <BarraProgresso pct={pct} cor={cor} />
+                      <div style={styles.gvFooter}>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{c.coachings_validos} / {c.meta} coachings</span>
+                        <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
+                        <span>RNs cobertos: {c.rns_cobertos}/{c.total_rns_sala}</span>
+                        <span>{c.mes_referencia}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {coaching.filter(c => c.periodo === periodoCoaching).length === 0 && (
+                  <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Rota Coaching.</p>
+                )}
+              </div>
+            </div>
 
             {/* POR GV */}
             {aba === "gv" && (
