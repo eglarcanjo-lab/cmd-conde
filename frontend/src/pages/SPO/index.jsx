@@ -201,7 +201,7 @@ export default function SPO() {
                   <table style={styles.table}>
                     <thead>
                       <tr>
-                        {["GV", "Setor", "PDV", "Nome", "Visita", "GPS", "Status"].map((h) => (
+                        {["GV", "Setor", "PDV", "Nome", "Dia Visita", "Visita", "GPS", "Status"].map((h) => (
                           <th key={h} style={styles.th}>{h}</th>
                         ))}
                       </tr>
@@ -215,6 +215,7 @@ export default function SPO() {
                             <td style={styles.td}>{d.setor}</td>
                             <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
                             <td style={{ ...styles.td, textAlign: "left", fontSize: "0.8rem" }}>{d.nome_pdv || "—"}</td>
+                            <td style={styles.td}>{d.dia_visita || "—"}</td>
                             <td style={styles.td}><span style={{ color: d.visita_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.visita_ok}</span></td>
                             <td style={styles.td}><span style={{ color: d.gps_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.gps_ok}</span></td>
                             <td style={styles.td}>

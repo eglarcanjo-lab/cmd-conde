@@ -102,7 +102,7 @@ async function initializeSheets() {
     rv_pontos_bees: ["setor", "pontos_real", "pontos_meta", "pct_atingimento", "mes_referencia"],
     rv_ap: ["setor", "mes_referencia", "tasks_compra_real", "tasks_compra_meta", "compradores_real", "compradores_meta", "rota_efetiva_real", "rota_efetiva_meta", "gps_real", "gps_meta", "ap_ok"],
     rv_faturamento_mktp: ["setor", "faturamento_mktp_real", "mes_referencia"],
-    spo_visitacao_gv: ["gv","setor","cod_pdv","nome_pdv","visita_ok","gps_ok","valida","mes_referencia"],
+    spo_visitacao_gv: ["gv","setor","cod_pdv","nome_pdv","dia_visita","visita_ok","gps_ok","valida","mes_referencia"],
     spo_visitacao_gv_resumo: ["gv","meta","visitados","pct","mes_referencia"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
