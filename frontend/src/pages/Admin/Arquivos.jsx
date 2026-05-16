@@ -39,6 +39,15 @@ const ARQUIVOS_CONFIG = [
     icon: "✅",
   },
 {
+    id: "spo_dto",
+    campo: "spo_dto",
+    rotulo: "SPO — DTO GC",
+    descricao: "Item 6 — Diagnóstico de Trabalho Operacional GC x GV",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "📝",
+  },
+  {
     id: "spo_coaching",
     campo: "spo_coaching",
     rotulo: "SPO — Rota Coaching",

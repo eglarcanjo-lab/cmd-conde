@@ -1,3 +1,4 @@
+// v2.6 - desafios diarios
 const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
@@ -57,6 +58,14 @@ router.get("/visitacao-gv/detalhe", async (req, res) => {
   try {
     const dados = await readSheet("spo_visitacao_gv");
     return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/dto
+router.get("/dto", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_dto_resumo");
+    return res.json(dados);
   } catch { return res.json([]); }
 });
 
