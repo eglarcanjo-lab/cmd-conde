@@ -1,3 +1,4 @@
+// updated: 2026-05-16 21:47:53
 const { google } = require("googleapis");
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
@@ -108,7 +109,7 @@ async function initializeSheets() {
     spo_coaching_resumo: ["gv","periodo","mes_referencia","coachings_validos","meta","pct","rns_cobertos","total_rns_sala","gv_ok"],
     spo_coaching_sem_coaching: ["gv","setor","mes_referencia"],
     spo_dias_rota_resumo: ["gv","periodo","mes_referencia","dias_validos","meta","pct","gv_ok"],
-    // v2.6
+    // v2.8 - dto
     spo_dto_resumo: ["mes_referencia","status_final","matinal_meta","matinal_real","matinal_pct","matinal_status","vespertina_meta","vespertina_real","vespertina_pct","vespertina_status","coaching_meta","coaching_real","coaching_pct","coaching_status"],
     spo_desafios: ["gv","dia","mes_referencia","status"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
