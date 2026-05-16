@@ -15,7 +15,7 @@ router.use(authMiddleware, adminOnly);
 // POST /api/arquivos/processar — envia arquivos para o processador Python
 router.post(
   "/processar",
-  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }]),
+  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }]),
   async (req, res) => {
     try {
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
@@ -28,6 +28,18 @@ router.post(
       if (req.files?.pedidos?.[0]) {
         const f = req.files.pedidos[0];
         form.append("pedidos", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.spo_visitacao_gv?.[0]) {
+        const f = req.files.spo_visitacao_gv[0];
+        form.append("spo_visitacao_gv", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.faturamento_mktp?.[0]) {
+        const f = req.files.faturamento_mktp[0];
+        form.append("faturamento_mktp", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.pontos_bees?.[0]) {
+        const f = req.files.pontos_bees[0];
+        form.append("pontos_bees", f.buffer, { filename: f.originalname, contentType: f.mimetype });
       }
       if (req.files?.produtos_base?.[0]) {
         const f = req.files.produtos_base[0];

@@ -1,0 +1,289 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
+
+const META_GV = 36;
+
+const SPO_ITEMS = [
+  { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
+  { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: false },
+  { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: false },
+  { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: false },
+  { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
+  { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: false },
+  { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: false },
+  { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: false },
+  { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: false },
+  { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: false },
+  { n: 11, label: "Tasks Cerveja TT (Portfolio)",       pts: 10, peso: 5.6,  ativo: false },
+  { n: 12, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.3,  ativo: false },
+  { n: 13, label: "Tasks NAB TT (Portfolio)",           pts: 10, peso: 5.6,  ativo: false },
+  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: false },
+  { n: 15, label: "Tasks de Marketplace",               pts: 8,  peso: 4.4,  ativo: false },
+  { n: 16, label: "Tasks de Match (Portfolio)",         pts: 8,  peso: 4.4,  ativo: false },
+  { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: false },
+  { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: false },
+  { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: false },
+  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false },
+  { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: false },
+  { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: false },
+  { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: false },
+  { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: false },
+];
+
+const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
+
+function BarraProgresso({ pct, cor }) {
+  const w = Math.min(pct, 100);
+  const c = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+  return (
+    <div style={{ height: "8px", background: "rgba(255,255,255,0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "6px" }}>
+      <div style={{ height: "100%", width: `${w}%`, background: cor || c, borderRadius: "4px", transition: "width 0.4s" }} />
+    </div>
+  );
+}
+
+export default function SPO() {
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
+  const [aba, setAba] = useState("operacao");
+  const [resumo, setResumo] = useState([]);
+  const [detalhe, setDetalhe] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [filtroGv, setFiltroGv] = useState("todos");
+  const [filtroStatus, setFiltroStatus] = useState("todos");
+
+  useEffect(() => { carregar(); }, []);
+
+  async function carregar() {
+    setLoading(true);
+    try {
+      const [resResumo, resDetalhe] = await Promise.all([
+        api.get("/api/spo/visitacao-gv/resumo"),
+        api.get("/api/spo/visitacao-gv/detalhe"),
+      ]);
+      setResumo(resResumo.data || []);
+      setDetalhe(resDetalhe.data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }
+
+  // Resumo operação
+  const totalVisitados = resumo.reduce((s, r) => s + parseInt(r.visitados || 0), 0);
+  const totalMeta = resumo.reduce((s, r) => s + parseInt(r.meta || META_GV), 0);
+  const pctOp = totalMeta > 0 ? Math.round((totalVisitados / totalMeta) * 100) : 0;
+
+  // Detalhe filtrado
+  const detalheFiltrado = detalhe.filter((d) => {
+    const buscaOk = !busca || d.cod_pdv?.includes(busca) || d.nome_pdv?.toLowerCase().includes(busca.toLowerCase());
+    const gvOk = filtroGv === "todos" || d.gv === filtroGv;
+    const stOk = filtroStatus === "todos" || (filtroStatus === "ok" && d.valida === "SIM") || (filtroStatus === "nok" && d.valida === "NÃO");
+    return buscaOk && gvOk && stOk;
+  });
+
+  const gvsUnicos = [...new Set(detalhe.map((d) => d.gv))].sort();
+
+  return (
+    <div style={styles.root}>
+      <div style={styles.header}>
+        <div style={styles.headerLeft}>
+          <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
+          <div>
+            <h1 style={styles.title}>📊 SPO — Excelência Operacional</h1>
+            <p style={styles.subtitle}>CMD Ambev · Conde</p>
+          </div>
+        </div>
+        <button style={styles.logoutBtn} onClick={logout}>Sair</button>
+      </div>
+
+      <div style={styles.content}>
+        {/* Scoreboard dos 24 KPIs */}
+        <div style={styles.scoreboard}>
+          <div style={styles.scoreboardHeader}>
+            <span style={styles.scoreboardTitle}>Painel SPO — {TOTAL_PTS} pontos</span>
+            <span style={styles.scoreboardSub}>KPIs ativos em amarelo</span>
+          </div>
+          <div style={styles.kpiGrid}>
+            {SPO_ITEMS.map((item) => (
+              <div key={item.n} style={{ ...styles.kpiCard, ...(item.ativo ? styles.kpiCardAtivo : {}) }}>
+                <span style={styles.kpiN}>#{item.n}</span>
+                <span style={styles.kpiLabel}>{item.label}</span>
+                <div style={styles.kpiPts}>
+                  <span style={{ color: item.ativo ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
+                  <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{item.peso}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Abas de visão */}
+        <div style={styles.abas}>
+          {["operacao", "gv", "detalhe"].map((a) => (
+            <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
+              {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : "📋 Detalhe"}
+            </button>
+          ))}
+        </div>
+
+        {loading ? <p style={styles.msg}>Carregando...</p> : (
+          <>
+            {/* OPERAÇÃO */}
+            {aba === "operacao" && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
+                <div style={styles.opGrid}>
+                  {[
+                    { label: "Meta Total", val: totalMeta, color: "#fff" },
+                    { label: "Visitados", val: totalVisitados, color: "#4ade80" },
+                    { label: "Atingimento", val: `${pctOp}%`, color: pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#fbb900" : "#f87171" },
+                    { label: "Pontos SPO", val: pctOp >= 100 ? "14 pts" : `${Math.round(14 * pctOp / 100)} pts`, color: "#fbb900" },
+                  ].map((c) => (
+                    <div key={c.label} style={styles.opCard}>
+                      <p style={styles.opLabel}>{c.label}</p>
+                      <p style={{ ...styles.opVal, color: c.color }}>{c.val}</p>
+                    </div>
+                  ))}
+                </div>
+                <BarraProgresso pct={pctOp} />
+              </div>
+            )}
+
+            {/* POR GV */}
+            {aba === "gv" && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
+                <div style={styles.gvGrid}>
+                  {resumo.map((r) => {
+                    const pct = Math.round((parseInt(r.visitados) / parseInt(r.meta)) * 100);
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    return (
+                      <div key={r.gv} style={styles.gvCard}>
+                        <div style={styles.gvHeader}>
+                          <span style={styles.gvLabel}>GV {r.gv}</span>
+                          <span style={{ color: cor, fontWeight: "700", fontSize: "1.1rem" }}>{pct}%</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{r.visitados} / {r.meta} PDVs</span>
+                          <span style={{ color: "#fbb900", fontSize: "0.82rem", fontWeight: "600" }}>
+                            {pct >= 100 ? "14 pts" : `~${Math.round(14 * pct / 100)} pts`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
+                </div>
+              </div>
+            )}
+
+            {/* DETALHE */}
+            {aba === "detalhe" && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Item 1 — Visitas Detalhadas</h3>
+                <div style={styles.filtrosRow}>
+                  <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+                  <select style={styles.inputFiltro} value={filtroGv} onChange={(e) => setFiltroGv(e.target.value)}>
+                    <option value="todos">Todos os GVs</option>
+                    {gvsUnicos.map((g) => <option key={g} value={g}>GV {g}</option>)}
+                  </select>
+                  <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+                    <option value="todos">Todos</option>
+                    <option value="ok">✅ Válidas</option>
+                    <option value="nok">❌ Inválidas</option>
+                  </select>
+                  <span style={styles.countLabel}>{detalheFiltrado.length} visitas</span>
+                </div>
+                <div style={styles.tableWrap}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        {["GV", "Setor", "PDV", "Nome", "Visita", "GPS", "Status"].map((h) => (
+                          <th key={h} style={styles.th}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detalheFiltrado.slice(0, 200).map((d, i) => {
+                        const ok = d.valida === "SIM";
+                        return (
+                          <tr key={i} style={styles.tr}>
+                            <td style={styles.td}>{d.gv}</td>
+                            <td style={styles.td}>{d.setor}</td>
+                            <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
+                            <td style={{ ...styles.td, textAlign: "left", fontSize: "0.8rem" }}>{d.nome_pdv || "—"}</td>
+                            <td style={styles.td}><span style={{ color: d.visita_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.visita_ok}</span></td>
+                            <td style={styles.td}><span style={{ color: d.gps_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.gps_ok}</span></td>
+                            <td style={styles.td}>
+                              <span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>
+                                {ok ? "✅ Válida" : "❌ Inválida"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {detalheFiltrado.length > 200 && (
+                    <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: "12px" }}>
+                      Mostrando 200 de {detalheFiltrado.length}. Use os filtros para refinar.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
+  headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
+  backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
+  subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
+  logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
+  content: { padding: "24px 32px", maxWidth: "1100px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" },
+  msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
+  scoreboard: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
+  scoreboardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
+  scoreboardTitle: { fontWeight: "700", fontSize: "0.95rem" },
+  scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" },
+  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "6px" },
+  kpiCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "4px" },
+  kpiCardAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.04)" },
+  kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" },
+  kpiLabel: { color: "rgba(255,255,255,0.7)", fontSize: "0.78rem", lineHeight: "1.3" },
+  kpiPts: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" },
+  abas: { display: "flex", gap: "4px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px" },
+  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
+  section: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
+  sectionTitle: { margin: "0 0 16px", fontSize: "0.95rem", fontWeight: "600" },
+  opGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "12px" },
+  opCard: { background: "rgba(255,255,255,0.04)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" },
+  opLabel: { margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.78rem" },
+  opVal: { margin: 0, fontSize: "1.6rem", fontWeight: "800" },
+  gvGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "14px" },
+  gvCard: { background: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", gap: "8px" },
+  gvHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  gvLabel: { fontWeight: "600", fontSize: "0.95rem" },
+  gvFooter: { display: "flex", justifyContent: "space-between" },
+  filtrosRow: { display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" },
+  inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
+  countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
+  tableWrap: { overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" },
+  table: { width: "100%", borderCollapse: "collapse" },
+  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.04em", padding: "9px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
+  td: { padding: "8px 12px", color: "rgba(255,255,255,0.75)", fontSize: "0.85rem", textAlign: "center" },
+  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 7px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" },
+  statusTag: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "600", whiteSpace: "nowrap" },
+};
