@@ -65,7 +65,7 @@ router.get("/visitacao-gv/detalhe", async (req, res) => {
 router.get("/promo/resumo", async (req, res) => {
   try {
     const dados = await readSheet("spo_promo_resumo");
-    return res.json(filtrarPorPerfil(dados, req.user, "setor"));
+    return res.json(dados);
   } catch { return res.json([]); }
 });
 
@@ -73,7 +73,7 @@ router.get("/promo/resumo", async (req, res) => {
 router.get("/promo/detalhe", async (req, res) => {
   try {
     const dados = await readSheet("spo_promo_detalhe");
-    return res.json(filtrarPorPerfil(dados, req.user, "setor"));
+    return res.json(dados);
   } catch { return res.json([]); }
 });
 
