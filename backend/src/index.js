@@ -42,6 +42,8 @@ app.use("/api/cobertura",  require("./routes/cobertura"));
 app.use("/api/pdvs",       require("./routes/pdvs"));
 app.use("/api/tasks",      require("./routes/tasks"));
 app.use("/api/admin/produtos", require("./routes/produtos"));
+// v2.5 - spo routes
+app.use("/api/spo", require("./routes/spo"));
 app.use("/api/rv", require("./routes/rv"));
 app.use("/api/incidentes", require("./routes/incidentes"));
 
