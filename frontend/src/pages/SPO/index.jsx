@@ -16,7 +16,7 @@ const SPO_ITEMS = [
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: true },
-  { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: false },
+  { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: true },
   { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: false },
   { n: 11, label: "Tasks Cerveja TT (Portfolio)",       pts: 10, peso: 5.6,  ativo: false },
   { n: 12, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.3,  ativo: false },
@@ -66,6 +66,7 @@ export default function SPO() {
   const [promoFiltroSetor, setPromoFiltroSetor] = useState("todos");
   const [promoFiltroDia, setPromoFiltroDia] = useState("todos");
   const [politica, setPolitica] = useState([]);
+  const [menu, setMenu] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -76,17 +77,18 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica] = await Promise.all([
-        api.get("/api/spo/visitacao-gv/resumo"),
-        api.get("/api/spo/visitacao-gv/detalhe"),
-        api.get("/api/spo/coaching/resumo"),
-        api.get("/api/spo/coaching/sem-coaching"),
-        api.get("/api/spo/dias-rota/resumo"),
-        api.get(`/api/spo/desafios?mes=${new Date().toISOString().slice(0,7)}`),
-        api.get("/api/spo/dto"),
-        api.get("/api/spo/promo/resumo"),
-        api.get("/api/spo/promo/detalhe"),
-        api.get("/api/spo/politica-comercial/resumo"),
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu] = await Promise.all([
+        api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/coaching/sem-coaching").catch(() => ({ data: [] })),
+        api.get("/api/spo/dias-rota/resumo").catch(() => ({ data: [] })),
+        api.get(`/api/spo/desafios?mes=${new Date().toISOString().slice(0,7)}`).catch(() => ({ data: [] })),
+        api.get("/api/spo/dto").catch(() => ({ data: [] })),
+        api.get("/api/spo/promo/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/promo/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/politica-comercial/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/menu/resumo").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -101,6 +103,7 @@ export default function SPO() {
       const promoDetData = resPromoDetalhe?.data || [];
       setPromoDetalhe(Array.isArray(promoDetData) ? promoDetData : []);
       setPolitica(resPolitica?.data || []);
+      setMenu(resMenu?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -434,6 +437,39 @@ export default function SPO() {
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
                           <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_execucao}/{r.pdvs_aderidos} PDVs</span>
+                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                        </div>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+
+            {/* MENU DE CERVEJA */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 9 — Execução Menu de Cerveja</h3>
+              {menu.length === 0 ? (
+                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                  {menu.map((r) => {
+                    const pct = parseFloat(r.pct || 0);
+                    const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                    const isOp = r.setor === "OPERACAO";
+                    return (
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div style={styles.gvHeader}>
+                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                          </span>
+                          <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
