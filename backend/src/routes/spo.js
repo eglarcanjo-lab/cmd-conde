@@ -158,5 +158,14 @@ router.get("/politica-comercial/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/tasks-cerveja/resumo
+router.get("/tasks-cerveja/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_tasks_cerveja_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
