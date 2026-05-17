@@ -1,3 +1,4 @@
+/* BUILD_20260517_004909 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +12,7 @@ const SPO_ITEMS = [
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
-  // v3.2 politica fix 00:29:07
+  // BUILD_20260517_004902
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: true },
