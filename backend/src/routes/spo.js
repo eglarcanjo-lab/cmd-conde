@@ -133,4 +133,20 @@ router.post("/desafios", async (req, res) => {
   }
 });
 
+// GET /api/spo/politica-comercial/resumo
+router.get("/politica-comercial/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_politica_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/politica-comercial/detalhe
+router.get("/politica-comercial/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_politica_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
