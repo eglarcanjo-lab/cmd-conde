@@ -133,6 +133,14 @@ router.post("/desafios", async (req, res) => {
   }
 });
 
+// GET /api/spo/menu/resumo
+router.get("/menu/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_menu_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 // GET /api/spo/politica-comercial/resumo
 router.get("/politica-comercial/resumo", async (req, res) => {
   try {

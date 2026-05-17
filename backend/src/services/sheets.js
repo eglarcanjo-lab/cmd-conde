@@ -110,6 +110,7 @@ async function initializeSheets() {
     spo_coaching_sem_coaching: ["gv","setor","mes_referencia"],
     spo_dias_rota_resumo: ["gv","periodo","mes_referencia","dias_validos","meta","pct","gv_ok"],
     // v2.8 - dto
+    spo_menu_resumo: ["setor","tasks_total","tasks_validas","pct","ok","mes_referencia"],
     spo_politica_resumo: ["setor","pdvs_aderidos","pdvs_execucao","pct","meta","ok","mes_referencia"],
     spo_politica_detalhe: ["setor","cod_pdv","tasks_aderidas","tasks_validas","pct","ok","mes_referencia"],
     spo_promo_detalhe: ["setor","cod_pdv","dia_visita","visitas","acesso_promo","pct","mes_referencia"],
