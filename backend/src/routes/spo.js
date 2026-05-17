@@ -1,3 +1,4 @@
+// FORCE 20260517_105347
 // updated: 2026-05-16 21:47:53
 const express = require("express");
 const router = express.Router();
@@ -158,3 +159,4 @@ router.get("/politica-comercial/detalhe", async (req, res) => {
 });
 
 module.exports = router;
+
