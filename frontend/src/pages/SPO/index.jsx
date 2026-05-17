@@ -1,3 +1,4 @@
+/* BUILD_FORCE 20260517_103722 */
 /* BUILD_20260517_004909 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -616,3 +617,4 @@ const styles = {
   codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 7px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" },
   statusTag: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "600", whiteSpace: "nowrap" },
 };
+
