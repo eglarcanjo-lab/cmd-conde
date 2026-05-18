@@ -167,5 +167,14 @@ router.get("/tasks-cerveja/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/score5/resumo
+router.get("/score5/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_score5_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
