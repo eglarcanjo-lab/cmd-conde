@@ -203,5 +203,14 @@ router.get("/tasks-marketplace/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/tasks-match/resumo
+router.get("/tasks-match/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_tasks_match_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
