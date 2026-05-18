@@ -230,5 +230,22 @@ router.get("/tasks-digitalizacao/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/pedido-alone/resumo
+router.get("/pedido-alone/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_pedido_alone_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/pedido-alone/detalhe
+router.get("/pedido-alone/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_pedido_alone_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
