@@ -16,7 +16,7 @@ router.use(authMiddleware, adminOnly);
 // POST /api/arquivos/processar — envia arquivos para o processador Python
 router.post(
   "/processar",
-  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }]),
+  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }]),
   async (req, res) => {
     try {
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
@@ -65,6 +65,10 @@ router.post(
       if (req.files?.inadimplencia?.[0]) {
         const f = req.files.inadimplencia[0];
         form.append("inadimplencia", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.spo_score5?.[0]) {
+        const f = req.files.spo_score5[0];
+        form.append("spo_score5", f.buffer, { filename: f.originalname, contentType: f.mimetype });
       }
 
       const response = await axios.post(`${PROCESSOR_URL}/api/processar/ambos`, form, {
