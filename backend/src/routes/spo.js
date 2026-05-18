@@ -176,5 +176,14 @@ router.get("/score5/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/tasks-nab/resumo
+router.get("/tasks-nab/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_tasks_nab_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
