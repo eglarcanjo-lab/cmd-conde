@@ -27,7 +27,7 @@ const SPO_ITEMS = [
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: true  },
   { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true  },
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true  },
-  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false },
+  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true  },
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: false },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: false },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: false },
@@ -77,6 +77,10 @@ export default function SPO() {
   const [tasksDigit, setTasksDigit] = useState([]);
   const [alone, setAlone] = useState([]);
   const [aloneDetalhe, setAloneDetalhe] = useState([]);
+  const [rgb, setRgb] = useState([]);
+  const [rgbLit, setRgbLit] = useState([]);
+  const [rgbInt, setRgbInt] = useState([]);
+  const [rgbDet, setRgbDet] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -87,7 +91,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -109,6 +113,10 @@ export default function SPO() {
         api.get("/api/spo/tasks-digitalizacao/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/pedido-alone/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/pedido-alone/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/rgb/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/rgb/litrinho").catch(() => ({ data: [] })),
+        api.get("/api/spo/rgb/inteira").catch(() => ({ data: [] })),
+        api.get("/api/spo/rgb/detalhe").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -134,6 +142,10 @@ export default function SPO() {
       setTasksDigit(resTasksDigit?.data || []);
       setAlone(resAlone?.data || []);
       setAloneDetalhe(resAloneDetalhe?.data || []);
+      setRgb(resRgb?.data || []);
+      setRgbLit(resRgbLit?.data || []);
+      setRgbInt(resRgbInt?.data || []);
+      setRgbDet(resRgbDet?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -816,6 +828,49 @@ export default function SPO() {
                       </div>
                     ))}
                   </div>
+                </>
+              )}
+            </div>
+
+
+            {/* +RGB */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 20 — +RGB</h3>
+              {rgb.length === 0 ? (
+                <p style={styles.msg}>Importe o relatório +RGB para calcular automaticamente.</p>
+              ) : (
+                <>
+                  {["Total","Litrinho","Inteira"].map((tipo) => {
+                    const dados = tipo === "Total" ? rgb : tipo === "Litrinho" ? rgbLit : rgbInt;
+                    const op = dados.find(r => r.setor === "OPERACAO");
+                    if (!op && tipo !== "Total") return null;
+                    return (
+                      <div key={tipo} style={{ marginBottom: "16px" }}>
+                        <p style={{ margin: "0 0 8px", color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>{tipo}</p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px" }}>
+                          {dados.map((r) => {
+                            const pct = parseFloat(r.pct_meta || 0);
+                            const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                            const isOp = r.setor === "OPERACAO";
+                            return (
+                              <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                                <div style={styles.gvHeader}>
+                                  <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                                    {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                                  </span>
+                                </div>
+                                <BarraProgresso pct={pct} cor={cor} />
+                                <div style={styles.gvFooter}>
+                                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_bateu_meta}/{r.pdvs_total} PDVs</span>
+                                  <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>

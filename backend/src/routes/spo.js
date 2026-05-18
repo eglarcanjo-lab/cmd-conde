@@ -247,5 +247,38 @@ router.get("/pedido-alone/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/rgb/resumo
+router.get("/rgb/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rgb_total");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/rgb/litrinho
+router.get("/rgb/litrinho", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rgb_litrinho");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/rgb/inteira
+router.get("/rgb/inteira", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rgb_inteira");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/rgb/detalhe
+router.get("/rgb/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rgb_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
