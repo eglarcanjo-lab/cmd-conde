@@ -25,7 +25,7 @@ const SPO_ITEMS = [
   { n: 15, label: "Tasks de Marketplace",               pts: 8,  peso: 4.4,  ativo: true  },
   { n: 16, label: "Tasks de Match (Portfolio)",         pts: 8,  peso: 4.4,  ativo: true  },
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: false },
+  { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true  },
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: false },
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false },
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: false },
@@ -74,6 +74,7 @@ export default function SPO() {
   const [tasksMktp, setTasksMktp] = useState([]);
   const [tasksMatch, setTasksMatch] = useState([]);
   const [tasksCervZero, setTasksCervZero] = useState([]);
+  const [tasksDigit, setTasksDigit] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -84,7 +85,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -103,6 +104,7 @@ export default function SPO() {
         api.get("/api/spo/tasks-marketplace/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-match/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-cerv-zero/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/tasks-digitalizacao/resumo").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -125,6 +127,7 @@ export default function SPO() {
       setTasksMktp(resTasksMktp?.data || []);
       setTasksMatch(resTasksMatch?.data || []);
       setTasksCervZero(resTasksCervZero?.data || []);
+      setTasksDigit(resTasksDigit?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -708,6 +711,39 @@ export default function SPO() {
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
                   {tasksCervZero.map((r) => {
+                    const pct = parseFloat(r.pct || 0);
+                    const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                    const isOp = r.setor === "OPERACAO";
+                    return (
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div style={styles.gvHeader}>
+                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                          </span>
+                          <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                        </div>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+
+            {/* TASKS DIGITALIZAÇÃO */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
+              {tasksDigit.length === 0 ? (
+                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                  {tasksDigit.map((r) => {
                     const pct = parseFloat(r.pct || 0);
                     const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
                     const isOp = r.setor === "OPERACAO";
