@@ -70,6 +70,7 @@ export default function SPO() {
   const [tasksCerveja, setTasksCerveja] = useState([]);
   const [score5, setScore5] = useState([]);
   const [tasksNab, setTasksNab] = useState([]);
+  const [tasksVolume, setTasksVolume] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -80,7 +81,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -95,6 +96,7 @@ export default function SPO() {
         api.get("/api/spo/tasks-cerveja/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/score5/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-nab/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/tasks-volume/resumo").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -113,6 +115,7 @@ export default function SPO() {
       setTasksCerveja(resTasksCerveja?.data || []);
       setScore5(resScore5?.data || []);
       setTasksNab(resTasksNab?.data || []);
+      setTasksVolume(resTasksVolume?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -564,6 +567,39 @@ export default function SPO() {
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
                   {tasksNab.map((r) => {
+                    const pct = parseFloat(r.pct || 0);
+                    const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                    const isOp = r.setor === "OPERACAO";
+                    return (
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div style={styles.gvHeader}>
+                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                          </span>
+                          <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                        </div>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+
+            {/* TASKS VOLUME */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 14 — Tasks de Volume</h3>
+              {tasksVolume.length === 0 ? (
+                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                  {tasksVolume.map((r) => {
                     const pct = parseFloat(r.pct || 0);
                     const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
                     const isOp = r.setor === "OPERACAO";
