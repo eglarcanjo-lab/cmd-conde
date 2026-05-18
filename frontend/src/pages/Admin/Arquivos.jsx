@@ -84,6 +84,15 @@ const ARQUIVOS_CONFIG = [
     icon: "⭐",
   },
   {
+    id: "spo_score5",
+    campo: "spo_score5",
+    rotulo: "SPO — Score 5 (ON_TRADE)",
+    descricao: "Item 12 — Tasks Faturamento PDVs Score 5",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "⭐",
+  },
+  {
     id: "inadimplencia",
     campo: "inadimplencia",
     rotulo: "Inadimplência",
