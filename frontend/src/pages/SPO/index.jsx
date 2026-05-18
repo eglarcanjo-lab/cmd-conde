@@ -21,7 +21,7 @@ const SPO_ITEMS = [
   { n: 11, label: "Tasks Cerveja TT (Portfolio)",       pts: 10, peso: 5.6,  ativo: true  },
   { n: 12, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
   { n: 13, label: "Tasks NAB TT (Portfolio)",           pts: 10, peso: 5.6,  ativo: true  },
-  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: false },
+  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: true },
   { n: 15, label: "Tasks de Marketplace",               pts: 8,  peso: 4.4,  ativo: false },
   { n: 16, label: "Tasks de Match (Portfolio)",         pts: 8,  peso: 4.4,  ativo: false },
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: false },
