@@ -93,6 +93,15 @@ const ARQUIVOS_CONFIG = [
     icon: "⭐",
   },
   {
+    id: "spo_alone",
+    campo: "spo_alone",
+    rotulo: "SPO — Pedido Alone",
+    descricao: "Item 19 — PDVs com Compra Independente (Digitalização)",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "📱",
+  },
+  {
     id: "inadimplencia",
     campo: "inadimplencia",
     rotulo: "Inadimplência",
