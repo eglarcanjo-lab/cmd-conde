@@ -212,5 +212,14 @@ router.get("/tasks-match/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/tasks-cerv-zero/resumo
+router.get("/tasks-cerv-zero/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_tasks_cerv_zero_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
