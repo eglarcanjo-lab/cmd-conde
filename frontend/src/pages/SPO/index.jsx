@@ -29,7 +29,7 @@ const SPO_ITEMS = [
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true  },
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true  },
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: false },
+  { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true  },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: false },
   { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: false },
 ];
@@ -87,6 +87,10 @@ export default function SPO() {
   const [cuponsGV, setCuponsGV] = useState("TODOS");
   const [cuponsRN, setCuponsRN] = useState("TODOS");
   const [cuponsDia, setCuponsDia] = useState("TODOS");
+  const [lojaIdeal, setLojaIdeal] = useState([]);
+  const [lojaIdealDet, setLojaIdealDet] = useState([]);
+  const [lojaFiltroRN, setLojaFiltroRN] = useState("TODOS");
+  const [lojaFiltroStatus, setLojaFiltroStatus] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -97,7 +101,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -125,6 +129,8 @@ export default function SPO() {
         api.get("/api/spo/rgb/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/cupons/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/cupons/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/loja-ideal/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/loja-ideal/detalhe").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -156,6 +162,8 @@ export default function SPO() {
       setRgbDet(resRgbDet?.data || []);
       setCupons(resCupons?.data || []);
       setCuponsDet(resCuponsDet?.data || []);
+      setLojaIdeal(resLojaIdeal?.data || []);
+      setLojaIdealDet(resLojaIdealDet?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -964,6 +972,99 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.4)" }}>{r.ultimo_resgate}</td>
                               </tr>
                             ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+
+            {/* LOJA IDEAL VIZINHANÇA */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 22 — % Lojas Ideais Vizinhança</h3>
+              {lojaIdeal.length === 0 ? (
+                <p style={styles.msg}>Importe o Planificador de Loja Ideal para calcular automaticamente.</p>
+              ) : (
+                <>
+                  {/* Resumo por setor */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {lojaIdeal.map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 40 ? "#4ade80" : pct >= 25 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 40%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe */}
+                  {lojaIdealDet.length > 0 && (
+                    <>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        {[
+                          { label: "RN", val: lojaFiltroRN, set: setLojaFiltroRN, opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.setor))].sort() },
+                          { label: "Status", val: lojaFiltroStatus, set: setLojaFiltroStatus, opts: ["TODOS", "SIM", "NÃO"] },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                          {lojaIdealDet.filter(r =>
+                            (lojaFiltroRN === "TODOS" || r.setor === lojaFiltroRN) &&
+                            (lojaFiltroStatus === "TODOS" || r.loja_ideal === lojaFiltroStatus)
+                          ).length} PDVs
+                        </span>
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["RN","PDV","Nome","Dia","Total","Sort.","Exec.","Desafio","Ideal"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {lojaIdealDet.filter(r =>
+                              (lojaFiltroRN === "TODOS" || r.setor === lojaFiltroRN) &&
+                              (lojaFiltroStatus === "TODOS" || r.loja_ideal === lojaFiltroStatus)
+                            ).sort((a,b) => parseFloat(b.pts_total||0) - parseFloat(a.pts_total||0)).map((r, i) => {
+                              const pts = parseFloat(r.pts_total || 0);
+                              const cor = pts >= 60 ? "#4ade80" : pts >= 40 ? "#fbb900" : "#f87171";
+                              return (
+                                <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                  <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                                  <td style={{ padding: "7px 10px", color: cor, fontWeight: "700" }}>{r.pts_total}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.6)" }}>{r.pts_sortimento}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.6)" }}>{r.pts_execucao}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.6)" }}>{r.pts_desafio}</td>
+                                  <td style={{ padding: "7px 10px" }}>
+                                    <span style={{ color: r.loja_ideal === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.loja_ideal}</span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>

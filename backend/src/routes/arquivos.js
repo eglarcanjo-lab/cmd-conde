@@ -16,7 +16,7 @@ router.use(authMiddleware, adminOnly);
 // POST /api/arquivos/processar — envia arquivos para o processador Python
 router.post(
   "/processar",
-  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }]),
+  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }]),
   async (req, res) => {
     try {
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
@@ -65,6 +65,10 @@ router.post(
       if (req.files?.spo_alone?.[0]) {
         const f = req.files.spo_alone[0];
         form.append("spo_alone", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.spo_loja_ideal?.[0]) {
+        const f = req.files.spo_loja_ideal[0];
+        form.append("spo_loja_ideal", f.buffer, { filename: f.originalname, contentType: f.mimetype });
       }
       if (req.files?.spo_cupons?.[0]) {
         const f = req.files.spo_cupons[0];

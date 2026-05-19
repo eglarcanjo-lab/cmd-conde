@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_loja_ideal",
+    campo: "spo_loja_ideal",
+    rotulo: "SPO — Loja Ideal Vizinhança",
+    descricao: "Item 22 — % Lojas Ideais OFF Trade (Planificador)",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "Semanal",
+    icon: "🏪",
+  },
+  {
     id: "spo_cupons",
     campo: "spo_cupons",
     rotulo: "SPO — Cupons Digitais",

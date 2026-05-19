@@ -297,5 +297,22 @@ router.get("/cupons/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/loja-ideal/resumo
+router.get("/loja-ideal/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_loja_ideal_resumo");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/loja-ideal/detalhe
+router.get("/loja-ideal/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_loja_ideal_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
