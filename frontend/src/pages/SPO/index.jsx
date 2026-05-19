@@ -83,6 +83,7 @@ export default function SPO() {
   const [rgbDet, setRgbDet] = useState([]);
   const [cupons, setCupons] = useState([]);
   const [cuponsDet, setCuponsDet] = useState([]);
+  const [cuponsMarca, setCuponsMarca] = useState("TODAS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -909,9 +910,24 @@ export default function SPO() {
                   </div>
                   {cuponsDet.length > 0 && (
                     <>
-                      <p style={{ margin: "0 0 8px", color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
-                        PDVs sem resgate no mês atual ({cuponsDet.length} registros)
-                      </p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
+                          PDVs sem resgate no mês atual
+                        </p>
+                        <select
+                          value={cuponsMarca}
+                          onChange={(e) => setCuponsMarca(e.target.value)}
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}
+                        >
+                          <option value="TODAS">Todas as marcas</option>
+                          {[...new Set(cuponsDet.map(r => r.campanha))].sort().map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                          {cuponsDet.filter(r => cuponsMarca === "TODAS" || r.campanha === cuponsMarca).length} registros
+                        </span>
+                      </div>
                       <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                           <thead>
@@ -922,7 +938,7 @@ export default function SPO() {
                             </tr>
                           </thead>
                           <tbody>
-                            {cuponsDet.map((r, i) => (
+                            {cuponsDet.filter(r => cuponsMarca === "TODAS" || r.campanha === cuponsMarca).map((r, i) => (
                               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.pdv}</td>
