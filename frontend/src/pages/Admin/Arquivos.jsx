@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_scanntech",
+    campo: "spo_scanntech",
+    rotulo: "SPO — Expansão Scanntech",
+    descricao: "Item 23 — PDVs ativos na Scanntech (Vizinhança)",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "Semanal",
+    icon: "📡",
+  },
+  {
     id: "spo_loja_ideal",
     campo: "spo_loja_ideal",
     rotulo: "SPO — Loja Ideal Vizinhança",

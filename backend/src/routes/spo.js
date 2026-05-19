@@ -314,5 +314,22 @@ router.get("/loja-ideal/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/scanntech/resumo
+router.get("/scanntech/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_scanntech_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/scanntech/detalhe
+router.get("/scanntech/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_scanntech_detalhe");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 

@@ -30,7 +30,7 @@ const SPO_ITEMS = [
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true  },
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true  },
-  { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: false },
+  { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: true  },
   { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: false },
 ];
 
@@ -91,6 +91,9 @@ export default function SPO() {
   const [lojaIdealDet, setLojaIdealDet] = useState([]);
   const [lojaFiltroRN, setLojaFiltroRN] = useState("TODOS");
   const [lojaFiltroStatus, setLojaFiltroStatus] = useState("TODOS");
+  const [scanntech, setScanntech] = useState([]);
+  const [scanntechDet, setScanntechDet] = useState([]);
+  const [scanFiltroStatus, setScanFiltroStatus] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -101,7 +104,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -131,6 +134,8 @@ export default function SPO() {
         api.get("/api/spo/cupons/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/loja-ideal/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/loja-ideal/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/scanntech/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/scanntech/detalhe").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -164,6 +169,8 @@ export default function SPO() {
       setCuponsDet(resCuponsDet?.data || []);
       setLojaIdeal(resLojaIdeal?.data || []);
       setLojaIdealDet(resLojaIdealDet?.data || []);
+      setScanntech(resScanntech?.data || []);
+      setScanntechDet(resScanntechDet?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -1065,6 +1072,89 @@ export default function SPO() {
                                 </tr>
                               );
                             })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+
+            {/* EXPANSÃO SCANNTECH */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 23 — Expansão Scanntech</h3>
+              {scanntech.length === 0 ? (
+                <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
+              ) : (
+                <>
+                  {/* Resumo */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {scanntech.map((r) => {
+                      const isOp = r.setor === "OPERACAO";
+                      const ativos = parseInt(r.pdvs_ativos || 0);
+                      const total  = parseInt(r.pdvs_total  || 0);
+                      const meta   = parseInt(r.meta || 0);
+                      const pct    = meta > 0 ? Math.round(ativos / meta * 100) : 0;
+                      const cor    = isOp ? (r.ok === "OK" ? "#4ade80" : "#f87171") : "#4ade80";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `GV ${r.gv}`}
+                            </span>
+                            {isOp && <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>}
+                          </div>
+                          {isOp && <BarraProgresso pct={pct} cor={cor} />}
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{ativos}/{total} PDVs</span>
+                            {isOp && <span style={{ color: cor, fontWeight: "700" }}>{ativos} ativos</span>}
+                          </div>
+                          {isOp && <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ {meta} PDVs</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe */}
+                  {scanntechDet.length > 0 && (
+                    <>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        <select value={scanFiltroStatus} onChange={e => setScanFiltroStatus(e.target.value)}
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                          <option value="TODOS">Todos os status</option>
+                          {[...new Set(scanntechDet.map(r => r.status_scanntech))].sort().map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                          {scanntechDet.filter(r => scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus).length} PDVs
+                        </span>
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["GV","PDV","Nome","Dia","Status","Ativo"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {scanntechDet.filter(r => scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus)
+                              .sort((a,b) => a.status_scanntech.localeCompare(b.status_scanntech))
+                              .map((r, i) => (
+                                <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                  <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                                  <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.6)" }}>{r.status_scanntech}</td>
+                                  <td style={{ padding: "7px 10px" }}>
+                                    <span style={{ color: r.is_ativo === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.is_ativo}</span>
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
