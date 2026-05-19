@@ -28,7 +28,7 @@ const SPO_ITEMS = [
   { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true  },
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true  },
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: false },
+  { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: false },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: false },
   { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: false },
@@ -81,6 +81,8 @@ export default function SPO() {
   const [rgbLit, setRgbLit] = useState([]);
   const [rgbInt, setRgbInt] = useState([]);
   const [rgbDet, setRgbDet] = useState([]);
+  const [cupons, setCupons] = useState([]);
+  const [cuponsDet, setCuponsDet] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -91,7 +93,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -117,6 +119,8 @@ export default function SPO() {
         api.get("/api/spo/rgb/litrinho").catch(() => ({ data: [] })),
         api.get("/api/spo/rgb/inteira").catch(() => ({ data: [] })),
         api.get("/api/spo/rgb/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/cupons/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/cupons/detalhe").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -146,6 +150,8 @@ export default function SPO() {
       setRgbLit(resRgbLit?.data || []);
       setRgbInt(resRgbInt?.data || []);
       setRgbDet(resRgbDet?.data || []);
+      setCupons(resCupons?.data || []);
+      setCuponsDet(resCuponsDet?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -871,6 +877,67 @@ export default function SPO() {
                       </div>
                     );
                   })}
+                </>
+              )}
+            </div>
+
+
+            {/* CUPONS DIGITAIS */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 21 — Cupons Digitais Score 5</h3>
+              {cupons.length === 0 ? (
+                <p style={styles.msg}>Importe o planificador de Cupons para calcular automaticamente.</p>
+              ) : (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {cupons.map((r) => {
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                            </span>
+                          </div>
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>Cupons resgatados</span>
+                            <span style={{ color: "#fbb900", fontWeight: "700", fontSize: "1.1rem" }}>{r.cupons_mes}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {cuponsDet.length > 0 && (
+                    <>
+                      <p style={{ margin: "0 0 8px", color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
+                        PDVs sem resgate no mês atual ({cuponsDet.length} registros)
+                      </p>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["Setor","PDV","Nome","Campanha","Cupons","Próx. Visita","Último Resgate"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cuponsDet.map((r, i) => (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "#fbb900" }}>{r.campanha}</td>
+                                <td style={{ padding: "7px 10px", color: "#4ade80", fontWeight: "600" }}>{r.cupons}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.proxima_visita}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.4)" }}>{r.ultimo_resgate}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

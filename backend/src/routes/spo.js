@@ -280,5 +280,22 @@ router.get("/rgb/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/cupons/resumo
+router.get("/cupons/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_cupons_resumo");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/cupons/detalhe
+router.get("/cupons/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_cupons_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 

@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_cupons",
+    campo: "spo_cupons",
+    rotulo: "SPO — Cupons Digitais",
+    descricao: "Item 21 — Cupons Digitais Score 5 (Planificador)",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🎫",
+  },
+  {
     id: "spo_rgb",
     campo: "spo_rgb",
     rotulo: "SPO — +RGB",
