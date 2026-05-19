@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_rgb",
+    campo: "spo_rgb",
+    rotulo: "SPO — +RGB",
+    descricao: "Item 20 — PDVs Litrinho e Inteira Verde batendo meta",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🍺",
+  },
+  {
     id: "inadimplencia",
     campo: "inadimplencia",
     rotulo: "Inadimplência",
