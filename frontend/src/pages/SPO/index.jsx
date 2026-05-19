@@ -31,7 +31,7 @@ const SPO_ITEMS = [
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true  },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: true  },
-  { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: false },
+  { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: true  },
 ];
 
 const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
@@ -94,6 +94,12 @@ export default function SPO() {
   const [scanntech, setScanntech] = useState([]);
   const [scanntechDet, setScanntechDet] = useState([]);
   const [scanFiltroStatus, setScanFiltroStatus] = useState("TODOS");
+  const [portIdeal, setPortIdeal] = useState([]);
+  const [portIdealDet, setPortIdealDet] = useState([]);
+  const [portFiltroGV, setPortFiltroGV] = useState("TODOS");
+  const [portFiltroRN, setPortFiltroRN] = useState("TODOS");
+  const [portFiltroDia, setPortFiltroDia] = useState("TODOS");
+  const [portFiltroStatus, setPortFiltroStatus] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -104,7 +110,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -136,6 +142,8 @@ export default function SPO() {
         api.get("/api/spo/loja-ideal/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/scanntech/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/scanntech/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/portfolio-ideal/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/portfolio-ideal/detalhe").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -171,6 +179,8 @@ export default function SPO() {
       setLojaIdealDet(resLojaIdealDet?.data || []);
       setScanntech(resScanntech?.data || []);
       setScanntechDet(resScanntechDet?.data || []);
+      setPortIdeal(resPortIdeal?.data || []);
+      setPortIdealDet(resPortIdealDet?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -1155,6 +1165,100 @@ export default function SPO() {
                                   </td>
                                 </tr>
                               ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+
+            {/* PORTFÓLIO IDEAL SCORE 5 */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 24 — Portfólio Ideal Score 5</h3>
+              {portIdeal.length === 0 ? (
+                <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
+              ) : (
+                <>
+                  {/* Resumo */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {portIdeal.map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe com filtros */}
+                  {portIdealDet.length > 0 && (
+                    <>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        {[
+                          { label: "GV",     val: portFiltroGV,     set: setPortFiltroGV,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.gv).filter(Boolean))].sort() },
+                          { label: "RN",     val: portFiltroRN,     set: setPortFiltroRN,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.setor).filter(Boolean))].sort() },
+                          { label: "Dia",    val: portFiltroDia,    set: setPortFiltroDia,    opts: ["TODOS", ...new Set(portIdealDet.map(r => r.dia_visita).filter(Boolean))].sort() },
+                          { label: "Status", val: portFiltroStatus, set: setPortFiltroStatus, opts: ["TODOS", "SIM", "NÃO"] },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                          {portIdealDet.filter(r =>
+                            (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
+                            (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
+                            (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
+                            (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
+                          ).length} PDVs
+                        </span>
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["GV","RN","PDV","Nome","Base","Dia","Port. Ideal","Itens Faltando"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {portIdealDet.filter(r =>
+                              (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
+                              (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
+                              (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
+                              (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
+                            ).map((r, i) => (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem" }}>{r.base}</td>
+                                <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                                <td style={{ padding: "7px 10px" }}>
+                                  <span style={{ color: r.portfolio_ideal === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.portfolio_ideal}</span>
+                                </td>
+                                <td style={{ padding: "7px 10px", color: "#fbb900", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>

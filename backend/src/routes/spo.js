@@ -331,5 +331,22 @@ router.get("/scanntech/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/portfolio-ideal/resumo
+router.get("/portfolio-ideal/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_portfolio_ideal_resumo");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/portfolio-ideal/detalhe
+router.get("/portfolio-ideal/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_portfolio_ideal_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 

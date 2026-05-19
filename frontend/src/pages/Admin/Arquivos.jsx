@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_portfolio_ideal",
+    campo: "spo_portfolio_ideal",
+    rotulo: "SPO — Portfólio Ideal Score 5",
+    descricao: "Item 24 — PDVs Score 5 com Portfólio Ideal (ON_TRADE)",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "2x semana",
+    icon: "🏆",
+  },
+  {
     id: "spo_scanntech",
     campo: "spo_scanntech",
     rotulo: "SPO — Expansão Scanntech",
