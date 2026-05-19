@@ -84,6 +84,9 @@ export default function SPO() {
   const [cupons, setCupons] = useState([]);
   const [cuponsDet, setCuponsDet] = useState([]);
   const [cuponsMarca, setCuponsMarca] = useState("TODAS");
+  const [cuponsGV, setCuponsGV] = useState("TODOS");
+  const [cuponsRN, setCuponsRN] = useState("TODOS");
+  const [cuponsDia, setCuponsDia] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -910,39 +913,51 @@ export default function SPO() {
                   </div>
                   {cuponsDet.length > 0 && (
                     <>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
-                        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
-                          PDVs sem resgate no mês atual
-                        </p>
-                        <select
-                          value={cuponsMarca}
-                          onChange={(e) => setCuponsMarca(e.target.value)}
-                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}
-                        >
-                          <option value="TODAS">Todas as marcas</option>
-                          {[...new Set(cuponsDet.map(r => r.campanha))].sort().map(m => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
+                      {/* Filtros */}
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>PDVs sem resgate no mês atual</p>
+                        {[
+                          { label: "GV", val: cuponsGV, set: setCuponsGV, opts: ["TODOS", ...new Set(cuponsDet.map(r => r.gv).filter(Boolean))].sort() },
+                          { label: "RN", val: cuponsRN, set: setCuponsRN, opts: ["TODOS", ...new Set(cuponsDet.map(r => r.setor).filter(Boolean))].sort() },
+                          { label: "Dia", val: cuponsDia, set: setCuponsDia, opts: ["TODOS", ...new Set(cuponsDet.map(r => r.dia_visita).filter(Boolean))].sort() },
+                          { label: "Marca", val: cuponsMarca, set: setCuponsMarca, opts: ["TODAS", ...new Set(cuponsDet.map(r => r.campanha).filter(Boolean))].sort() },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
                         <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
-                          {cuponsDet.filter(r => cuponsMarca === "TODAS" || r.campanha === cuponsMarca).length} registros
+                          {cuponsDet.filter(r =>
+                            (cuponsGV === "TODOS" || r.gv === cuponsGV) &&
+                            (cuponsRN === "TODOS" || r.setor === cuponsRN) &&
+                            (cuponsDia === "TODOS" || r.dia_visita === cuponsDia) &&
+                            (cuponsMarca === "TODAS" || r.campanha === cuponsMarca)
+                          ).length} registros
                         </span>
                       </div>
                       <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                           <thead>
                             <tr>
-                              {["Setor","PDV","Nome","Campanha","Cupons","Próx. Visita","Último Resgate"].map(h => (
+                              {["GV","RN","PDV","Nome","Dia Visita","Marca","Cupons","Próx. Visita","Último Resgate"].map(h => (
                                 <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {cuponsDet.filter(r => cuponsMarca === "TODAS" || r.campanha === cuponsMarca).map((r, i) => (
+                            {cuponsDet.filter(r =>
+                              (cuponsGV === "TODOS" || r.gv === cuponsGV) &&
+                              (cuponsRN === "TODOS" || r.setor === cuponsRN) &&
+                              (cuponsDia === "TODOS" || r.dia_visita === cuponsDia) &&
+                              (cuponsMarca === "TODAS" || r.campanha === cuponsMarca)
+                            ).map((r, i) => (
                               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.pdv}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
                                 <td style={{ padding: "7px 10px", color: "#fbb900" }}>{r.campanha}</td>
                                 <td style={{ padding: "7px 10px", color: "#4ade80", fontWeight: "600" }}>{r.cupons}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.proxima_visita}</td>
