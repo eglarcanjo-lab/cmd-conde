@@ -348,5 +348,14 @@ router.get("/portfolio-ideal/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/painel/metas
+router.get("/painel/metas", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_metas");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 
