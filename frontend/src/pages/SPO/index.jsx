@@ -40,10 +40,6 @@ function BarraProgresso({ pct, cor }) {
   const w = Math.min(pct, 100);
   const c = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
 
-  const thStyle = { padding: "8px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
-  const thSubStyle = { padding: "5px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
-  const tdStyle = { padding: "7px 8px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
-
   return (
     <div style={{ height: "8px", background: "rgba(255,255,255,0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "6px" }}>
       <div style={{ height: "100%", width: `${w}%`, background: cor || c, borderRadius: "4px", transition: "width 0.4s" }} />
@@ -308,6 +304,10 @@ export default function SPO() {
               }, 0);
 
               const mesAtual = new Date().toISOString().slice(0,7);
+
+              const thStyle = { padding: "8px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
+              const thSubStyle = { padding: "5px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
+              const tdStyle = { padding: "7px 8px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
 
               return (
                 <div style={{ overflowX: "auto" }}>
