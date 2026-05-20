@@ -6,7 +6,12 @@ const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 function getAuth() {
   return new google.auth.JWT({
     email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    key: (() => {
+      const k = process.env.GOOGLE_PRIVATE_KEY || "";
+      if (k.includes("\\n")) return k.replace(/\\n/g, "\n");
+      if (k.includes("\n")) return k;
+      return k.replace(/\\n/g, "\n");
+    })(),
     scopes: [
       "https://www.googleapis.com/auth/spreadsheets",
       "https://www.googleapis.com/auth/drive",
