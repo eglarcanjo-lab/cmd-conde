@@ -233,10 +233,10 @@ export default function SPO() {
 
       <div style={styles.content}>
         {/* Layout side-by-side */}
-        <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: "0", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "0 0 30%", minWidth: 0 }}>
+        <div style={{ flex: "0 0 30%", minWidth: 0, paddingRight: "16px" }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
