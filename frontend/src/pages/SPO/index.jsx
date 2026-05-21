@@ -1518,8 +1518,9 @@ export default function SPO() {
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
+              <>
                           {/* PAINEL SPO CONSOLIDADO */}
-                          {aba === "painel" && (() => {
+                          {(() => {
                             const MESES = ["2026-04","2026-05","2026-06"];
                             const MESES_LABEL = {"2026-04":"Abril","2026-05":"Maio","2026-06":"Junho"};
                             const INICIO_AVAL = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
@@ -1655,6 +1656,7 @@ export default function SPO() {
                               </div>
                             );
                           })()}
+              </>
             )}
           </div>
         </div>
