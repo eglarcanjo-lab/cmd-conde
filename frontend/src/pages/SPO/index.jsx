@@ -274,15 +274,14 @@ export default function SPO() {
         </div>
 
         {loading ? <p style={styles.msg}>Carregando...</p> : (
+          <>
 
 
 
 
             {/* OPERAÇÃO */}
-            {aba === "operacao" && (
-              <>
-              {(kpiAtivo === null || kpiAtivo === 1) && (
-            <div style={styles.section}>
+            {aba === "operacao" && (kpiAtivo === null || kpiAtivo === 1) && (
+              <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
                 <div style={styles.opGrid}>
                   {[
@@ -342,7 +341,6 @@ export default function SPO() {
             </div>
             )}
 
-
             {/* DIAS EM ROTA TT */}
             {(kpiAtivo === null || kpiAtivo === 3) && (
             <div style={styles.section}>
@@ -381,7 +379,6 @@ export default function SPO() {
             </div>
             )}
 
-
             {/* DESAFIOS DIÁRIOS */}
             {(kpiAtivo === null || kpiAtivo === 4) && (
             <div style={styles.section}>
@@ -414,7 +411,6 @@ export default function SPO() {
               </div>
             </div>
             )}
-
 
             {/* DTO GC */}
             {(kpiAtivo === null || kpiAtivo === 6) && (
@@ -457,7 +453,6 @@ export default function SPO() {
               )}
             </div>
             )}
-
 
             {/* ABA PROMOÇÃO */}
             {(kpiAtivo === null || kpiAtivo === 7) && (
@@ -539,7 +534,6 @@ export default function SPO() {
             </div>
             )}
 
-
             {/* POLÍTICA COMERCIAL */}
             {(kpiAtivo === null || kpiAtivo === 8) && (
             <div style={styles.section}>
@@ -572,6 +566,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* MENU DE CERVEJA */}
@@ -606,6 +601,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
@@ -640,6 +636,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
@@ -674,6 +671,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS NAB */}
@@ -708,6 +706,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS VOLUME */}
@@ -742,6 +741,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS MARKETPLACE */}
@@ -776,6 +776,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS MATCH */}
@@ -810,6 +811,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS CERVEJA ZERO */}
@@ -844,6 +846,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS DIGITALIZAÇÃO */}
@@ -878,6 +881,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* PDV COMPRA INDEPENDENTE */}
@@ -887,6 +891,7 @@ export default function SPO() {
               {alone.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Pedido Alone para calcular automaticamente.</p>
               ) : (
+                <>
                   {/* Card Operação */}
                   {alone.filter(r => r.setor === "OPERACAO").map(r => {
                     const val = parseInt(r.pdvs_alone || 0);
@@ -921,8 +926,10 @@ export default function SPO() {
                       </div>
                     ))}
                   </div>
+                </>
               )}
             </div>
+            )}
 
 
             {/* +RGB */}
@@ -932,6 +939,7 @@ export default function SPO() {
               {rgb.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório +RGB para calcular automaticamente.</p>
               ) : (
+                <>
                   {["Total","Litrinho","Inteira"].map((tipo) => {
                     const dados = tipo === "Total" ? rgb : tipo === "Litrinho" ? rgbLit : rgbInt;
                     const op = dados.find(r => r.setor === "OPERACAO");
@@ -963,8 +971,10 @@ export default function SPO() {
                       </div>
                     );
                   })}
+                </>
               )}
             </div>
+            )}
 
 
             {/* CUPONS DIGITAIS */}
@@ -974,6 +984,7 @@ export default function SPO() {
               {cupons.length === 0 ? (
                 <p style={styles.msg}>Importe o planificador de Cupons para calcular automaticamente.</p>
               ) : (
+                <>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {cupons.map((r) => {
                       const isOp = r.setor === "OPERACAO";
@@ -993,6 +1004,7 @@ export default function SPO() {
                     })}
                   </div>
                   {cuponsDet.length > 0 && (
+                    <>
                       {/* Filtros */}
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>PDVs sem resgate no mês atual</p>
@@ -1047,9 +1059,12 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
+                    </>
                   )}
+                </>
               )}
             </div>
+            )}
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
@@ -1059,6 +1074,7 @@ export default function SPO() {
               {lojaIdeal.length === 0 ? (
                 <p style={styles.msg}>Importe o Planificador de Loja Ideal para calcular automaticamente.</p>
               ) : (
+                <>
                   {/* Resumo por setor */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {lojaIdeal.map((r) => {
@@ -1085,6 +1101,7 @@ export default function SPO() {
                   </div>
                   {/* Detalhe */}
                   {lojaIdealDet.length > 0 && (
+                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "RN", val: lojaFiltroRN, set: setLojaFiltroRN, opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.setor))].sort() },
@@ -1137,9 +1154,12 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
+                    </>
                   )}
+                </>
               )}
             </div>
+            )}
 
 
             {/* EXPANSÃO SCANNTECH */}
@@ -1149,6 +1169,7 @@ export default function SPO() {
               {scanntech.length === 0 ? (
                 <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
               ) : (
+                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {scanntech.map((r) => {
@@ -1178,6 +1199,7 @@ export default function SPO() {
                   </div>
                   {/* Detalhe */}
                   {scanntechDet.length > 0 && (
+                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         <select value={scanFiltroStatus} onChange={e => setScanFiltroStatus(e.target.value)}
                           style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
@@ -1217,9 +1239,12 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
+                    </>
                   )}
+                </>
               )}
             </div>
+            )}
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
@@ -1229,6 +1254,7 @@ export default function SPO() {
               {portIdeal.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
               ) : (
+                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {portIdeal.map((r) => {
@@ -1255,6 +1281,7 @@ export default function SPO() {
                   </div>
                   {/* Detalhe com filtros */}
                   {portIdealDet.length > 0 && (
+                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "GV",     val: portFiltroGV,     set: setPortFiltroGV,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.gv).filter(Boolean))].sort() },
@@ -1308,9 +1335,12 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
+                    </>
                   )}
+                </>
               )}
             </div>
+            )}
 
 
             {/* ATENDIMENTO PRODUTIVO */}
@@ -1320,6 +1350,7 @@ export default function SPO() {
               {ap.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Atendimento Produtivo para calcular automaticamente.</p>
               ) : (
+                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {ap.map((r) => {
@@ -1346,6 +1377,7 @@ export default function SPO() {
                   </div>
                   {/* Detalhe por RN */}
                   {apDet.length > 0 && (
+                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "GV",     val: apFiltroGV,     set: setApFiltroGV,     opts: ["TODOS", ...new Set(apDet.map(r => r.gv).filter(Boolean))].sort() },
@@ -1394,17 +1426,16 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
+                    </>
                   )}
+                </>
               )}
             </div>
-              </>
             )}
 
             {/* POR GV */}
             {aba === "gv" && (
-              <>
-              {(kpiAtivo === null || kpiAtivo === 1) && (
-            <div style={styles.section}>
+              <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
                 <div style={styles.gvGrid}>
                   {resumo.map((r) => {
@@ -1429,7 +1460,6 @@ export default function SPO() {
                   {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
                 </div>
               </div>
-              </>
             )}
 
             {/* SEM COACHING */}
@@ -1523,15 +1553,17 @@ export default function SPO() {
                 </div>
               </div>
             )}
+          </>
         )}
 
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 58%", minWidth: 0, position: "sticky", top: "0", alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
+        <div style={{ flex: "0 0 58%", minWidth: 0, position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
+              <>
                           {/* PAINEL SPO CONSOLIDADO */}
                           {(() => {
                             const MESES = ["2026-04","2026-05","2026-06"];
@@ -1618,7 +1650,7 @@ export default function SPO() {
                                     {ITENS_SPO.map((item) => {
                                       let triPts = 0;
                                       return (
-                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
+                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
@@ -1669,6 +1701,7 @@ export default function SPO() {
                               </div>
                             );
                           })()}
+              </>
             )}
           </div>
         </div>
