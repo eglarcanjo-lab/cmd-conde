@@ -212,6 +212,9 @@ export default function SPO() {
     return buscaOk && gvOk && stOk && diaOk;
   });
 
+
+  const MESES_PT = {"2026-04":"Abr/26","2026-05":"Mai/26","2026-06":"Jun/26","2025-04":"Abr/25","2025-05":"Mai/25","2025-06":"Jun/25"};
+  const fmtMes = (m) => MESES_PT[m] || m;
   const gvsUnicos = [...new Set(detalhe.map((d) => d.gv))].sort();
   const diasUnicos = [...new Set(detalhe.map((d) => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort();
 
@@ -266,7 +269,7 @@ export default function SPO() {
 
         {/* Abas de visão */}
         <div style={styles.abas}>
-          {["operacao", "gv", "detalhe", "sem_coaching"].map((a) => (
+          {["operacao", "gv", "detalhe", ...(kpiAtivo === null || kpiAtivo === 2 ? ["sem_coaching"] : [])].map((a) => (
             <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
               {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
             </button>
@@ -280,7 +283,7 @@ export default function SPO() {
 
 
             {/* OPERAÇÃO */}
-            {aba === "operacao" && (
+            {aba === "operacao" && (kpiAtivo === null || kpiAtivo === 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
                 <div style={styles.opGrid}>
@@ -301,6 +304,7 @@ export default function SPO() {
             )}
 
             {/* COACHING */}
+            {(kpiAtivo === null || kpiAtivo === 2) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 2 — Rota Coaching</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -328,7 +332,7 @@ export default function SPO() {
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
                         <span>RNs cobertos: {c.rns_cobertos}/{c.total_rns_sala}</span>
-                        <span>{c.mes_referencia}</span>
+                        <span>{fmtMes(c.mes_referencia)}</span>
                       </div>
                     </div>
                   );
@@ -338,8 +342,10 @@ export default function SPO() {
                 )}
               </div>
             </div>
+            )}
 
             {/* DIAS EM ROTA TT */}
+            {(kpiAtivo === null || kpiAtivo === 3) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 3 — TT Dias com Rotas</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -365,7 +371,7 @@ export default function SPO() {
                         <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{d.dias_validos} / {d.meta} dias</span>
                         <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>{d.mes_referencia}</div>
+                      <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>{fmtMes(d.mes_referencia)}</div>
                     </div>
                   );
                 })}
@@ -374,8 +380,10 @@ export default function SPO() {
                 )}
               </div>
             </div>
+            )}
 
             {/* DESAFIOS DIÁRIOS */}
+            {(kpiAtivo === null || kpiAtivo === 4) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 4 — Abertura de Desafios Diários</h3>
               <div style={styles.gvGrid}>
@@ -405,8 +413,10 @@ export default function SPO() {
                 {desafios.length === 0 && <p style={styles.msg}>Preencha em Admin → SPO Desafios.</p>}
               </div>
             </div>
+            )}
 
             {/* DTO GC */}
+            {(kpiAtivo === null || kpiAtivo === 6) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 6 — DTO GC x GV</h3>
               {!dto ? (
@@ -445,8 +455,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
             {/* ABA PROMOÇÃO */}
+            {(kpiAtivo === null || kpiAtivo === 7) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 7 — % PDVs abrindo Aba de Promoção no BEES</h3>
               {promo.length === 0 ? (
@@ -455,7 +467,7 @@ export default function SPO() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   {/* Cards por setor */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                    {promo.map((r) => {
+                    {[...promo].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const pct = parseFloat(r.pct || 0);
                       const cor = pct >= 10 ? "#4ade80" : pct >= 7 ? "#fbb900" : "#f87171";
                       const isOp = r.setor === "OPERACAO";
@@ -523,8 +535,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
             {/* POLÍTICA COMERCIAL */}
+            {(kpiAtivo === null || kpiAtivo === 8) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 8 — Aderência de Política Comercial</h3>
               {politica.length === 0 ? (
@@ -558,6 +572,7 @@ export default function SPO() {
 
 
             {/* MENU DE CERVEJA */}
+            {(kpiAtivo === null || kpiAtivo === 9) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 9 — Execução Menu de Cerveja</h3>
               {menu.length === 0 ? (
@@ -591,6 +606,7 @@ export default function SPO() {
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
+            {(kpiAtivo === null || kpiAtivo === 11) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 11 — Tasks de Portfólio Cerveja</h3>
               {tasksCerveja.length === 0 ? (
@@ -624,6 +640,7 @@ export default function SPO() {
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
+            {(kpiAtivo === null || kpiAtivo === 12) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 12 — Tasks Faturamento Score 5</h3>
               {score5.length === 0 ? (
@@ -657,6 +674,7 @@ export default function SPO() {
 
 
             {/* TASKS NAB */}
+            {(kpiAtivo === null || kpiAtivo === 13) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 13 — Tasks de Portfólio NAB</h3>
               {tasksNab.length === 0 ? (
@@ -690,6 +708,7 @@ export default function SPO() {
 
 
             {/* TASKS VOLUME */}
+            {(kpiAtivo === null || kpiAtivo === 14) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 14 — Tasks de Volume</h3>
               {tasksVolume.length === 0 ? (
@@ -723,6 +742,7 @@ export default function SPO() {
 
 
             {/* TASKS MARKETPLACE */}
+            {(kpiAtivo === null || kpiAtivo === 15) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 15 — Tasks de Marketplace</h3>
               {tasksMktp.length === 0 ? (
@@ -756,6 +776,7 @@ export default function SPO() {
 
 
             {/* TASKS MATCH */}
+            {(kpiAtivo === null || kpiAtivo === 16) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 16 — Tasks de Portfólio MATCH</h3>
               {tasksMatch.length === 0 ? (
@@ -789,6 +810,7 @@ export default function SPO() {
 
 
             {/* TASKS CERVEJA ZERO */}
+            {(kpiAtivo === null || kpiAtivo === 17) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 17 — Tasks de Portfólio Cerveja Zero</h3>
               {tasksCervZero.length === 0 ? (
@@ -822,6 +844,7 @@ export default function SPO() {
 
 
             {/* TASKS DIGITALIZAÇÃO */}
+            {(kpiAtivo === null || kpiAtivo === 18) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
               {tasksDigit.length === 0 ? (
@@ -855,6 +878,7 @@ export default function SPO() {
 
 
             {/* PDV COMPRA INDEPENDENTE */}
+            {(kpiAtivo === null || kpiAtivo === 19) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 19 — PDVs com Compra Independente</h3>
               {alone.length === 0 ? (
@@ -901,6 +925,7 @@ export default function SPO() {
 
 
             {/* +RGB */}
+            {(kpiAtivo === null || kpiAtivo === 20) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 20 — +RGB</h3>
               {rgb.length === 0 ? (
@@ -944,6 +969,7 @@ export default function SPO() {
 
 
             {/* CUPONS DIGITAIS */}
+            {(kpiAtivo === null || kpiAtivo === 21) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 21 — Cupons Digitais Score 5</h3>
               {cupons.length === 0 ? (
@@ -1032,6 +1058,7 @@ export default function SPO() {
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
+            {(kpiAtivo === null || kpiAtivo === 22) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 22 — % Lojas Ideais Vizinhança</h3>
               {lojaIdeal.length === 0 ? (
@@ -1125,6 +1152,7 @@ export default function SPO() {
 
 
             {/* EXPANSÃO SCANNTECH */}
+            {(kpiAtivo === null || kpiAtivo === 23) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 23 — Expansão Scanntech</h3>
               {scanntech.length === 0 ? (
@@ -1208,6 +1236,7 @@ export default function SPO() {
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
+            {(kpiAtivo === null || kpiAtivo === 24) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 24 — Portfólio Ideal Score 5</h3>
               {portIdeal.length === 0 ? (
@@ -1302,6 +1331,7 @@ export default function SPO() {
 
 
             {/* ATENDIMENTO PRODUTIVO */}
+            {(kpiAtivo === null || kpiAtivo === 5) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 5 — Atendimento Produtivo</h3>
               {ap.length === 0 ? (
@@ -1388,6 +1418,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
             {/* POR GV */}
             {aba === "gv" && (
@@ -1515,7 +1546,7 @@ export default function SPO() {
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 58%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
+        <div style={{ flex: "0 0 40%", minWidth: "380px", position: "sticky", top: "20px" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
@@ -1606,7 +1637,7 @@ export default function SPO() {
                                     {ITENS_SPO.map((item) => {
                                       let triPts = 0;
                                       return (
-                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
+                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
@@ -1676,7 +1707,7 @@ const styles = {
   title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  content: { padding: "16px 0px", display: "flex", flexDirection: "column", gap: "16px" },
+  content: { padding: "24px 32px", maxWidth: "1100px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   scoreboard: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
   scoreboardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
