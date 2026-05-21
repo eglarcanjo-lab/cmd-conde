@@ -50,7 +50,7 @@ function BarraProgresso({ pct, cor }) {
 export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [aba, setAba] = useState("painel");
+  const [aba, setAba] = useState("operacao");
   const [spoMetas, setSpoMetas] = useState([]);
   const [resumo, setResumo] = useState([]);
   const [detalhe, setDetalhe] = useState([]);
@@ -228,6 +228,12 @@ export default function SPO() {
       </div>
 
       <div style={styles.content}>
+        {/* Layout side-by-side */}
+        <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+
+        {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
+        <div style={{ flex: "1 1 58%", minWidth: 0 }}>
+
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
           <div style={styles.scoreboardHeader}>
@@ -236,7 +242,16 @@ export default function SPO() {
           </div>
           <div style={styles.kpiGrid}>
             {SPO_ITEMS.map((item) => (
-              <div key={item.n} style={{ ...styles.kpiCard, ...(item.ativo ? styles.kpiCardAtivo : {}) }}>
+              <div
+                key={item.n}
+                onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)}
+                style={{
+                  ...styles.kpiCard,
+                  ...(item.ativo ? styles.kpiCardAtivo : {}),
+                  ...(kpiAtivo === item.n ? { border: "1px solid #fbb900", boxShadow: "0 0 12px rgba(251,185,0,0.2)" } : {}),
+                  cursor: "pointer",
+                }}
+              >
                 <span style={styles.kpiN}>#{item.n}</span>
                 <span style={styles.kpiLabel}>{item.label}</span>
                 <div style={styles.kpiPts}>
@@ -250,9 +265,9 @@ export default function SPO() {
 
         {/* Abas de visão */}
         <div style={styles.abas}>
-          {["painel", "operacao", "gv", "detalhe", "sem_coaching"].map((a) => (
+          {["operacao", "gv", "detalhe", "sem_coaching"].map((a) => (
             <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
-              {a === "painel" ? "📊 Painel SPO" : a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
+              {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
             </button>
           ))}
         </div>
@@ -260,143 +275,8 @@ export default function SPO() {
         {loading ? <p style={styles.msg}>Carregando...</p> : (
           <>
 
-            {/* PAINEL SPO CONSOLIDADO */}
-            {aba === "painel" && (() => {
-              const MESES = ["2026-04","2026-05","2026-06"];
-              const MESES_LABEL = {"2026-04":"Abril","2026-05":"Maio","2026-06":"Junho"};
-              const INICIO_AVAL = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
 
-              const ITENS_SPO = [
-                {n:1,  label:"Visitação GV na Base Foco"},
-                {n:2,  label:"Rota Coaching"},
-                {n:3,  label:"TT Dias com Rotas"},
-                {n:4,  label:"Abertura de Desafios Diários"},
-                {n:5,  label:"Atendimento Produtivo"},
-                {n:6,  label:"DTO GC"},
-                {n:7,  label:"% Visitas RN abrindo Promoção"},
-                {n:8,  label:"Aderência de Política Comercial"},
-                {n:9,  label:"Execução Menu de Cerveja"},
-                {n:10, label:"Academia Bees RN"},
-                {n:11, label:"Tasks Cerveja TT (Portfolio)"},
-                {n:12, label:"Tasks Faturamento Score 5"},
-                {n:13, label:"Tasks NAB TT (Portfolio)"},
-                {n:14, label:"Tasks de Volume"},
-                {n:15, label:"Tasks de Marketplace"},
-                {n:16, label:"Tasks de Match (Portfolio)"},
-                {n:17, label:"Tasks Cerveja Zero (Portfolio)"},
-                {n:18, label:"Tarefa de Digitalização"},
-                {n:19, label:"PDVs com Compra Independente"},
-                {n:20, label:"+RGB"},
-                {n:21, label:"Cupons Digitais - Score 5"},
-                {n:22, label:"% Lojas Ideais"},
-                {n:23, label:"Expansão Scanntech"},
-                {n:24, label:"Portfólio Ideal Score 5"},
-              ];
 
-              const getMeta = (n, mes) => {
-                const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
-                return r ? parseFloat(r.meta) : null;
-              };
-              const getReal = (n, mes) => {
-                const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
-                return r ? parseFloat(r.real) : null;
-              };
-
-              // Total de pontos por mês
-              const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
-                if (INICIO_AVAL[item.n] > mes) return acc;
-                const meta = getMeta(item.n, mes);
-                const real = getReal(item.n, mes);
-                if (meta === null || real === null) return acc;
-                return acc + (real >= meta ? 3 : 0);
-              }, 0);
-
-              const mesAtual = new Date().toISOString().slice(0,7);
-
-              const thStyle = { padding: "8px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
-              const thSubStyle = { padding: "5px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
-              const tdStyle = { padding: "7px 8px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
-
-              return (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem", minWidth: "900px" }}>
-                    <thead>
-                      <tr>
-                        <th style={thStyle}>#</th>
-                        <th style={{ ...thStyle, textAlign: "left", minWidth: "200px" }}>Indicador</th>
-                        <th style={thStyle}>Início</th>
-                        {MESES.map(mes => (
-                          <th key={mes} colSpan={4} style={{ ...thStyle, background: mes === mesAtual ? "rgba(251,185,0,0.15)" : "rgba(255,255,255,0.04)", borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
-                            {MESES_LABEL[mes]}
-                          </th>
-                        ))}
-                        <th colSpan={3} style={{ ...thStyle, background: "rgba(251,185,0,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
-                      </tr>
-                      <tr>
-                        <th style={thSubStyle} colSpan={3}></th>
-                        {MESES.map(mes => (
-                          ["Meta","Real","% Ating","Pts"].map(h => (
-                            <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(251,185,0,0.08)" : "" }}>{h}</th>
-                          ))
-                        ))}
-                        {["Pts","Real","Meta"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ITENS_SPO.map((item) => {
-                        let triPts = 0;
-                        return (
-                          <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                            <td style={tdStyle}>{item.n}</td>
-                            <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
-                            <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
-                            {MESES.map(mes => {
-                              if (INICIO_AVAL[item.n] > mes) {
-                                return [null,null,null,null].map((_,i) => <td key={mes+i} style={tdStyle}>—</td>);
-                              }
-                              const meta = getMeta(item.n, mes);
-                              const real = getReal(item.n, mes);
-                              const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
-                              const bateu = meta !== null && real !== null && real >= meta;
-                              const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
-                              if (pts === 3) triPts += 3;
-                              const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
-                              return [
-                                <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
-                                <td key={mes+"r"} style={tdStyle}>{real !== null ? real : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
-                                <td key={mes+"a"} style={{ ...tdStyle, color: ating !== null ? corAting : "rgba(255,255,255,0.2)", fontWeight: ating ? "600" : "400" }}>{ating !== null ? `${ating}%` : "—"}</td>,
-                                <td key={mes+"p"} style={{ ...tdStyle, color: pts === 3 ? "#4ade80" : pts === 0 ? "#f87171" : "rgba(255,255,255,0.2)", fontWeight: "700" }}>{pts !== null ? pts : "—"}</td>,
-                              ];
-                            })}
-                            <td style={{ ...tdStyle, color: triPts > 0 ? "#4ade80" : "#f87171", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{triPts > 0 ? triPts : 0}</td>
-                            <td style={{ ...tdStyle, color: "rgba(255,255,255,0.5)", background: "rgba(251,185,0,0.04)" }}>—</td>
-                            <td style={{ ...tdStyle, color: "rgba(255,255,255,0.3)", background: "rgba(251,185,0,0.04)" }}>—</td>
-                          </tr>
-                        );
-                      })}
-                      {/* Rodapé pontos */}
-                      <tr style={{ borderTop: "2px solid rgba(255,255,255,0.15)", background: "rgba(251,185,0,0.05)" }}>
-                        <td colSpan={3} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", textAlign: "left" }}>Total de Pontos</td>
-                        {MESES.map(mes => [
-                          <td key={mes+"tm"} style={tdStyle}></td>,
-                          <td key={mes+"tr"} style={tdStyle}></td>,
-                          <td key={mes+"ta"} style={tdStyle}></td>,
-                          <td key={mes+"tp"} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem" }}>{pontosMes(mes)}</td>,
-                        ])}
-                        <td colSpan={3} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
-                          {MESES.reduce((acc, mes) => acc + pontosMes(mes), 0)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  {spoMetas.length === 0 && (
-                    <p style={{ ...styles.msg, marginTop: "16px" }}>
-                      ⚠️ Metas não importadas — importe as metas no Admin → SPO → Metas para ver o painel completo.
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
 
             {/* OPERAÇÃO */}
             {aba === "operacao" && (
@@ -1630,6 +1510,156 @@ export default function SPO() {
             )}
           </>
         )}
+
+        </div>{/* fim coluna esquerda */}
+
+        {/* COLUNA DIREITA — Painel SPO fixo */}
+        <div style={{ flex: "0 0 40%", minWidth: "380px", position: "sticky", top: "20px" }}>
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
+            <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
+            {loading ? <p style={styles.msg}>Carregando...</p> : (
+                          {/* PAINEL SPO CONSOLIDADO */}
+                          {aba === "painel" && (() => {
+                            const MESES = ["2026-04","2026-05","2026-06"];
+                            const MESES_LABEL = {"2026-04":"Abril","2026-05":"Maio","2026-06":"Junho"};
+                            const INICIO_AVAL = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
+              
+                            const ITENS_SPO = [
+                              {n:1,  label:"Visitação GV na Base Foco"},
+                              {n:2,  label:"Rota Coaching"},
+                              {n:3,  label:"TT Dias com Rotas"},
+                              {n:4,  label:"Abertura de Desafios Diários"},
+                              {n:5,  label:"Atendimento Produtivo"},
+                              {n:6,  label:"DTO GC"},
+                              {n:7,  label:"% Visitas RN abrindo Promoção"},
+                              {n:8,  label:"Aderência de Política Comercial"},
+                              {n:9,  label:"Execução Menu de Cerveja"},
+                              {n:10, label:"Academia Bees RN"},
+                              {n:11, label:"Tasks Cerveja TT (Portfolio)"},
+                              {n:12, label:"Tasks Faturamento Score 5"},
+                              {n:13, label:"Tasks NAB TT (Portfolio)"},
+                              {n:14, label:"Tasks de Volume"},
+                              {n:15, label:"Tasks de Marketplace"},
+                              {n:16, label:"Tasks de Match (Portfolio)"},
+                              {n:17, label:"Tasks Cerveja Zero (Portfolio)"},
+                              {n:18, label:"Tarefa de Digitalização"},
+                              {n:19, label:"PDVs com Compra Independente"},
+                              {n:20, label:"+RGB"},
+                              {n:21, label:"Cupons Digitais - Score 5"},
+                              {n:22, label:"% Lojas Ideais"},
+                              {n:23, label:"Expansão Scanntech"},
+                              {n:24, label:"Portfólio Ideal Score 5"},
+                            ];
+              
+                            const getMeta = (n, mes) => {
+                              const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
+                              return r ? parseFloat(r.meta) : null;
+                            };
+                            const getReal = (n, mes) => {
+                              const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
+                              return r ? parseFloat(r.real) : null;
+                            };
+              
+                            // Total de pontos por mês
+                            const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
+                              if (INICIO_AVAL[item.n] > mes) return acc;
+                              const meta = getMeta(item.n, mes);
+                              const real = getReal(item.n, mes);
+                              if (meta === null || real === null) return acc;
+                              return acc + (real >= meta ? 3 : 0);
+                            }, 0);
+              
+                            const mesAtual = new Date().toISOString().slice(0,7);
+              
+                            const thStyle = { padding: "8px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
+                            const thSubStyle = { padding: "5px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
+                            const tdStyle = { padding: "7px 8px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
+              
+                            return (
+                              <div style={{ overflowX: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem", minWidth: "900px" }}>
+                                  <thead>
+                                    <tr>
+                                      <th style={thStyle}>#</th>
+                                      <th style={{ ...thStyle, textAlign: "left", minWidth: "200px" }}>Indicador</th>
+                                      <th style={thStyle}>Início</th>
+                                      {MESES.map(mes => (
+                                        <th key={mes} colSpan={4} style={{ ...thStyle, background: mes === mesAtual ? "rgba(251,185,0,0.15)" : "rgba(255,255,255,0.04)", borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
+                                          {MESES_LABEL[mes]}
+                                        </th>
+                                      ))}
+                                      <th colSpan={3} style={{ ...thStyle, background: "rgba(251,185,0,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
+                                    </tr>
+                                    <tr>
+                                      <th style={thSubStyle} colSpan={3}></th>
+                                      {MESES.map(mes => (
+                                        ["Meta","Real","% Ating","Pts"].map(h => (
+                                          <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(251,185,0,0.08)" : "" }}>{h}</th>
+                                        ))
+                                      ))}
+                                      {["Pts","Real","Meta"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {ITENS_SPO.map((item) => {
+                                      let triPts = 0;
+                                      return (
+                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                          <td style={tdStyle}>{item.n}</td>
+                                          <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
+                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
+                                          {MESES.map(mes => {
+                                            if (INICIO_AVAL[item.n] > mes) {
+                                              return [null,null,null,null].map((_,i) => <td key={mes+i} style={tdStyle}>—</td>);
+                                            }
+                                            const meta = getMeta(item.n, mes);
+                                            const real = getReal(item.n, mes);
+                                            const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
+                                            const bateu = meta !== null && real !== null && real >= meta;
+                                            const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
+                                            if (pts === 3) triPts += 3;
+                                            const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
+                                            return [
+                                              <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
+                                              <td key={mes+"r"} style={tdStyle}>{real !== null ? real : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
+                                              <td key={mes+"a"} style={{ ...tdStyle, color: ating !== null ? corAting : "rgba(255,255,255,0.2)", fontWeight: ating ? "600" : "400" }}>{ating !== null ? `${ating}%` : "—"}</td>,
+                                              <td key={mes+"p"} style={{ ...tdStyle, color: pts === 3 ? "#4ade80" : pts === 0 ? "#f87171" : "rgba(255,255,255,0.2)", fontWeight: "700" }}>{pts !== null ? pts : "—"}</td>,
+                                            ];
+                                          })}
+                                          <td style={{ ...tdStyle, color: triPts > 0 ? "#4ade80" : "#f87171", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{triPts > 0 ? triPts : 0}</td>
+                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.5)", background: "rgba(251,185,0,0.04)" }}>—</td>
+                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.3)", background: "rgba(251,185,0,0.04)" }}>—</td>
+                                        </tr>
+                                      );
+                                    })}
+                                    {/* Rodapé pontos */}
+                                    <tr style={{ borderTop: "2px solid rgba(255,255,255,0.15)", background: "rgba(251,185,0,0.05)" }}>
+                                      <td colSpan={3} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", textAlign: "left" }}>Total de Pontos</td>
+                                      {MESES.map(mes => [
+                                        <td key={mes+"tm"} style={tdStyle}></td>,
+                                        <td key={mes+"tr"} style={tdStyle}></td>,
+                                        <td key={mes+"ta"} style={tdStyle}></td>,
+                                        <td key={mes+"tp"} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem" }}>{pontosMes(mes)}</td>,
+                                      ])}
+                                      <td colSpan={3} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
+                                        {MESES.reduce((acc, mes) => acc + pontosMes(mes), 0)}
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                {spoMetas.length === 0 && (
+                                  <p style={{ ...styles.msg, marginTop: "16px" }}>
+                                    ⚠️ Metas não importadas — importe as metas no Admin → SPO → Metas para ver o painel completo.
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })()}
+            )}
+          </div>
+        </div>
+
+        </div>{/* fim flex */}
       </div>
     </div>
   );
