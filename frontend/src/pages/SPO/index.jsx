@@ -213,7 +213,7 @@ export default function SPO() {
   });
 
 
-  const MESES_PT = {"2026-04":"Abr/26","2026-05":"Mai/26","2026-06":"Jun/26","2025-04":"Abr/25","2025-05":"Mai/25","2025-06":"Jun/25"};
+  const MESES_PT = {"2026-04":"Abr/26","2026-05":"Mai/26","2026-06":"Jun/26"};
   const fmtMes = (m) => MESES_PT[m] || m;
   const gvsUnicos = [...new Set(detalhe.map((d) => d.gv))].sort();
   const diasUnicos = [...new Set(detalhe.map((d) => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort();
@@ -233,10 +233,10 @@ export default function SPO() {
 
       <div style={styles.content}>
         {/* Layout side-by-side */}
-        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "0 0 30%", minWidth: 0, paddingRight: "16px" }}>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
