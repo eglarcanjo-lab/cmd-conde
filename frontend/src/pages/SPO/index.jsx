@@ -51,6 +51,7 @@ export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [aba, setAba] = useState("operacao");
+  const [kpiAtivo, setKpiAtivo] = useState(null);
   const [spoMetas, setSpoMetas] = useState([]);
   const [resumo, setResumo] = useState([]);
   const [detalhe, setDetalhe] = useState([]);
