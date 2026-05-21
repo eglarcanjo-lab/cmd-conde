@@ -233,7 +233,7 @@ export default function SPO() {
 
       <div style={styles.content}>
         {/* Layout side-by-side */}
-        <div style={{ display: "flex", gap: "0", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
         <div style={{ flex: "0 0 30%", minWidth: 0, paddingRight: "16px" }}>
@@ -1653,7 +1653,7 @@ export default function SPO() {
                                     {ITENS_SPO.map((item) => {
                                       let triPts = 0;
                                       return (
-                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
