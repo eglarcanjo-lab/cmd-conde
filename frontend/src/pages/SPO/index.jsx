@@ -280,8 +280,9 @@ export default function SPO() {
 
 
             {/* OPERAÇÃO */}
-            {aba === "operacao" && (kpiAtivo === null || kpiAtivo === 1) && (
-              <div style={styles.section}>
+            {aba === "operacao" && (
+              {(kpiAtivo === null || kpiAtivo === 1) && (
+            <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
                 <div style={styles.opGrid}>
                   {[
@@ -341,6 +342,7 @@ export default function SPO() {
             </div>
             )}
 
+
             {/* DIAS EM ROTA TT */}
             {(kpiAtivo === null || kpiAtivo === 3) && (
             <div style={styles.section}>
@@ -379,6 +381,7 @@ export default function SPO() {
             </div>
             )}
 
+
             {/* DESAFIOS DIÁRIOS */}
             {(kpiAtivo === null || kpiAtivo === 4) && (
             <div style={styles.section}>
@@ -411,6 +414,7 @@ export default function SPO() {
               </div>
             </div>
             )}
+
 
             {/* DTO GC */}
             {(kpiAtivo === null || kpiAtivo === 6) && (
@@ -453,6 +457,7 @@ export default function SPO() {
               )}
             </div>
             )}
+
 
             {/* ABA PROMOÇÃO */}
             {(kpiAtivo === null || kpiAtivo === 7) && (
@@ -534,6 +539,7 @@ export default function SPO() {
             </div>
             )}
 
+
             {/* POLÍTICA COMERCIAL */}
             {(kpiAtivo === null || kpiAtivo === 8) && (
             <div style={styles.section}>
@@ -566,7 +572,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* MENU DE CERVEJA */}
@@ -601,7 +606,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
@@ -636,7 +640,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
@@ -671,7 +674,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS NAB */}
@@ -706,7 +708,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS VOLUME */}
@@ -741,7 +742,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS MARKETPLACE */}
@@ -776,7 +776,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS MATCH */}
@@ -811,7 +810,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS CERVEJA ZERO */}
@@ -846,7 +844,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS DIGITALIZAÇÃO */}
@@ -881,7 +878,6 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* PDV COMPRA INDEPENDENTE */}
@@ -929,7 +925,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* +RGB */}
@@ -974,7 +969,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* CUPONS DIGITAIS */}
@@ -1064,7 +1058,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
@@ -1159,7 +1152,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* EXPANSÃO SCANNTECH */}
@@ -1244,7 +1236,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
@@ -1340,7 +1331,6 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* ATENDIMENTO PRODUTIVO */}
@@ -1433,9 +1423,11 @@ export default function SPO() {
             </div>
             )}
 
+
             {/* POR GV */}
             {aba === "gv" && (
-              <div style={styles.section}>
+              {(kpiAtivo === null || kpiAtivo === 1) && (
+            <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
                 <div style={styles.gvGrid}>
                   {resumo.map((r) => {
@@ -1559,7 +1551,7 @@ export default function SPO() {
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 58%", minWidth: 0, position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
+        <div style={{ flex: "0 0 58%", minWidth: 0, position: "sticky", top: "0", alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
@@ -1650,7 +1642,7 @@ export default function SPO() {
                                     {ITENS_SPO.map((item) => {
                                       let triPts = 0;
                                       return (
-                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
