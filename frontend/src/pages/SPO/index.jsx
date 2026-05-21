@@ -1,4 +1,4 @@
-/* BUILD_20260517_004910 */
+/* BUILD_20260517_004909 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -301,8 +301,7 @@ export default function SPO() {
             )}
 
             {/* COACHING */}
-            {(kpiAtivo === null || kpiAtivo === 2) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 2 — Rota Coaching</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 {["mensal", "trimestral"].map((p) => (
@@ -339,11 +338,9 @@ export default function SPO() {
                 )}
               </div>
             </div>
-            )}
 
             {/* DIAS EM ROTA TT */}
-            {(kpiAtivo === null || kpiAtivo === 3) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 3 — TT Dias com Rotas</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 {["mensal", "trimestral"].map((p) => (
@@ -377,11 +374,9 @@ export default function SPO() {
                 )}
               </div>
             </div>
-            )}
 
             {/* DESAFIOS DIÁRIOS */}
-            {(kpiAtivo === null || kpiAtivo === 4) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 4 — Abertura de Desafios Diários</h3>
               <div style={styles.gvGrid}>
                 {["1","3"].map((gv) => {
@@ -410,11 +405,9 @@ export default function SPO() {
                 {desafios.length === 0 && <p style={styles.msg}>Preencha em Admin → SPO Desafios.</p>}
               </div>
             </div>
-            )}
 
             {/* DTO GC */}
-            {(kpiAtivo === null || kpiAtivo === 6) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 6 — DTO GC x GV</h3>
               {!dto ? (
                 <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO DTO GC.</p>
@@ -452,11 +445,9 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
             {/* ABA PROMOÇÃO */}
-            {(kpiAtivo === null || kpiAtivo === 7) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 7 — % PDVs abrindo Aba de Promoção no BEES</h3>
               {promo.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Aba Promoção BEES.</p>
@@ -532,11 +523,9 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
             {/* POLÍTICA COMERCIAL */}
-            {(kpiAtivo === null || kpiAtivo === 8) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 8 — Aderência de Política Comercial</h3>
               {politica.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -566,12 +555,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* MENU DE CERVEJA */}
-            {(kpiAtivo === null || kpiAtivo === 9) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 9 — Execução Menu de Cerveja</h3>
               {menu.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -601,12 +588,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
-            {(kpiAtivo === null || kpiAtivo === 11) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 11 — Tasks de Portfólio Cerveja</h3>
               {tasksCerveja.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -636,12 +621,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
-            {(kpiAtivo === null || kpiAtivo === 12) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 12 — Tasks Faturamento Score 5</h3>
               {score5.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
@@ -671,12 +654,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS NAB */}
-            {(kpiAtivo === null || kpiAtivo === 13) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 13 — Tasks de Portfólio NAB</h3>
               {tasksNab.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -706,12 +687,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS VOLUME */}
-            {(kpiAtivo === null || kpiAtivo === 14) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 14 — Tasks de Volume</h3>
               {tasksVolume.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -741,12 +720,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS MARKETPLACE */}
-            {(kpiAtivo === null || kpiAtivo === 15) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 15 — Tasks de Marketplace</h3>
               {tasksMktp.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -776,12 +753,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS MATCH */}
-            {(kpiAtivo === null || kpiAtivo === 16) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 16 — Tasks de Portfólio MATCH</h3>
               {tasksMatch.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -811,12 +786,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS CERVEJA ZERO */}
-            {(kpiAtivo === null || kpiAtivo === 17) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 17 — Tasks de Portfólio Cerveja Zero</h3>
               {tasksCervZero.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -846,12 +819,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* TASKS DIGITALIZAÇÃO */}
-            {(kpiAtivo === null || kpiAtivo === 18) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
               {tasksDigit.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
@@ -881,12 +852,10 @@ export default function SPO() {
                 </div>
               )}
             </div>
-            )}
 
 
             {/* PDV COMPRA INDEPENDENTE */}
-            {(kpiAtivo === null || kpiAtivo === 19) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 19 — PDVs com Compra Independente</h3>
               {alone.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Pedido Alone para calcular automaticamente.</p>
@@ -929,12 +898,10 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* +RGB */}
-            {(kpiAtivo === null || kpiAtivo === 20) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 20 — +RGB</h3>
               {rgb.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório +RGB para calcular automaticamente.</p>
@@ -974,12 +941,10 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* CUPONS DIGITAIS */}
-            {(kpiAtivo === null || kpiAtivo === 21) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 21 — Cupons Digitais Score 5</h3>
               {cupons.length === 0 ? (
                 <p style={styles.msg}>Importe o planificador de Cupons para calcular automaticamente.</p>
@@ -1064,12 +1029,10 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
-            {(kpiAtivo === null || kpiAtivo === 22) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 22 — % Lojas Ideais Vizinhança</h3>
               {lojaIdeal.length === 0 ? (
                 <p style={styles.msg}>Importe o Planificador de Loja Ideal para calcular automaticamente.</p>
@@ -1159,12 +1122,10 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* EXPANSÃO SCANNTECH */}
-            {(kpiAtivo === null || kpiAtivo === 23) && (
-<div style={styles.section}>
+            <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 23 — Expansão Scanntech</h3>
               {scanntech.length === 0 ? (
                 <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
@@ -1244,11 +1205,9 @@ export default function SPO() {
                 </>
               )}
             </div>
-            )}
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
-            {(kpiAtivo === null || kpiAtivo === 24) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 24 — Portfólio Ideal Score 5</h3>
               {portIdeal.length === 0 ? (
@@ -1702,8 +1661,6 @@ export default function SPO() {
             )}
           </div>
         </div>
-
-            )}
 
         </div>{/* fim flex */}
       </div>
