@@ -233,7 +233,7 @@ export default function SPO() {
         <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "1 1 58%", minWidth: 0 }}>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
@@ -1515,7 +1515,7 @@ export default function SPO() {
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 42%", minWidth: 0, alignSelf: "flex-start" }}>
+        <div style={{ flex: "0 0 40%", minWidth: "380px", position: "sticky", top: "20px" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
