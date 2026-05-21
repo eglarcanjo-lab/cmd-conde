@@ -233,7 +233,7 @@ export default function SPO() {
         <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "1 1 0", minWidth: 0, overflow: "hidden" }}>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
@@ -1676,13 +1676,13 @@ const styles = {
   title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  content: { padding: "16px 24px", display: "flex", flexDirection: "column", gap: "16px" },
+  content: { padding: "24px 32px", maxWidth: "1100px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   scoreboard: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
   scoreboardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
   scoreboardTitle: { fontWeight: "700", fontSize: "0.95rem" },
   scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" },
-  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" },
+  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "6px" },
   kpiCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "4px" },
   kpiCardAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.04)" },
   kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" },
