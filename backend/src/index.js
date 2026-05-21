@@ -60,16 +60,27 @@ app.use((err, req, res, next) => {
 
 // ─── INICIALIZAÇÃO ────────────────────────────────────────────────────────────
 async function start() {
-  try {
-    console.log("🔧 Inicializando planilhas...");
-    await initializeSheets();
-    app.listen(PORT, () => {
-      console.log(`✅ Backend rodando na porta ${PORT}`);
-      console.log(`   Ambiente: ${process.env.NODE_ENV || "development"}`);
-    });
-  } catch (err) {
-    console.error("❌ Erro ao iniciar servidor:", err);
-    process.exit(1);
+  // Sobe o servidor imediatamente — não bloqueia no initializeSheets
+  app.listen(PORT, () => {
+    console.log(`✅ Backend rodando na porta ${PORT}`);
+    console.log(`   Ambiente: ${process.env.NODE_ENV || "development"}`);
+  });
+
+  // Inicializa planilhas em background com retry para evitar quota 429
+  const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+  let tentativa = 0;
+  while (tentativa < 5) {
+    try {
+      console.log(`🔧 Inicializando planilhas (tentativa ${tentativa + 1})...`);
+      await initializeSheets();
+      console.log("✅ Planilhas inicializadas.");
+      break;
+    } catch (err) {
+      tentativa++;
+      const espera = tentativa * 15000; // 15s, 30s, 45s, 60s, 75s
+      console.warn(`⚠️ Erro ao inicializar planilhas: ${err.message}. Tentando novamente em ${espera/1000}s...`);
+      await delay(espera);
+    }
   }
 }
 
