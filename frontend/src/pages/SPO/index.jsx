@@ -569,6 +569,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* MENU DE CERVEJA */}
@@ -603,6 +604,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
@@ -637,6 +639,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
@@ -671,6 +674,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS NAB */}
@@ -705,6 +709,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS VOLUME */}
@@ -739,6 +744,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS MARKETPLACE */}
@@ -773,6 +779,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS MATCH */}
@@ -807,6 +814,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS CERVEJA ZERO */}
@@ -841,6 +849,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* TASKS DIGITALIZAÇÃO */}
@@ -875,6 +884,7 @@ export default function SPO() {
                 </div>
               )}
             </div>
+            )}
 
 
             {/* PDV COMPRA INDEPENDENTE */}
@@ -922,6 +932,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* +RGB */}
@@ -966,6 +977,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* CUPONS DIGITAIS */}
@@ -1055,6 +1067,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
@@ -1149,6 +1162,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* EXPANSÃO SCANNTECH */}
@@ -1233,6 +1247,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
@@ -1328,6 +1343,7 @@ export default function SPO() {
                 </>
               )}
             </div>
+            )}
 
 
             {/* ATENDIMENTO PRODUTIVO */}
