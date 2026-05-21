@@ -274,7 +274,6 @@ export default function SPO() {
         </div>
 
         {loading ? <p style={styles.msg}>Carregando...</p> : (
-          <>
 
 
 
@@ -888,7 +887,6 @@ export default function SPO() {
               {alone.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Pedido Alone para calcular automaticamente.</p>
               ) : (
-                <>
                   {/* Card Operação */}
                   {alone.filter(r => r.setor === "OPERACAO").map(r => {
                     const val = parseInt(r.pdvs_alone || 0);
@@ -923,7 +921,6 @@ export default function SPO() {
                       </div>
                     ))}
                   </div>
-                </>
               )}
             </div>
 
@@ -935,7 +932,6 @@ export default function SPO() {
               {rgb.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório +RGB para calcular automaticamente.</p>
               ) : (
-                <>
                   {["Total","Litrinho","Inteira"].map((tipo) => {
                     const dados = tipo === "Total" ? rgb : tipo === "Litrinho" ? rgbLit : rgbInt;
                     const op = dados.find(r => r.setor === "OPERACAO");
@@ -967,7 +963,6 @@ export default function SPO() {
                       </div>
                     );
                   })}
-                </>
               )}
             </div>
 
@@ -979,7 +974,6 @@ export default function SPO() {
               {cupons.length === 0 ? (
                 <p style={styles.msg}>Importe o planificador de Cupons para calcular automaticamente.</p>
               ) : (
-                <>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {cupons.map((r) => {
                       const isOp = r.setor === "OPERACAO";
@@ -999,7 +993,6 @@ export default function SPO() {
                     })}
                   </div>
                   {cuponsDet.length > 0 && (
-                    <>
                       {/* Filtros */}
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>PDVs sem resgate no mês atual</p>
@@ -1054,9 +1047,7 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
-                    </>
                   )}
-                </>
               )}
             </div>
 
@@ -1068,7 +1059,6 @@ export default function SPO() {
               {lojaIdeal.length === 0 ? (
                 <p style={styles.msg}>Importe o Planificador de Loja Ideal para calcular automaticamente.</p>
               ) : (
-                <>
                   {/* Resumo por setor */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {lojaIdeal.map((r) => {
@@ -1095,7 +1085,6 @@ export default function SPO() {
                   </div>
                   {/* Detalhe */}
                   {lojaIdealDet.length > 0 && (
-                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "RN", val: lojaFiltroRN, set: setLojaFiltroRN, opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.setor))].sort() },
@@ -1148,9 +1137,7 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
-                    </>
                   )}
-                </>
               )}
             </div>
 
@@ -1162,7 +1149,6 @@ export default function SPO() {
               {scanntech.length === 0 ? (
                 <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
               ) : (
-                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {scanntech.map((r) => {
@@ -1192,7 +1178,6 @@ export default function SPO() {
                   </div>
                   {/* Detalhe */}
                   {scanntechDet.length > 0 && (
-                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         <select value={scanFiltroStatus} onChange={e => setScanFiltroStatus(e.target.value)}
                           style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
@@ -1232,9 +1217,7 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
-                    </>
                   )}
-                </>
               )}
             </div>
 
@@ -1246,7 +1229,6 @@ export default function SPO() {
               {portIdeal.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
               ) : (
-                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {portIdeal.map((r) => {
@@ -1273,7 +1255,6 @@ export default function SPO() {
                   </div>
                   {/* Detalhe com filtros */}
                   {portIdealDet.length > 0 && (
-                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "GV",     val: portFiltroGV,     set: setPortFiltroGV,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.gv).filter(Boolean))].sort() },
@@ -1327,9 +1308,7 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
-                    </>
                   )}
-                </>
               )}
             </div>
 
@@ -1341,7 +1320,6 @@ export default function SPO() {
               {ap.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Atendimento Produtivo para calcular automaticamente.</p>
               ) : (
-                <>
                   {/* Resumo */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {ap.map((r) => {
@@ -1368,7 +1346,6 @@ export default function SPO() {
                   </div>
                   {/* Detalhe por RN */}
                   {apDet.length > 0 && (
-                    <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
                           { label: "GV",     val: apFiltroGV,     set: setApFiltroGV,     opts: ["TODOS", ...new Set(apDet.map(r => r.gv).filter(Boolean))].sort() },
@@ -1417,14 +1394,11 @@ export default function SPO() {
                           </tbody>
                         </table>
                       </div>
-                    </>
                   )}
-                </>
               )}
             </div>
               </>
             )}
-
 
             {/* POR GV */}
             {aba === "gv" && (
@@ -1455,6 +1429,7 @@ export default function SPO() {
                   {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
                 </div>
               </div>
+              </>
             )}
 
             {/* SEM COACHING */}
@@ -1486,7 +1461,6 @@ export default function SPO() {
                   </div>
                 )}
               </div>
-              </>
             )}
 
             {/* DETALHE */}
@@ -1549,7 +1523,6 @@ export default function SPO() {
                 </div>
               </div>
             )}
-          </>
         )}
 
         </div>{/* fim coluna esquerda */}
@@ -1559,7 +1532,6 @@ export default function SPO() {
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
-              <>
                           {/* PAINEL SPO CONSOLIDADO */}
                           {(() => {
                             const MESES = ["2026-04","2026-05","2026-06"];
@@ -1697,7 +1669,6 @@ export default function SPO() {
                               </div>
                             );
                           })()}
-              </>
             )}
           </div>
         </div>
