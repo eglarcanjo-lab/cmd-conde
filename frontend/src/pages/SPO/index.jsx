@@ -236,7 +236,7 @@ export default function SPO() {
         <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+        <div style={{ flex: "0 0 30%", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
