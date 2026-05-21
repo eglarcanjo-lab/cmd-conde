@@ -357,5 +357,22 @@ router.get("/painel/metas", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+
+// GET /api/spo/ap/resumo
+router.get("/ap/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_ap_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/ap/detalhe
+router.get("/ap/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_ap_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 

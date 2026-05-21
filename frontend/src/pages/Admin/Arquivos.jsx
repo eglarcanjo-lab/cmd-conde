@@ -102,6 +102,15 @@ const ARQUIVOS_CONFIG = [
     icon: "📱",
   },
   {
+    id: "spo_ap",
+    campo: "spo_ap",
+    rotulo: "SPO — Atendimento Produtivo",
+    descricao: "Item 5 — GPS, Rota Efetiva, Carteira Ideal e Positivação",
+    extensoes: ".xlsx,.xls",
+    periodicidade: "Diária",
+    icon: "🎯",
+  },
+  {
     id: "spo_portfolio_ideal",
     campo: "spo_portfolio_ideal",
     rotulo: "SPO — Portfólio Ideal Score 5",

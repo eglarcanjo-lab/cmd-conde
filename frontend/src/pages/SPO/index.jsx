@@ -11,7 +11,7 @@ const SPO_ITEMS = [
   { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
-  { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: false },
+  { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: true  },
   // BUILD_20260517_004902
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
@@ -102,6 +102,10 @@ export default function SPO() {
   const [portFiltroRN, setPortFiltroRN] = useState("TODOS");
   const [portFiltroDia, setPortFiltroDia] = useState("TODOS");
   const [portFiltroStatus, setPortFiltroStatus] = useState("TODOS");
+  const [ap, setAp] = useState([]);
+  const [apDet, setApDet] = useState([]);
+  const [apFiltroGV, setApFiltroGV] = useState("TODOS");
+  const [apFiltroStatus, setApFiltroStatus] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -146,6 +150,8 @@ export default function SPO() {
         api.get("/api/spo/scanntech/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/portfolio-ideal/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/portfolio-ideal/detalhe").catch(() => ({ data: [] })),
+        api.get("/api/spo/ap/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/ap/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/painel/metas").catch(() => ({ data: [] })),
       ]);
       setResumo(resResumo.data || []);
@@ -184,6 +190,8 @@ export default function SPO() {
       setScanntechDet(resScanntechDet?.data || []);
       setPortIdeal(resPortIdeal?.data || []);
       setPortIdealDet(resPortIdealDet?.data || []);
+      setAp(resAp?.data || []);
+      setApDet(resApDet?.data || []);
       setSpoMetas(resSpoMetas?.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -1402,6 +1410,95 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px", color: "#fbb900", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
                               </tr>
                             ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+
+            {/* ATENDIMENTO PRODUTIVO */}
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 5 — Atendimento Produtivo</h3>
+              {ap.length === 0 ? (
+                <p style={styles.msg}>Importe o relatório de Atendimento Produtivo para calcular automaticamente.</p>
+              ) : (
+                <>
+                  {/* Resumo */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {ap.map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 90 ? "#4ade80" : pct >= 60 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `GV ${r.gv}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.rns_ap_ok}/{r.rns_total} RNs</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 90%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe por RN */}
+                  {apDet.length > 0 && (
+                    <>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        {[
+                          { label: "GV",     val: apFiltroGV,     set: setApFiltroGV,     opts: ["TODOS", ...new Set(apDet.map(r => r.gv).filter(Boolean))].sort() },
+                          { label: "AP OK",  val: apFiltroStatus, set: setApFiltroStatus, opts: ["TODOS", "Sim", "Não"] },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
+                          <thead>
+                            <tr>
+                              {["GV","RN","Segmento","AP OK","KPIs OK","Positiv %","Carteira","GPS %","Rota %"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {apDet.filter(r =>
+                              (apFiltroGV === "TODOS" || r.gv === apFiltroGV) &&
+                              (apFiltroStatus === "TODOS" || r.ap_ok === apFiltroStatus)
+                            ).map((r, i) => {
+                              const corAP = r.ap_ok === "Sim" ? "#4ade80" : "#f87171";
+                              const corKPI = parseInt(r.kpis_ok) === 4 ? "#4ade80" : parseInt(r.kpis_ok) >= 2 ? "#fbb900" : "#f87171";
+                              return (
+                                <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: "rgba(255,255,255,0.8)", fontWeight: "600" }}>{r.setor}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.7rem" }}>{r.segmento}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center" }}>
+                                    <span style={{ color: corAP, fontWeight: "700" }}>{r.ap_ok}</span>
+                                  </td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center" }}>
+                                    <span style={{ color: corKPI, fontWeight: "700" }}>{r.kpis_ok}/4</span>
+                                  </td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.positiv_real) >= parseFloat(r.positiv_meta) ? "#4ade80" : "#f87171" }}>{r.positiv_real !== null ? `${r.positiv_real}%` : "—"}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseInt(r.carteira_real) >= parseInt(r.carteira_meta) ? "#4ade80" : "#f87171" }}>{r.carteira_real || "—"}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.gps_real) >= parseFloat(r.gps_meta) ? "#4ade80" : "#f87171" }}>{r.gps_real !== null ? `${r.gps_real}%` : "—"}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.rota_real) >= parseFloat(r.rota_meta) ? "#4ade80" : "#f87171" }}>{r.rota_real !== null ? `${r.rota_real}%` : "—"}</td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
