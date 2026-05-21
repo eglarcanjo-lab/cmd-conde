@@ -281,6 +281,7 @@ export default function SPO() {
 
             {/* OPERAÇÃO */}
             {aba === "operacao" && (
+              <>
               {(kpiAtivo === null || kpiAtivo === 1) && (
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
@@ -1421,11 +1422,13 @@ export default function SPO() {
                 </>
               )}
             </div>
+              </>
             )}
 
 
             {/* POR GV */}
             {aba === "gv" && (
+              <>
               {(kpiAtivo === null || kpiAtivo === 1) && (
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
@@ -1483,6 +1486,7 @@ export default function SPO() {
                   </div>
                 )}
               </div>
+              </>
             )}
 
             {/* DETALHE */}
