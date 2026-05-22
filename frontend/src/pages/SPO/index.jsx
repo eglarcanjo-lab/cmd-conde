@@ -1290,99 +1290,55 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Consolidado por GV */}
-                  {(() => {
-                    const gvsPort = [...new Set(portIdeal.filter(r => r.setor !== "OPERACAO").map(r => r.gv).filter(Boolean))].sort();
-                    return (
-                      <>
-                        {/* Card Operação */}
-                        {portIdeal.filter(r => r.setor === "OPERACAO").map(r => {
-                          const pct = parseFloat(r.pct || 0);
-                          const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
-                          return (
-                            <div key="op" style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
-                              <div style={styles.gvHeader}>
-                                <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
-                                <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
-                              </div>
-                              <BarraProgresso pct={pct} cor={cor} />
-                              <div style={styles.gvFooter}>
-                                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
-                                <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                              </div>
-                              <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
-                            </div>
-                          );
-                        })}
-                        {/* Cards por GV */}
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                          {gvsPort.map(gv => {
-                            const pdvsGV = portIdealDet.filter(r => r.gv === gv);
-                            const ideaisGV = pdvsGV.filter(r => r.portfolio_ideal === "SIM").length;
-                            const totalGV = pdvsGV.length;
-                            const pctGV = totalGV > 0 ? Math.round(ideaisGV / totalGV * 100) : 0;
-                            const corGV = pctGV >= 46 ? "#4ade80" : pctGV >= 30 ? "#fbb900" : "#f87171";
-                            return (
-                              <div key={gv} style={styles.gvCard}>
-                                <div style={styles.gvHeader}>
-                                  <span style={{ fontWeight: "700", fontSize: "0.88rem" }}>GV {gv}</span>
-                                  <span style={{ color: corGV, fontWeight: "700" }}>{pctGV}%</span>
-                                </div>
-                                <BarraProgresso pct={pctGV} cor={corGV} />
-                                <div style={styles.gvFooter}>
-                                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{ideaisGV}/{totalGV} PDVs</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {/* Cards por RN */}
-                          {portIdeal.filter(r => r.setor !== "OPERACAO").map(r => {
-                            const pct = parseFloat(r.pct || 0);
-                            const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
-                            return (
-                              <div key={r.setor} style={styles.gvCard}>
-                                <div style={styles.gvHeader}>
-                                  <span style={{ fontWeight: "700", fontSize: "0.85rem" }}>Setor {r.setor}</span>
-                                  <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
-                                </div>
-                                <BarraProgresso pct={pct} cor={cor} />
-                                <div style={styles.gvFooter}>
-                                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
-                                  <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                                </div>
-                                <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
-                              </div>
-                            );
-                          })}
+                  {/* Resumo */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                    {portIdeal.map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
+                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
                         </div>
-                      </>
-                    );
-                  })()}
-                  {/* Detalhe com filtros — sem filtro GV, com filtro itens faltantes */}
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe com filtros */}
                   {portIdealDet.length > 0 && (
                     <>
-                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
+                          { label: "GV",     val: portFiltroGV,     set: setPortFiltroGV,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.gv).filter(Boolean))].sort() },
                           { label: "RN",     val: portFiltroRN,     set: setPortFiltroRN,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.setor).filter(Boolean))].sort() },
                           { label: "Dia",    val: portFiltroDia,    set: setPortFiltroDia,    opts: ["TODOS", ...new Set(portIdealDet.map(r => r.dia_visita).filter(Boolean))].sort() },
                           { label: "Status", val: portFiltroStatus, set: setPortFiltroStatus, opts: ["TODOS", "SIM", "NÃO"] },
-                          { label: "Itens Faltando", val: portFiltroGV, set: setPortFiltroGV, opts: ["TODOS", ...new Set(portIdealDet.map(r => r.itens_faltantes).filter(Boolean)).values()].sort() },
                         ].map(({ label, val, set, opts }) => (
                           <select key={label} value={val} onChange={e => set(e.target.value)}
-                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
                             {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
                           </select>
                         ))}
-                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
                           {portIdealDet.filter(r =>
+                            (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
                             (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
                             (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
-                            (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus) &&
-                            (portFiltroGV === "TODOS" || r.itens_faltantes === portFiltroGV)
+                            (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
                           ).length} PDVs
                         </span>
                       </div>
-                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                           <thead>
                             <tr>
@@ -1393,10 +1349,10 @@ export default function SPO() {
                           </thead>
                           <tbody>
                             {portIdealDet.filter(r =>
+                              (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
                               (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
                               (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
-                              (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus) &&
-                              (portFiltroGV === "TODOS" || r.itens_faltantes === portFiltroGV)
+                              (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
                             ).map((r, i) => (
                               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
@@ -1408,30 +1364,7 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px" }}>
                                   <span style={{ color: r.portfolio_ideal === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.portfolio_ideal}</span>
                                 </td>
-                                <td style={{ padding: "7px 10px" }}>
-                                  {r.itens_faltantes && r.itens_faltantes !== "—" ? (
-                                    <span
-                                      title={String(r.itens_faltantes).split(";").map(s => s.trim()).join("\n")}
-                                      onClick={e => {
-                                        const existing = document.getElementById("port24-popup");
-                                        if (existing) existing.remove();
-                                        const items = String(r.itens_faltantes).split(";").map(s => s.trim()).filter(Boolean);
-                                        const popup = document.createElement("div");
-                                        popup.id = "port24-popup";
-                                        popup.style.cssText = "position:fixed;z-index:9999;background:#1a2035;border:1px solid rgba(251,185,0,0.3);border-radius:10px;padding:14px 16px;min-width:220px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:#fff;font-size:0.8rem;";
-                                        popup.style.left = Math.min(e.clientX + 12, window.innerWidth - 340) + "px";
-                                        popup.style.top  = Math.min(e.clientY + 12, window.innerHeight - 200) + "px";
-                                        popup.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="color:#fbb900">Itens Faltando (${items.length})</strong><span onclick="document.getElementById('port24-popup').remove()" style="cursor:pointer;color:rgba(255,255,255,0.4);font-size:1rem">✕</span></div>` + items.map(it => `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.8)">${it}</div>`).join("");
-                                        document.body.appendChild(popup);
-                                        const close = (ev) => { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener("click", close); } };
-                                        setTimeout(() => document.addEventListener("click", close), 10);
-                                      }}
-                                      style={{ color: "#fbb900", fontSize: "0.75rem", cursor: "pointer", textDecoration: "underline dotted", whiteSpace: "nowrap" }}
-                                    >
-                                      {String(r.itens_faltantes).split(";").filter(Boolean).length} itens ▾
-                                    </span>
-                                  ) : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
-                                </td>
+                                <td style={{ padding: "7px 10px", color: "#fbb900", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
                               </tr>
                             ))}
                           </tbody>
