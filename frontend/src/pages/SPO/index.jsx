@@ -1,4 +1,4 @@
-/* BUILD_20260522_172705 */
+/* BUILD_20260522_185644 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -1085,11 +1085,15 @@ export default function SPO() {
                   {/* Cards por RN com meta individual e tarja colorida */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px", marginBottom: "16px" }}>
                     {alone.filter(r => r.setor !== "OPERACAO").map(r => {
-                      const val  = parseInt(r.pdvs_alone || 0);
-                      const meta = parseInt(r.meta || 0);
-                      const pct  = parseFloat(r.pct || (meta > 0 ? Math.round(val / meta * 100) : 0));
-                      const cor  = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-                      const tarjaBg = pct >= 100 ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
+                      const val   = parseInt(r.pdvs_alone || 0);
+                      const meta  = parseInt(r.meta || 0);
+                      const total = parseInt(r.pdvs_total || 0);
+                      // pct: usa meta individual se disponível, senão percentual sobre total
+                      const pct   = meta > 0
+                        ? parseFloat(r.pct || Math.round(val / meta * 100))
+                        : (total > 0 ? Math.round(val / total * 100) : 0);
+                      const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      const tarjaBg     = pct >= 100 ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
                       const tarjaBorder = pct >= 100 ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(251,185,0,0.25)" : "rgba(248,113,113,0.25)";
                       return (
                         <div key={r.setor} style={{ ...styles.gvCard, background: tarjaBg, border: `1px solid ${tarjaBorder}` }}>
@@ -1099,7 +1103,9 @@ export default function SPO() {
                           </div>
                           <BarraProgresso pct={pct} cor={cor} />
                           <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{val} / {meta || "—"} alone</span>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
+                              {val} / {meta > 0 ? meta : total} {meta > 0 ? "alone" : "PDVs"}
+                            </span>
                           </div>
                         </div>
                       );
@@ -1881,10 +1887,42 @@ export default function SPO() {
                               const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
                               return r ? parseFloat(r.meta) : null;
                             };
-                            const getReal = (n, mes) => {
+
+                            // Real: busca primeiro em spoMetas (histórico), depois nas abas processadas (mês atual)
+                            const getRealDados = (n, mes) => {
+                              // 1. Tenta spoMetas (histórico importado)
                               const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
-                              return r ? parseFloat(r.real) : null;
+                              if (r && r.real !== "" && r.real !== null && r.real !== undefined) return parseFloat(r.real);
+
+                              // 2. Fallback: dado real das abas processadas (só funciona para o mês atual)
+                              const op = (arr) => arr.find(x => x.setor === "OPERACAO" || x.setor === "operacao");
+                              const opMes = (arr) => arr.find(x => (x.setor === "OPERACAO" || x.setor === "operacao") && (x.mes_referencia || "").startsWith(mes));
+
+                              switch(n) {
+                                case 1:  { const d = opMes(resumo) || op(resumo); return d ? parseFloat(d.visitados || 0) : null; }
+                                case 2:  { const d = opMes(coaching) || op(coaching); return d ? parseFloat(d.coachings_validos || 0) : null; }
+                                case 3:  { const d = opMes(diasRota) || op(diasRota); return d ? parseFloat(d.dias_rota || 0) : null; }
+                                case 4:  { const d = desafios.filter(x => (x.mes_referencia||"").startsWith(mes) && x.status === "OK"); return d.length > 0 ? d.length : null; }
+                                case 5:  { const d = opMes(apResumo) || op(apResumo); return d ? parseFloat(d.pct_geral || d.pct || 0) : null; }
+                                case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
+                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
+                                case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
+                                case 13: { const d = opMes(tasksNab) || op(tasksNab); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 14: { const d = opMes(tasksVolume) || op(tasksVolume); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 15: { const d = opMes(tasksMktp) || op(tasksMktp); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 16: { const d = opMes(tasksMatch) || op(tasksMatch); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 17: { const d = opMes(tasksCervZero) || op(tasksCervZero); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 18: { const d = opMes(tasksDigit) || op(tasksDigit); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 19: { const d = opMes(alone) || op(alone); return d ? parseFloat(d.pdvs_alone || 0) : null; }
+                                case 20: { const d = opMes(rgb) || op(rgb); return d ? parseFloat(d.pdvs_bateu_meta || 0) : null; }
+                                case 21: { const d = opMes(cupons) || op(cupons); return d ? parseFloat(d.cupons_mes || 0) : null; }
+                                case 22: { const d = opMes(lojaIdeal) || op(lojaIdeal); return d ? parseFloat(d.pct || 0) : null; }
+                                case 23: { const d = opMes(scanntech) || op(scanntech); return d ? parseFloat(d.ativos || 0) : null; }
+                                case 24: { const d = opMes(portIdeal) || op(portIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
+                                default: return null;
+                              }
                             };
+                            const getReal = (n, mes) => getRealDados(n, mes);
               
                             // Total de pontos por mês
                             const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
