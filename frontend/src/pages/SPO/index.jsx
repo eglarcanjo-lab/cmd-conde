@@ -1437,7 +1437,7 @@ export default function SPO() {
             )}
 
             {/* POR GV */}
-            {aba === "gv" && (
+            {aba === "gv" && (kpiAtivo === null || kpiAtivo === 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
                 <div style={styles.gvGrid}>
@@ -1466,7 +1466,7 @@ export default function SPO() {
             )}
 
             {/* SEM COACHING */}
-            {aba === "sem_coaching" && (
+            {aba === "sem_coaching" && (kpiAtivo === null || kpiAtivo === 2) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>RNs sem Coaching no Trimestre</h3>
                 {semCoaching.length === 0 ? (
@@ -1497,7 +1497,7 @@ export default function SPO() {
             )}
 
             {/* DETALHE */}
-            {aba === "detalhe" && (
+            {aba === "detalhe" && (kpiAtivo === null || kpiAtivo === 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitas Detalhadas</h3>
                 <div style={styles.filtrosRow}>
