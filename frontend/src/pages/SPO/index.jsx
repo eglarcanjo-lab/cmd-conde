@@ -1,4 +1,4 @@
-/* BUILD_20260522_162703 */
+/* BUILD_20260522_172705 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -84,6 +84,10 @@ export default function SPO() {
   const [tasksDigit, setTasksDigit] = useState([]);
   const [alone, setAlone] = useState([]);
   const [aloneDetalhe, setAloneDetalhe] = useState([]);
+  const [aloneView, setAloneView] = useState("mensal");
+  const [aloneFiltroRN, setAloneFiltroRN] = useState("TODOS");
+  const [aloneFiltroDia, setAloneFiltroDia] = useState("TODOS");
+  const [aloneFiltroPDV, setAloneFiltroPDV] = useState("TODOS");
   const [rgb, setRgb] = useState([]);
   const [rgbLit, setRgbLit] = useState([]);
   const [rgbInt, setRgbInt] = useState([]);
@@ -1047,40 +1051,115 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o relatório de Pedido Alone para calcular automaticamente.</p>
               ) : (
                 <>
+                  {/* Botão mensal/trimestral */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px" }}>
+                      {["mensal","trimestral"].map(v => (
+                        <button key={v} onClick={() => setAloneView(v)}
+                          style={{ background: aloneView === v ? "rgba(251,185,0,0.2)" : "transparent", border: "none", color: aloneView === v ? "#fbb900" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: aloneView === v ? "600" : "400" }}>
+                          {v === "mensal" ? "Mensal" : "Trimestral"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {/* Card Operação */}
                   {alone.filter(r => r.setor === "OPERACAO").map(r => {
-                    const val = parseInt(r.pdvs_alone || 0);
+                    const val  = parseInt(r.pdvs_alone || 0);
                     const meta = parseInt(r.meta || 0);
-                    const pct = meta > 0 ? Math.round(val / meta * 100) : 0;
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const pct  = parseFloat(r.pct || (meta > 0 ? Math.round(val / meta * 100) : 0));
+                    const cor  = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
                     return (
-                      <div key="op" style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "10px" }}>
+                      <div key="op" style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
                           <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{val} / meta {meta} PDVs</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{val} / {meta} PDVs alone</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                       </div>
                     );
                   })}
-                  {/* Cards por setor */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px" }}>
-                    {alone.filter(r => r.setor !== "OPERACAO").map(r => (
-                      <div key={r.setor} style={styles.gvCard}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: "0.88rem" }}>Setor {r.setor}</span>
+                  {/* Cards por RN com meta individual e tarja colorida */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px", marginBottom: "16px" }}>
+                    {alone.filter(r => r.setor !== "OPERACAO").map(r => {
+                      const val  = parseInt(r.pdvs_alone || 0);
+                      const meta = parseInt(r.meta || 0);
+                      const pct  = parseFloat(r.pct || (meta > 0 ? Math.round(val / meta * 100) : 0));
+                      const cor  = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      const tarjaBg = pct >= 100 ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
+                      const tarjaBorder = pct >= 100 ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(251,185,0,0.25)" : "rgba(248,113,113,0.25)";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, background: tarjaBg, border: `1px solid ${tarjaBorder}` }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: "0.88rem" }}>Setor {r.setor}</span>
+                            <span style={{ color: cor, fontWeight: "700", fontSize: "0.9rem" }}>{pct}%</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{val} / {meta || "—"} alone</span>
+                          </div>
                         </div>
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_total} PDVs</span>
-                          <span style={{ color: "#4ade80", fontWeight: "700" }}>{r.pdvs_alone} alone</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+                  {/* Detalhe por PDV */}
+                  {aloneDetalhe.length > 0 && (
+                    <>
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
+                        {[
+                          { label: "RN",     val: aloneFiltroRN,  set: setAloneFiltroRN,  opts: ["TODOS", ...new Set(aloneDetalhe.map(r => r.setor).filter(Boolean))].sort() },
+                          { label: "Dia",    val: aloneFiltroDia, set: setAloneFiltroDia, opts: ["TODOS", ...new Set(aloneDetalhe.map(r => r.dia_visita).filter(Boolean))].sort() },
+                          { label: "Alone",  val: aloneFiltroPDV, set: setAloneFiltroPDV, opts: ["TODOS", "SIM", "NÃO"] },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
+                          {aloneDetalhe.filter(r =>
+                            (aloneFiltroRN  === "TODOS" || r.setor      === aloneFiltroRN) &&
+                            (aloneFiltroDia === "TODOS" || r.dia_visita === aloneFiltroDia) &&
+                            (aloneFiltroPDV === "TODOS" || r.is_alone   === aloneFiltroPDV)
+                          ).length} PDVs
+                        </span>
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["RN","PDV","Nome","Dia","Ped. Total","Ped. Alone","Alone","SKU Top"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {aloneDetalhe.filter(r =>
+                              (aloneFiltroRN  === "TODOS" || r.setor      === aloneFiltroRN) &&
+                              (aloneFiltroDia === "TODOS" || r.dia_visita === aloneFiltroDia) &&
+                              (aloneFiltroPDV === "TODOS" || r.is_alone   === aloneFiltroPDV)
+                            ).map((r, i) => (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "130px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)", textAlign: "right" }}>{r.pedidos_total}</td>
+                                <td style={{ padding: "7px 10px", color: "#fbb900", textAlign: "right", fontWeight: "600" }}>{r.pedidos_alone}</td>
+                                <td style={{ padding: "7px 10px" }}>
+                                  <span style={{ color: r.is_alone === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.is_alone}</span>
+                                </td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.sku_top || "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
