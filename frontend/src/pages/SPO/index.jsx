@@ -1,4 +1,4 @@
-/* BUILD_20260517_004909 */
+/* BUILD_20260522_013407 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -97,6 +97,9 @@ export default function SPO() {
   const [scanntech, setScanntech] = useState([]);
   const [scanntechDet, setScanntechDet] = useState([]);
   const [scanFiltroStatus, setScanFiltroStatus] = useState("TODOS");
+  const [scanFiltroRN, setScanFiltroRN] = useState("TODOS");
+  const [scanFiltroDia, setScanFiltroDia] = useState("TODOS");
+  const [lojaFiltroDia, setLojaFiltroDia] = useState("TODOS");
   const [portIdeal, setPortIdeal] = useState([]);
   const [portIdealDet, setPortIdealDet] = useState([]);
   const [portFiltroGV, setPortFiltroGV] = useState("TODOS");
@@ -213,8 +216,14 @@ export default function SPO() {
   });
 
 
-  const MESES_PT = {"2026-04":"Abr/26","2026-05":"Mai/26","2026-06":"Jun/26"};
-  const fmtMes = (m) => MESES_PT[m] || m;
+  const MESES_NOMES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const fmtMes = (m) => {
+    if (!m) return "—";
+    const [ano, mes] = m.split("-");
+    if (!mes) return m;
+    const nome = MESES_NOMES[parseInt(mes, 10) - 1];
+    return nome ? `${nome}/${String(ano).slice(2)}` : m;
+  };
   const gvsUnicos = [...new Set(detalhe.map((d) => d.gv))].sort();
   const diasUnicos = [...new Set(detalhe.map((d) => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort();
 
@@ -988,19 +997,29 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o planificador de Cupons para calcular automaticamente.</p>
               ) : (
                 <>
+                  {/* Consolidado — Operação primeiro, depois setores */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {cupons.map((r) => {
+                    {[...cupons].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const isOp = r.setor === "OPERACAO";
+                      const meta = parseInt(r.meta || 0);
+                      const real = parseInt(r.cupons_mes || 0);
+                      const pct  = meta > 0 ? Math.round(real / meta * 100) : null;
+                      const cor  = pct === null ? "#fbb900" : pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
                       return (
                         <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                               {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
                             </span>
+                            {pct !== null && (
+                              <span style={{ color: cor, fontWeight: "700", fontSize: isOp ? "1rem" : "0.9rem" }}>{pct}%</span>
+                            )}
                           </div>
+                          {pct !== null && <BarraProgresso pct={pct} cor={cor} />}
                           <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>Cupons resgatados</span>
-                            <span style={{ color: "#fbb900", fontWeight: "700", fontSize: "1.1rem" }}>{r.cupons_mes}</span>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
+                              {real}{meta > 0 ? ` / ${meta}` : ""} cupons
+                            </span>
                           </div>
                         </div>
                       );
@@ -1008,9 +1027,9 @@ export default function SPO() {
                   </div>
                   {cuponsDet.length > 0 && (
                     <>
-                      {/* Filtros */}
-                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>PDVs sem resgate no mês atual</p>
+                      {/* Filtros em linha única com fonte reduzida */}
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", whiteSpace: "nowrap" }}>PDVs sem resgate:</p>
                         {[
                           { label: "GV", val: cuponsGV, set: setCuponsGV, opts: ["TODOS", ...new Set(cuponsDet.map(r => r.gv).filter(Boolean))].sort() },
                           { label: "RN", val: cuponsRN, set: setCuponsRN, opts: ["TODOS", ...new Set(cuponsDet.map(r => r.setor).filter(Boolean))].sort() },
@@ -1018,11 +1037,11 @@ export default function SPO() {
                           { label: "Marca", val: cuponsMarca, set: setCuponsMarca, opts: ["TODAS", ...new Set(cuponsDet.map(r => r.campanha).filter(Boolean))].sort() },
                         ].map(({ label, val, set, opts }) => (
                           <select key={label} value={val} onChange={e => set(e.target.value)}
-                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
                             {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
                           </select>
                         ))}
-                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
                           {cuponsDet.filter(r =>
                             (cuponsGV === "TODOS" || r.gv === cuponsGV) &&
                             (cuponsRN === "TODOS" || r.setor === cuponsRN) &&
@@ -1078,9 +1097,9 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o Planificador de Loja Ideal para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Resumo por setor */}
+                  {/* Consolidado — Operação primeiro */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {lojaIdeal.map((r) => {
+                    {[...lojaIdeal].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const pct = parseFloat(r.pct || 0);
                       const cor = pct >= 40 ? "#4ade80" : pct >= 25 ? "#fbb900" : "#f87171";
                       const isOp = r.setor === "OPERACAO";
@@ -1105,19 +1124,21 @@ export default function SPO() {
                   {/* Detalhe */}
                   {lojaIdealDet.length > 0 && (
                     <>
-                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
                         {[
-                          { label: "RN", val: lojaFiltroRN, set: setLojaFiltroRN, opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.setor))].sort() },
+                          { label: "RN",     val: lojaFiltroRN,     set: setLojaFiltroRN,     opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.setor))].sort() },
+                          { label: "Dia",    val: lojaFiltroDia,    set: setLojaFiltroDia,    opts: ["TODOS", ...new Set(lojaIdealDet.map(r => r.dia_visita).filter(Boolean))].sort() },
                           { label: "Status", val: lojaFiltroStatus, set: setLojaFiltroStatus, opts: ["TODOS", "SIM", "NÃO"] },
                         ].map(({ label, val, set, opts }) => (
                           <select key={label} value={val} onChange={e => set(e.target.value)}
-                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
                             {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
                           </select>
                         ))}
-                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
                           {lojaIdealDet.filter(r =>
                             (lojaFiltroRN === "TODOS" || r.setor === lojaFiltroRN) &&
+                            (lojaFiltroDia === "TODOS" || r.dia_visita === lojaFiltroDia) &&
                             (lojaFiltroStatus === "TODOS" || r.loja_ideal === lojaFiltroStatus)
                           ).length} PDVs
                         </span>
@@ -1134,6 +1155,7 @@ export default function SPO() {
                           <tbody>
                             {lojaIdealDet.filter(r =>
                               (lojaFiltroRN === "TODOS" || r.setor === lojaFiltroRN) &&
+                              (lojaFiltroDia === "TODOS" || r.dia_visita === lojaFiltroDia) &&
                               (lojaFiltroStatus === "TODOS" || r.loja_ideal === lojaFiltroStatus)
                             ).sort((a,b) => parseFloat(b.pts_total||0) - parseFloat(a.pts_total||0)).map((r, i) => {
                               const pts = parseFloat(r.pts_total || 0);
@@ -1173,9 +1195,9 @@ export default function SPO() {
                 <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Resumo */}
+                  {/* Consolidado — Operação primeiro, sem GV NaN */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {scanntech.map((r) => {
+                    {[...scanntech].filter(r => r.gv !== "NaN" && r.gv !== null && r.gv !== undefined && String(r.gv).trim() !== "").sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const isOp = r.setor === "OPERACAO";
                       const ativos = parseInt(r.pdvs_ativos || 0);
                       const total  = parseInt(r.pdvs_total  || 0);
@@ -1203,16 +1225,23 @@ export default function SPO() {
                   {/* Detalhe */}
                   {scanntechDet.length > 0 && (
                     <>
-                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                        <select value={scanFiltroStatus} onChange={e => setScanFiltroStatus(e.target.value)}
-                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
-                          <option value="TODOS">Todos os status</option>
-                          {[...new Set(scanntechDet.map(r => r.status_scanntech))].sort().map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
-                          {scanntechDet.filter(r => scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus).length} PDVs
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
+                        {[
+                          { label: "RN",     val: scanFiltroRN,     set: setScanFiltroRN,     opts: ["TODOS", ...new Set(scanntechDet.map(r => r.setor).filter(Boolean))].sort() },
+                          { label: "Dia",    val: scanFiltroDia,    set: setScanFiltroDia,    opts: ["TODOS", ...new Set(scanntechDet.map(r => r.dia_visita).filter(Boolean))].sort() },
+                          { label: "Status", val: scanFiltroStatus, set: setScanFiltroStatus, opts: ["TODOS", ...new Set(scanntechDet.map(r => r.status_scanntech).filter(Boolean))].sort() },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
+                          {scanntechDet.filter(r =>
+                            (scanFiltroRN === "TODOS" || r.setor === scanFiltroRN) &&
+                            (scanFiltroDia === "TODOS" || r.dia_visita === scanFiltroDia) &&
+                            (scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus)
+                          ).length} PDVs
                         </span>
                       </div>
                       <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -1225,8 +1254,11 @@ export default function SPO() {
                             </tr>
                           </thead>
                           <tbody>
-                            {scanntechDet.filter(r => scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus)
-                              .sort((a,b) => a.status_scanntech.localeCompare(b.status_scanntech))
+                            {scanntechDet.filter(r =>
+                              (scanFiltroRN === "TODOS" || r.setor === scanFiltroRN) &&
+                              (scanFiltroDia === "TODOS" || r.dia_visita === scanFiltroDia) &&
+                              (scanFiltroStatus === "TODOS" || r.status_scanntech === scanFiltroStatus)
+                            ).sort((a,b) => a.status_scanntech.localeCompare(b.status_scanntech))
                               .map((r, i) => (
                                 <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                   <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
@@ -1258,55 +1290,99 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Resumo */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {portIdeal.map((r) => {
-                      const pct = parseFloat(r.pct || 0);
-                      const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
-                      const isOp = r.setor === "OPERACAO";
-                      return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
-                          <div style={styles.gvHeader}>
-                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
-                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                            </span>
-                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
-                          </div>
-                          <BarraProgresso pct={pct} cor={cor} />
-                          <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
-                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                          </div>
-                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
+                  {/* Consolidado por GV */}
+                  {(() => {
+                    const gvsPort = [...new Set(portIdeal.filter(r => r.setor !== "OPERACAO").map(r => r.gv).filter(Boolean))].sort();
+                    return (
+                      <>
+                        {/* Card Operação */}
+                        {portIdeal.filter(r => r.setor === "OPERACAO").map(r => {
+                          const pct = parseFloat(r.pct || 0);
+                          const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
+                          return (
+                            <div key="op" style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
+                              <div style={styles.gvHeader}>
+                                <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
+                                <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                              </div>
+                              <BarraProgresso pct={pct} cor={cor} />
+                              <div style={styles.gvFooter}>
+                                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
+                                <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                              </div>
+                              <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
+                            </div>
+                          );
+                        })}
+                        {/* Cards por GV */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
+                          {gvsPort.map(gv => {
+                            const pdvsGV = portIdealDet.filter(r => r.gv === gv);
+                            const ideaisGV = pdvsGV.filter(r => r.portfolio_ideal === "SIM").length;
+                            const totalGV = pdvsGV.length;
+                            const pctGV = totalGV > 0 ? Math.round(ideaisGV / totalGV * 100) : 0;
+                            const corGV = pctGV >= 46 ? "#4ade80" : pctGV >= 30 ? "#fbb900" : "#f87171";
+                            return (
+                              <div key={gv} style={styles.gvCard}>
+                                <div style={styles.gvHeader}>
+                                  <span style={{ fontWeight: "700", fontSize: "0.88rem" }}>GV {gv}</span>
+                                  <span style={{ color: corGV, fontWeight: "700" }}>{pctGV}%</span>
+                                </div>
+                                <BarraProgresso pct={pctGV} cor={corGV} />
+                                <div style={styles.gvFooter}>
+                                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{ideaisGV}/{totalGV} PDVs</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* Cards por RN */}
+                          {portIdeal.filter(r => r.setor !== "OPERACAO").map(r => {
+                            const pct = parseFloat(r.pct || 0);
+                            const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
+                            return (
+                              <div key={r.setor} style={styles.gvCard}>
+                                <div style={styles.gvHeader}>
+                                  <span style={{ fontWeight: "700", fontSize: "0.85rem" }}>Setor {r.setor}</span>
+                                  <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                                </div>
+                                <BarraProgresso pct={pct} cor={cor} />
+                                <div style={styles.gvFooter}>
+                                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.pdvs_ideais}/{r.pdvs_total} PDVs</span>
+                                  <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                                </div>
+                                <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 46%</p>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                  {/* Detalhe com filtros */}
+                      </>
+                    );
+                  })()}
+                  {/* Detalhe com filtros — sem filtro GV, com filtro itens faltantes */}
                   {portIdealDet.length > 0 && (
                     <>
-                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto", alignItems: "center" }}>
                         {[
-                          { label: "GV",     val: portFiltroGV,     set: setPortFiltroGV,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.gv).filter(Boolean))].sort() },
                           { label: "RN",     val: portFiltroRN,     set: setPortFiltroRN,     opts: ["TODOS", ...new Set(portIdealDet.map(r => r.setor).filter(Boolean))].sort() },
                           { label: "Dia",    val: portFiltroDia,    set: setPortFiltroDia,    opts: ["TODOS", ...new Set(portIdealDet.map(r => r.dia_visita).filter(Boolean))].sort() },
                           { label: "Status", val: portFiltroStatus, set: setPortFiltroStatus, opts: ["TODOS", "SIM", "NÃO"] },
+                          { label: "Itens Faltando", val: portFiltroGV, set: setPortFiltroGV, opts: ["TODOS", ...new Set(portIdealDet.map(r => r.itens_faltantes).filter(Boolean)).values()].sort() },
                         ].map(({ label, val, set, opts }) => (
                           <select key={label} value={val} onChange={e => set(e.target.value)}
-                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer" }}>
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
                             {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
                           </select>
                         ))}
-                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
                           {portIdealDet.filter(r =>
-                            (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
                             (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
                             (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
-                            (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
+                            (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus) &&
+                            (portFiltroGV === "TODOS" || r.itens_faltantes === portFiltroGV)
                           ).length} PDVs
                         </span>
                       </div>
-                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                           <thead>
                             <tr>
@@ -1317,10 +1393,10 @@ export default function SPO() {
                           </thead>
                           <tbody>
                             {portIdealDet.filter(r =>
-                              (portFiltroGV === "TODOS" || r.gv === portFiltroGV) &&
                               (portFiltroRN === "TODOS" || r.setor === portFiltroRN) &&
                               (portFiltroDia === "TODOS" || r.dia_visita === portFiltroDia) &&
-                              (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus)
+                              (portFiltroStatus === "TODOS" || r.portfolio_ideal === portFiltroStatus) &&
+                              (portFiltroGV === "TODOS" || r.itens_faltantes === portFiltroGV)
                             ).map((r, i) => (
                               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
@@ -1332,7 +1408,30 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px" }}>
                                   <span style={{ color: r.portfolio_ideal === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.portfolio_ideal}</span>
                                 </td>
-                                <td style={{ padding: "7px 10px", color: "#fbb900", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
+                                <td style={{ padding: "7px 10px" }}>
+                                  {r.itens_faltantes && r.itens_faltantes !== "—" ? (
+                                    <span
+                                      title={String(r.itens_faltantes).split(";").map(s => s.trim()).join("\n")}
+                                      onClick={e => {
+                                        const existing = document.getElementById("port24-popup");
+                                        if (existing) existing.remove();
+                                        const items = String(r.itens_faltantes).split(";").map(s => s.trim()).filter(Boolean);
+                                        const popup = document.createElement("div");
+                                        popup.id = "port24-popup";
+                                        popup.style.cssText = "position:fixed;z-index:9999;background:#1a2035;border:1px solid rgba(251,185,0,0.3);border-radius:10px;padding:14px 16px;min-width:220px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:#fff;font-size:0.8rem;";
+                                        popup.style.left = Math.min(e.clientX + 12, window.innerWidth - 340) + "px";
+                                        popup.style.top  = Math.min(e.clientY + 12, window.innerHeight - 200) + "px";
+                                        popup.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="color:#fbb900">Itens Faltando (${items.length})</strong><span onclick="document.getElementById('port24-popup').remove()" style="cursor:pointer;color:rgba(255,255,255,0.4);font-size:1rem">✕</span></div>` + items.map(it => `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.8)">${it}</div>`).join("");
+                                        document.body.appendChild(popup);
+                                        const close = (ev) => { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener("click", close); } };
+                                        setTimeout(() => document.addEventListener("click", close), 10);
+                                      }}
+                                      style={{ color: "#fbb900", fontSize: "0.75rem", cursor: "pointer", textDecoration: "underline dotted", whiteSpace: "nowrap" }}
+                                    >
+                                      {String(r.itens_faltantes).split(";").filter(Boolean).length} itens ▾
+                                    </span>
+                                  ) : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
