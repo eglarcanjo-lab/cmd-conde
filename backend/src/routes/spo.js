@@ -167,6 +167,14 @@ router.get("/tasks-cerveja/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/tasks-cerveja/detalhe
+router.get("/tasks-cerveja/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_tasks_cerveja_detalhe");
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 
 // GET /api/spo/score5/resumo
 router.get("/score5/resumo", async (req, res) => {
