@@ -729,7 +729,9 @@ export default function SPO() {
                           </div>
                           <BarraProgresso pct={pct} cor={cor} />
                           <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_ok}/{r.pdvs_total} PDVs</span>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>
+                              {r.pdvs_ok ?? r.tasks_validas ?? "?"}/{r.pdvs_total ?? r.tasks_total ?? "?"} PDVs
+                            </span>
                             <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                           </div>
                           <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
