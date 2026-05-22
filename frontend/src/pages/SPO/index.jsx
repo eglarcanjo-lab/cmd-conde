@@ -1,4 +1,4 @@
-/* BUILD_20260522_025859 */
+/* BUILD_20260522_145258 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -62,7 +62,8 @@ export default function SPO() {
   const [diasRota, setDiasRota] = useState([]);
   const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
   const [desafios, setDesafios] = useState([]);
-  const [dto, setDto] = useState(null);
+  const [dto, setDto] = useState([]);        // array de meses
+  const [dtoView, setDtoView] = useState("mensal"); // "mensal" | "trimestral" 
   const [promo, setPromo] = useState([]);
   const [promoDetalhe, setPromoDetalhe] = useState([]);
   const [promoBusca, setPromoBusca] = useState("");
@@ -181,7 +182,7 @@ export default function SPO() {
       setDiasRota(resDiasRota?.data || []);
       setDesafios(resDesafios?.data || []);
       const dtoData = resDto?.data || [];
-      setDto(Array.isArray(dtoData) && dtoData.length > 0 ? dtoData[0] : (dtoData && !Array.isArray(dtoData) ? dtoData : null));
+      setDto(Array.isArray(dtoData) ? dtoData : (dtoData ? [dtoData] : []));
       const promoData = resPromo?.data || [];
       setPromo(Array.isArray(promoData) ? promoData : []);
       const promoDetData = resPromoDetalhe?.data || [];
@@ -474,41 +475,78 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 6) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 6 — DTO GC x GV</h3>
-              {!dto ? (
+              {dto.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO DTO GC.</p>
-              ) : (
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{dto.mes_referencia}</span>
-                    <span style={{ ...styles.apBadge, background: dto.status_final === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: dto.status_final === "OK" ? "#4ade80" : "#f87171" }}>
-                      {dto.status_final === "OK" ? "✅ OK" : "❌ NOK"}
-                    </span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px" }}>
-                    {[
-                      { label: "Matinal", real: dto.matinal_real, meta: dto.matinal_meta, pct: dto.matinal_pct, status: dto.matinal_status },
-                      { label: "Vespertina", real: dto.vespertina_real, meta: dto.vespertina_meta, pct: dto.vespertina_pct, status: dto.vespertina_status },
-                      { label: "Rota Coaching", real: dto.coaching_real, meta: dto.coaching_meta, pct: dto.coaching_pct, status: dto.coaching_status },
-                    ].map((item) => {
-                      const pct = parseFloat(item.pct || 0);
-                      const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-                      return (
-                        <div key={item.label} style={styles.gvCard}>
-                          <div style={styles.gvHeader}>
-                            <span style={{ fontSize: "0.88rem", fontWeight: "600" }}>{item.label}</span>
-                            <span style={{ ...styles.apBadge, background: item.status === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: item.status === "OK" ? "#4ade80" : "#f87171", fontSize: "0.72rem" }}>{item.status}</span>
+              ) : (() => {
+                // Mês mais recente disponível
+                const meses = [...dto].sort((a,b) => (b.mes_referencia||"").localeCompare(a.mes_referencia||""));
+                const dtoMes = meses[0] || {};
+                // Trimestral: soma real e meta dos últimos 3 meses
+                const ultimos3 = meses.slice(0, 3);
+                const tri = {
+                  matinal_real:     ultimos3.reduce((s,r) => s + Number(r.matinal_real||0), 0),
+                  matinal_meta:     ultimos3.reduce((s,r) => s + Number(r.matinal_meta||0), 0),
+                  vespertina_real:  ultimos3.reduce((s,r) => s + Number(r.vespertina_real||0), 0),
+                  vespertina_meta:  ultimos3.reduce((s,r) => s + Number(r.vespertina_meta||0), 0),
+                  coaching_real:    ultimos3.reduce((s,r) => s + Number(r.coaching_real||0), 0),
+                  coaching_meta:    ultimos3.reduce((s,r) => s + Number(r.coaching_meta||0), 0),
+                };
+                tri.matinal_pct     = tri.matinal_meta  > 0 ? Math.round(tri.matinal_real    / tri.matinal_meta    * 100) : 0;
+                tri.vespertina_pct  = tri.vespertina_meta > 0 ? Math.round(tri.vespertina_real / tri.vespertina_meta * 100) : 0;
+                tri.coaching_pct    = tri.coaching_meta  > 0 ? Math.round(tri.coaching_real   / tri.coaching_meta   * 100) : 0;
+                tri.status_final    = (tri.matinal_pct >= 100 && tri.vespertina_pct >= 100 && tri.coaching_pct >= 100) ? "OK" : "NOK";
+
+                const d = dtoView === "trimestral" ? tri : dtoMes;
+                const periodoLabel = dtoView === "trimestral"
+                  ? `Trimestral (${ultimos3.map(r => fmtMes(r.mes_referencia)).reverse().join(" · ")})`
+                  : fmtMes(dtoMes.mes_referencia);
+
+                return (
+                  <div>
+                    {/* Botão mensal/trimestral */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{periodoLabel}</span>
+                      <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px" }}>
+                        {["mensal","trimestral"].map(v => (
+                          <button key={v} onClick={() => setDtoView(v)}
+                            style={{ background: dtoView === v ? "rgba(251,185,0,0.2)" : "transparent", border: "none", color: dtoView === v ? "#fbb900" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: dtoView === v ? "600" : "400" }}>
+                            {v === "mensal" ? "Mensal" : "Trimestral"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Badge status */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+                      <span style={{ ...styles.apBadge, background: d.status_final === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: d.status_final === "OK" ? "#4ade80" : "#f87171" }}>
+                        {d.status_final === "OK" ? "✅ OK" : "❌ NOK"}
+                      </span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px" }}>
+                      {[
+                        { label: "Matinal",       real: d.matinal_real,    meta: d.matinal_meta,    pct: d.matinal_pct,    status: d.matinal_status },
+                        { label: "Vespertina",    real: d.vespertina_real, meta: d.vespertina_meta, pct: d.vespertina_pct, status: d.vespertina_status },
+                        { label: "Rota Coaching", real: d.coaching_real,   meta: d.coaching_meta,   pct: d.coaching_pct,   status: d.coaching_status },
+                      ].map((item) => {
+                        const pct = parseFloat(item.pct || 0);
+                        const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                        return (
+                          <div key={item.label} style={styles.gvCard}>
+                            <div style={styles.gvHeader}>
+                              <span style={{ fontSize: "0.88rem", fontWeight: "600" }}>{item.label}</span>
+                              {item.status && <span style={{ ...styles.apBadge, background: item.status === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: item.status === "OK" ? "#4ade80" : "#f87171", fontSize: "0.72rem" }}>{item.status}</span>}
+                            </div>
+                            <BarraProgresso pct={pct} cor={cor} />
+                            <div style={styles.gvFooter}>
+                              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{item.real} / {item.meta}</span>
+                              <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                            </div>
                           </div>
-                          <BarraProgresso pct={pct} cor={cor} />
-                          <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{item.real} / {item.meta}</span>
-                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
             )}
 
