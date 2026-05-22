@@ -236,7 +236,7 @@ export default function SPO() {
         <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+        <div style={{ flex: "0 0 35%", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
@@ -1562,7 +1562,7 @@ export default function SPO() {
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 40%", minWidth: "380px", position: "sticky", top: "20px" }}>
+        <div style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? <p style={styles.msg}>Carregando...</p> : (
@@ -1620,13 +1620,13 @@ export default function SPO() {
               
                             const mesAtual = new Date().toISOString().slice(0,7);
               
-                            const thStyle = { padding: "8px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
-                            const thSubStyle = { padding: "5px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
-                            const tdStyle = { padding: "7px 8px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
+                            const thStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
+                            const thSubStyle = { padding: "3px 5px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
+                            const tdStyle = { padding: "4px 5px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
               
                             return (
                               <div style={{ overflowX: "auto" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem", minWidth: "900px" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
                                   <thead>
                                     <tr>
                                       <th style={thStyle}>#</th>
@@ -1729,7 +1729,7 @@ const styles = {
   scoreboardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
   scoreboardTitle: { fontWeight: "700", fontSize: "0.95rem" },
   scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" },
-  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "6px" },
+  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" },
   kpiCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "4px" },
   kpiCardAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.04)" },
   kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" },
