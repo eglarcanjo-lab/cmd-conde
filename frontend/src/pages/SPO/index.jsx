@@ -1,4 +1,4 @@
-/* BUILD_20260522_145258 */
+/* BUILD_20260522_162703 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +72,9 @@ export default function SPO() {
   const [politica, setPolitica] = useState([]);
   const [menu, setMenu] = useState([]);
   const [tasksCerveja, setTasksCerveja] = useState([]);
+  const [tasksCervejaDetalhe, setTasksCervejaDetalhe] = useState([]);
+  const [kpi11FiltroRN, setKpi11FiltroRN] = useState("TODOS");
+  const [kpi11FiltroDia, setKpi11FiltroDia] = useState("TODOS");
   const [score5, setScore5] = useState([]);
   const [tasksNab, setTasksNab] = useState([]);
   const [tasksVolume, setTasksVolume] = useState([]);
@@ -137,7 +140,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resTasksCervejaDetalhe, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -150,6 +153,7 @@ export default function SPO() {
         api.get("/api/spo/politica-comercial/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/menu/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-cerveja/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/tasks-cerveja/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/score5/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-nab/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-volume/resumo").catch(() => ({ data: [] })),
@@ -190,6 +194,7 @@ export default function SPO() {
       setPolitica(resPolitica?.data || []);
       setMenu(resMenu?.data || []);
       setTasksCerveja(resTasksCerveja?.data || []);
+      setTasksCervejaDetalhe(resTasksCervejaDetalhe?.data || []);
       setScore5(resScore5?.data || []);
       setTasksNab(resTasksNab?.data || []);
       setTasksVolume(resTasksVolume?.data || []);
@@ -707,29 +712,81 @@ export default function SPO() {
               {tasksCerveja.length === 0 ? (
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksCerveja.map((r) => {
-                    const pct = parseFloat(r.pct || 0);
-                    const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
-                    const isOp = r.setor === "OPERACAO";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                <>
+                  {/* Consolidado por setor — contador POR PDV */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px", marginBottom: "16px" }}>
+                    {[...tasksCerveja].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
+                      const pct = parseFloat(r.pct || 0);
+                      const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                      const isOp = r.setor === "OPERACAO";
+                      return (
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div style={styles.gvHeader}>
+                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
+                            </span>
+                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          </div>
+                          <BarraProgresso pct={pct} cor={cor} />
+                          <div style={styles.gvFooter}>
+                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_ok}/{r.pdvs_total} PDVs</span>
+                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
                         </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 60%</p>
+                      );
+                    })}
+                  </div>
+                  {/* Detalhe — PDVs com task em aberto */}
+                  {tasksCervejaDetalhe.length > 0 && (
+                    <>
+                      <p style={{ margin: "0 0 8px", color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
+                        PDVs com task em aberto ({tasksCervejaDetalhe.filter(r =>
+                          (kpi11FiltroRN === "TODOS" || r.setor === kpi11FiltroRN) &&
+                          (kpi11FiltroDia === "TODOS" || r.dia_visita === kpi11FiltroDia)
+                        ).length})
+                      </p>
+                      <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "nowrap", overflowX: "auto" }}>
+                        {[
+                          { label: "RN",  val: kpi11FiltroRN,  set: setKpi11FiltroRN,  opts: ["TODOS", ...new Set(tasksCervejaDetalhe.map(r => r.setor).filter(Boolean))].sort() },
+                          { label: "Dia", val: kpi11FiltroDia, set: setKpi11FiltroDia, opts: ["TODOS", ...new Set(tasksCervejaDetalhe.map(r => r.dia_visita).filter(Boolean))].sort() },
+                        ].map(({ label, val, set, opts }) => (
+                          <select key={label} value={val} onChange={e => set(e.target.value)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "3px 8px", fontSize: "0.75rem", cursor: "pointer", flexShrink: 0 }}>
+                            {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
+                          </select>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
+                      <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead>
+                            <tr>
+                              {["RN","PDV","Nome","Dia","Status Task"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tasksCervejaDetalhe.filter(r =>
+                              (kpi11FiltroRN === "TODOS" || r.setor === kpi11FiltroRN) &&
+                              (kpi11FiltroDia === "TODOS" || r.dia_visita === kpi11FiltroDia)
+                            ).map((r, i) => (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                                <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                                <td style={{ padding: "7px 10px" }}>
+                                  <span style={{ color: r.status_task === "OPEN" ? "#fbb900" : "#f87171", fontWeight: "600", fontSize: "0.75rem" }}>{r.status_task}</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
             </div>
             )}
