@@ -1,4 +1,4 @@
-/* BUILD_20260522_013407 */
+/* BUILD_20260522_025859 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -116,6 +116,22 @@ export default function SPO() {
   const [filtroDia, setFiltroDia] = useState("todos");
 
   useEffect(() => { carregar(); }, []);
+
+  // Resetar aba quando KPI muda para evitar aba inválida visível
+  useEffect(() => {
+    if (kpiAtivo === null) return;
+    if (kpiAtivo === 1) {
+      // gv e detalhe são válidas para KPI 1 — mantém
+      return;
+    }
+    if (kpiAtivo === 2) {
+      // sem_coaching é válida para KPI 2 — mantém se estiver nela
+      if (!["operacao", "sem_coaching"].includes(aba)) setAba("operacao");
+      return;
+    }
+    // Demais KPIs: só operacao faz sentido
+    setAba("operacao");
+  }, [kpiAtivo]);
 
   async function carregar() {
     setLoading(true);
@@ -276,16 +292,46 @@ export default function SPO() {
           </div>
         </div>
 
-        {/* Abas de visão */}
-        <div style={styles.abas}>
-          {["operacao", "gv", "detalhe", ...(kpiAtivo === null || kpiAtivo === 2 ? ["sem_coaching"] : [])].map((a) => (
-            <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
-              {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
-            </button>
-          ))}
-        </div>
+        {/* Abas de visão — contextuais por KPI */}
+        {(() => {
+          let abasVisiveis = ["operacao"];
+          if (kpiAtivo === null || kpiAtivo === 1) abasVisiveis = ["operacao", "gv", "detalhe"];
+          if (kpiAtivo === 2) abasVisiveis = ["operacao", "sem_coaching"];
+          return (
+            <div style={styles.abas}>
+              {abasVisiveis.map((a) => (
+                <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
+                  {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
-        {loading ? <p style={styles.msg}>Carregando...</p> : (
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0" }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "14px",
+                padding: "20px",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ height: "14px", width: "40%", background: "rgba(255,255,255,0.06)", borderRadius: "6px", marginBottom: "12px" }} />
+                <div style={{ height: "10px", width: "70%", background: "rgba(255,255,255,0.04)", borderRadius: "6px", marginBottom: "8px" }} />
+                <div style={{ height: "10px", width: "55%", background: "rgba(255,255,255,0.04)", borderRadius: "6px" }} />
+                <div style={{
+                  position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
+                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)",
+                  animation: "shimmer 1.4s infinite",
+                }} />
+              </div>
+            ))}
+            <style>{`@keyframes shimmer { 0% { left: -100% } 100% { left: 200% } }`}</style>
+          </div>
+        ) : (
           <>
 
 
@@ -1597,7 +1643,30 @@ export default function SPO() {
         <div style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
-            {loading ? <p style={styles.msg}>Carregando...</p> : (
+            {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0" }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "14px",
+                padding: "20px",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ height: "14px", width: "40%", background: "rgba(255,255,255,0.06)", borderRadius: "6px", marginBottom: "12px" }} />
+                <div style={{ height: "10px", width: "70%", background: "rgba(255,255,255,0.04)", borderRadius: "6px", marginBottom: "8px" }} />
+                <div style={{ height: "10px", width: "55%", background: "rgba(255,255,255,0.04)", borderRadius: "6px" }} />
+                <div style={{
+                  position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
+                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)",
+                  animation: "shimmer 1.4s infinite",
+                }} />
+              </div>
+            ))}
+            <style>{`@keyframes shimmer { 0% { left: -100% } 100% { left: 200% } }`}</style>
+          </div>
+        ) : (
               <>
                           {/* PAINEL SPO CONSOLIDADO */}
                           {(() => {
