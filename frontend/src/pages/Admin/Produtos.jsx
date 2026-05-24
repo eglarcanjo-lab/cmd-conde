@@ -104,6 +104,7 @@ export default function Produtos() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
+  const [filtroCat, setFiltroCat] = useState("");
   const [editando, setEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [sucesso, setSucesso] = useState("");
@@ -146,14 +147,28 @@ export default function Produtos() {
     cod: s.cod_prod, nome: s.nome_prod, categorias: s.categoria || ""
   }));
 
+  // Contagem por categoria (para badges nos chips)
+  const contagemPorCat = {};
+  lista.forEach((p) => {
+    const catField = p.categorias || p.categoria || "";
+    if (catField) {
+      catField.split("|").map(c => c.trim()).filter(Boolean).forEach(c => {
+        contagemPorCat[c] = (contagemPorCat[c] || 0) + 1;
+      });
+    }
+  });
+
   const filtrados = lista.filter((p) => {
+    const catField = p.categorias || p.categoria || "";
     const buscaOk = !busca ||
       p.cod?.toString().includes(busca) ||
       p.nome?.toLowerCase().includes(busca.toLowerCase());
     const filtroOk = filtro === "todos" ||
-      (filtro === "sem_cat" && !p.categorias) ||
-      (filtro === "com_cat" && p.categorias);
-    return buscaOk && filtroOk;
+      (filtro === "sem_cat" && !catField) ||
+      (filtro === "com_cat" && catField);
+    const catOk = !filtroCat ||
+      catField.split("|").map(c => c.trim()).includes(filtroCat);
+    return buscaOk && filtroOk && catOk;
   });
 
   return (
@@ -178,13 +193,62 @@ export default function Produtos() {
           onChange={(e) => setBusca(e.target.value)}
         />
         {aba === "base" && (
-          <select style={styles.inputFiltro} value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+          <select style={styles.inputFiltro} value={filtro} onChange={(e) => { setFiltro(e.target.value); setFiltroCat(""); }}>
             <option value="todos">Todos</option>
             <option value="com_cat">Com categoria</option>
             <option value="sem_cat">Sem categoria</option>
           </select>
         )}
         <span style={styles.countLabel}>{filtrados.length} produtos</span>
+      </div>
+
+      {/* Filtro por categoria */}
+      <div style={styles.catFiltroWrap}>
+        <button
+          style={{
+            ...styles.catChip,
+            background: !filtroCat ? "rgba(251,185,0,0.18)" : "rgba(255,255,255,0.05)",
+            color: !filtroCat ? "#fbb900" : "rgba(255,255,255,0.35)",
+            border: !filtroCat ? "1px solid rgba(251,185,0,0.4)" : "1px solid rgba(255,255,255,0.08)",
+            fontWeight: !filtroCat ? "700" : "400",
+          }}
+          onClick={() => { setFiltroCat(""); setFiltro("todos"); }}
+        >
+          Todas
+        </button>
+        {CATEGORIAS.map(cat => {
+          const clr = CAT_COLORS[cat] || { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" };
+          const ativo = filtroCat === cat;
+          const qtd = contagemPorCat[cat] || 0;
+          return (
+            <button
+              key={cat}
+              style={{
+                ...styles.catChip,
+                background: ativo ? clr.bg : "rgba(255,255,255,0.03)",
+                color: ativo ? clr.color : "rgba(255,255,255,0.35)",
+                border: ativo ? `1px solid ${clr.color}50` : "1px solid rgba(255,255,255,0.07)",
+                fontWeight: ativo ? "700" : "400",
+              }}
+              onClick={() => { setFiltroCat(ativo ? "" : cat); setFiltro("todos"); }}
+            >
+              {cat}
+              {qtd > 0 && (
+                <span style={{
+                  marginLeft: "5px",
+                  background: ativo ? `${clr.color}25` : "rgba(255,255,255,0.08)",
+                  color: ativo ? clr.color : "rgba(255,255,255,0.3)",
+                  padding: "0px 5px",
+                  borderRadius: "8px",
+                  fontSize: "0.68rem",
+                  fontWeight: "700",
+                }}>
+                  {qtd}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
@@ -231,9 +295,11 @@ const styles = {
   abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
   badge: { background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "1px 6px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: "700" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", marginBottom: "12px", textAlign: "center" },
-  filtrosRow: { display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" },
+  filtrosRow: { display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center", flexWrap: "wrap" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
+  catFiltroWrap: { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px", padding: "10px 12px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" },
+  catChip: { border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontSize: "0.75rem", fontFamily: "inherit", transition: "all 0.15s", display: "flex", alignItems: "center" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   lista: { display: "flex", flexDirection: "column", gap: "6px" },
   prodRow: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" },
