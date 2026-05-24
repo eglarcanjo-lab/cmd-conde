@@ -63,6 +63,8 @@ export default function Login() {
             <input
               style={styles.input}
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="000.000.000-00"
               value={cpf}
               onChange={(e) => setCpf(formatCPF(e.target.value))}
