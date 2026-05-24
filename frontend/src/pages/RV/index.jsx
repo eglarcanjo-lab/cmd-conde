@@ -79,7 +79,7 @@ export default function RV() {
   const normPeso = (val, fallback) => { const v = parseFloat(val || 0); return (v > 0 && v <= 100) ? v : fallback; };
 
   const apOk = ap?.ap_ok === "OK";
-  const poTotal = parseFloat(rv?.po_total || 1500);
+  const poTotal = parseFloat(rv?.po_total || 1000);
   const segmento = rv?.segmento || (["101","102","103"].includes(usuario?.cod) ? "OFF" : "ON");
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
   const pesoPontos = normPeso(rv?.peso_pontos, 50);

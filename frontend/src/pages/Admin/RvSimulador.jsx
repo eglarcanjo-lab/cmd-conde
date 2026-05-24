@@ -142,7 +142,7 @@ export default function RvSimulador() {
     const seg    = SETORES.find(s => s.cod === cod)?.tipo || "ON";
 
     const apOk    = ap?.ap_ok === "OK";
-    const poTotal = parseFloat(rv?.po_total || 1500);
+    const poTotal = parseFloat(rv?.po_total || 1000);
 
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
     const pesoPontos = normPeso(rv?.peso_pontos, 50);
