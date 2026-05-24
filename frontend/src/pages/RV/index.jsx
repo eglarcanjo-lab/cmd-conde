@@ -13,7 +13,7 @@ const KPIS_AP = [
 ];
 
 function BarIndicador({ label, real, meta, peso, po_total, bloqueado }) {
-  const pct = meta > 0 ? Math.min((real / meta) * 100, 125) : 0;
+  const pct = meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
   const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
   const valor_rv = bloqueado ? 0 : (po_total * (peso / 100)) * (pct / 100);
 
@@ -80,7 +80,7 @@ export default function RV() {
 
   const calcRv = (real, meta, peso) => {
     if (!apOk || !meta) return 0;
-    const pct = Math.min((real / meta) * 100, 125);
+    const pct = Math.min((real / meta) * 100, 150);
     return (poTotal * peso / 100) * (pct / 100);
   };
 

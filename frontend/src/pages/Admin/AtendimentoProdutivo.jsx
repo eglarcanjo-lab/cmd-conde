@@ -101,7 +101,10 @@ export default function AtendimentoProdutivo() {
       <div style={styles.toolbar}>
         <div>
           <h3 style={styles.title}>Atendimento Produtivo</h3>
-          <p style={styles.desc}>Preencha os 4 KPIs de cada RN. AP OK = todos os 4 atingidos.</p>
+          <p style={styles.desc}>
+            Dados importados automaticamente via <strong>SPO — Atendimento Produtivo</strong> na aba Arquivos.
+            Use esta tabela apenas para correção manual pontual.
+          </p>
         </div>
         <div style={styles.toolbarRight}>
           <input type="month" style={styles.inputMes} value={mesRef} onChange={(e) => setMesRef(e.target.value)} />

@@ -84,6 +84,15 @@ const ARQUIVOS_CONFIG = [
     icon: "⭐",
   },
   {
+    id: "faturamento_mktp",
+    campo: "faturamento_mktp",
+    rotulo: "Faturamento Marketplace",
+    descricao: "030509 — GMV Marketplace por setor (col G = Total Venda, col N = Setor)",
+    extensoes: ".csv,.inf,.txt",
+    periodicidade: "Mensal",
+    icon: "🛒",
+  },
+  {
     id: "spo_score5",
     campo: "spo_score5",
     rotulo: "SPO — Score 5 (ON_TRADE)",
