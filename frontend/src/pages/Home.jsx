@@ -30,6 +30,9 @@ export default function Home() {
           {usuario?.perfil === "admin" && (
             <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>
           )}
+          {usuario?.perfil === "director" && (
+            <button style={styles.adminBtn} onClick={() => navigate("/rv-admin")}>💰 RV Simulador</button>
+          )}
           <button style={styles.logout} onClick={logout}>Sair</button>
         </div>
       </div>
