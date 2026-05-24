@@ -35,15 +35,20 @@ function normPeso(val, fallback) {
   return (v > 0 && v <= 100) ? v : fallback;
 }
 
-function calcRv(real, meta, peso, poTotal, apOk) {
+// Pontos Bees: sem piso (paga de 0% a 150%)
+// Resultados (volume/faturamento): piso 70% — abaixo não paga
+function calcRv(real, meta, peso, poTotal, apOk, minPct = 70) {
   if (!apOk || !meta) return 0;
-  return (poTotal * peso / 100) * (pct(real, meta) / 100);
+  const p = pct(real, meta);
+  if (p < minPct) return 0;
+  return (poTotal * peso / 100) * (p / 100);
 }
 
-// Calcula valor potencial independente do AP (para mostrar em amarelo quando bloqueado)
-function calcRvPot(real, meta, peso, poTotal) {
+function calcRvPot(real, meta, peso, poTotal, minPct = 70) {
   if (!meta) return 0;
-  return (poTotal * peso / 100) * (pct(real, meta) / 100);
+  const p = pct(real, meta);
+  if (p < minPct) return 0;
+  return (poTotal * peso / 100) * (p / 100);
 }
 
 function fmtBrl(v) {
@@ -54,11 +59,11 @@ function fmtNum(v, dec = 1) {
   return Number(v).toLocaleString("pt-BR", { maximumFractionDigits: dec });
 }
 
-function BarRow({ label, real, meta, peso, poTotal, apOk }) {
+function BarRow({ label, real, meta, peso, poTotal, apOk, minPct = 70 }) {
   const p      = pct(real, meta);
   const cor    = p >= 100 ? "#4ade80" : p >= 70 ? "#fbb900" : "#f87171";
-  const val    = calcRv(real, meta, peso, poTotal, apOk);
-  const valPot = calcRvPot(real, meta, peso, poTotal);
+  const val    = calcRv(real, meta, peso, poTotal, apOk, minPct);
+  const valPot = calcRvPot(real, meta, peso, poTotal, minPct);
   return (
     <div style={s.barRow}>
       <div style={s.barRowTop}>
@@ -141,7 +146,9 @@ export default function RvSimulador() {
 
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
     const pesoPontos = normPeso(rv?.peso_pontos, 50);
-    const rvPontos   = apOk ? (poTotal * pesoPontos / 100) * (Math.min(pontosReal / META_PONTOS * 100, 150) / 100) : 0;
+    // Pontos Bees: sem piso — paga proporcionalmente a partir de 0%
+    const pctPts = Math.min(pontosReal / META_PONTOS * 100, 150);
+    const rvPontos = apOk ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
 
     const realCerv   = parseFloat(rv?.real_cerveja  || 0);
     const metaCerv   = parseFloat(rv?.meta_cerveja  || 0);
@@ -165,10 +172,12 @@ export default function RvSimulador() {
     const rvCerv = calcRv(realCerv, metaCerv, pesoCerv, poTotal, apOk);
     const rvNab  = calcRv(realNab,  metaNab,  pesoNab,  poTotal, apOk);
     const rvVar  = calcRv(realVar,  metaVar,  pesoVar,  poTotal, apOk);
+    // Pontos Bees não tem mínimo — paga proporcional a partir de 0%
+    // (regra do regulamento: "0% - 150%" no range de Meios)
     const total  = rvPontos + rvCerv + rvNab + rvVar;
 
     // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
-    const rvPontsPot = calcRvPot(pontosReal, META_PONTOS, pesoPontos, poTotal);
+    const rvPontsPot = (poTotal * pesoPontos / 100) * (pctPts / 100); // sem piso para Pontos
     const rvCervPot  = calcRvPot(realCerv, metaCerv, pesoCerv, poTotal);
     const rvNabPot   = calcRvPot(realNab,  metaNab,  pesoNab,  poTotal);
     const rvVarPot   = calcRvPot(realVar,  metaVar,  pesoVar,  poTotal);
@@ -301,7 +310,7 @@ export default function RvSimulador() {
               <BarRow
                 label={`⭐ Pontos Bees`}
                 real={tot.pontosReal} meta={META_PONTOS}
-                peso={tot.pesoPontos} poTotal={tot.poTotal} apOk={tot.apOk}
+                peso={tot.pesoPontos} poTotal={tot.poTotal} apOk={tot.apOk} minPct={0}
               />
               <BarRow
                 label="🍺 Cerveja (Volume HL)"

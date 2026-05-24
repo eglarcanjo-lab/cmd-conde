@@ -12,11 +12,12 @@ const KPIS_AP = [
   { key: "gps", label: "GPS" },
 ];
 
-function BarIndicador({ label, real, meta, peso, po_total, bloqueado }) {
+function BarIndicador({ label, real, meta, peso, po_total, bloqueado, minPct = 70 }) {
   const pct     = meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
   const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-  const valReal = bloqueado ? 0 : (po_total * (peso / 100)) * (pct / 100);
-  const valPot  = meta > 0 ? (po_total * (peso / 100)) * (pct / 100) : 0;
+  const base    = meta > 0 && pct >= minPct ? (po_total * (peso / 100)) * (pct / 100) : 0;
+  const valReal = bloqueado ? 0 : base;
+  const valPot  = base;
 
   return (
     <div style={styles.barCard}>
@@ -82,16 +83,20 @@ export default function RV() {
   const segmento = rv?.segmento || (["101","102","103"].includes(usuario?.cod) ? "OFF" : "ON");
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
   const pesoPontos = normPeso(rv?.peso_pontos, 50);
-  const rvPontos = apOk ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
+  const rvPontos    = apOk ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
+  const rvPontosPot = (poTotal * pesoPontos / 100) * (pctPontos / 100); // sem piso
 
-  const calcRv = (real, meta, peso) => {
+  // Pontos Bees: sem piso (paga de 0%), Resultados: piso 70%
+  const calcRv = (real, meta, peso, minPct = 70) => {
     if (!apOk || !meta) return 0;
     const p = Math.min((real / meta) * 100, 150);
+    if (p < minPct) return 0;
     return (poTotal * peso / 100) * (p / 100);
   };
-  const calcPot = (real, meta, peso) => {
+  const calcPot = (real, meta, peso, minPct = 70) => {
     if (!meta) return 0;
     const p = Math.min((real / meta) * 100, 150);
+    if (p < minPct) return 0;
     return (poTotal * peso / 100) * (p / 100);
   };
 
@@ -102,8 +107,7 @@ export default function RV() {
     : calcRv(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), normPeso(rv?.peso_marketplace, 10));
   const rvTotal = rvPontos + rvCerv + rvNab + rvVar;
 
-  // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
-  const rvPontosPot = calcPot(pontos ? parseFloat(pontos.pontos_real || 0) : 0, META_PONTOS, pesoPontos);
+  // Potencial dos Resultados (como se AP fosse OK)
   const rvCervPot   = calcPot(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), normPeso(rv?.peso_cerveja, 25));
   const rvNabPot    = calcPot(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), normPeso(rv?.peso_nab, 15));
   const rvVarPot    = segmento === "OFF"
