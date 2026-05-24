@@ -7,15 +7,17 @@ export default function Home() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
+  const isRn = usuario?.perfil === "rn";
+
   const modulos = [
-    { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true },
-    { icon: "🗺️", label: "PDVs", route: "/pdvs", ativo: true },
-    { icon: "📦", label: "Produtos", route: "/produtos", ativo: false },
-    { icon: "✅", label: "Tasks", route: "/tasks", ativo: true },
-    { icon: "💰", label: "Remuneração", route: "/rv", ativo: true },
-    { icon: "📊", label: "SPO", route: "/spo", ativo: true },
-    { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true },
-  ];
+    { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true,  soGestor: true },
+    { icon: "🗺️", label: "PDVs",      route: "/pdvs",      ativo: true,  soGestor: false },
+    { icon: "📦", label: "Produtos",  route: "/produtos",  ativo: false, soGestor: false },
+    { icon: "✅", label: "Tasks",     route: "/tasks",     ativo: true,  soGestor: false },
+    { icon: "💰", label: "Remuneração", route: "/rv",      ativo: true,  soGestor: false },
+    { icon: "📊", label: "SPO",       route: "/spo",       ativo: true,  soGestor: true },
+    { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true, soGestor: false },
+  ].filter((m) => !isRn || !m.soGestor);
 
   return (
     <div style={styles.root}>
