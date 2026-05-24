@@ -83,8 +83,8 @@ export default function RV() {
   const segmento = rv?.segmento || (["101","102","103"].includes(usuario?.cod) ? "OFF" : "ON");
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
   const pesoPontos = normPeso(rv?.peso_pontos, 50);
-  const rvPontos    = apOk ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
-  const rvPontosPot = (poTotal * pesoPontos / 100) * (pctPontos / 100); // sem piso
+  const rvPontos    = apOk && pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
+  const rvPontosPot = pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
 
   // Pontos Bees: sem piso (paga de 0%), Resultados: piso 70%
   const calcRv = (real, meta, peso, minPct = 70) => {
