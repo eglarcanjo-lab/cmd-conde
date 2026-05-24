@@ -100,12 +100,32 @@ export default function Metas() {
           }
 
           // meta_aplicada tem prioridade sobre meta_volume
-          const metaRaw = r.meta_aplicada || r.meta_volume || "";
-          const metaNum = parseFloat(String(metaRaw).replace(",", "."));
+          // Suporta formato brasileiro: "1.111" (ponto = milhar) → 1111
+          //                              "1.111,50" (ponto milhar + vírgula decimal) → 1111.50
+          const parseBrNum = (v) => {
+            const s = String(v ?? "").trim();
+            if (!s) return NaN;
+            if (typeof v === "number") return v; // já é número (raw: true no XLSX)
+            if (s.includes(",") && s.includes(".")) {
+              // "1.234,56" → remove pontos de milhar → "1234,56" → troca vírgula → "1234.56"
+              return parseFloat(s.replace(/\./g, "").replace(",", "."));
+            }
+            if (s.includes(",")) {
+              // "1234,56" → decimal com vírgula
+              return parseFloat(s.replace(",", "."));
+            }
+            if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+              // "1.111" ou "1.234.567" → só milhar com ponto, sem decimal → remove pontos
+              return parseFloat(s.replace(/\./g, ""));
+            }
+            return parseFloat(s); // "1111" ou "3.35" (decimal inglês)
+          };
+
+          const metaNum = parseBrNum(r.meta_aplicada ?? r.meta_volume ?? "");
           const meta = isNaN(metaNum) ? "" : String(Math.round(metaNum * 100) / 100);
 
-          const volRaw = parseFloat(String(r.volume_tri || "").replace(",", "."));
-          const vol = isNaN(volRaw) ? "" : String(Math.round(volRaw * 100) / 100);
+          const volNum = parseBrNum(r.volume_tri ?? "");
+          const vol = isNaN(volNum) ? "" : String(Math.round(volNum * 100) / 100);
 
           return {
             setor:          String(r.setor || "").trim(),
