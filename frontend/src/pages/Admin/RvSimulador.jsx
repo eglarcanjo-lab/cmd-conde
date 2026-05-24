@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import * as XLSX from "xlsx";
 
 const META_PONTOS = 100000;
 
@@ -189,6 +190,7 @@ export default function RvSimulador() {
       realNab,  metaNab,  pesoNab,  rvNab,
       realVar,  metaVar,  pesoVar,  rvVar,
       total, totalPot,
+      rvPontsPot, rvCervPot, rvNabPot, rvVarPot,
     };
   }
 
@@ -200,6 +202,94 @@ export default function RvSimulador() {
   const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod) }));
   const somaTotal    = linhas.reduce((acc, l) => acc + l.total, 0);
   const somaPotencial = linhas.reduce((acc, l) => acc + (l.apOk ? l.total : l.totalPot), 0);
+
+  function exportarRelatorio() {
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const p1 = (v) => r2(v);
+
+    // ── Aba 1: Resumo por RN ────────────────────────────────────────────────
+    const resumo = linhas.map(l => {
+      const rvExibido = l.apOk ? l.total : l.totalPot;
+      return {
+        "Setor":             l.cod,
+        "Nome RN":           l.nome,
+        "Segmento":          l.tipo,
+        "AP":                l.apOk ? "OK" : "NOK",
+        "Status RV":         l.apOk ? "Confirmada" : "Potencial (AP NOK)",
+        "PO Total (R$)":     r2(l.poTotal),
+        "Pontos Bees %":     p1(pct(l.pontosReal, META_PONTOS)),
+        "Pontos Bees (R$)":  r2(l.apOk ? l.rvPontos : l.rvPontsPot),
+        "Cerveja %":         p1(pct(l.realCerv, l.metaCerv)),
+        "Cerveja (R$)":      r2(l.apOk ? l.rvCerv : l.rvCervPot),
+        "NAB %":             p1(pct(l.realNab, l.metaNab)),
+        "NAB (R$)":          r2(l.apOk ? l.rvNab : l.rvNabPot),
+        [l.varLabel + " %"]: p1(pct(l.realVar, l.metaVar)),
+        [l.varLabel + " (R$)"]: r2(l.apOk ? l.rvVar : l.rvVarPot),
+        "Total RV (R$)":     r2(rvExibido),
+        "% do PO":           l.poTotal > 0 ? p1((rvExibido / l.poTotal) * 100) : 0,
+      };
+    });
+
+    // linha de totais
+    resumo.push({
+      "Setor": "TOTAL",
+      "Nome RN": "",
+      "Segmento": "",
+      "AP": "",
+      "Status RV": "",
+      "PO Total (R$)": r2(linhas.reduce((a, l) => a + l.poTotal, 0)),
+      "Pontos Bees %": "",
+      "Pontos Bees (R$)": "",
+      "Cerveja %": "",
+      "Cerveja (R$)": "",
+      "NAB %": "",
+      "NAB (R$)": "",
+      "Match %": "",
+      "Match (R$)": "",
+      "Total RV (R$)": r2(somaPotencial),
+      "% do PO": "",
+    });
+
+    // ── Aba 2: Detalhamento por indicador ───────────────────────────────────
+    const detalhe = [];
+    linhas.forEach(l => {
+      const rvExibido = l.apOk ? l.total : l.totalPot;
+      const addLinha = (indicador, peso, real, meta, rvVal) => {
+        const pctAting = pct(real, meta);
+        detalhe.push({
+          "Setor":       l.cod,
+          "Nome RN":     l.nome,
+          "AP":          l.apOk ? "OK" : "NOK",
+          "Indicador":   indicador,
+          "Peso %":      peso,
+          "Meta":        r2(meta),
+          "Realizado":   r2(real),
+          "Atingimento %": p1(pctAting),
+          "Piso 70%":    pctAting >= 70 ? "Atingido" : "Abaixo — R$0",
+          "RV (R$)":     r2(rvVal),
+          "Status":      l.apOk ? "Confirmada" : "Potencial (AP NOK)",
+        });
+      };
+      addLinha("Pontos Bees",  l.pesoPontos, l.pontosReal, META_PONTOS, l.apOk ? l.rvPontos : l.rvPontsPot);
+      addLinha("Cerveja",      l.pesoCerv,   l.realCerv,   l.metaCerv,  l.apOk ? l.rvCerv  : l.rvCervPot);
+      addLinha("NAB",          l.pesoNab,    l.realNab,    l.metaNab,   l.apOk ? l.rvNab   : l.rvNabPot);
+      addLinha(l.varLabel,     l.pesoVar,    l.realVar,    l.metaVar,   l.apOk ? l.rvVar   : l.rvVarPot);
+      detalhe.push({ "Setor": "", "Nome RN": `── Total ${l.cod}`, "AP": "", "Indicador": "", "Peso %": "", "Meta": "", "Realizado": "", "Atingimento %": "", "Piso 70%": "", "RV (R$)": r2(rvExibido), "Status": "" });
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsResumo  = XLSX.utils.json_to_sheet(resumo);
+    const wsDetalhe = XLSX.utils.json_to_sheet(detalhe);
+
+    wsResumo["!cols"]  = [8,20,10,6,22,14,14,16,10,12,6,8,12,16,14,10].map(w=>({wch:w}));
+    wsDetalhe["!cols"] = [8,20,6,14,8,10,12,14,20,10,22].map(w=>({wch:w}));
+
+    XLSX.utils.book_append_sheet(wb, wsResumo,  "Resumo RV");
+    XLSX.utils.book_append_sheet(wb, wsDetalhe, "Detalhamento");
+
+    const mesLabel = mesRef.replace("-", "-");
+    XLSX.writeFile(wb, `relatorio_rv_${mesRef}.xlsx`);
+  }
 
   return (
     <div>
@@ -213,6 +303,9 @@ export default function RvSimulador() {
           <input type="month" style={s.inputMes} value={mesRef} onChange={e => setMesRef(e.target.value)} />
           <button style={{ ...s.btnCalc, opacity: recalc ? 0.7 : 1 }} onClick={recalcular} disabled={recalc}>
             {recalc ? "Recalculando..." : "🔄 Recalcular RV"}
+          </button>
+          <button style={s.btnExport} onClick={exportarRelatorio}>
+            ⬇️ Exportar Relatório
           </button>
         </div>
       </div>
@@ -412,6 +505,7 @@ const s = {
   desc: { margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" },
   inputMes: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   btnCalc: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "8px 18px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnExport: { background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", borderRadius: "8px", padding: "8px 18px", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   msgLoad: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px" },
 
   // Seletor de RN
