@@ -74,11 +74,14 @@ export default function RV() {
     finally { setLoading(false); }
   }
 
+  // Garante que peso esteja em [0,100]. Se vier corrompido (>100), usa o fallback do regulamento.
+  const normPeso = (val, fallback) => { const v = parseFloat(val || 0); return (v > 0 && v <= 100) ? v : fallback; };
+
   const apOk = ap?.ap_ok === "OK";
   const poTotal = parseFloat(rv?.po_total || 1500);
   const segmento = rv?.segmento || (["101","102","103"].includes(usuario?.cod) ? "OFF" : "ON");
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
-  const pesoPontos = parseFloat(rv?.peso_pontos || 50);
+  const pesoPontos = normPeso(rv?.peso_pontos, 50);
   const rvPontos = apOk ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
 
   const calcRv = (real, meta, peso) => {
@@ -92,20 +95,20 @@ export default function RV() {
     return (poTotal * peso / 100) * (p / 100);
   };
 
-  const rvCerv = calcRv(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), parseFloat(rv?.peso_cerveja || 0));
-  const rvNab  = calcRv(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), parseFloat(rv?.peso_nab || 0));
+  const rvCerv = calcRv(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), normPeso(rv?.peso_cerveja, 25));
+  const rvNab  = calcRv(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), normPeso(rv?.peso_nab, 15));
   const rvVar  = segmento === "OFF"
-    ? calcRv(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), parseFloat(rv?.peso_match || 0))
-    : calcRv(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), parseFloat(rv?.peso_marketplace || 0));
+    ? calcRv(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), normPeso(rv?.peso_match, 10))
+    : calcRv(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), normPeso(rv?.peso_marketplace, 10));
   const rvTotal = rvPontos + rvCerv + rvNab + rvVar;
 
   // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
   const rvPontosPot = calcPot(pontos ? parseFloat(pontos.pontos_real || 0) : 0, META_PONTOS, pesoPontos);
-  const rvCervPot   = calcPot(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), parseFloat(rv?.peso_cerveja || 0));
-  const rvNabPot    = calcPot(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), parseFloat(rv?.peso_nab || 0));
+  const rvCervPot   = calcPot(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), normPeso(rv?.peso_cerveja, 25));
+  const rvNabPot    = calcPot(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), normPeso(rv?.peso_nab, 15));
   const rvVarPot    = segmento === "OFF"
-    ? calcPot(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), parseFloat(rv?.peso_match || 0))
-    : calcPot(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), parseFloat(rv?.peso_marketplace || 0));
+    ? calcPot(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), normPeso(rv?.peso_match, 10))
+    : calcPot(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), normPeso(rv?.peso_marketplace, 10));
   const rvTotalPot  = rvPontosPot + rvCervPot + rvNabPot + rvVarPot;
 
   return (
@@ -208,11 +211,11 @@ export default function RV() {
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>📊 Indicadores de Volume / Faturamento</h3>
               <div style={styles.barsGrid}>
-                <BarIndicador label="Cerveja (Volume HL)" real={parseFloat(rv?.real_cerveja||0)} meta={parseFloat(rv?.meta_cerveja||0)} peso={parseFloat(rv?.peso_cerveja||0)} po_total={poTotal} bloqueado={!apOk}/>
-                <BarIndicador label="NAB (Volume HL)" real={parseFloat(rv?.real_nab||0)} meta={parseFloat(rv?.meta_nab||0)} peso={parseFloat(rv?.peso_nab||0)} po_total={poTotal} bloqueado={!apOk}/>
+                <BarIndicador label="Cerveja (Volume HL)" real={parseFloat(rv?.real_cerveja||0)} meta={parseFloat(rv?.meta_cerveja||0)} peso={normPeso(rv?.peso_cerveja,25)} po_total={poTotal} bloqueado={!apOk}/>
+                <BarIndicador label="NAB (Volume HL)" real={parseFloat(rv?.real_nab||0)} meta={parseFloat(rv?.meta_nab||0)} peso={normPeso(rv?.peso_nab,15)} po_total={poTotal} bloqueado={!apOk}/>
                 {segmento === "OFF"
-                  ? <BarIndicador label="Match (Volume HL)" real={parseFloat(rv?.real_match||0)} meta={parseFloat(rv?.meta_match||0)} peso={parseFloat(rv?.peso_match||0)} po_total={poTotal} bloqueado={!apOk}/>
-                  : <BarIndicador label="Marketplace (GMV R$)" real={parseFloat(rv?.real_marketplace||0)} meta={parseFloat(rv?.meta_marketplace||0)} peso={parseFloat(rv?.peso_marketplace||0)} po_total={poTotal} bloqueado={!apOk}/>
+                  ? <BarIndicador label="Match (Volume HL)" real={parseFloat(rv?.real_match||0)} meta={parseFloat(rv?.meta_match||0)} peso={normPeso(rv?.peso_match,10)} po_total={poTotal} bloqueado={!apOk}/>
+                  : <BarIndicador label="Marketplace (GMV R$)" real={parseFloat(rv?.real_marketplace||0)} meta={parseFloat(rv?.meta_marketplace||0)} peso={normPeso(rv?.peso_marketplace,10)} po_total={poTotal} bloqueado={!apOk}/>
                 }
               </div>
             </div>

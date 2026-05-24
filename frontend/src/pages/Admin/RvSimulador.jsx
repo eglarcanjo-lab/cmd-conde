@@ -29,6 +29,12 @@ function pct(real, meta) {
   return Math.min((real / meta) * 100, 150);
 }
 
+// Garante que peso esteja em [0,100]. Se vier corrompido (>100), usa o fallback do regulamento.
+function normPeso(val, fallback) {
+  const v = parseFloat(val || 0);
+  return (v > 0 && v <= 100) ? v : fallback;
+}
+
 function calcRv(real, meta, peso, poTotal, apOk) {
   if (!apOk || !meta) return 0;
   return (poTotal * peso / 100) * (pct(real, meta) / 100);
@@ -134,16 +140,16 @@ export default function RvSimulador() {
     const poTotal = parseFloat(rv?.po_total || 1500);
 
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
-    const pesoPontos = parseFloat(rv?.peso_pontos  || 50);
+    const pesoPontos = normPeso(rv?.peso_pontos, 50);
     const rvPontos   = apOk ? (poTotal * pesoPontos / 100) * (Math.min(pontosReal / META_PONTOS * 100, 150) / 100) : 0;
 
     const realCerv   = parseFloat(rv?.real_cerveja  || 0);
     const metaCerv   = parseFloat(rv?.meta_cerveja  || 0);
-    const pesoCerv   = parseFloat(rv?.peso_cerveja  || 0);
+    const pesoCerv   = normPeso(rv?.peso_cerveja, 25);
 
     const realNab    = parseFloat(rv?.real_nab   || 0);
     const metaNab    = parseFloat(rv?.meta_nab   || 0);
-    const pesoNab    = parseFloat(rv?.peso_nab   || 0);
+    const pesoNab    = normPeso(rv?.peso_nab, 15);
 
     const realVar    = seg === "OFF"
       ? parseFloat(rv?.real_match  || 0)
@@ -152,8 +158,8 @@ export default function RvSimulador() {
       ? parseFloat(rv?.meta_match  || 0)
       : parseFloat(rv?.meta_marketplace  || 0);
     const pesoVar    = seg === "OFF"
-      ? parseFloat(rv?.peso_match  || 0)
-      : parseFloat(rv?.peso_marketplace  || 0);
+      ? normPeso(rv?.peso_match, 10)
+      : normPeso(rv?.peso_marketplace, 10);
     const varLabel   = seg === "OFF" ? "Match" : "Marketplace";
 
     const rvCerv = calcRv(realCerv, metaCerv, pesoCerv, poTotal, apOk);
