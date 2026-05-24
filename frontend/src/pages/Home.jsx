@@ -54,20 +54,22 @@ export default function Home() {
   );
 }
 
+const isMobile = () => window.innerWidth <= 600;
+
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "32px 24px", maxWidth: "900px", margin: "0 auto" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" },
-  headerRight: { display: "flex", gap: "10px", alignItems: "center" },
+  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,32px) clamp(16px,4vw,24px)", maxWidth: "900px", margin: "0 auto" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "clamp(20px,5vw,32px)", flexWrap: "wrap", gap: "12px" },
+  headerRight: { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" },
   greeting: { color: "rgba(255,255,255,0.4)", margin: "0 0 2px", fontSize: "0.85rem" },
-  nome: { color: "#fff", margin: "0 0 6px", fontSize: "1.4rem", fontWeight: "700" },
+  nome: { color: "#fff", margin: "0 0 6px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
   badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "3px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" },
-  adminBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
-  logout: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "16px" },
-  card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", transition: "all 0.2s" },
+  adminBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600", minHeight: "44px" },
+  logout: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "44px" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "12px" },
+  card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "clamp(16px,4vw,24px) 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", transition: "all 0.2s" },
   cardAtivo: { cursor: "pointer", borderColor: "rgba(251,185,0,0.3)" },
   cardInativo: { opacity: 0.5, cursor: "default" },
-  cardIcon: { fontSize: "1.8rem" },
-  cardLabel: { color: "#fff", fontWeight: "600", fontSize: "0.9rem" },
+  cardIcon: { fontSize: "clamp(1.5rem,5vw,1.8rem)" },
+  cardLabel: { color: "#fff", fontWeight: "600", fontSize: "clamp(0.82rem,3vw,0.9rem)", textAlign: "center" },
   cardTag: { color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" },
 };

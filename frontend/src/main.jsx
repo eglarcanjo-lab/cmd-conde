@@ -1,5 +1,6 @@
 import React from "react";
 import "./index.css";
+import "./mobile.css";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 

@@ -5,9 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMD Ambev · Conde</title>
     <meta name="theme-color" content="#0a0f1e" />
+    <!-- PWA / Mobile -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CMD Conde" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { background: #0a0f1e; }
+      /* Evita bounce/scroll indesejado no iOS */
+      html, body { height: 100%; overflow-x: hidden; }
+      /* Safe area para notch / home bar do iPhone */
+      #root { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
     </style>
   </head>
   <body>
