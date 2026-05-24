@@ -34,6 +34,12 @@ function calcRv(real, meta, peso, poTotal, apOk) {
   return (poTotal * peso / 100) * (pct(real, meta) / 100);
 }
 
+// Calcula valor potencial independente do AP (para mostrar em amarelo quando bloqueado)
+function calcRvPot(real, meta, peso, poTotal) {
+  if (!meta) return 0;
+  return (poTotal * peso / 100) * (pct(real, meta) / 100);
+}
+
 function fmtBrl(v) {
   return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -43,9 +49,10 @@ function fmtNum(v, dec = 1) {
 }
 
 function BarRow({ label, real, meta, peso, poTotal, apOk }) {
-  const p    = pct(real, meta);
-  const cor  = p >= 100 ? "#4ade80" : p >= 70 ? "#fbb900" : "#f87171";
-  const val  = calcRv(real, meta, peso, poTotal, apOk);
+  const p      = pct(real, meta);
+  const cor    = p >= 100 ? "#4ade80" : p >= 70 ? "#fbb900" : "#f87171";
+  const val    = calcRv(real, meta, peso, poTotal, apOk);
+  const valPot = calcRvPot(real, meta, peso, poTotal);
   return (
     <div style={s.barRow}>
       <div style={s.barRowTop}>
@@ -60,8 +67,8 @@ function BarRow({ label, real, meta, peso, poTotal, apOk }) {
         <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem" }}>
           {fmtNum(real, 2)} / {fmtNum(meta, 2)}
         </span>
-        <span style={{ color: apOk ? cor : "#f87171", fontWeight: "600", fontSize: "0.82rem" }}>
-          {apOk ? `R$ ${fmtBrl(val)}` : "BLOQUEADO"}
+        <span style={{ color: apOk ? cor : "#fbb900", fontWeight: "600", fontSize: "0.82rem" }}>
+          {apOk ? `R$ ${fmtBrl(val)}` : `⚠️ R$ ${fmtBrl(valPot)}`}
         </span>
       </div>
     </div>
@@ -154,13 +161,20 @@ export default function RvSimulador() {
     const rvVar  = calcRv(realVar,  metaVar,  pesoVar,  poTotal, apOk);
     const total  = rvPontos + rvCerv + rvNab + rvVar;
 
+    // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
+    const rvPontsPot = calcRvPot(pontosReal, META_PONTOS, pesoPontos, poTotal);
+    const rvCervPot  = calcRvPot(realCerv, metaCerv, pesoCerv, poTotal);
+    const rvNabPot   = calcRvPot(realNab,  metaNab,  pesoNab,  poTotal);
+    const rvVarPot   = calcRvPot(realVar,  metaVar,  pesoVar,  poTotal);
+    const totalPot   = rvPontsPot + rvCervPot + rvNabPot + rvVarPot;
+
     return {
       apOk, poTotal, seg, varLabel,
       pontosReal, pesoPontos, pctPontos: pct(pontosReal, META_PONTOS), rvPontos,
       realCerv, metaCerv, pesoCerv, rvCerv,
       realNab,  metaNab,  pesoNab,  rvNab,
       realVar,  metaVar,  pesoVar,  rvVar,
-      total,
+      total, totalPot,
     };
   }
 
@@ -170,7 +184,8 @@ export default function RvSimulador() {
 
   // ── totalizador (todas as RNs) ────────────────────────────────────────────
   const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod) }));
-  const somaTotal = linhas.reduce((acc, l) => acc + l.total, 0);
+  const somaTotal    = linhas.reduce((acc, l) => acc + l.total, 0);
+  const somaPotencial = linhas.reduce((acc, l) => acc + (l.apOk ? l.total : l.totalPot), 0);
 
   return (
     <div>
@@ -213,8 +228,8 @@ export default function RvSimulador() {
                     ...s.rnAp,
                     color: t.apOk ? "#4ade80" : "#f87171",
                   }}>{t.apOk ? "✅" : "❌"}</span>
-                  <span style={{ color: "#fbb900", fontSize: "0.7rem", fontWeight: "700" }}>
-                    R$ {fmtBrl(t.total)}
+                  <span style={{ color: t.apOk ? "#fbb900" : "#fbb900", fontSize: "0.7rem", fontWeight: "700" }}>
+                    {t.apOk ? "" : "⚠️ "}R$ {fmtBrl(t.apOk ? t.total : t.totalPot)}
                   </span>
                 </button>
               );
@@ -257,14 +272,21 @@ export default function RvSimulador() {
             <div style={s.totalCard}>
               <div>
                 <p style={s.totalLabel}>Estimativa RV — {mesRef}</p>
-                <p style={{ ...s.totalValor, color: tot.apOk ? "#4ade80" : "#f87171" }}>
-                  R$ {fmtBrl(tot.total)}
+                <p style={{ ...s.totalValor, color: tot.apOk ? "#4ade80" : "#fbb900" }}>
+                  R$ {fmtBrl(tot.apOk ? tot.total : tot.totalPot)}
                 </p>
+                {!tot.apOk && (
+                  <p style={{ margin: "0 0 2px", color: "#f87171", fontSize: "0.72rem", fontWeight: "600" }}>
+                    ⚠️ potencial — bloqueado por AP NOK
+                  </p>
+                )}
                 <p style={s.totalSub}>de R$ {fmtBrl(tot.poTotal)} possíveis (100% PO)</p>
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={s.totalPct}>{tot.poTotal > 0 ? ((tot.total / tot.poTotal) * 100).toFixed(1) : "0"}%</p>
-                <p style={s.totalPctLabel}>do PO</p>
+                <p style={{ ...s.totalPct, color: tot.apOk ? "#fbb900" : "#fbb900" }}>
+                  {tot.poTotal > 0 ? (((tot.apOk ? tot.total : tot.totalPot) / tot.poTotal) * 100).toFixed(1) : "0"}%
+                </p>
+                <p style={s.totalPctLabel}>{tot.apOk ? "do PO" : "potencial"}</p>
               </div>
             </div>
 
@@ -297,7 +319,11 @@ export default function RvSimulador() {
           <div style={s.section}>
             <div style={s.sectionHeader}>
               <h3 style={s.sectionTitle}>📊 Totalizador — Todos os RNs</h3>
-              <span style={s.somaChip}>Total estimado: <strong>R$ {fmtBrl(somaTotal)}</strong></span>
+              <span style={s.somaChip}>
+                Confirmado: <strong>R$ {fmtBrl(somaTotal)}</strong>
+                &nbsp;·&nbsp;
+                <span style={{ color: "#fbb900" }}>⚠️ Potencial: <strong>R$ {fmtBrl(somaPotencial)}</strong></span>
+              </span>
             </div>
             <div style={s.tableWrap}>
               <table style={s.table}>
@@ -333,7 +359,10 @@ export default function RvSimulador() {
                           <td style={{ ...s.td, color: cor(pCerv), fontWeight: "600" }}>{pCerv.toFixed(0)}%</td>
                           <td style={{ ...s.td, color: cor(pNab),  fontWeight: "600" }}>{pNab.toFixed(0)}%</td>
                           <td style={{ ...s.td, color: cor(pVar),  fontWeight: "600" }}>{pVar.toFixed(0)}%</td>
-                          <td style={{ ...s.td, color: "#fbb900", fontWeight: "700" }}>R$ {fmtBrl(l.total)}</td>
+                          <td style={{ ...s.td, color: "#fbb900", fontWeight: "700" }}>
+                            {!l.apOk && <span style={{ fontSize: "0.65rem", marginRight: "2px" }}>⚠️</span>}
+                            R$ {fmtBrl(l.apOk ? l.total : l.totalPot)}
+                          </td>
                           <td style={{ ...s.td, color: ppPO >= 100 ? "#4ade80" : ppPO >= 70 ? "#fbb900" : "#f87171", fontWeight: "600" }}>
                             {ppPO.toFixed(1)}%
                           </td>

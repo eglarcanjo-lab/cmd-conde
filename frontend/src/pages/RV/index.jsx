@@ -13,9 +13,10 @@ const KPIS_AP = [
 ];
 
 function BarIndicador({ label, real, meta, peso, po_total, bloqueado }) {
-  const pct = meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
-  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-  const valor_rv = bloqueado ? 0 : (po_total * (peso / 100)) * (pct / 100);
+  const pct     = meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
+  const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+  const valReal = bloqueado ? 0 : (po_total * (peso / 100)) * (pct / 100);
+  const valPot  = meta > 0 ? (po_total * (peso / 100)) * (pct / 100) : 0;
 
   return (
     <div style={styles.barCard}>
@@ -33,8 +34,10 @@ function BarIndicador({ label, real, meta, peso, po_total, bloqueado }) {
           {Number(real).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} /&nbsp;
           {Number(meta).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
         </span>
-        <span style={{ color: bloqueado ? "#f87171" : cor, fontWeight: "600", fontSize: "0.82rem" }}>
-          {bloqueado ? "BLOQUEADO" : `R$ ${valor_rv.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        <span style={{ color: bloqueado ? "#fbb900" : cor, fontWeight: "600", fontSize: "0.82rem" }}>
+          {bloqueado
+            ? `⚠️ R$ ${valPot.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : `R$ ${valReal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         </span>
       </div>
     </div>
@@ -80,8 +83,13 @@ export default function RV() {
 
   const calcRv = (real, meta, peso) => {
     if (!apOk || !meta) return 0;
-    const pct = Math.min((real / meta) * 100, 150);
-    return (poTotal * peso / 100) * (pct / 100);
+    const p = Math.min((real / meta) * 100, 150);
+    return (poTotal * peso / 100) * (p / 100);
+  };
+  const calcPot = (real, meta, peso) => {
+    if (!meta) return 0;
+    const p = Math.min((real / meta) * 100, 150);
+    return (poTotal * peso / 100) * (p / 100);
   };
 
   const rvCerv = calcRv(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), parseFloat(rv?.peso_cerveja || 0));
@@ -90,6 +98,15 @@ export default function RV() {
     ? calcRv(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), parseFloat(rv?.peso_match || 0))
     : calcRv(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), parseFloat(rv?.peso_marketplace || 0));
   const rvTotal = rvPontos + rvCerv + rvNab + rvVar;
+
+  // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
+  const rvPontosPot = calcPot(pontos ? parseFloat(pontos.pontos_real || 0) : 0, META_PONTOS, pesoPontos);
+  const rvCervPot   = calcPot(parseFloat(rv?.real_cerveja || 0), parseFloat(rv?.meta_cerveja || 0), parseFloat(rv?.peso_cerveja || 0));
+  const rvNabPot    = calcPot(parseFloat(rv?.real_nab || 0), parseFloat(rv?.meta_nab || 0), parseFloat(rv?.peso_nab || 0));
+  const rvVarPot    = segmento === "OFF"
+    ? calcPot(parseFloat(rv?.real_match || 0), parseFloat(rv?.meta_match || 0), parseFloat(rv?.peso_match || 0))
+    : calcPot(parseFloat(rv?.real_marketplace || 0), parseFloat(rv?.meta_marketplace || 0), parseFloat(rv?.peso_marketplace || 0));
+  const rvTotalPot  = rvPontosPot + rvCervPot + rvNabPot + rvVarPot;
 
   return (
     <div style={styles.root}>
@@ -141,19 +158,26 @@ export default function RV() {
             {/* Total */}
             <div style={styles.totalCard}>
               <div>
-                <p style={{ margin: "0 0 4px", color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>Estimativa RV do mês</p>
-                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: apOk ? "#4ade80" : "#f87171" }}>
-                  R$ {rvTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <p style={{ margin: "0 0 4px", color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>
+                  {apOk ? "Estimativa RV — 2026-05" : "Estimativa RV — 2026-05"}
                 </p>
+                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: apOk ? "#4ade80" : "#fbb900" }}>
+                  R$ {(apOk ? rvTotal : rvTotalPot).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                {!apOk && (
+                  <p style={{ margin: "0 0 2px", color: "#f87171", fontSize: "0.72rem", fontWeight: "600" }}>
+                    ⚠️ potencial — bloqueado por AP NOK
+                  </p>
+                )}
                 <p style={{ margin: 0, color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" }}>
                   de R$ {poTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} possíveis (100% PO)
                 </p>
               </div>
               <div style={{ textAlign: "center" }}>
                 <p style={{ margin: 0, fontSize: "2.5rem", fontWeight: "800", color: "#fbb900" }}>
-                  {poTotal > 0 ? ((rvTotal / poTotal) * 100).toFixed(1) : "0"}%
+                  {poTotal > 0 ? (((apOk ? rvTotal : rvTotalPot) / poTotal) * 100).toFixed(1) : "0"}%
                 </p>
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>do PO</p>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{apOk ? "do PO" : "potencial"}</p>
               </div>
             </div>
 
@@ -166,7 +190,7 @@ export default function RV() {
                   { label: "Meta", val: META_PONTOS.toLocaleString("pt-BR"), color: "#fff" },
                   { label: "Atingimento", val: `${pctPontos.toFixed(1)}%`, color: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#fbb900" : "#f87171" },
                   { label: "Peso no PO", val: `${pesoPontos}%`, color: "#fff" },
-                  { label: "Valor estimado", val: `R$ ${rvPontos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: apOk ? "#4ade80" : "#f87171" },
+                  { label: "Valor estimado", val: `${apOk ? "" : "⚠️ "}R$ ${(apOk ? rvPontos : rvPontosPot).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: apOk ? "#4ade80" : "#fbb900" },
                 ].map((item) => (
                   <div key={item.label} style={styles.pontosItem}>
                     <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem" }}>{item.label}</span>
