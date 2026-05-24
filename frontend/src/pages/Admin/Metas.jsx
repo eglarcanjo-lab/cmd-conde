@@ -14,7 +14,7 @@ const CATEGORIAS = [
   "PONTOS FORCE",
 ];
 
-const SETORES = ["101","102","103","104","105","301","302","303","304","305"];
+const SETORES = ["101","102","103","104","105","106","301","302","303","304","305"];
 
 const EMPTY_FORM = { setor: "101", categoria: CATEGORIAS[0], meta_volume: "", mes_referencia: "", peso: "" };
 
