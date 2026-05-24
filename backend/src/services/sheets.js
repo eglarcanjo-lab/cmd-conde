@@ -40,7 +40,10 @@ async function readSheet(tabName) {
   return rows.slice(1).map((row) => {
     const obj = {};
     headers.forEach((h, i) => {
-      obj[h] = row[i] ?? "";
+      // Converte para string para manter compatibilidade com comparações de setor/cod_pdv
+      // (UNFORMATTED_VALUE pode retornar números — "101" chegaria como 101)
+      const v = row[i];
+      obj[h] = v != null ? String(v) : "";
     });
     return obj;
   });
