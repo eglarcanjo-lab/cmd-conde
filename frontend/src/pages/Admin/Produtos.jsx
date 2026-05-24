@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
+import * as XLSX from "xlsx";
 
 const CATEGORIAS = [
   "GIRO RGB",
@@ -147,6 +148,38 @@ export default function Produtos() {
     cod: s.cod_prod, nome: s.nome_prod, categorias: s.categoria || ""
   }));
 
+  function exportar() {
+    const linhas = filtrados.map((p) => {
+      const catField = p.categorias || p.categoria || "";
+      const cats = catField.split("|").map(c => c.trim()).filter(Boolean);
+      return {
+        "Código":     p.cod ?? "",
+        "Nome":       p.nome ?? "",
+        "Categorias": cats.join(" | ") || "Sem categoria",
+        "Qtd. Categorias": cats.length,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(linhas);
+
+    // Largura das colunas
+    ws["!cols"] = [{ wch: 12 }, { wch: 40 }, { wch: 50 }, { wch: 16 }];
+
+    const wb = XLSX.utils.book_new();
+    const abaLabel = aba === "base" ? "Produtos" : "Sem Categoria";
+    XLSX.utils.book_append_sheet(wb, ws, abaLabel);
+
+    // Nome do arquivo reflete os filtros ativos
+    const partes = ["produtos"];
+    if (filtroCat) partes.push(filtroCat.replace(/[\s/()]/g, "_"));
+    else if (filtro !== "todos") partes.push(filtro);
+    if (busca) partes.push(`busca_${busca}`);
+    const hoje = new Date().toISOString().slice(0, 10);
+    partes.push(hoje);
+
+    XLSX.writeFile(wb, `${partes.join("_")}.xlsx`);
+  }
+
   // Contagem por categoria (para badges nos chips)
   const contagemPorCat = {};
   lista.forEach((p) => {
@@ -200,6 +233,14 @@ export default function Produtos() {
           </select>
         )}
         <span style={styles.countLabel}>{filtrados.length} produtos</span>
+        <button
+          style={styles.btnExportar}
+          onClick={exportar}
+          disabled={filtrados.length === 0}
+          title="Exportar lista filtrada para Excel"
+        >
+          ⬇️ Exportar xlsx
+        </button>
       </div>
 
       {/* Filtro por categoria */}
@@ -298,6 +339,7 @@ const styles = {
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center", flexWrap: "wrap" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
+  btnExportar: { background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600", whiteSpace: "nowrap" },
   catFiltroWrap: { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px", padding: "10px 12px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" },
   catChip: { border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontSize: "0.75rem", fontFamily: "inherit", transition: "all 0.15s", display: "flex", alignItems: "center" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
