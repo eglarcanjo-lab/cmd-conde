@@ -30,6 +30,7 @@ async function readSheet(tabName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: tabName,
+    valueRenderOption: "UNFORMATTED_VALUE",
   });
 
   const rows = res.data.values || [];

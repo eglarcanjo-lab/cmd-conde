@@ -24,6 +24,13 @@ function getDiaHoje() {
   return dias[new Date().getDay()];
 }
 
+// Converte valor que pode vir como "35,5" (locale BR) ou "35.5" ou número
+const parseHl = (v) => {
+  if (typeof v === "number" && !isNaN(v)) return v;
+  const n = parseFloat(String(v ?? "").replace(",", "."));
+  return isNaN(n) ? 0 : n;
+};
+
 export default function PDVs() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -106,7 +113,7 @@ export default function PDVs() {
   // Top compradores do dia (por volume últimos 4m)
   const rankDia = rank
     .filter((r) => pdvsDia.some((p) => p.cod_pdv === r.cod_pdv))
-    .sort((a, b) => Number(b.volume_4m_hl) - Number(a.volume_4m_hl))
+    .sort((a, b) => parseHl(b.volume_4m_hl) - parseHl(a.volume_4m_hl))
     .slice(0, 5);
 
   // Mix do PDV selecionado
@@ -167,7 +174,7 @@ export default function PDVs() {
                   <span key={r.cod_pdv} style={styles.rankMiniItem}>
                     <span style={styles.rankPos}>{i + 1}°</span>
                     {r.nome_fantasia || r.cod_pdv}
-                    <span style={styles.rankVol}>{Number(r.volume_4m_hl).toFixed(0)} HL</span>
+                    <span style={styles.rankVol}>{parseHl(r.volume_4m_hl).toFixed(0)} HL</span>
                   </span>
                 ))
               }
@@ -319,7 +326,7 @@ export default function PDVs() {
                           <span style={styles.mixNome}>{m.nome_prod}</span>
                           <span style={styles.mixCat}>{m.categoria || "—"}</span>
                         </div>
-                        <span style={styles.mixVol}>{Number(m.volume_total_hl).toFixed(2)} HL</span>
+                        <span style={styles.mixVol}>{parseHl(m.volume_total_hl).toFixed(2)} HL</span>
                       </div>
                     ))}
                   </div>
@@ -453,7 +460,7 @@ function TabelaRank({ pdvs, mapaInad }) {
               <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
               <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia || p.cod_pdv}</td>
               <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
-                {Number(p.volume_4m_hl).toFixed(2)} HL
+                {parseHl(p.volume_4m_hl).toFixed(2)} HL
               </td>
               <td style={styles.td}>{mapaInad[p.cod_pdv] ? <span style={styles.inadTag}>⚠️ Sim</span> : "—"}</td>
             </tr>
