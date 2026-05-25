@@ -56,6 +56,7 @@ export default function Cobertura() {
   const navigate = useNavigate();
   const [cobertura, setCobertura]       = useState([]);
   const [pdvBase, setPdvBase]           = useState([]);
+  const [pdvMix, setPdvMix]             = useState([]);
   const [produtosBase, setProdutosBase] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
@@ -69,13 +70,15 @@ export default function Cobertura() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resC, resP, resPB] = await Promise.all([
+      const [resC, resP, resM, resPB] = await Promise.all([
         api.get("/api/cobertura"),
         api.get("/api/cobertura/pdv-base"),
+        api.get("/api/pdvs/mix").catch(() => ({ data: [] })),
         api.get("/api/pdvs/categorias-produto").catch(() => ({ data: [] })),
       ]);
       setCobertura(resC.data || []);
       setPdvBase(resP.data || []);
+      setPdvMix(resM.data || []);
       setProdutosBase(resPB.data || []);
     } catch (err) {
       console.error(err);
@@ -104,37 +107,31 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
-  // ── Mapeamento produtos_base: key → [categorias]
-  // Indexado por cod E por nome para cobrir tanto códigos quanto nomes na tabela cobertura.
-  // A coluna "categorias" pode ter múltiplos valores separados por vírgula/ponto-e-vírgula.
+  // ── Mapeamento produtos_base: cod_produto → [categorias]
+  // "categorias" pode ter múltiplos valores separados por vírgula/ponto-e-vírgula.
+  // Indexado pelo código (cod) que é a chave usada em pdv_mix.produto.
   const mapProdCats = {};
   produtosBase.forEach((p) => {
     const rawCats = p.categorias || p.categoria || "";
-    if (!rawCats) return;
+    if (!rawCats || !p.cod) return;
     const cats = String(rawCats)
       .split(/[,;|]/)
       .map((c) => c.trim().toUpperCase())
       .filter(Boolean);
-    if (!cats.length) return;
-    if (p.cod)  mapProdCats[String(p.cod).trim().toUpperCase()]  = cats;
-    if (p.nome) mapProdCats[String(p.nome).trim().toUpperCase()] = cats;
+    if (cats.length) mapProdCats[String(p.cod).trim()] = cats;
   });
 
-  // ── Mapa distribuição: { cod_pdv: { categoria_principal: Set<produto_key> } }
-  // Fonte: mapaCob (cobertura por PDV) + mapProdCats (produtos_base).
-  // Para cada linha OK em cobertura, resolve as categorias via produtos_base
-  // e conta os SKUs distintos por categoria por PDV.
+  // ── Mapa distribuição: { cod_pdv: { categoria: Set<cod_produto> } }
+  // Fonte: pdv_mix (produtos por PDV) × produtos_base (categorias por produto).
+  // Um produto com múltiplas categorias é contado em todas elas.
   const mapaDist = {};
-  Object.entries(mapaCob).forEach(([cod_pdv, cats]) => {
-    Object.entries(cats).forEach(([prodKey, status]) => {
-      if (status !== "OK") return;
-      const hlCats = mapProdCats[prodKey.trim().toUpperCase()];
-      if (!hlCats) return;
-      if (!mapaDist[cod_pdv]) mapaDist[cod_pdv] = {};
-      hlCats.forEach((cat) => {
-        if (!mapaDist[cod_pdv][cat]) mapaDist[cod_pdv][cat] = new Set();
-        mapaDist[cod_pdv][cat].add(prodKey);
-      });
+  pdvMix.forEach((r) => {
+    const cats = mapProdCats[String(r.produto || "").trim()];
+    if (!cats) return;
+    if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
+    cats.forEach((cat) => {
+      if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
+      mapaDist[r.cod_pdv][cat].add(r.produto);
     });
   });
 
