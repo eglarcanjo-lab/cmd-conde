@@ -107,48 +107,38 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
-  // ── Mapeamento produtos_base: cod_produto → [categorias]
-  // "categorias" pode ter múltiplos valores separados por vírgula/ponto-e-vírgula.
-  // Indexado pelo código (cod) que é a chave usada em pdv_mix.produto.
-  const mapProdCats = {};
-  produtosBase.forEach((p) => {
-    const rawCats = p.categorias || p.categoria || "";
-    if (!rawCats || !p.cod) return;
-    const cats = String(rawCats)
-      .split(/[,;|]/)
-      .map((c) => c.trim().toUpperCase())
-      .filter(Boolean);
-    if (cats.length) mapProdCats[String(p.cod).trim()] = cats;
-  });
-
-  // ── Mapa distribuição: { cod_pdv: { categoria: Set<cod_produto> } }
-  // Fonte: pdv_mix (produtos por PDV) × produtos_base (categorias por produto).
-  // Um produto com múltiplas categorias é contado em todas elas.
+  // ── Mapa distribuição: { cod_pdv: { categoria: Set<cod_prod> } }
+  // Fonte: pdv_mix — já tem as colunas cod_pdv, cod_prod e categoria prontas.
+  // mapaNomeProd: cod_prod → nome_prod (para exibir nos top3/bottom3)
+  const mapaNomeProd = {};
   const mapaDist = {};
   pdvMix.forEach((r) => {
-    const cats = mapProdCats[String(r.produto || "").trim()];
-    if (!cats) return;
+    const cat = String(r.categoria || "").trim().toUpperCase();
+    const cod  = String(r.cod_prod  || "").trim();
+    if (!cat || !cod || !r.cod_pdv) return;
+    if (r.nome_prod) mapaNomeProd[cod] = r.nome_prod;
     if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
-    cats.forEach((cat) => {
-      if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
-      mapaDist[r.cod_pdv][cat].add(r.produto);
-    });
+    if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
+    mapaDist[r.cod_pdv][cat].add(cod);
   });
 
   // ── Estatísticas por categoria (base total, não só o dia) ────────────────
   const catStats = {};
   CAT_MAIN.forEach((c) => {
     let total = 0, pdvsComDist = 0;
-    const skuCount = {}; // produto_key → quantos PDVs têm
+    const skuCount = {}; // cod_prod → quantos PDVs têm
     pdvSetor.forEach((p) => {
       const skus = mapaDist[p.cod_pdv]?.[c.key]
         ? [...mapaDist[p.cod_pdv][c.key]]
         : [];
       total += skus.length;
       if (skus.length > 0) pdvsComDist++;
-      skus.forEach((sku) => { skuCount[sku] = (skuCount[sku] || 0) + 1; });
+      skus.forEach((cod) => { skuCount[cod] = (skuCount[cod] || 0) + 1; });
     });
-    const sorted = Object.entries(skuCount).sort((a, b) => b[1] - a[1]);
+    // Converte cod_prod → nome_prod para exibição
+    const sorted = Object.entries(skuCount)
+      .map(([cod, cnt]) => [mapaNomeProd[cod] || cod, cnt])
+      .sort((a, b) => b[1] - a[1]);
     catStats[c.key] = {
       total,
       pdvsComDist,
