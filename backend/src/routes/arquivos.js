@@ -5,6 +5,7 @@ const multer = require("multer");
 const axios = require("axios");
 const FormData = require("form-data");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { cacheClearAll } = require("../services/sheets");
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
 
@@ -105,6 +106,8 @@ router.post(
         maxBodyLength: Infinity,
       });
 
+      // Limpa cache do servidor para que os dados novos sejam lidos imediatamente
+      cacheClearAll();
       return res.json(response.data);
     } catch (err) {
       console.error("Erro ao chamar processador:", err.message);

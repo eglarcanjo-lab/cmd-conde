@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 import Usuarios from "./Usuarios";
 import Metas from "./Metas";
 import Arquivos from "./Arquivos";
@@ -28,8 +29,24 @@ export default function Admin() {
   const searchParams = new URLSearchParams(window.location.search);
   const tabInicial = searchParams.get("tab") || "usuarios";
   const [tab, setTab] = useState(tabInicial);
+  const [limpandoCache, setLimpandoCache] = useState(false);
+  const [msgCache, setMsgCache] = useState("");
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+
+  async function limparCache() {
+    setLimpandoCache(true);
+    setMsgCache("");
+    try {
+      await api.post("/api/admin/cache/limpar");
+      setMsgCache("✅ Cache limpo! Dados frescos na próxima consulta.");
+    } catch {
+      setMsgCache("❌ Erro ao limpar cache.");
+    } finally {
+      setLimpandoCache(false);
+      setTimeout(() => setMsgCache(""), 4000);
+    }
+  }
 
   return (
     <div style={styles.root}>
@@ -42,6 +59,16 @@ export default function Admin() {
           </div>
         </div>
         <div style={styles.headerRight}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+            <button
+              style={{ ...styles.cacheBtn, ...(limpandoCache ? styles.cacheBtnLoading : {}) }}
+              onClick={limparCache}
+              disabled={limpandoCache}
+            >
+              {limpandoCache ? "⏳ Limpando..." : "🔄 Forçar atualização"}
+            </button>
+            {msgCache && <span style={styles.msgCache}>{msgCache}</span>}
+          </div>
           <span style={styles.badge}>{usuario?.nome}</span>
           <button style={styles.logoutBtn} onClick={logout}>Sair</button>
         </div>
@@ -84,6 +111,9 @@ const styles = {
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
   badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
+  cacheBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600" },
+  cacheBtnLoading: { opacity: 0.6, cursor: "not-allowed" },
+  msgCache: { fontSize: "0.75rem", color: "rgba(255,255,255,0.6)" },
   tabs: { display: "flex", gap: "4px", padding: "16px 32px 0", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   tab: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", transition: "all 0.2s" },
   tabActive: { color: "#fbb900", borderBottom: "2px solid #fbb900" },

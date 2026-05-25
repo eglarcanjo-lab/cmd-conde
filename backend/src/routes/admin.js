@@ -1,7 +1,7 @@
 // v2.1 - fix importacao metas
 const express = require("express");
 const router = express.Router();
-const { readSheet, appendRow, updateRow } = require("../services/sheets");
+const { readSheet, appendRow, updateRow, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 
 router.use(authMiddleware, adminOnly);
@@ -131,6 +131,12 @@ router.get("/config", async (req, res) => {
     sheet_id: process.env.GOOGLE_SHEET_ID,
     admin_whatsapp: process.env.ADMIN_WHATSAPP,
   });
+});
+
+// POST /api/admin/cache/limpar — força limpeza do cache do servidor
+router.post("/cache/limpar", (req, res) => {
+  cacheClearAll();
+  return res.json({ success: true, message: "Cache limpo. Próximas requisições buscam dados frescos." });
 });
 
 module.exports = router;

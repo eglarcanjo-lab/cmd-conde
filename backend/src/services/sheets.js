@@ -14,6 +14,7 @@ function cacheGet(tab) {
 }
 function cacheSet(tab, data) { _cache.set(tab, { data, ts: Date.now() }); }
 function cacheInvalidate(tab) { _cache.delete(tab); }
+function cacheClearAll() { _cache.clear(); }
 // ─────────────────────────────────────────────────────────────────────────────
 
 function getAuth() {
@@ -169,4 +170,4 @@ async function initializeSheets() {
   console.log("✅ Planilhas inicializadas com sucesso.");
 }
 
-module.exports = { readSheet, appendRow, updateRow, ensureTab, initializeSheets };
+module.exports = { readSheet, appendRow, updateRow, ensureTab, initializeSheets, cacheClearAll };
