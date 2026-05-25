@@ -23,19 +23,6 @@ const CATEGORIAS = [
 // Primeiras 11 categorias (sem os sub-SKUs HE)
 const CAT_MAIN = CATEGORIAS.slice(0, 11);
 
-// Sub-SKUs HE para distribuição via tabela cobertura
-const HE_SKUS = [
-  "TRIMARCA RGB HE (Original)",
-  "TRIMARCA RGB HE (Stella)",
-  "TRIMARCA RGB HE (Spaten)",
-];
-
-// Categoria é resolvida via join: pdv_mix.produto (código) → produtos_base.cod → categoria
-
-function calcDistHE(cob) {
-  return HE_SKUS.filter((sku) => cob[sku] === "OK").length;
-}
-
 const DIAS = [
   { key: "SEG", label: "Segunda" },
   { key: "TER", label: "Terça" },
@@ -67,11 +54,10 @@ function corNumDist(n) {
 export default function Cobertura() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [cobertura, setCobertura]     = useState([]);
-  const [pdvBase, setPdvBase]         = useState([]);
-  const [pdvMix, setPdvMix]           = useState([]);
+  const [cobertura, setCobertura]       = useState([]);
+  const [pdvBase, setPdvBase]           = useState([]);
   const [produtosBase, setProdutosBase] = useState([]);
-  const [loading, setLoading]         = useState(true);
+  const [loading, setLoading]           = useState(true);
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
   const [busca, setBusca]           = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
@@ -83,15 +69,13 @@ export default function Cobertura() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resC, resP, resM, resPB] = await Promise.all([
+      const [resC, resP, resPB] = await Promise.all([
         api.get("/api/cobertura"),
         api.get("/api/cobertura/pdv-base"),
-        api.get("/api/pdvs/mix").catch(() => ({ data: [] })),
         api.get("/api/pdvs/categorias-produto").catch(() => ({ data: [] })),
       ]);
       setCobertura(resC.data || []);
       setPdvBase(resP.data || []);
-      setPdvMix(resM.data || []);
       setProdutosBase(resPB.data || []);
     } catch (err) {
       console.error(err);
@@ -120,36 +104,49 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
-  // Mapa cod_produto → categoria (join com produtos_base)
-  const mapProdCat = {};
+  // ── Mapeamento produtos_base: key → [categorias]
+  // Indexado por cod E por nome para cobrir tanto códigos quanto nomes na tabela cobertura.
+  // A coluna "categorias" pode ter múltiplos valores separados por vírgula/ponto-e-vírgula.
+  const mapProdCats = {};
   produtosBase.forEach((p) => {
-    if (p.cod && p.categoria) mapProdCat[String(p.cod).trim()] = String(p.categoria).trim().toUpperCase();
+    const rawCats = p.categorias || p.categoria || "";
+    if (!rawCats) return;
+    const cats = String(rawCats)
+      .split(/[,;|]/)
+      .map((c) => c.trim().toUpperCase())
+      .filter(Boolean);
+    if (!cats.length) return;
+    if (p.cod)  mapProdCats[String(p.cod).trim().toUpperCase()]  = cats;
+    if (p.nome) mapProdCats[String(p.nome).trim().toUpperCase()] = cats;
   });
 
-  // Mapa distribuição: { cod_pdv: { categoria: Set<cod_produto> } }
+  // ── Mapa distribuição: { cod_pdv: { categoria_principal: Set<produto_key> } }
+  // Fonte: mapaCob (cobertura por PDV) + mapProdCats (produtos_base).
+  // Para cada linha OK em cobertura, resolve as categorias via produtos_base
+  // e conta os SKUs distintos por categoria por PDV.
   const mapaDist = {};
-  pdvMix.forEach((r) => {
-    const cat = mapProdCat[String(r.produto || "").trim()];
-    if (!cat) return;
-    if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
-    if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
-    if (r.produto) mapaDist[r.cod_pdv][cat].add(r.produto);
+  Object.entries(mapaCob).forEach(([cod_pdv, cats]) => {
+    Object.entries(cats).forEach(([prodKey, status]) => {
+      if (status !== "OK") return;
+      const hlCats = mapProdCats[prodKey.trim().toUpperCase()];
+      if (!hlCats) return;
+      if (!mapaDist[cod_pdv]) mapaDist[cod_pdv] = {};
+      hlCats.forEach((cat) => {
+        if (!mapaDist[cod_pdv][cat]) mapaDist[cod_pdv][cat] = new Set();
+        mapaDist[cod_pdv][cat].add(prodKey);
+      });
+    });
   });
 
-  // Estatísticas por categoria sobre a base total (não só o dia)
+  // ── Estatísticas por categoria (base total, não só o dia) ────────────────
   const catStats = {};
   CAT_MAIN.forEach((c) => {
     let total = 0, pdvsComDist = 0;
-    const skuCount = {}; // sku → quantos PDVs têm
+    const skuCount = {}; // produto_key → quantos PDVs têm
     pdvSetor.forEach((p) => {
-      let skus;
-      if (c.key === "HE") {
-        skus = HE_SKUS.filter((sku) => mapaCob[p.cod_pdv]?.[sku] === "OK");
-      } else {
-        skus = mapaDist[p.cod_pdv]?.[c.key]
-          ? [...mapaDist[p.cod_pdv][c.key]]
-          : [];
-      }
+      const skus = mapaDist[p.cod_pdv]?.[c.key]
+        ? [...mapaDist[p.cod_pdv][c.key]]
+        : [];
       total += skus.length;
       if (skus.length > 0) pdvsComDist++;
       skus.forEach((sku) => { skuCount[sku] = (skuCount[sku] || 0) + 1; });
@@ -167,9 +164,7 @@ export default function Cobertura() {
   const pdvsComDados = pdvsDia.map((p) => {
     const distByCat = {};
     CAT_MAIN.forEach((c) => {
-      distByCat[c.key] = c.key === "HE"
-        ? calcDistHE(mapaCob[p.cod_pdv] || {})
-        : (mapaDist[p.cod_pdv]?.[c.key]?.size ?? 0);
+      distByCat[c.key] = mapaDist[p.cod_pdv]?.[c.key]?.size ?? 0;
     });
     const distTotal = Object.values(distByCat).reduce((s, v) => s + v, 0);
     return { ...p, cob: mapaCob[p.cod_pdv] || {}, distByCat, distTotal };
