@@ -7,35 +7,53 @@ const CATEGORIAS = [
   { key: "GIRO RGB",                   label: "GIRO RGB" },
   { key: "LITRINHO",                   label: "LITRINHO" },
   { key: "CERVEJA",                    label: "CERVEJA" },
-  { key: "CERVEJA ZERO",               label: "CERVEJA ZERO" },
-  { key: "CERVEJA MULTIPACK",          label: "CERVEJA MULTIPACK" },
+  { key: "CERVEJA ZERO",               label: "CERV. ZERO" },
+  { key: "CERVEJA MULTIPACK",          label: "MULTIPACK" },
   { key: "HE",                         label: "HE" },
   { key: "NAB",                        label: "NAB" },
   { key: "NAB ZERO",                   label: "NAB ZERO" },
   { key: "MATCH",                      label: "MATCH" },
   { key: "MKTP",                       label: "MKTP" },
-  { key: "BALANCED CHOICE",            label: "BALANCED CHOICE" },
+  { key: "BALANCED CHOICE",            label: "BALANCED" },
   { key: "TRIMARCA RGB HE (Original)", label: "Trimarca HE Original" },
   { key: "TRIMARCA RGB HE (Stella)",   label: "Trimarca HE Stella" },
   { key: "TRIMARCA RGB HE (Spaten)",   label: "Trimarca HE Spaten" },
 ];
 
-// Sub-SKUs HE para distribuição
+// Primeiras 11 categorias (sem os sub-SKUs HE)
+const CAT_MAIN = CATEGORIAS.slice(0, 11);
+
+// Sub-SKUs HE para distribuição via tabela cobertura
 const HE_SKUS = [
   "TRIMARCA RGB HE (Original)",
   "TRIMARCA RGB HE (Stella)",
   "TRIMARCA RGB HE (Spaten)",
 ];
 
+// Mapeia nome de produto para categoria usando a coluna 'categoria' se existir,
+// ou padrões de nome. Ajuste os padrões conforme os nomes reais na planilha pdv_mix.
+function getProdutoCategoria(row) {
+  if (row.categoria) return String(row.categoria).trim().toUpperCase();
+  const p = String(row.produto || "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  if (/CERVEJA.*ZERO|ZERO.*CERV|SEM ALCOOL|S\/ALCOOL/.test(p))   return "CERVEJA ZERO";
+  if (/MULTIPACK|PACK\s*\d|\d\s*PACK|FARDO/.test(p))              return "CERVEJA MULTIPACK";
+  if (/STELLA|SPATEN|BUDWEISER|\bBUD\b|CORONA|BOHEMIA|SERRAMALTE|COLORADO|WALS|BECKS|LEFFE|HOEGAARDEN|FRANZISKANER|PATAGONIA/.test(p)) return "HE";
+  if (/LITRINHO/.test(p))                                          return "LITRINHO";
+  if (/\bRGB\b|GIRO/.test(p))                                     return "GIRO RGB";
+  if (/CERVEJ/.test(p))                                            return "CERVEJA";
+  if (/NAB.*ZERO|ZERO.*NAB|H2OH.*ZERO/.test(p))                   return "NAB ZERO";
+  if (/\bNAB\b|GUARANA|GATORADE|H2OH|LIPTON|DO BEM|TONICA|SUCO\b|AGUA\b|MONSTER|ENERGETICO/.test(p)) return "NAB";
+  if (/MATCH/.test(p))                                             return "MATCH";
+  if (/MKTP|MARKETPLACE/.test(p))                                  return "MKTP";
+  if (/BALANCED|BC\s/.test(p))                                     return "BALANCED CHOICE";
+  return null;
+}
+
 function calcDistHE(cob) {
   return HE_SKUS.filter((sku) => cob[sku] === "OK").length;
-}
-function corDist(dist, max) {
-  const pct = max > 0 ? dist / max : 0;
-  if (pct >= 1)   return "#4ade80";
-  if (pct >= 0.6) return "#fbb900";
-  if (pct > 0)    return "#fb923c";
-  return "#f87171";
 }
 
 const DIAS = [
@@ -59,6 +77,13 @@ function getDiaHoje() {
   return dias[new Date().getDay()];
 }
 
+function corNumDist(n) {
+  if (n === 0) return "#f87171";
+  if (n === 1) return "#fb923c";
+  if (n <= 3)  return "#fbb900";
+  return "#4ade80";
+}
+
 export default function Cobertura() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -69,7 +94,8 @@ export default function Cobertura() {
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
   const [busca, setBusca]           = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
-  const [aba, setAba]               = useState("cobertura"); // "cobertura" | "distribuicao"
+  const [aba, setAba]               = useState("cobertura");
+  const [catFiltro, setCatFiltro]   = useState(null);
 
   useEffect(() => { carregar(); }, []);
 
@@ -111,21 +137,55 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
-  // Mapa distribuição: { cod_pdv: [produto, produto, ...] }
+  // Mapa distribuição: { cod_pdv: { categoria: Set<produto> } }
+  // Usa coluna 'categoria' de pdv_mix se existir, senão mapeia pelo nome do produto
   const mapaDist = {};
   pdvMix.forEach((r) => {
-    if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = new Set();
-    if (r.produto) mapaDist[r.cod_pdv].add(r.produto);
+    const cat = getProdutoCategoria(r);
+    if (!cat) return;
+    if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
+    if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
+    if (r.produto) mapaDist[r.cod_pdv][cat].add(r.produto);
+  });
+
+  // Estatísticas por categoria sobre a base total (não só o dia)
+  const catStats = {};
+  CAT_MAIN.forEach((c) => {
+    let total = 0, pdvsComDist = 0;
+    const skuCount = {}; // sku → quantos PDVs têm
+    pdvSetor.forEach((p) => {
+      let skus;
+      if (c.key === "HE") {
+        skus = HE_SKUS.filter((sku) => mapaCob[p.cod_pdv]?.[sku] === "OK");
+      } else {
+        skus = mapaDist[p.cod_pdv]?.[c.key]
+          ? [...mapaDist[p.cod_pdv][c.key]]
+          : [];
+      }
+      total += skus.length;
+      if (skus.length > 0) pdvsComDist++;
+      skus.forEach((sku) => { skuCount[sku] = (skuCount[sku] || 0) + 1; });
+    });
+    const sorted = Object.entries(skuCount).sort((a, b) => b[1] - a[1]);
+    catStats[c.key] = {
+      total,
+      pdvsComDist,
+      top3:    sorted.slice(0, 3),
+      bottom3: sorted.length > 3 ? [...sorted].reverse().slice(0, 3) : [],
+    };
   });
 
   // ── PDVs do dia com dados enriquecidos ────────────────────────────────────
-  const pdvsComDados = pdvsDia.map((p) => ({
-    ...p,
-    cob:      mapaCob[p.cod_pdv] || {},
-    distTotal: mapaDist[p.cod_pdv]?.size ?? 0,
-    distHE:   calcDistHE(mapaCob[p.cod_pdv] || {}),
-    skus:     mapaDist[p.cod_pdv] ? [...mapaDist[p.cod_pdv]] : [],
-  }));
+  const pdvsComDados = pdvsDia.map((p) => {
+    const distByCat = {};
+    CAT_MAIN.forEach((c) => {
+      distByCat[c.key] = c.key === "HE"
+        ? calcDistHE(mapaCob[p.cod_pdv] || {})
+        : (mapaDist[p.cod_pdv]?.[c.key]?.size ?? 0);
+    });
+    const distTotal = Object.values(distByCat).reduce((s, v) => s + v, 0);
+    return { ...p, cob: mapaCob[p.cod_pdv] || {}, distByCat, distTotal };
+  });
 
   const pdvsFiltrados = pdvsComDados.filter((p) => {
     const buscaOk = !busca
@@ -134,6 +194,12 @@ export default function Cobertura() {
     const statusOk = !filtroStatus || Object.values(p.cob).includes(filtroStatus);
     return buscaOk && statusOk;
   });
+
+  const pdvsDistFiltrados = pdvsComDados.filter((p) =>
+    !busca
+      || p.nome_fantasia?.toLowerCase().includes(busca.toLowerCase())
+      || p.cod_pdv?.includes(busca)
+  );
 
   // ── Resumo cobertura por categoria ───────────────────────────────────────
   function calcResumo(pdvList) {
@@ -152,33 +218,9 @@ export default function Cobertura() {
   }
 
   const resumoTotal = calcResumo(pdvSetor);
-  const totalOk    = Object.values(resumoTotal).reduce((a,b) => a + b.OK, 0);
-  const totalPend  = Object.values(resumoTotal).reduce((a,b) => a + b.PENDENTE, 0);
-  const totalNok   = Object.values(resumoTotal).reduce((a,b) => a + b.NOK, 0);
-
-  // ── Resumo distribuição por categoria (base total) ───────────────────────
-  // Para cada categoria, conta PDVs com ao menos 1 OK = "cobertos"
-  // e média de OK entre os cobertos = proxy de distribuição até ter SKU-level
-  const resumoDist = CATEGORIAS.map((c) => {
-    const cobertos = pdvSetor.filter((p) => mapaCob[p.cod_pdv]?.[c.key] === "OK").length;
-    const pct = pdvSetor.length > 0 ? Math.round((cobertos / pdvSetor.length) * 100) : 0;
-    return { ...c, cobertos, pct };
-  }).sort((a, b) => b.cobertos - a.cobertos);
-
-  // Distribuição total (pdv_mix) — base completa
-  const allDist = pdvSetor.map((p) => mapaDist[p.cod_pdv]?.size ?? 0);
-  const mediaDistTotal = allDist.length > 0
-    ? (allDist.reduce((s,v) => s + v, 0) / allDist.filter(v => v > 0).length || 0).toFixed(1)
-    : "0.0";
-  const maxDist = Math.max(...allDist, 1);
-
-  // HE breakdown (base total)
-  const distHEArr = pdvSetor.map((p) => calcDistHE(mapaCob[p.cod_pdv] || {}));
-  const distHEBreak = [0,1,2,3].map((n) => distHEArr.filter((d) => d === n).length);
-  const cobertosHE = distHEArr.filter((d) => d > 0).length;
-  const mediaHE = cobertosHE > 0
-    ? (distHEArr.reduce((s,v) => s + v, 0) / cobertosHE).toFixed(1)
-    : "0.0";
+  const totalOk   = Object.values(resumoTotal).reduce((a, b) => a + b.OK, 0);
+  const totalPend = Object.values(resumoTotal).reduce((a, b) => a + b.PENDENTE, 0);
+  const totalNok  = Object.values(resumoTotal).reduce((a, b) => a + b.NOK, 0);
 
   return (
     <div style={styles.root}>
@@ -340,80 +382,98 @@ export default function Cobertura() {
         ════════════════════════════════════════════════════════════════════ */}
         {aba === "distribuicao" && (
           <>
-            {/* Dashboard distribuição */}
-            <div style={styles.dashRow}>
-              <div style={styles.dashCard}>
-                <p style={styles.dashLabel}>PDVs na base</p>
-                <p style={styles.dashVal}>{pdvSetor.length}</p>
-              </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.3)" }}>
-                <p style={styles.dashLabel}>Média SKUs únicos / PDV</p>
-                <p style={{ ...styles.dashVal, color: "#fbb900" }}>{mediaDistTotal}</p>
-              </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.2)" }}>
-                <p style={styles.dashLabel}>📅 PDVs no dia</p>
-                <p style={{ ...styles.dashVal, color: "#fbb900" }}>{pdvsDia.length}</p>
-              </div>
+            {/* ── Filtro de categoria ─────────────────────────────────────── */}
+            <div style={styles.catFiltroRow}>
+              <button
+                style={{ ...styles.catFiltroBtn, ...(catFiltro === null ? styles.catFiltroBtnAtivo : {}) }}
+                onClick={() => setCatFiltro(null)}
+              >
+                Todas
+              </button>
+              {CAT_MAIN.map((c) => (
+                <button
+                  key={c.key}
+                  style={{ ...styles.catFiltroBtn, ...(catFiltro === c.key ? styles.catFiltroBtnAtivo : {}) }}
+                  onClick={() => setCatFiltro(catFiltro === c.key ? null : c.key)}
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
 
-            {/* Cobertura por categoria (ordenado por maior cobertura) */}
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Cobertura por Categoria — Base Total</h3>
-              <p style={{ margin: "-8px 0 16px", fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
-                Cobertura = PDV tem qualquer SKU da categoria (independente de mix ou quantidade)
-              </p>
-              <div style={styles.catGrid}>
-                {resumoDist.map((c) => {
-                  const cor = c.pct >= 70 ? "#4ade80" : c.pct >= 40 ? "#fbb900" : "#f87171";
-                  return (
-                    <div key={c.key} style={styles.catCard}>
-                      <p style={styles.catLabel}>{c.label}</p>
-                      <p style={{ ...styles.catPct, color: cor }}>{c.pct}%</p>
-                      <div style={styles.catBar}>
-                        <div style={{ ...styles.catBarFill, width: `${c.pct}%`, background: cor }} />
-                      </div>
-                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>
-                        {c.cobertos} / {pdvSetor.length} PDVs
-                      </p>
+            {/* ── Cards por categoria ─────────────────────────────────────── */}
+            <div style={styles.distCatGrid}>
+              {CAT_MAIN.map((c) => {
+                const s = catStats[c.key] || { total: 0, pdvsComDist: 0 };
+                const ativo = catFiltro === c.key;
+                return (
+                  <div
+                    key={c.key}
+                    style={{ ...styles.distCatCard, ...(ativo ? styles.distCatCardAtivo : {}) }}
+                    onClick={() => setCatFiltro(ativo ? null : c.key)}
+                  >
+                    <p style={styles.distCatLabel}>{c.label}</p>
+                    <p style={{ ...styles.distCatNum, color: ativo ? "#fbb900" : "#fff" }}>
+                      {s.total}
+                    </p>
+                    <p style={styles.distCatPdvs}>{s.pdvsComDist} PDVs cobertos</p>
+                    <div style={styles.distCatAA}>
+                      <span>AA —</span>
+                      <span>Δ —</span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Distribuição HE (multi-SKU) */}
-            <div style={{ ...styles.section, borderColor: "rgba(251,185,0,0.2)" }}>
-              <h3 style={{ ...styles.sectionTitle, color: "#fbb900" }}>🍺 Distribuição HE — SKUs Únicos</h3>
-              <p style={{ margin: "-8px 0 16px", fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
-                Distribuição = qtd de SKUs distintos presentes (Original, Stella, Spaten). 2 caixas do mesmo SKU = 1.
-              </p>
-              <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>
-                  PDVs cobertos: <strong style={{ color: "#fff" }}>{cobertosHE} / {pdvSetor.length}</strong>
-                </span>
-                <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.82rem" }}>·</span>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>
-                  Média: <strong style={{ color: "#fbb900" }}>{mediaHE} SKUs</strong>
-                </span>
+            {/* ── Detalhe da categoria selecionada ────────────────────────── */}
+            {catFiltro && catStats[catFiltro] && (
+              <div style={{ ...styles.section, borderColor: "rgba(251,185,0,0.25)", marginTop: "4px" }}>
+                <h3 style={{ ...styles.sectionTitle, color: "#fbb900" }}>
+                  🔍 {CAT_MAIN.find((c) => c.key === catFiltro)?.label} — SKUs por distribuição
+                </h3>
+                <div style={styles.top3Grid}>
+                  {/* Top 3 mais distribuídos */}
+                  <div>
+                    <p style={styles.top3Titulo}>🏆 Top 3 mais distribuídos</p>
+                    {catStats[catFiltro].top3.length === 0 ? (
+                      <p style={styles.semDados}>Sem dados de SKU</p>
+                    ) : (
+                      catStats[catFiltro].top3.map(([sku, cnt], i) => (
+                        <div key={sku} style={styles.skuRow}>
+                          <span style={{ ...styles.skuRank, color: "#4ade80" }}>#{i + 1}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={styles.skuNome}>{sku}</p>
+                            <p style={styles.skuQtd}>{cnt} PDVs</p>
+                          </div>
+                          <span style={{ ...styles.skuBadge, background: "rgba(74,222,128,0.12)", color: "#4ade80" }}>{cnt}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {/* Top 3 menos distribuídos */}
+                  <div>
+                    <p style={styles.top3Titulo}>⚠️ Top 3 menos distribuídos</p>
+                    {catStats[catFiltro].bottom3.length === 0 ? (
+                      <p style={styles.semDados}>Sem dados suficientes</p>
+                    ) : (
+                      catStats[catFiltro].bottom3.map(([sku, cnt], i) => (
+                        <div key={sku} style={styles.skuRow}>
+                          <span style={{ ...styles.skuRank, color: "#f87171" }}>#{i + 1}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={styles.skuNome}>{sku}</p>
+                            <p style={styles.skuQtd}>{cnt} PDVs</p>
+                          </div>
+                          <span style={{ ...styles.skuBadge, background: "rgba(248,113,113,0.12)", color: "#f87171" }}>{cnt}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                {[0,1,2,3].map((n) => {
-                  const qtd = distHEBreak[n];
-                  const pct = pdvSetor.length > 0 ? Math.round((qtd / pdvSetor.length) * 100) : 0;
-                  const cor = corDist(n, 3);
-                  const labels = ["0 SKUs","1 SKU","2 SKUs","3 SKUs ✓"];
-                  return (
-                    <div key={n} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${cor}40`, borderRadius: "10px", padding: "12px 16px", flex: 1, minWidth: "100px", textAlign: "center" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "0.72rem", color: "rgba(255,255,255,0.45)" }}>{labels[n]}</p>
-                      <p style={{ margin: "0 0 2px", fontSize: "1.5rem", fontWeight: "800", color: cor }}>{qtd}</p>
-                      <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>{pct}%</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            )}
 
-            {/* Tabela do dia — distribuição */}
+            {/* ── Tabela do dia — distribuição ────────────────────────────── */}
             <div style={styles.section}>
               <div style={styles.diaRow}>
                 <h3 style={styles.sectionTitle}>Distribuição por PDV — Visitas do Dia</h3>
@@ -428,12 +488,17 @@ export default function Cobertura() {
                 </div>
               </div>
               <div style={styles.filtrosRow}>
-                <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
-                <span style={styles.countLabel}>{pdvsFiltrados.length} PDVs</span>
+                <input
+                  style={styles.inputFiltro}
+                  placeholder="Buscar PDV..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+                <span style={styles.countLabel}>{pdvsDistFiltrados.length} PDVs</span>
               </div>
               {loading ? (
                 <p style={styles.msg}>Carregando...</p>
-              ) : pdvsFiltrados.length === 0 ? (
+              ) : pdvsDistFiltrados.length === 0 ? (
                 <p style={styles.msg}>Nenhum PDV para {diaFiltro}.</p>
               ) : (
                 <div style={styles.tableWrap}>
@@ -441,52 +506,38 @@ export default function Cobertura() {
                     <thead>
                       <tr>
                         <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
-                        <th style={{ ...styles.th, minWidth: "160px" }}>Nome</th>
+                        <th style={{ ...styles.th, minWidth: "150px" }}>Nome</th>
                         <th style={styles.th}>Cidade</th>
-                        <th style={{ ...styles.th, color: "#fbb900" }}>SKUs únicos</th>
-                        <th style={{ ...styles.th, color: "#fbb900" }}>Dist. HE</th>
-                        {CATEGORIAS.slice(0, 11).map((c) => (
-                          <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
+                        {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => (
+                          <th key={c.key} style={{ ...styles.th, ...styles.thCat, color: catFiltro === c.key ? "#fbb900" : undefined }}>
+                            {c.label}
+                          </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {[...pdvsFiltrados]
+                      {[...pdvsDistFiltrados]
                         .sort((a, b) => b.distTotal - a.distTotal)
-                        .map((p) => {
-                          const corTotal = corDist(p.distTotal, maxDist);
-                          const corHE    = corDist(p.distHE, 3);
-                          return (
-                            <tr key={p.cod_pdv} style={styles.tr}>
-                              <td style={{ ...styles.td, ...styles.thFixed }}>
-                                <span style={styles.codBadge}>{p.cod_pdv}</span>
-                              </td>
-                              <td style={{ ...styles.td, fontSize: "0.82rem" }}>{p.nome_fantasia}</td>
-                              <td style={{ ...styles.td, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</td>
-                              <td style={{ ...styles.td, ...styles.tdCat, background: "rgba(251,185,0,0.04)" }}>
-                                <span style={{ ...styles.statusPill, background: `${corTotal}22`, color: corTotal, fontWeight: "800" }}>
-                                  {p.distTotal}
-                                </span>
-                              </td>
-                              <td style={{ ...styles.td, ...styles.tdCat, background: "rgba(251,185,0,0.04)" }}>
-                                <span style={{ ...styles.statusPill, background: `${corHE}22`, color: corHE, fontWeight: "800" }}>
-                                  {p.distHE}/3
-                                </span>
-                              </td>
-                              {CATEGORIAS.slice(0, 11).map((c) => {
-                                const st = p.cob[c.key] || "—";
-                                const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
-                                return (
-                                  <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
-                                    <span style={{ ...styles.statusPill, background: clr.bg, color: clr.color }}>
-                                      {st === "PENDENTE" ? "PEN" : st}
-                                    </span>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
+                        .map((p) => (
+                          <tr key={p.cod_pdv} style={styles.tr}>
+                            <td style={{ ...styles.td, ...styles.thFixed }}>
+                              <span style={styles.codBadge}>{p.cod_pdv}</span>
+                            </td>
+                            <td style={{ ...styles.td, fontSize: "0.82rem" }}>{p.nome_fantasia}</td>
+                            <td style={{ ...styles.td, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</td>
+                            {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => {
+                              const n = p.distByCat[c.key] ?? 0;
+                              const cor = corNumDist(n);
+                              return (
+                                <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
+                                  <span style={{ ...styles.statusPill, background: `${cor}18`, color: cor, fontWeight: "800", minWidth: "28px" }}>
+                                    {n}
+                                  </span>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -512,6 +563,7 @@ const styles = {
   abas: { display: "flex", gap: "6px", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "0" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", fontWeight: "500" },
   abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900", fontWeight: "700" },
+  // Cobertura
   dashRow: { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   dashCard: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "16px 20px", minWidth: "120px", flex: 1 },
   dashLabel: { margin: "0 0 6px", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)" },
@@ -543,4 +595,23 @@ const styles = {
   tdCat: { padding: "8px 4px" },
   codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
   statusPill: { display: "inline-block", padding: "3px 6px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: "700", minWidth: "36px" },
+  // Distribuição
+  catFiltroRow: { display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" },
+  catFiltroBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit", minHeight: "36px", whiteSpace: "nowrap" },
+  catFiltroBtnAtivo: { background: "rgba(251,185,0,0.15)", border: "1px solid rgba(251,185,0,0.5)", color: "#fbb900", fontWeight: "700" },
+  distCatGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px", marginBottom: "20px" },
+  distCatCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 12px", cursor: "pointer", transition: "border-color 0.2s, background 0.2s" },
+  distCatCardAtivo: { background: "rgba(251,185,0,0.06)", border: "1px solid rgba(251,185,0,0.45)" },
+  distCatLabel: { margin: "0 0 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em" },
+  distCatNum: { margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", lineHeight: 1 },
+  distCatPdvs: { margin: "0 0 10px", fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" },
+  distCatAA: { display: "flex", justifyContent: "space-between", fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px" },
+  top3Grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" },
+  top3Titulo: { margin: "0 0 14px", fontSize: "0.82rem", fontWeight: "700" },
+  skuRow: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: "8px" },
+  skuRank: { fontSize: "0.82rem", fontWeight: "800", width: "24px", flexShrink: 0 },
+  skuNome: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.85)", fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  skuQtd: { margin: 0, fontSize: "0.7rem", color: "rgba(255,255,255,0.35)" },
+  skuBadge: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", flexShrink: 0 },
+  semDados: { fontSize: "0.78rem", color: "rgba(255,255,255,0.25)", margin: 0 },
 };
