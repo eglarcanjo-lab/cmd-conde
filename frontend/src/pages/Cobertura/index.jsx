@@ -44,6 +44,20 @@ function getDiaHoje() {
   return dias[new Date().getDay()];
 }
 
+// Normaliza qualquer formato de dia → "SEG", "TER", "QUA", "QUI", "SEX", "SAB"
+const DIA_MAP = {
+  SEG: "SEG", SEGUNDA: "SEG", "SEGUNDA-FEIRA": "SEG", "2": "SEG",
+  TER: "TER", TERCA: "TER", "TERÇA": "TER", "TERCA-FEIRA": "TER", "TERÇA-FEIRA": "TER", "3": "TER",
+  QUA: "QUA", QUARTA: "QUA", "QUARTA-FEIRA": "QUA", "4": "QUA",
+  QUI: "QUI", QUINTA: "QUI", "QUINTA-FEIRA": "QUI", "5": "QUI",
+  SEX: "SEX", SEXTA: "SEX", "SEXTA-FEIRA": "SEX", "6": "SEX",
+  SAB: "SAB", SABADO: "SAB", "SÁBADO": "SAB", "SABADO-LETIVO": "SAB", "7": "SAB",
+};
+function normalizeDia(raw) {
+  const s = String(raw || "").trim().toUpperCase().split(/[\/,; \-]/)[0].trim();
+  return DIA_MAP[s] || s;
+}
+
 function corNumDist(n) {
   if (n === 0) return "#f87171";
   if (n === 1) return "#fb923c";
@@ -95,10 +109,7 @@ export default function Cobertura() {
   const pdvSetor = isGestor ? pdvBase
     : pdvBase.filter((r) => r.setor === usuario?.cod);
 
-  const pdvsDia = pdvSetor.filter((p) => {
-    const dia = String(p.dia_visita || "").trim().toUpperCase().split("/")[0].trim();
-    return dia === diaFiltro;
-  });
+  const pdvsDia = pdvSetor.filter((p) => normalizeDia(p.dia_visita) === diaFiltro);
 
   // Mapa cobertura: { cod_pdv: { categoria: status } }
   const mapaCob = {};
@@ -107,22 +118,36 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
+  // ── Map cod_produto → categorias[] usando produtos_base (suporta multi-categoria)
+  const mapProdCats = {};
+  produtosBase.forEach((p) => {
+    const rawCats = p.categorias || p.categoria || "";
+    if (!rawCats || !p.cod) return;
+    const cats = String(rawCats).split(/[,;|]/).map((c) => c.trim().toUpperCase()).filter(Boolean);
+    if (cats.length) mapProdCats[String(p.cod).trim()] = cats;
+  });
+
   // ── Mapa distribuição: { cod_pdv: { categoria: Set<cod_prod> } }
-  // Fonte: pdv_mix — já tem as colunas cod_pdv, cod_prod e categoria prontas.
+  // Usa produtos_base.categorias para suportar múltiplas categorias por produto.
   // mapaNomeProd: cod_prod → nome_prod (para exibir nos top3/bottom3)
   const mapaNomeProd = {};
   const mapaDist = {};
   pdvMix.forEach((r) => {
-    const cat = String(r.categoria || "").trim().toUpperCase();
-    const cod  = String(r.cod_prod  || "").trim();
-    if (!cat || !cod || !r.cod_pdv) return;
+    const cod = String(r.cod_prod || "").trim();
+    const pdv = String(r.cod_pdv  || "").trim();
+    if (!cod || !pdv) return;
     if (r.nome_prod) mapaNomeProd[cod] = r.nome_prod;
-    if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
-    if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
-    mapaDist[r.cod_pdv][cat].add(cod);
+    // Categorias via produtos_base (multi-categoria); fallback para pdv_mix.categoria
+    const cats = mapProdCats[cod] || [String(r.categoria || "").trim().toUpperCase()].filter(Boolean);
+    cats.forEach((cat) => {
+      if (!cat) return;
+      if (!mapaDist[pdv]) mapaDist[pdv] = {};
+      if (!mapaDist[pdv][cat]) mapaDist[pdv][cat] = new Set();
+      mapaDist[pdv][cat].add(cod);
+    });
   });
 
-  // ── Estatísticas por categoria — calculadas direto do pdvMix (sem join pdvBase)
+  // ── Estatísticas por categoria — usando produtos_base para multi-categoria
   const catStats = {};
   CAT_MAIN.forEach((c) => {
     // pdvSkus: cod_pdv → Set<cod_prod> para esta categoria
@@ -130,10 +155,11 @@ export default function Cobertura() {
     // skuPdvs: cod_prod → Set<cod_pdv> para ranquear top/bottom
     const skuPdvs = {};
     pdvMix.forEach((r) => {
-      if (String(r.categoria || "").trim().toUpperCase() !== c.key) return;
       const cod = String(r.cod_prod || "").trim();
       const pdv = String(r.cod_pdv  || "").trim();
       if (!cod || !pdv) return;
+      const cats = mapProdCats[cod] || [String(r.categoria || "").trim().toUpperCase()].filter(Boolean);
+      if (!cats.includes(c.key)) return;
       if (!pdvSkus[pdv]) pdvSkus[pdv] = new Set();
       pdvSkus[pdv].add(cod);
       if (!skuPdvs[cod]) skuPdvs[cod] = new Set();
@@ -447,6 +473,87 @@ export default function Cobertura() {
                 </div>
               </div>
             )}
+
+            {/* ── Tabela PDVs do dia — SKUs distribuídos por categoria ────── */}
+            <div style={{ ...styles.section, border: "1px solid rgba(255,255,255,0.13)" }}>
+              <div style={styles.diaRow}>
+                <div>
+                  <h3 style={{ ...styles.sectionTitle, color: "#fff" }}>📋 PDVs do Dia — SKUs por Categoria</h3>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>
+                    {pdvsDia.length} PDVs no roteiro de {diaFiltro}
+                  </p>
+                </div>
+                <div style={styles.diasBtns}>
+                  {DIAS.map((d) => (
+                    <button key={d.key}
+                      style={{ ...styles.diaBtn, ...(diaFiltro === d.key ? styles.diaBtnAtivo : {}) }}
+                      onClick={() => setDiaFiltro(d.key)}>
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={styles.filtrosRow}>
+                <input
+                  style={styles.inputFiltro}
+                  placeholder="Buscar PDV..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+                <span style={styles.countLabel}>{pdvsDistFiltrados.length} PDVs</span>
+              </div>
+              {loading ? (
+                <p style={styles.msg}>Carregando...</p>
+              ) : pdvsDia.length === 0 ? (
+                <p style={{ ...styles.msg, color: "rgba(255,255,255,0.55)" }}>
+                  Nenhum PDV no roteiro de <strong style={{ color: "#fbb900" }}>{diaFiltro}</strong>. Selecione outro dia.
+                </p>
+              ) : pdvsDistFiltrados.length === 0 ? (
+                <p style={{ ...styles.msg, color: "rgba(255,255,255,0.55)" }}>
+                  Nenhum PDV encontrado para o filtro atual.
+                </p>
+              ) : (
+                <div style={styles.tableWrap}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
+                        <th style={{ ...styles.th, minWidth: "160px", textAlign: "left" }}>Nome</th>
+                        <th style={{ ...styles.th, ...styles.thCat }}>Total</th>
+                        {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => (
+                          <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pdvsDistFiltrados.map((p) => {
+                        const colsCat = catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN;
+                        return (
+                          <tr key={p.cod_pdv} style={styles.tr}>
+                            <td style={{ ...styles.td, ...styles.thFixed }}>
+                              <span style={styles.codBadge}>{p.cod_pdv}</span>
+                            </td>
+                            <td style={{ ...styles.td, fontSize: "0.82rem", textAlign: "left" }}>{p.nome_fantasia}</td>
+                            <td style={{ ...styles.td, ...styles.tdCat }}>
+                              <span style={{ fontWeight: "700", color: corNumDist(p.distTotal), fontSize: "0.88rem" }}>
+                                {p.distTotal}
+                              </span>
+                            </td>
+                            {colsCat.map((c) => (
+                              <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
+                                <span style={{ fontWeight: "700", color: corNumDist(p.distByCat[c.key]), fontSize: "0.88rem" }}>
+                                  {p.distByCat[c.key]}
+                                </span>
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
           </>
         )}
