@@ -255,23 +255,38 @@ export default function SPO() {
 
   return (
     <div style={styles.root}>
-      <div style={styles.header}>
+      <style>{`
+        @media (max-width: 768px) {
+          .spo-layout { flex-direction: column !important; }
+          .spo-col-left  { flex: 0 0 100% !important; width: 100%; }
+          .spo-col-right { flex: 0 0 100% !important; width: 100%; position: static !important; }
+          .spo-header { padding: clamp(12px,3vw,20px) clamp(14px,4vw,32px) !important; }
+          .spo-header h1 { font-size: clamp(1rem,5vw,1.3rem) !important; }
+          .spo-kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .spo-backBtn { min-height: 44px; padding: 10px 14px !important; }
+          .spo-logoutBtn { min-height: 44px; }
+        }
+        @media (max-width: 420px) {
+          .spo-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+      <div style={styles.header} className="spo-header">
         <div style={styles.headerLeft}>
-          <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
+          <button style={styles.backBtn} className="spo-backBtn" onClick={() => navigate("/")}>← Voltar</button>
           <div>
             <h1 style={styles.title}>📊 SPO — Excelência Operacional</h1>
             <p style={styles.subtitle}>CMD Ambev · Conde</p>
           </div>
         </div>
-        <button style={styles.logoutBtn} onClick={logout}>Sair</button>
+        <button style={styles.logoutBtn} className="spo-logoutBtn" onClick={logout}>Sair</button>
       </div>
 
       <div style={styles.content}>
         {/* Layout side-by-side */}
-        <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+        <div className="spo-layout" style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
         {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div style={{ flex: "0 0 35%", minWidth: 0 }}>
+        <div className="spo-col-left" style={{ flex: "0 0 35%", minWidth: 0 }}>
 
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
@@ -279,7 +294,7 @@ export default function SPO() {
             <span style={styles.scoreboardTitle}>Painel SPO — {TOTAL_PTS} pontos</span>
             <span style={styles.scoreboardSub}>KPIs ativos em amarelo</span>
           </div>
-          <div style={styles.kpiGrid}>
+          <div className="spo-kpi-grid" style={styles.kpiGrid}>
             {SPO_ITEMS.map((item) => (
               <div
                 key={item.n}
@@ -1822,7 +1837,7 @@ export default function SPO() {
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
+        <div className="spo-col-right" style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
             <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
             {loading ? (
