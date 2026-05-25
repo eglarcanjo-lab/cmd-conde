@@ -48,6 +48,16 @@ router.get("/rank", async (req, res) => {
   }
 });
 
+// GET /api/pdvs/categorias-produto — mapeamento cod_produto → categoria (de produtos_base)
+router.get("/categorias-produto", async (req, res) => {
+  try {
+    const dados = await readSheet("produtos_base");
+    return res.json(dados);
+  } catch {
+    return res.json([]);
+  }
+});
+
 // GET /api/pdvs/sem-compra
 router.get("/sem-compra", async (req, res) => {
   try {

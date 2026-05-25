@@ -30,27 +30,7 @@ const HE_SKUS = [
   "TRIMARCA RGB HE (Spaten)",
 ];
 
-// Mapeia nome de produto para categoria usando a coluna 'categoria' se existir,
-// ou padrões de nome. Ajuste os padrões conforme os nomes reais na planilha pdv_mix.
-function getProdutoCategoria(row) {
-  if (row.categoria) return String(row.categoria).trim().toUpperCase();
-  const p = String(row.produto || "")
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-  if (/CERVEJA.*ZERO|ZERO.*CERV|SEM ALCOOL|S\/ALCOOL/.test(p))   return "CERVEJA ZERO";
-  if (/MULTIPACK|PACK\s*\d|\d\s*PACK|FARDO/.test(p))              return "CERVEJA MULTIPACK";
-  if (/STELLA|SPATEN|BUDWEISER|\bBUD\b|CORONA|BOHEMIA|SERRAMALTE|COLORADO|WALS|BECKS|LEFFE|HOEGAARDEN|FRANZISKANER|PATAGONIA/.test(p)) return "HE";
-  if (/LITRINHO/.test(p))                                          return "LITRINHO";
-  if (/\bRGB\b|GIRO/.test(p))                                     return "GIRO RGB";
-  if (/CERVEJ/.test(p))                                            return "CERVEJA";
-  if (/NAB.*ZERO|ZERO.*NAB|H2OH.*ZERO/.test(p))                   return "NAB ZERO";
-  if (/\bNAB\b|GUARANA|GATORADE|H2OH|LIPTON|DO BEM|TONICA|SUCO\b|AGUA\b|MONSTER|ENERGETICO/.test(p)) return "NAB";
-  if (/MATCH/.test(p))                                             return "MATCH";
-  if (/MKTP|MARKETPLACE/.test(p))                                  return "MKTP";
-  if (/BALANCED|BC\s/.test(p))                                     return "BALANCED CHOICE";
-  return null;
-}
+// Categoria é resolvida via join: pdv_mix.produto (código) → produtos_base.cod → categoria
 
 function calcDistHE(cob) {
   return HE_SKUS.filter((sku) => cob[sku] === "OK").length;
@@ -87,10 +67,11 @@ function corNumDist(n) {
 export default function Cobertura() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [cobertura, setCobertura]   = useState([]);
-  const [pdvBase, setPdvBase]       = useState([]);
-  const [pdvMix, setPdvMix]         = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [cobertura, setCobertura]     = useState([]);
+  const [pdvBase, setPdvBase]         = useState([]);
+  const [pdvMix, setPdvMix]           = useState([]);
+  const [produtosBase, setProdutosBase] = useState([]);
+  const [loading, setLoading]         = useState(true);
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
   const [busca, setBusca]           = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
@@ -102,14 +83,16 @@ export default function Cobertura() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resC, resP, resM] = await Promise.all([
+      const [resC, resP, resM, resPB] = await Promise.all([
         api.get("/api/cobertura"),
         api.get("/api/cobertura/pdv-base"),
         api.get("/api/pdvs/mix").catch(() => ({ data: [] })),
+        api.get("/api/pdvs/categorias-produto").catch(() => ({ data: [] })),
       ]);
       setCobertura(resC.data || []);
       setPdvBase(resP.data || []);
       setPdvMix(resM.data || []);
+      setProdutosBase(resPB.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -137,11 +120,16 @@ export default function Cobertura() {
     mapaCob[r.cod_pdv][r.categoria] = r.status;
   });
 
-  // Mapa distribuição: { cod_pdv: { categoria: Set<produto> } }
-  // Usa coluna 'categoria' de pdv_mix se existir, senão mapeia pelo nome do produto
+  // Mapa cod_produto → categoria (join com produtos_base)
+  const mapProdCat = {};
+  produtosBase.forEach((p) => {
+    if (p.cod && p.categoria) mapProdCat[String(p.cod).trim()] = String(p.categoria).trim().toUpperCase();
+  });
+
+  // Mapa distribuição: { cod_pdv: { categoria: Set<cod_produto> } }
   const mapaDist = {};
   pdvMix.forEach((r) => {
-    const cat = getProdutoCategoria(r);
+    const cat = mapProdCat[String(r.produto || "").trim()];
     if (!cat) return;
     if (!mapaDist[r.cod_pdv]) mapaDist[r.cod_pdv] = {};
     if (!mapaDist[r.cod_pdv][cat]) mapaDist[r.cod_pdv][cat] = new Set();
