@@ -7,6 +7,19 @@ const { authMiddleware } = require("../middleware/auth");
 
 router.use(authMiddleware);
 
+// Converte serial de data do Google Sheets → "YYYY-MM"
+// Necessário quando colunas de mês são tipo date na planilha (UNFORMATTED_VALUE retorna número)
+function normalizeMes(v) {
+  if (!v) return v;
+  if (/^\d{4}-\d{2}/.test(v)) return v.slice(0, 7); // já no formato correto
+  const n = Number(v);
+  if (!isNaN(n) && n > 20000) {
+    const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return v;
+}
+
 function filtrarGV(dados, usuario) {
   if (["admin", "director"].includes(usuario.perfil)) return dados;
   if (usuario.perfil === "gv1") return dados.filter((r) => String(r.gv) === "1");
@@ -91,7 +104,8 @@ router.get("/desafios", async (req, res) => {
   try {
     const { mes } = req.query;
     const dados = await readSheet("spo_desafios");
-    const filtrado = mes ? dados.filter((r) => r.mes_referencia === mes) : dados;
+    const normalized = dados.map((r) => ({ ...r, mes_referencia: normalizeMes(r.mes_referencia) }));
+    const filtrado = mes ? normalized.filter((r) => r.mes_referencia === mes) : normalized;
     return res.json(filtrarGV(filtrado, req.user));
   } catch { return res.json([]); }
 });
@@ -356,19 +370,6 @@ router.get("/portfolio-ideal/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
-
-// Converte serial de data do Google Sheets (ex: 46142) → "2026-05"
-// Se já for "YYYY-MM", mantém. Necessário quando a coluna `mes` é tipo date na planilha.
-function normalizeMes(mesStr) {
-  if (!mesStr) return mesStr;
-  if (/^\d{4}-\d{2}$/.test(mesStr)) return mesStr; // já no formato correto
-  const n = Number(mesStr);
-  if (!isNaN(n) && n > 20000) {                     // serial date do Google Sheets
-    const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  }
-  return mesStr;
-}
 
 // GET /api/spo/painel/metas
 router.get("/painel/metas", async (req, res) => {
