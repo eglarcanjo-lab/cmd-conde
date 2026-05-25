@@ -357,6 +357,17 @@ export default function Cobertura() {
         ════════════════════════════════════════════════════════════════════ */}
         {aba === "distribuicao" && (
           <>
+            {/* ── DEBUG temporário ── remover após diagnóstico ── */}
+            <div style={{ background:"rgba(255,0,0,0.1)", border:"1px solid red", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:"0.75rem", color:"#fff", lineHeight:1.8 }}>
+              <strong>🔍 DEBUG</strong><br/>
+              pdvMix registros: <strong>{pdvMix.length}</strong><br/>
+              pdvMix[0] keys: <strong>{pdvMix[0] ? Object.keys(pdvMix[0]).join(", ") : "—"}</strong><br/>
+              pdvMix[0] categoria: <strong>{pdvMix[0]?.categoria ?? "undefined"}</strong><br/>
+              pdvMix[0] cod_prod: <strong>{pdvMix[0]?.cod_prod ?? "undefined"}</strong><br/>
+              pdvMix[0] cod_pdv: <strong>{pdvMix[0]?.cod_pdv ?? "undefined"}</strong><br/>
+              mapaDist keys: <strong>{Object.keys(mapaDist).length}</strong><br/>
+              catStats GIRO RGB total: <strong>{catStats["GIRO RGB"]?.total ?? "—"}</strong>
+            </div>
             {/* ── Filtro de categoria ─────────────────────────────────────── */}
             <div style={styles.catFiltroRow}>
               <button
