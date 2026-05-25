@@ -122,22 +122,27 @@ export default function Cobertura() {
     mapaDist[r.cod_pdv][cat].add(cod);
   });
 
-  // ── Estatísticas por categoria (base total, não só o dia) ────────────────
+  // ── Estatísticas por categoria — calculadas direto do pdvMix (sem join pdvBase)
   const catStats = {};
   CAT_MAIN.forEach((c) => {
-    let total = 0, pdvsComDist = 0;
-    const skuCount = {}; // cod_prod → quantos PDVs têm
-    pdvSetor.forEach((p) => {
-      const skus = mapaDist[p.cod_pdv]?.[c.key]
-        ? [...mapaDist[p.cod_pdv][c.key]]
-        : [];
-      total += skus.length;
-      if (skus.length > 0) pdvsComDist++;
-      skus.forEach((cod) => { skuCount[cod] = (skuCount[cod] || 0) + 1; });
+    // pdvSkus: cod_pdv → Set<cod_prod> para esta categoria
+    const pdvSkus = {};
+    // skuPdvs: cod_prod → Set<cod_pdv> para ranquear top/bottom
+    const skuPdvs = {};
+    pdvMix.forEach((r) => {
+      if (String(r.categoria || "").trim().toUpperCase() !== c.key) return;
+      const cod = String(r.cod_prod || "").trim();
+      const pdv = String(r.cod_pdv  || "").trim();
+      if (!cod || !pdv) return;
+      if (!pdvSkus[pdv]) pdvSkus[pdv] = new Set();
+      pdvSkus[pdv].add(cod);
+      if (!skuPdvs[cod]) skuPdvs[cod] = new Set();
+      skuPdvs[cod].add(pdv);
     });
-    // Converte cod_prod → nome_prod para exibição
-    const sorted = Object.entries(skuCount)
-      .map(([cod, cnt]) => [mapaNomeProd[cod] || cod, cnt])
+    const total       = Object.values(pdvSkus).reduce((s, set) => s + set.size, 0);
+    const pdvsComDist = Object.keys(pdvSkus).length;
+    const sorted = Object.entries(skuPdvs)
+      .map(([cod, pdvSet]) => [mapaNomeProd[cod] || cod, pdvSet.size])
       .sort((a, b) => b[1] - a[1]);
     catStats[c.key] = {
       total,
