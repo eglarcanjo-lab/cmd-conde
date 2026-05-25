@@ -357,17 +357,6 @@ export default function Cobertura() {
         ════════════════════════════════════════════════════════════════════ */}
         {aba === "distribuicao" && (
           <>
-            {/* ── DEBUG temporário ── remover após diagnóstico ── */}
-            <div style={{ background:"rgba(255,0,0,0.1)", border:"1px solid red", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:"0.75rem", color:"#fff", lineHeight:1.8 }}>
-              <strong>🔍 DEBUG</strong><br/>
-              pdvMix registros: <strong>{pdvMix.length}</strong><br/>
-              pdvMix[0] keys: <strong>{pdvMix[0] ? Object.keys(pdvMix[0]).join(", ") : "—"}</strong><br/>
-              pdvMix[0] categoria: <strong>{pdvMix[0]?.categoria ?? "undefined"}</strong><br/>
-              pdvMix[0] cod_prod: <strong>{pdvMix[0]?.cod_prod ?? "undefined"}</strong><br/>
-              pdvMix[0] cod_pdv: <strong>{pdvMix[0]?.cod_pdv ?? "undefined"}</strong><br/>
-              mapaDist keys: <strong>{Object.keys(mapaDist).length}</strong><br/>
-              catStats GIRO RGB total: <strong>{catStats["GIRO RGB"]?.total ?? "—"}</strong>
-            </div>
             {/* ── Filtro de categoria ─────────────────────────────────────── */}
             <div style={styles.catFiltroRow}>
               <button
@@ -459,76 +448,6 @@ export default function Cobertura() {
               </div>
             )}
 
-            {/* ── Tabela do dia — distribuição ────────────────────────────── */}
-            <div style={styles.section}>
-              <div style={styles.diaRow}>
-                <h3 style={styles.sectionTitle}>Distribuição por PDV — Visitas do Dia</h3>
-                <div style={styles.diasBtns}>
-                  {DIAS.map((d) => (
-                    <button key={d.key}
-                      style={{ ...styles.diaBtn, ...(diaFiltro === d.key ? styles.diaBtnAtivo : {}) }}
-                      onClick={() => setDiaFiltro(d.key)}>
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={styles.filtrosRow}>
-                <input
-                  style={styles.inputFiltro}
-                  placeholder="Buscar PDV..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                />
-                <span style={styles.countLabel}>{pdvsDistFiltrados.length} PDVs</span>
-              </div>
-              {loading ? (
-                <p style={styles.msg}>Carregando...</p>
-              ) : pdvsDistFiltrados.length === 0 ? (
-                <p style={styles.msg}>Nenhum PDV para {diaFiltro}.</p>
-              ) : (
-                <div style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
-                        <th style={{ ...styles.th, minWidth: "150px" }}>Nome</th>
-                        <th style={styles.th}>Cidade</th>
-                        {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => (
-                          <th key={c.key} style={{ ...styles.th, ...styles.thCat, color: catFiltro === c.key ? "#fbb900" : undefined }}>
-                            {c.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...pdvsDistFiltrados]
-                        .sort((a, b) => b.distTotal - a.distTotal)
-                        .map((p) => (
-                          <tr key={p.cod_pdv} style={styles.tr}>
-                            <td style={{ ...styles.td, ...styles.thFixed }}>
-                              <span style={styles.codBadge}>{p.cod_pdv}</span>
-                            </td>
-                            <td style={{ ...styles.td, fontSize: "0.82rem" }}>{p.nome_fantasia}</td>
-                            <td style={{ ...styles.td, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</td>
-                            {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => {
-                              const n = p.distByCat[c.key] ?? 0;
-                              const cor = corNumDist(n);
-                              return (
-                                <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
-                                  <span style={{ ...styles.statusPill, background: `${cor}18`, color: cor, fontWeight: "800", minWidth: "28px" }}>
-                                    {n}
-                                  </span>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
           </>
         )}
 
