@@ -53,6 +53,8 @@ export default function Tasks() {
   const [filtroTipo, setFiltroTipo] = useState("");
   const [busca, setBusca] = useState("");
   const [pdvExpandido, setPdvExpandido] = useState(null);
+  const [viewMode, setViewMode] = useState("pdv");     // "pdv" | "task"
+  const [taskExpandida, setTaskExpandida] = useState(null);
 
   useEffect(() => { carregar(); }, []);
 
@@ -113,12 +115,19 @@ export default function Tasks() {
 
   // Dashboard
   const totalTasks = tasksDia.length;
-  const open = tasksDia.filter((t) => t.status === "OPEN").length;
-  const valid = tasksDia.filter((t) => t.status === "VALID").length;
-  const invalid = tasksDia.filter((t) => t.status === "INVALID").length;
   const pdvsComTask = Object.keys(porPdv).length;
 
   const tipos = [...new Set(tasksDia.map((t) => t.tipo).filter(Boolean))];
+
+  // Agrupamento Por Task — agrupa por descrição, ordena por mais abertas
+  const porTask = {};
+  tasksVisiveis.forEach((t) => {
+    const key = t.descricao || t.tipo || "(sem descrição)";
+    if (!porTask[key]) porTask[key] = { tipo: t.tipo, pdvs: [] };
+    porTask[key].pdvs.push(t);
+  });
+  const taskGroups = Object.entries(porTask)
+    .sort((a, b) => b[1].pdvs.length - a[1].pdvs.length);
 
   return (
     <div style={styles.root}>
@@ -154,21 +163,25 @@ export default function Tasks() {
             <p style={styles.dashVal}>{pdvsComTask}</p>
           </div>
           <div style={styles.dashCard}>
-            <p style={styles.dashLabel}>Total tasks</p>
+            <p style={styles.dashLabel}>Total tasks abertas</p>
             <p style={styles.dashVal}>{totalTasks}</p>
           </div>
-          <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.3)" }}>
-            <p style={styles.dashLabel}>🟡 Abertas</p>
-            <p style={{ ...styles.dashVal, color: "#fbb900" }}>{open}</p>
-          </div>
-          <div style={{ ...styles.dashCard, borderColor: "rgba(34,197,94,0.3)" }}>
-            <p style={styles.dashLabel}>✅ Validadas</p>
-            <p style={{ ...styles.dashVal, color: "#4ade80" }}>{valid}</p>
-          </div>
-          <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }}>
-            <p style={styles.dashLabel}>❌ Inválidas</p>
-            <p style={{ ...styles.dashVal, color: "#f87171" }}>{invalid}</p>
-          </div>
+        </div>
+
+        {/* Toggle de visualização */}
+        <div style={styles.viewToggle}>
+          <button
+            style={{ ...styles.viewBtn, ...(viewMode === "pdv" ? styles.viewBtnAtivo : {}) }}
+            onClick={() => { setViewMode("pdv"); setPdvExpandido(null); setTaskExpandida(null); }}
+          >
+            🏪 Por PDV
+          </button>
+          <button
+            style={{ ...styles.viewBtn, ...(viewMode === "task" ? styles.viewBtnAtivo : {}) }}
+            onClick={() => { setViewMode("task"); setPdvExpandido(null); setTaskExpandida(null); }}
+          >
+            📋 Por Task
+          </button>
         </div>
 
         {/* Filtros */}
@@ -192,22 +205,22 @@ export default function Tasks() {
           <span style={styles.countLabel}>{Object.keys(porPdv).length} PDVs · {tasksVisiveis.length} tasks</span>
         </div>
 
-        {/* Lista agrupada por PDV */}
+        {/* Lista */}
         {loading ? (
           <p style={styles.msg}>Carregando...</p>
-        ) : Object.keys(porPdv).length === 0 ? (
-          <p style={styles.msg}>Nenhuma task encontrada para {diaFiltro}.</p>
-        ) : (
+        ) : tasksVisiveis.length === 0 ? (
+          <p style={styles.msg}>Nenhuma task aberta para {diaFiltro}.</p>
+        ) : viewMode === "pdv" ? (
+
+          /* ── VISÃO POR PDV ── */
           <div style={styles.lista}>
             {Object.entries(porPdv).map(([codPdv, tasksPdv]) => {
               const pdv = mapaPdv[codPdv];
               const aberto = pdvExpandido === codPdv;
-              const temAberta = tasksPdv.some((t) => t.status === "OPEN");
               return (
                 <div key={codPdv} style={styles.pdvCard}>
-                  {/* Header do PDV */}
                   <div
-                    style={{ ...styles.pdvHeader, ...(temAberta ? styles.pdvHeaderAberto : {}) }}
+                    style={{ ...styles.pdvHeader, ...styles.pdvHeaderAberto }}
                     onClick={() => setPdvExpandido(aberto ? null : codPdv)}
                   >
                     <div style={styles.pdvHeaderLeft}>
@@ -216,36 +229,25 @@ export default function Tasks() {
                       <span style={styles.pdvCidade}>{pdv?.cidade}</span>
                     </div>
                     <div style={styles.pdvHeaderRight}>
-                      {tasksPdv.filter((t) => t.status === "OPEN").length > 0 && (
-                        <span style={styles.tagAberta}>{tasksPdv.filter((t) => t.status === "OPEN").length} aberta(s)</span>
-                      )}
-                      {tasksPdv.filter((t) => t.status === "VALID").length > 0 && (
-                        <span style={styles.tagValid}>{tasksPdv.filter((t) => t.status === "VALID").length} válida(s)</span>
-                      )}
+                      <span style={styles.tagAberta}>{tasksPdv.length} aberta(s)</span>
                       <span style={styles.expandIcon}>{aberto ? "▲" : "▼"}</span>
                     </div>
                   </div>
-
-                  {/* Tasks do PDV */}
                   {aberto && (
                     <div style={styles.tasksList}>
                       {tasksPdv.map((t, i) => {
-                        const stConf = STATUS_CONFIG[t.status] || STATUS_CONFIG.OPEN;
                         const tipoColor = TIPOS_COLOR[t.tipo] || TIPOS_COLOR[""];
                         return (
                           <div key={i} style={styles.taskItem}>
                             <div style={styles.taskLeft}>
-                              <span style={{ ...styles.statusTag, background: stConf.bg, color: stConf.color }}>
-                                {stConf.label}
+                              <span style={{ ...styles.statusTag, background: STATUS_CONFIG.OPEN.bg, color: STATUS_CONFIG.OPEN.color }}>
+                                Aberta
                               </span>
-                              <span style={{ ...styles.tipoTag, color: tipoColor }}>
-                                {t.tipo}
-                              </span>
+                              <span style={{ ...styles.tipoTag, color: tipoColor }}>{t.tipo}</span>
                             </div>
                             <p style={styles.taskDesc}>{t.descricao}</p>
                             <div style={styles.taskMeta}>
-                              <span style={styles.taskMetaItem}>📅 Visita: {t.data_visita}</span>
-                              {t.data_conclusao && <span style={styles.taskMetaItem}>✅ Concluída: {t.data_conclusao}</span>}
+                              <span style={styles.taskMetaItem}>📅 {t.data_visita}</span>
                               <span style={styles.taskMetaItem}>⭐ {t.pontuacao} pts</span>
                               <span style={styles.taskMetaItem}>#{t.id_task}</span>
                             </div>
@@ -258,6 +260,50 @@ export default function Tasks() {
               );
             })}
           </div>
+
+        ) : (
+
+          /* ── VISÃO POR TASK ── */
+          <div style={styles.lista}>
+            {taskGroups.map(([descricao, grupo]) => {
+              const aberto = taskExpandida === descricao;
+              const pdvsUnicos = [...new Map(grupo.pdvs.map((t) => [t.cod_pdv, t])).values()];
+              const tipoColor = TIPOS_COLOR[grupo.tipo] || TIPOS_COLOR[""];
+              return (
+                <div key={descricao} style={styles.pdvCard}>
+                  <div
+                    style={{ ...styles.pdvHeader, borderLeft: "3px solid rgba(251,185,0,0.5)" }}
+                    onClick={() => setTaskExpandida(aberto ? null : descricao)}
+                  >
+                    <div style={{ ...styles.pdvHeaderLeft, flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
+                      <span style={{ ...styles.tipoTag, color: tipoColor, fontSize: "0.72rem" }}>{grupo.tipo}</span>
+                      <span style={styles.pdvNome}>{descricao}</span>
+                    </div>
+                    <div style={styles.pdvHeaderRight}>
+                      <span style={styles.tagAberta}>{pdvsUnicos.length} PDV{pdvsUnicos.length !== 1 ? "s" : ""}</span>
+                      <span style={styles.expandIcon}>{aberto ? "▲" : "▼"}</span>
+                    </div>
+                  </div>
+                  {aberto && (
+                    <div style={styles.tasksList}>
+                      {pdvsUnicos.map((t) => {
+                        const pdv = mapaPdv[t.cod_pdv];
+                        return (
+                          <div key={t.cod_pdv} style={{ ...styles.taskItem, flexDirection: "row", alignItems: "center", gap: "12px" }}>
+                            <span style={styles.codBadge}>{t.cod_pdv}</span>
+                            <span style={{ ...styles.pdvNome, flex: 1 }}>{pdv?.nome_fantasia || t.cod_pdv}</span>
+                            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>{pdv?.cidade}</span>
+                            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>📅 {t.data_visita}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
         )}
       </div>
     </div>
@@ -280,6 +326,9 @@ const styles = {
   dashCard: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 18px", flex: 1, minWidth: "100px" },
   dashLabel: { margin: "0 0 6px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)" },
   dashVal: { margin: 0, fontSize: "1.6rem", fontWeight: "700" },
+  viewToggle: { display: "flex", gap: "6px", marginBottom: "16px" },
+  viewBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "500", minHeight: "40px" },
+  viewBtnAtivo: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", fontWeight: "700" },
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
