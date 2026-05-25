@@ -383,25 +383,6 @@ export default function Cobertura() {
         ════════════════════════════════════════════════════════════════════ */}
         {aba === "distribuicao" && (
           <>
-            {/* ── Filtro de categoria ─────────────────────────────────────── */}
-            <div style={styles.catFiltroRow}>
-              <button
-                style={{ ...styles.catFiltroBtn, ...(catFiltro === null ? styles.catFiltroBtnAtivo : {}) }}
-                onClick={() => setCatFiltro(null)}
-              >
-                Todas
-              </button>
-              {CAT_MAIN.map((c) => (
-                <button
-                  key={c.key}
-                  style={{ ...styles.catFiltroBtn, ...(catFiltro === c.key ? styles.catFiltroBtnAtivo : {}) }}
-                  onClick={() => setCatFiltro(catFiltro === c.key ? null : c.key)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-
             {/* ── Cards por categoria ─────────────────────────────────────── */}
             <div style={styles.distCatGrid}>
               {CAT_MAIN.map((c) => {
