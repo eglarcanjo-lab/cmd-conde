@@ -357,11 +357,25 @@ router.get("/portfolio-ideal/detalhe", async (req, res) => {
 });
 
 
+// Converte serial de data do Google Sheets (ex: 46142) → "2026-05"
+// Se já for "YYYY-MM", mantém. Necessário quando a coluna `mes` é tipo date na planilha.
+function normalizeMes(mesStr) {
+  if (!mesStr) return mesStr;
+  if (/^\d{4}-\d{2}$/.test(mesStr)) return mesStr; // já no formato correto
+  const n = Number(mesStr);
+  if (!isNaN(n) && n > 20000) {                     // serial date do Google Sheets
+    const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return mesStr;
+}
+
 // GET /api/spo/painel/metas
 router.get("/painel/metas", async (req, res) => {
   try {
     const dados = await readSheet("spo_metas");
-    return res.json(dados);
+    const normalized = dados.map((r) => ({ ...r, mes: normalizeMes(r.mes) }));
+    return res.json(normalized);
   } catch { return res.json([]); }
 });
 
