@@ -7,17 +7,23 @@ export default function Home() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
-  const isRn = usuario?.perfil === "rn";
+  const perfil = usuario?.perfil;
+  const isRn = perfil === "rn";
+  const isAdminOuDirector = perfil === "admin" || perfil === "director";
 
   const modulos = [
-    { icon: "📊", label: "Cobertura", route: "/cobertura", ativo: true,  soGestor: true },
-    { icon: "🗺️", label: "PDVs",      route: "/pdvs",      ativo: true,  soGestor: false },
-    { icon: "📦", label: "Produtos",  route: "/produtos",  ativo: false, soGestor: false },
-    { icon: "✅", label: "Tasks",     route: "/tasks",     ativo: true,  soGestor: false },
-    { icon: "💰", label: "Remuneração", route: "/rv",      ativo: true,  soGestor: false },
-    { icon: "📊", label: "SPO",       route: "/spo",       ativo: true,  soGestor: true },
-    { icon: "🚨", label: "Incidentes", route: "/incidentes", ativo: true, soGestor: false },
-  ].filter((m) => !isRn || !m.soGestor);
+    { icon: "📊", label: "Cobertura",   route: "/cobertura",  ativo: true,  soGestor: true,  soRn: false },
+    { icon: "🗺️", label: "PDVs",        route: "/pdvs",       ativo: true,  soGestor: false, soRn: false },
+    { icon: "📦", label: "Produtos",    route: "/produtos",   ativo: false, soGestor: false, soRn: false },
+    { icon: "✅", label: "Tasks",       route: "/tasks",      ativo: true,  soGestor: false, soRn: false },
+    { icon: "💰", label: "Remuneração", route: "/rv",         ativo: true,  soGestor: false, soRn: true  },
+    { icon: "📊", label: "SPO",         route: "/spo",        ativo: true,  soGestor: true,  soRn: false },
+    { icon: "🚨", label: "Incidentes",  route: "/incidentes", ativo: true,  soGestor: false, soRn: false },
+  ].filter((m) => {
+    if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO
+    if (isAdminOuDirector && m.soRn) return false; // Admin/Director não vê Remuneração
+    return true;
+  });
 
   return (
     <div style={styles.root}>

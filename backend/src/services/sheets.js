@@ -3,6 +3,19 @@ const { google } = require("googleapis");
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
+// ── Cache em memória para reduzir chamadas à Sheets API ───────────────────────
+const _cache = new Map(); // tabName → { data, ts }
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+function cacheGet(tab) {
+  const entry = _cache.get(tab);
+  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data;
+  return null;
+}
+function cacheSet(tab, data) { _cache.set(tab, { data, ts: Date.now() }); }
+function cacheInvalidate(tab) { _cache.delete(tab); }
+// ─────────────────────────────────────────────────────────────────────────────
+
 function getAuth() {
   return new google.auth.JWT({
     email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -26,6 +39,9 @@ async function getSheets() {
 
 // Lê uma aba inteira e retorna array de objetos usando a primeira linha como cabeçalho
 async function readSheet(tabName) {
+  const cached = cacheGet(tabName);
+  if (cached) return cached;
+
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
@@ -34,10 +50,10 @@ async function readSheet(tabName) {
   });
 
   const rows = res.data.values || [];
-  if (rows.length === 0) return [];
+  if (rows.length === 0) { cacheSet(tabName, []); return []; }
 
   const headers = rows[0];
-  return rows.slice(1).map((row) => {
+  const result = rows.slice(1).map((row) => {
     const obj = {};
     headers.forEach((h, i) => {
       // Converte para string para manter compatibilidade com comparações de setor/cod_pdv
@@ -47,10 +63,14 @@ async function readSheet(tabName) {
     });
     return obj;
   });
+
+  cacheSet(tabName, result);
+  return result;
 }
 
 // Escreve uma linha nova no final de uma aba
 async function appendRow(tabName, values) {
+  cacheInvalidate(tabName);
   const sheets = await getSheets();
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
@@ -62,6 +82,7 @@ async function appendRow(tabName, values) {
 
 // Atualiza uma linha específica pelo índice (1-based, considerando cabeçalho na linha 1)
 async function updateRow(tabName, rowIndex, values) {
+  cacheInvalidate(tabName);
   const sheets = await getSheets();
   const range = `${tabName}!A${rowIndex + 1}`;
   await sheets.spreadsheets.values.update({
