@@ -258,13 +258,14 @@ export default function SPO() {
       <style>{`
         @media (max-width: 768px) {
           .spo-layout { flex-direction: column !important; }
-          .spo-col-left  { flex: 0 0 100% !important; width: 100%; }
-          .spo-col-right { flex: 0 0 100% !important; width: 100%; position: static !important; }
+          .spo-col-left  { flex: 0 0 100% !important; width: 100%; order: 2; }
+          .spo-col-right { flex: 0 0 100% !important; width: 100%; position: static !important; order: 1; }
           .spo-header { padding: clamp(12px,3vw,20px) clamp(14px,4vw,32px) !important; }
           .spo-header h1 { font-size: clamp(1rem,5vw,1.3rem) !important; }
           .spo-kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
           .spo-backBtn { min-height: 44px; padding: 10px 14px !important; }
           .spo-logoutBtn { min-height: 44px; }
+          .spo-painel-tr { cursor: pointer; }
         }
         @media (max-width: 420px) {
           .spo-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -1983,7 +1984,7 @@ export default function SPO() {
                                     {ITENS_SPO.map((item) => {
                                       let triPts = 0;
                                       return (
-                                        <tr key={item.n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
+                                        <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
