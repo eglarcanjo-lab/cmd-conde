@@ -20,6 +20,26 @@ const CATEGORIAS = [
   { key: "TRIMARCA RGB HE (Spaten)",   label: "TRIMARCA RGB HE (Spaten)" },
 ];
 
+// SKUs HE monitorados para Distribuição
+const HE_SKUS = [
+  "TRIMARCA RGB HE (Original)",
+  "TRIMARCA RGB HE (Stella)",
+  "TRIMARCA RGB HE (Spaten)",
+];
+
+// Distribuição HE de um PDV = qtd de SKUs HE com status OK
+function calcDistHE(cob) {
+  return HE_SKUS.filter((sku) => cob[sku] === "OK").length;
+}
+
+// Cor da distribuição HE
+function corDistHE(dist) {
+  if (dist === 3) return "#4ade80";
+  if (dist === 2) return "#fbb900";
+  if (dist === 1) return "#fb923c";
+  return "#f87171";
+}
+
 const DIAS = [
   { key: "SEG", label: "Segunda" },
   { key: "TER", label: "Terça" },
@@ -132,6 +152,17 @@ export default function Cobertura() {
   const totalPend = Object.values(resumoTotal).reduce((a,b) => a + b.PENDENTE, 0);
   const totalNok  = Object.values(resumoTotal).reduce((a,b) => a + b.NOK, 0);
 
+  // ── Distribuição HE ──────────────────────────────────────────────────────
+  // Para cada PDV calcula quantos SKUs HE estão OK
+  const distHEPorPdv = pdvSetor.map((p) => calcDistHE(mapaCob[p.cod_pdv] || {}));
+  const cobertosHE   = distHEPorPdv.filter((d) => d > 0).length;           // PDVs com ao menos 1 SKU HE
+  const distHEMedia  = cobertosHE > 0
+    ? (distHEPorPdv.reduce((s, d) => s + d, 0) / cobertosHE).toFixed(1)
+    : "0.0";
+  const distHEDia    = pdvsDia.map((p) => calcDistHE(mapaCob[p.cod_pdv] || {}));
+  // Breakdown: quantos PDVs têm dist 0/1/2/3 (base total)
+  const distBreak = [0, 1, 2, 3].map((n) => distHEPorPdv.filter((d) => d === n).length);
+
   return (
     <div style={styles.root}>
       {/* Header */}
@@ -169,6 +200,42 @@ export default function Cobertura() {
             <p style={styles.dashLabel}>📅 Visitas hoje</p>
             <p style={{ ...styles.dashVal, color: "#fbb900" }}>{pdvsDia.length}</p>
           </div>
+        </div>
+
+        {/* Distribuição HE */}
+        <div style={{ ...styles.section, borderColor: "rgba(251,185,0,0.2)", marginBottom: "20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+            <h3 style={{ ...styles.sectionTitle, margin: 0, color: "#fbb900" }}>🍺 Distribuição HE — Base Total</h3>
+            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>
+                PDVs cobertos: <strong style={{ color: "#fff" }}>{cobertosHE} / {pdvSetor.length}</strong>
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>
+                Dist. média: <strong style={{ color: "#fbb900" }}>{distHEMedia} SKUs</strong>
+              </span>
+            </div>
+          </div>
+          {/* Breakdown 0/1/2/3 SKUs */}
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {[0, 1, 2, 3].map((n) => {
+              const qtd = distBreak[n];
+              const pct = pdvSetor.length > 0 ? Math.round((qtd / pdvSetor.length) * 100) : 0;
+              const cor = corDistHE(n);
+              const labels = ["0 SKUs (sem cobertura)", "1 SKU", "2 SKUs", "3 SKUs (completo)"];
+              return (
+                <div key={n} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${cor}40`, borderRadius: "10px", padding: "12px 16px", flex: 1, minWidth: "110px", textAlign: "center" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: "0.72rem", color: "rgba(255,255,255,0.45)" }}>{labels[n]}</p>
+                  <p style={{ margin: "0 0 2px", fontSize: "1.5rem", fontWeight: "800", color: cor }}>{qtd}</p>
+                  <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>{pct}% da base</p>
+                </div>
+              );
+            })}
+          </div>
+          {/* Definição */}
+          <p style={{ margin: "12px 0 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", lineHeight: "1.5" }}>
+            <strong style={{ color: "rgba(255,255,255,0.4)" }}>Distribuição</strong>: qtd de SKUs HE únicos presentes no PDV (Original, Stella, Spaten) — 2 caixas do mesmo SKU = 1. &nbsp;
+            <strong style={{ color: "rgba(255,255,255,0.4)" }}>Cobertura</strong>: qualquer SKU, independente de mix ou quantidade = 1.
+          </p>
         </div>
 
         {/* Resumo por categoria — base total */}
@@ -243,6 +310,7 @@ export default function Cobertura() {
                     <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
                     <th style={{ ...styles.th, minWidth: "180px" }}>Nome</th>
                     <th style={styles.th}>Cidade</th>
+                    <th style={{ ...styles.th, ...styles.thCat, color: "#fbb900", background: "rgba(251,185,0,0.06)" }}>Dist. HE</th>
                     {CATEGORIAS.map((c) => (
                       <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
                     ))}
@@ -256,6 +324,17 @@ export default function Cobertura() {
                       </td>
                       <td style={{ ...styles.td, fontSize: "0.82rem" }}>{p.nome_fantasia}</td>
                       <td style={{ ...styles.td, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</td>
+                      {(() => {
+                        const dist = calcDistHE(p.cob);
+                        const cor = corDistHE(dist);
+                        return (
+                          <td style={{ ...styles.td, ...styles.tdCat, background: "rgba(251,185,0,0.04)" }}>
+                            <span style={{ ...styles.statusPill, background: `${cor}22`, color: cor, fontWeight: "800", fontSize: "0.85rem" }}>
+                              {dist}/3
+                            </span>
+                          </td>
+                        );
+                      })()}
                       {CATEGORIAS.map((c) => {
                         const st = p.cob[c.key] || "—";
                         const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
