@@ -1903,7 +1903,7 @@ export default function SPO() {
                                 case 2:  { const d = opMes(coaching) || op(coaching); return d ? parseFloat(d.coachings_validos || 0) : null; }
                                 case 3:  { const d = opMes(diasRota) || op(diasRota); return d ? parseFloat(d.dias_rota || 0) : null; }
                                 case 4:  { const d = desafios.filter(x => (x.mes_referencia||"").startsWith(mes) && x.status === "OK"); return d.length > 0 ? d.length : null; }
-                                case 5:  { const d = opMes(apResumo) || op(apResumo); return d ? parseFloat(d.pct_geral || d.pct || 0) : null; }
+                                case 5:  { const d = opMes(ap) || op(ap); return d ? parseFloat(d.pct_geral || d.pct || 0) : null; }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
                                 case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
