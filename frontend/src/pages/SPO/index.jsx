@@ -1132,39 +1132,40 @@ export default function SPO() {
                       ))}
                     </div>
                   </div>
-                  {/* Card Operação */}
-                  {alone.filter(r => r.setor === "OPERACAO").map(r => {
-                    const val  = parseInt(r.pdvs_alone || 0);
-                    const meta = parseInt(r.meta || 0);
-                    const pct  = parseFloat(r.pct || (meta > 0 ? Math.round(val / meta * 100) : 0));
-                    const cor  = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  {/* Card Operação — meta do spo_metas KPI 19 */}
+                  {(() => {
+                    const opRow = alone.find(r => r.setor === "OPERACAO");
+                    const val   = parseInt(opRow?.pdvs_alone || 0);
+                    const mOp   = spoMetaTotal(19);
+                    const pct   = mOp ? Math.round(val / mOp * 100) : 0;
+                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const okBadge = mOp !== null ? val >= mOp : opRow?.ok === "OK";
                     return (
-                      <div key="op" style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
+                      <div style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
-                          <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{val} / {meta} PDVs alone</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{val} / {mOp ?? "—"} PDVs alone</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {mOp !== null ? `${mOp} PDVs` : "—"}</p>
                       </div>
                     );
-                  })}
-                  {/* Cards por RN com meta individual e tarja colorida */}
+                  })()}
+                  {/* Cards por RN — meta individual = 90% da base do RN */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px", marginBottom: "16px" }}>
                     {alone.filter(r => r.setor !== "OPERACAO").map(r => {
-                      const val   = parseInt(r.pdvs_alone || 0);
-                      const meta  = parseInt(r.meta || 0);
-                      const total = parseInt(r.pdvs_total || 0);
-                      // pct: usa meta individual se disponível, senão percentual sobre total
-                      const pct   = meta > 0
-                        ? parseFloat(r.pct || Math.round(val / meta * 100))
-                        : (total > 0 ? Math.round(val / total * 100) : 0);
-                      const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-                      const tarjaBg     = pct >= 100 ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
-                      const tarjaBorder = pct >= 100 ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(251,185,0,0.25)" : "rgba(248,113,113,0.25)";
+                      const val     = parseInt(r.pdvs_alone || 0);
+                      const total   = parseInt(r.pdvs_total || 0);
+                      const metaRN  = total > 0 ? Math.ceil(total * 0.90) : 0;
+                      const pct     = metaRN > 0 ? Math.round(val / metaRN * 100) : 0;
+                      const okBadge = val >= metaRN && metaRN > 0;
+                      const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      const tarjaBg     = okBadge ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
+                      const tarjaBorder = okBadge ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(251,185,0,0.25)" : "rgba(248,113,113,0.25)";
                       return (
                         <div key={r.setor} style={{ ...styles.gvCard, background: tarjaBg, border: `1px solid ${tarjaBorder}` }}>
                           <div style={styles.gvHeader}>
@@ -1174,9 +1175,10 @@ export default function SPO() {
                           <BarraProgresso pct={pct} cor={cor} />
                           <div style={styles.gvFooter}>
                             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
-                              {val} / {meta > 0 ? meta : total} {meta > 0 ? "alone" : "PDVs"}
+                              {val} / {metaRN} PDVs
                             </span>
                           </div>
+                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRN} (90% de {total})</p>
                         </div>
                       );
                     })}
