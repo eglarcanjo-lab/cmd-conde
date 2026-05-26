@@ -2045,13 +2045,13 @@ export default function SPO() {
                             };
                             const getReal = (n, mes) => getRealDados(n, mes);
               
-                            // Total de pontos por mês
+                            // Total de pontos por mês — soma item.pts de cada KPI que bateu a meta
                             const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
                               if (INICIO_AVAL[item.n] > mes) return acc;
                               const meta = getMeta(item.n, mes);
                               const real = getReal(item.n, mes);
                               if (meta === null || real === null) return acc;
-                              return acc + (real >= meta ? 3 : 0);
+                              return acc + (real >= meta ? item.pts : 0);
                             }, 0);
               
                             // mesAtual definido no escopo do componente
@@ -2117,13 +2117,13 @@ export default function SPO() {
                                             const real = getReal(item.n, mes);
                                             const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
                                             const bateu = meta !== null && real !== null && real >= meta;
-                                            const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
+                                            const pts = (meta !== null && real !== null) ? (bateu ? item.pts : 0) : null;
                                             const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
                                             return [
                                               <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
                                               <td key={mes+"r"} style={tdStyle}>{real !== null ? real : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
                                               <td key={mes+"a"} style={{ ...tdStyle, color: ating !== null ? corAting : "rgba(255,255,255,0.2)", fontWeight: ating ? "600" : "400" }}>{ating !== null ? `${ating}%` : "—"}</td>,
-                                              <td key={mes+"p"} style={{ ...tdStyle, color: pts === 3 ? "#4ade80" : pts === 0 ? "#f87171" : "rgba(255,255,255,0.2)", fontWeight: "700" }}>{pts !== null ? pts : "—"}</td>,
+                                              <td key={mes+"p"} style={{ ...tdStyle, color: pts > 0 ? "#4ade80" : pts === 0 ? "#f87171" : "rgba(255,255,255,0.2)", fontWeight: "700" }}>{pts !== null ? pts : "—"}</td>,
                                             ];
                                           })}
                                           {/* TRI: Pts | Real | Pts Real | % Real */}
