@@ -2023,7 +2023,7 @@ export default function SPO() {
                                   return d ? parseFloat(d.rns_ap_ok || 0) : null;
                                 }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
-                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
+                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.acesso_promo || 0) : null; }
                                 case 8:  { const d = op(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
                                 case 9:  { const d = op(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
@@ -2037,7 +2037,7 @@ export default function SPO() {
                                 case 19: { const d = opMes(alone) || op(alone); return d ? parseFloat(d.pdvs_alone || 0) : null; }
                                 case 20: { const d = opMes(rgb) || op(rgb); return d ? parseFloat(d.pdvs_bateu_meta || 0) : null; }
                                 case 21: { const d = opMes(cupons) || op(cupons); return d ? parseFloat(d.cupons_mes || 0) : null; }
-                                case 22: { const d = opMes(lojaIdeal) || op(lojaIdeal); return d ? parseFloat(d.pct || 0) : null; }
+                                case 22: { const d = opMes(lojaIdeal) || op(lojaIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
                                 case 23: { const d = opMes(scanntech) || op(scanntech); return d ? parseFloat(d.pdvs_ativos || d.ativos || 0) : null; }
                                 case 24: { const d = opMes(portIdeal) || op(portIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
                                 default: return null;
