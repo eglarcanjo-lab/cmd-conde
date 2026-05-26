@@ -1493,29 +1493,44 @@ export default function SPO() {
                 <p style={styles.msg}>Importe a base Scanntech para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Consolidado — Operação primeiro, sem GV NaN */}
+                  {/* Card Operação — meta do spo_metas */}
+                  {(() => {
+                    const opRow = scanntech.find(r => r.setor === "OPERACAO");
+                    const real  = parseInt(opRow?.pdvs_ativos || opRow?.ativos || 0);
+                    const mOp   = spoMetaTotal(23);
+                    const pct   = mOp ? Math.round(real / mOp * 100) : 0;
+                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const okBadge = mOp !== null ? real >= mOp : opRow?.ok === "OK";
+                    return (
+                      <div style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "14px" }}>
+                        <div style={styles.gvHeader}>
+                          <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
+                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {mOp ?? "—"} PDVs ativos</span>
+                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                        </div>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {mOp !== null ? `${mOp} PDVs` : "—"}</p>
+                      </div>
+                    );
+                  })()}
+                  {/* Cards por GV */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {[...scanntech].filter(r => r.gv !== "NaN" && r.gv !== null && r.gv !== undefined && String(r.gv).trim() !== "").sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
-                      const isOp = r.setor === "OPERACAO";
-                      const ativos = parseInt(r.pdvs_ativos || 0);
+                    {[...scanntech].filter(r => r.gv && r.gv !== "NaN" && String(r.gv).trim() !== "" && r.setor !== "OPERACAO").sort((a,b) => String(a.gv).localeCompare(String(b.gv))).map((r) => {
+                      const ativos = parseInt(r.pdvs_ativos || r.ativos || 0);
                       const total  = parseInt(r.pdvs_total  || 0);
-                      const meta   = parseInt(r.meta || 0);
-                      const pct    = meta > 0 ? Math.round(ativos / meta * 100) : 0;
-                      const cor    = isOp ? (r.ok === "OK" ? "#4ade80" : "#f87171") : "#4ade80";
+                      const cor    = "#4ade80";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.gv} style={styles.gvCard}>
                           <div style={styles.gvHeader}>
-                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
-                              {isOp ? "🏭 Operação" : `GV ${r.gv}`}
-                            </span>
-                            {isOp && <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>}
+                            <span style={{ fontWeight: "700", fontSize: "0.88rem" }}>GV {r.gv}</span>
                           </div>
-                          {isOp && <BarraProgresso pct={pct} cor={cor} />}
                           <div style={styles.gvFooter}>
                             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{ativos}/{total} PDVs</span>
-                            {isOp && <span style={{ color: cor, fontWeight: "700" }}>{ativos} ativos</span>}
+                            <span style={{ color: cor, fontWeight: "700" }}>{ativos} ativos</span>
                           </div>
-                          {isOp && <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ {meta} PDVs</p>}
                         </div>
                       );
                     })}
