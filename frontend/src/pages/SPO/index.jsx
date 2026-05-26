@@ -2120,7 +2120,7 @@ export default function SPO() {
                                             const real = getReal(item.n, mes);
                                             const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
                                             const bateu = meta !== null && real !== null && real >= meta;
-                                            const pts = (meta !== null && real !== null) ? (bateu ? getPts(item.n) : 0) : null;
+                                            const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
                                             const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
                                             return [
                                               <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
