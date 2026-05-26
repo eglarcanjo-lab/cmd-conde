@@ -2036,7 +2036,7 @@ export default function SPO() {
                                 case 20: { const d = opMes(rgb) || op(rgb); return d ? parseFloat(d.pdvs_bateu_meta || 0) : null; }
                                 case 21: { const d = opMes(cupons) || op(cupons); return d ? parseFloat(d.cupons_mes || 0) : null; }
                                 case 22: { const d = opMes(lojaIdeal) || op(lojaIdeal); return d ? parseFloat(d.pct || 0) : null; }
-                                case 23: { const d = opMes(scanntech) || op(scanntech); return d ? parseFloat(d.ativos || 0) : null; }
+                                case 23: { const d = opMes(scanntech) || op(scanntech); return d ? parseFloat(d.pdvs_ativos || d.ativos || 0) : null; }
                                 case 24: { const d = opMes(portIdeal) || op(portIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
                                 default: return null;
                               }
