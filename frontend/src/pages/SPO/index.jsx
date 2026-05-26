@@ -482,6 +482,35 @@ export default function SPO() {
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 4 — Abertura de Desafios Diários</h3>
               <div style={styles.gvGrid}>
+                {/* Card OPERAÇÃO — média dos dois GVs */}
+                {(() => {
+                  const ok1 = desafios.filter(d => d.gv === "1" && d.status === "OK").length;
+                  const tot1 = desafios.filter(d => d.gv === "1").length;
+                  const ok3 = desafios.filter(d => d.gv === "3" && d.status === "OK").length;
+                  const tot3 = desafios.filter(d => d.gv === "3").length;
+                  const realOp = (ok1 + ok3) / 2;
+                  const metaOp = (tot1 * 0.9 + tot3 * 0.9) / 2;
+                  const pctOp = metaOp > 0 ? Math.round(realOp / metaOp * 100) : 0;
+                  const corOp = pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#fbb900" : "#f87171";
+                  const okOp = realOp >= metaOp && metaOp > 0;
+                  if (tot1 === 0 && tot3 === 0) return null;
+                  return (
+                    <div style={{ ...styles.gvCard, borderColor: "rgba(251,185,0,0.25)", background: "rgba(251,185,0,0.04)" }}>
+                      <div style={styles.gvHeader}>
+                        <span style={{ ...styles.gvLabel, color: "#fbb900" }}>Operação</span>
+                        <span style={{ ...styles.apBadge, background: okOp ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okOp ? "#4ade80" : "#f87171" }}>{okOp ? "OK" : "NOK"}</span>
+                      </div>
+                      <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", margin: "8px 0" }}>
+                        <div style={{ height: "100%", width: `${Math.min(pctOp,100)}%`, background: corOp, borderRadius: "3px" }} />
+                      </div>
+                      <div style={styles.gvFooter}>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{realOp.toFixed(1)} / {metaOp.toFixed(1)} dias (média)</span>
+                        <span style={{ color: corOp, fontWeight: "700" }}>{pctOp}%</span>
+                      </div>
+                      <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.72rem" }}>Meta: média ≥ 90% dos dias úteis</p>
+                    </div>
+                  );
+                })()}
                 {["1","3"].map((gv) => {
                   const dias = desafios.filter(d => d.gv === gv);
                   const ok = dias.filter(d => d.status === "OK").length;
