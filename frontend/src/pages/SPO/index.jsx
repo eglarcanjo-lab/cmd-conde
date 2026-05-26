@@ -259,13 +259,9 @@ export default function SPO() {
     const m = spoMetas.find(x => String(x.item) === String(kpiN) && x.mes === mesAtual);
     return (m && m.meta !== "" && m.meta !== null && m.meta !== undefined) ? parseFloat(m.meta) : null;
   };
-  // meta individual RN = ceil(meta_total / n_rns * 1.10)
-  const calcMetaRN = (kpiN, dados) => {
-    const total = spoMetaTotal(kpiN);
-    if (total === null) return null;
-    const n = dados.filter(r => r.setor !== "OPERACAO").length || 1;
-    return Math.ceil(total / n * 1.10);
-  };
+  // KPI 8: meta RN = ceil(pdvs_aderidos × 0.60) — sem uplift
+  // KPI 12: meta RN = ceil(pdvs_total × (meta_op / op_pdvs_total)) — sem uplift
+  // KPIs tasks (9,11,13-18): meta RN = ceil(tasks_total × (meta_op / op_tasks_total) × 1.10)
 
   return (
     <div style={styles.root}>
@@ -709,9 +705,9 @@ export default function SPO() {
                   {politica.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.pdvs_execucao || 0);
-                    const mOp = spoMetaTotal(8); const mRN = calcMetaRN(8, politica);
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
+                    const _ader = parseFloat(r.pdvs_aderidos || 0);
+                    const metaRef = _ader > 0 ? Math.ceil(_ader * 0.60) : (isOp ? spoMetaTotal(8) : null);
+                    const pct = metaRef !== null && metaRef > 0 ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
@@ -748,7 +744,9 @@ export default function SPO() {
                   {menu.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(9); const mRN = calcMetaRN(9, menu);
+                    const mOp = spoMetaTotal(9);
+                    const _opTot9 = parseFloat(menu.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot9 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot9) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -789,7 +787,9 @@ export default function SPO() {
                     {[...tasksCerveja].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const isOp = r.setor === "OPERACAO";
                       const real = parseFloat(r.tasks_validas || 0);
-                      const mOp = spoMetaTotal(11); const mRN = calcMetaRN(11, tasksCerveja);
+                      const mOp = spoMetaTotal(11);
+                      const _opTot11 = parseFloat(tasksCerveja.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                      const mRN = (mOp !== null && _opTot11 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot11) * 1.10) : null;
                       const metaRef = isOp ? mOp : mRN;
                       const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                       const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -880,7 +880,9 @@ export default function SPO() {
                   {score5.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.pdvs_ok || 0);
-                    const mOp = spoMetaTotal(12); const mRN = calcMetaRN(12, score5);
+                    const mOp = spoMetaTotal(12);
+                    const _opTot12 = parseFloat(score5.find(x => x.setor === "OPERACAO")?.pdvs_total || 0);
+                    const mRN = (mOp !== null && _opTot12 > 0) ? Math.ceil(parseFloat(r.pdvs_total || 0) * (mOp / _opTot12)) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -919,7 +921,9 @@ export default function SPO() {
                   {tasksNab.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(13); const mRN = calcMetaRN(13, tasksNab);
+                    const mOp = spoMetaTotal(13);
+                    const _opTot13 = parseFloat(tasksNab.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot13 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot13) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -958,7 +962,9 @@ export default function SPO() {
                   {tasksVolume.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(14); const mRN = calcMetaRN(14, tasksVolume);
+                    const mOp = spoMetaTotal(14);
+                    const _opTot14 = parseFloat(tasksVolume.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot14 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot14) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -997,7 +1003,9 @@ export default function SPO() {
                   {tasksMktp.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(15); const mRN = calcMetaRN(15, tasksMktp);
+                    const mOp = spoMetaTotal(15);
+                    const _opTot15 = parseFloat(tasksMktp.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot15 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot15) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -1036,7 +1044,9 @@ export default function SPO() {
                   {tasksMatch.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(16); const mRN = calcMetaRN(16, tasksMatch);
+                    const mOp = spoMetaTotal(16);
+                    const _opTot16 = parseFloat(tasksMatch.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot16 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot16) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -1075,7 +1085,9 @@ export default function SPO() {
                   {tasksCervZero.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(17); const mRN = calcMetaRN(17, tasksCervZero);
+                    const mOp = spoMetaTotal(17);
+                    const _opTot17 = parseFloat(tasksCervZero.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot17 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot17) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
@@ -1114,7 +1126,9 @@ export default function SPO() {
                   {tasksDigit.map((r) => {
                     const isOp = r.setor === "OPERACAO";
                     const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(18); const mRN = calcMetaRN(18, tasksDigit);
+                    const mOp = spoMetaTotal(18);
+                    const _opTot18 = parseFloat(tasksDigit.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
+                    const mRN = (mOp !== null && _opTot18 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot18) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
                     const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
