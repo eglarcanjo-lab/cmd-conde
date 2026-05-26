@@ -2045,13 +2045,16 @@ export default function SPO() {
                             };
                             const getReal = (n, mes) => getRealDados(n, mes);
               
-                            // Total de pontos por mês — soma item.pts de cada KPI que bateu a meta
+                            // Busca pts do item no SPO_ITEMS (ITENS_SPO interno não tem pts)
+                            const getPts = (n) => SPO_ITEMS.find(s => s.n === n)?.pts ?? 0;
+
+                            // Total de pontos por mês — soma pts de cada KPI que bateu a meta
                             const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
                               if (INICIO_AVAL[item.n] > mes) return acc;
                               const meta = getMeta(item.n, mes);
                               const real = getReal(item.n, mes);
                               if (meta === null || real === null) return acc;
-                              return acc + (real >= meta ? item.pts : 0);
+                              return acc + (real >= meta ? getPts(item.n) : 0);
                             }, 0);
               
                             // mesAtual definido no escopo do componente
@@ -2101,7 +2104,7 @@ export default function SPO() {
                                   <tbody>
                                     {ITENS_SPO.map((item) => {
                                       const tReal   = triReal(item.n);
-                                      const tPtsR   = triPtsReal(item.n, item.pts);
+                                      const tPtsR   = triPtsReal(item.n, getPts(item.n));
                                       const tPct    = tPtsR !== null ? (tPtsR / TOTAL_PTS * 100).toFixed(1) : null;
                                       const corTri  = tReal === 3 ? "#4ade80" : tReal === 1 ? "#fbb900" : tReal === 0 ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
@@ -2117,7 +2120,7 @@ export default function SPO() {
                                             const real = getReal(item.n, mes);
                                             const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
                                             const bateu = meta !== null && real !== null && real >= meta;
-                                            const pts = (meta !== null && real !== null) ? (bateu ? item.pts : 0) : null;
+                                            const pts = (meta !== null && real !== null) ? (bateu ? getPts(item.n) : 0) : null;
                                             const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
                                             return [
                                               <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
@@ -2127,7 +2130,7 @@ export default function SPO() {
                                             ];
                                           })}
                                           {/* TRI: Pts | Real | Pts Real | % Real */}
-                                          <td style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{item.pts}</td>
+                                          <td style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{getPts(item.n)}</td>
                                           <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tReal !== null ? tReal : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
                                           <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPtsR !== null ? tPtsR : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
                                           <td style={{ ...tdStyle, color: tPct !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "600", background: "rgba(251,185,0,0.04)" }}>{tPct !== null ? `${tPct}%` : "—"}</td>
@@ -2147,10 +2150,10 @@ export default function SPO() {
                                       <td style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", background: "rgba(251,185,0,0.06)" }}>{TOTAL_PTS}</td>
                                       <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
                                       <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
-                                        {ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, item.pts) ?? 0), 0)}
+                                        {ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, getPts(item.n)) ?? 0), 0)}
                                       </td>
                                       <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
-                                        {(ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, item.pts) ?? 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
+                                        {(ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, getPts(item.n)) ?? 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
                                       </td>
                                     </tr>
                                   </tbody>
