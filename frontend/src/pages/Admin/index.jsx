@@ -11,6 +11,7 @@ import Incidentes from "./Incidentes";
 import Produtos from "./Produtos";
 import AtendimentoProdutivo from "./AtendimentoProdutivo";
 import SpoDesafios from "./SpoDesafios";
+import SpoMetas from "./SpoMetas";
 import RvSimulador from "./RvSimulador";
 
 const TABS = [
@@ -21,6 +22,7 @@ const TABS = [
   { id: "ap", label: "🎯 AT. Produtivo" },
   { id: "rv_simulador", label: "💰 RV Simulador" },
   { id: "spo_desafios", label: "📋 SPO Desafios" },
+  { id: "spo_metas", label: "📊 SPO Metas" },
   { id: "incidentes", label: "🚨 Solicitações" },
   { id: "configuracoes", label: "⚙️ Configurações" },
 ];
@@ -94,6 +96,7 @@ export default function Admin() {
         {tab === "ap" && <AtendimentoProdutivo />}
         {tab === "rv_simulador" && <RvSimulador />}
         {tab === "spo_desafios" && <SpoDesafios />}
+        {tab === "spo_metas" && <SpoMetas />}
         {tab === "incidentes" && <Incidentes />}
         {tab === "configuracoes" && <Configuracoes />}
       </div>

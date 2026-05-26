@@ -380,6 +380,50 @@ router.get("/painel/metas", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// POST /api/spo/painel/metas — substitui toda a aba spo_metas
+router.post("/painel/metas", async (req, res) => {
+  try {
+    const { linhas } = req.body;
+    if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
+
+    const { google } = require("googleapis");
+    const auth = new google.auth.JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+    const sheets = google.sheets({ version: "v4", auth });
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+    const headers = ["item", "mes", "meta", "real"];
+
+    await sheets.spreadsheets.values.clear({ spreadsheetId: sheetId, range: "spo_metas" });
+    const rows = [
+      headers,
+      ...linhas.map((l) => [
+        String(l.item ?? ""),
+        String(l.mes ?? ""),
+        l.meta !== "" && l.meta !== null && l.meta !== undefined ? String(l.meta) : "",
+        l.real !== "" && l.real !== null && l.real !== undefined ? String(l.real) : "",
+      ]),
+    ];
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "spo_metas!A1",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: rows },
+    });
+
+    // Invalida cache
+    const { cacheClearAll } = require("../services/sheets");
+    cacheClearAll();
+
+    return res.json({ success: true, total: linhas.length });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao salvar metas SPO." });
+  }
+});
+
 
 // GET /api/spo/ap/resumo
 router.get("/ap/resumo", async (req, res) => {

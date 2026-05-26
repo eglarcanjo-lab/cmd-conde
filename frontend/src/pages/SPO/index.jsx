@@ -1,4 +1,4 @@
-/* BUILD_20260522_185644 */
+/* BUILD_20260525_150000 */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -1910,19 +1910,53 @@ export default function SPO() {
                               const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
                               if (r && r.real !== "" && r.real !== null && r.real !== undefined) return parseFloat(r.real);
 
-                              // 2. Fallback: dado real das abas processadas (só funciona para o mês atual)
+                              // 2. Fallback: dado real das abas processadas — apenas para o mês atual
+                              if (mes !== mesAtual) return null;
                               const op = (arr) => arr.find(x => x.setor === "OPERACAO" || x.setor === "operacao");
                               const opMes = (arr) => arr.find(x => (x.setor === "OPERACAO" || x.setor === "operacao") && (x.mes_referencia || "").startsWith(mes));
 
                               switch(n) {
-                                case 1:  { const d = opMes(resumo) || op(resumo); return d ? parseFloat(d.visitados || 0) : null; }
-                                case 2:  { const d = opMes(coaching) || op(coaching); return d ? parseFloat(d.coachings_validos || 0) : null; }
-                                case 3:  { const d = opMes(diasRota) || op(diasRota); return d ? parseFloat(d.dias_rota || 0) : null; }
-                                case 4:  { const d = desafios.filter(x => (x.mes_referencia||"").startsWith(mes) && x.status === "OK"); return d.length > 0 ? d.length : null; }
-                                case 5:  { const d = opMes(ap) || op(ap); return d ? parseFloat(d.pct_geral || d.pct || 0) : null; }
+                                case 1:  {
+                                  // Conta GVs que atingiram sua meta individual (visitados >= meta)
+                                  const gvs = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  if (gvs.length === 0) return null;
+                                  return gvs.filter(r => parseFloat(r.visitados||0) >= parseFloat(r.meta||1)).length;
+                                }
+                                case 2:  {
+                                  // Conta GVs com coaching OK
+                                  const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  if (gvs.length === 0) return null;
+                                  return gvs.filter(r => parseFloat(r.coachings_validos||0) >= parseFloat(r.meta||1)).length;
+                                }
+                                case 3:  {
+                                  // Conta GVs com dias de rota OK
+                                  const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  if (gvs.length === 0) return null;
+                                  return gvs.filter(r => parseFloat(r.dias_validos||0) >= parseFloat(r.meta||1)).length;
+                                }
+                                case 4:  {
+                                  // Conta GVs que atingiram ≥ 90% dos dias com desafio aberto (OK)
+                                  const mesDesafios = desafios.filter(x => (x.mes_referencia||"").startsWith(mes));
+                                  if (mesDesafios.length === 0) return null;
+                                  const gvsUnicos = [...new Set(mesDesafios.map(d => d.gv).filter(Boolean))];
+                                  const hitting = gvsUnicos.filter(gv => {
+                                    const dias = mesDesafios.filter(d => d.gv === gv);
+                                    const ok = dias.filter(d => d.status === "OK").length;
+                                    return dias.length > 0 && Math.round(ok / dias.length * 100) >= 90;
+                                  });
+                                  return hitting.length;
+                                }
+                                case 5:  {
+                                  // Conta RNs com AP OK (total da operação)
+                                  const d = op(ap);
+                                  return d ? parseFloat(d.rns_ap_ok || 0) : null;
+                                }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
                                 case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
+                                case 8:  { const d = op(politica); return d ? parseFloat(d.pct || 0) : null; }
+                                case 9:  { const d = op(menu);     return d ? parseFloat(d.pct || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
+                                case 12: { const d = op(score5);   return d ? parseFloat(d.pct || 0) : null; }
                                 case 13: { const d = opMes(tasksNab) || op(tasksNab); return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 14: { const d = opMes(tasksVolume) || op(tasksVolume); return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 15: { const d = opMes(tasksMktp) || op(tasksMktp); return d ? parseFloat(d.tasks_validas || 0) : null; }
