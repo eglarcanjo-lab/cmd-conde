@@ -695,7 +695,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_execucao}/{r.pdvs_aderidos} PDVs</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.pdvs_aderidos} PDVs</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} PDVs` : "≥ 60%"}</p>
@@ -734,7 +734,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -866,7 +866,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.pdvs_ok}/{r.pdvs_total} PDVs</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.pdvs_total} PDVs</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} PDVs` : "≥ 46%"}</p>
@@ -905,7 +905,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -944,7 +944,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -983,7 +983,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -1022,7 +1022,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -1061,7 +1061,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -1100,7 +1100,7 @@ export default function SPO() {
                         </div>
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.tasks_validas}/{r.tasks_total} tasks</span>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
                           <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                         </div>
                         <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
@@ -2007,10 +2007,10 @@ export default function SPO() {
                                 }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
                                 case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
-                                case 8:  { const d = op(politica); return d ? parseFloat(d.pct || 0) : null; }
-                                case 9:  { const d = op(menu);     return d ? parseFloat(d.pct || 0) : null; }
+                                case 8:  { const d = op(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
+                                case 9:  { const d = op(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
-                                case 12: { const d = op(score5);   return d ? parseFloat(d.pct || 0) : null; }
+                                case 12: { const d = op(score5);   return d ? parseFloat(d.pdvs_ok || 0) : null; }
                                 case 13: { const d = opMes(tasksNab) || op(tasksNab); return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 14: { const d = opMes(tasksVolume) || op(tasksVolume); return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 15: { const d = opMes(tasksMktp) || op(tasksMktp); return d ? parseFloat(d.tasks_validas || 0) : null; }
