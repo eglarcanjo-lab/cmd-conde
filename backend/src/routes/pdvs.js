@@ -25,8 +25,29 @@ router.get("/mix", async (req, res) => {
 // GET /api/pdvs/inadimplentes
 router.get("/inadimplentes", async (req, res) => {
   try {
-    const dados = await readSheet("inadimplencia_real");
-    return res.json(filtrarPorPerfil(dados, req.user));
+    const [inad, pdvBase] = await Promise.all([
+      readSheet("inadimplencia_real"),
+      readSheet("pdv_base"),
+    ]);
+
+    // Mapa nome_fantasia → cod_pdv a partir da base de PDVs
+    const nomeMap = {};
+    const codSet = new Set();
+    pdvBase.forEach((p) => {
+      if (p.cod_pdv) codSet.add(String(p.cod_pdv).trim());
+      if (p.nome_fantasia && p.cod_pdv)
+        nomeMap[String(p.nome_fantasia).trim().toLowerCase()] = String(p.cod_pdv).trim();
+    });
+
+    // Normaliza cod_pdv: se não estiver na base, tenta casar pelo nome_fantasia
+    const enriched = inad.map((r) => {
+      const cod = String(r.cod_pdv || "").trim();
+      if (codSet.has(cod)) return r;
+      const matched = nomeMap[String(r.nome_fantasia || "").trim().toLowerCase()];
+      return matched ? { ...r, cod_pdv: matched } : r;
+    });
+
+    return res.json(filtrarPorPerfil(enriched, req.user));
   } catch (err) {
     // Fallback para a aba antiga se a nova ainda não existir
     try {
