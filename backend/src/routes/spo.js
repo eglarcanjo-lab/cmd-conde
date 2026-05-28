@@ -78,8 +78,45 @@ router.get("/visitacao-gv/detalhe", async (req, res) => {
 // GET /api/spo/promo/resumo
 router.get("/promo/resumo", async (req, res) => {
   try {
-    const dados = await readSheet("spo_promo_resumo");
-    return res.json(dados);
+    const [resumo, detalhe] = await Promise.all([
+      readSheet("spo_promo_resumo"),
+      readSheet("spo_promo_detalhe"),
+    ]);
+
+    // Recalcula linha OPERACAO a partir do detalhe (evita dado agregado obsoleto)
+    if (detalhe.length > 0) {
+      const pcts = detalhe
+        .map((d) => parseFloat(d.pct || 0))
+        .filter((v) => !isNaN(v) && v >= 0);
+
+      const pct_op = pcts.length > 0
+        ? parseFloat((pcts.reduce((s, v) => s + v, 0) / pcts.length).toFixed(1))
+        : 0;
+
+      const total_vis = detalhe.reduce((s, d) => s + parseFloat(d.visitas || 0), 0);
+      const total_ac  = detalhe.reduce((s, d) => s + parseFloat(d.acesso_promo || 0), 0);
+      const mes_ref   = detalhe[0]?.mes_referencia || "";
+
+      // Pega meta da primeira linha que não seja OPERACAO
+      const setores = resumo.filter(
+        (r) => String(r.setor || "").toUpperCase() !== "OPERACAO"
+      );
+      const meta_ref = setores[0]?.meta || "10";
+
+      const opRow = {
+        setor: "OPERACAO",
+        visitas: String(Math.round(total_vis)),
+        acesso_promo: String(Math.round(total_ac)),
+        pct: String(pct_op),
+        meta: meta_ref,
+        ok: pct_op >= parseFloat(meta_ref) ? "OK" : "NOK",
+        mes_referencia: mes_ref,
+      };
+
+      return res.json([...setores, opRow]);
+    }
+
+    return res.json(resumo);
   } catch { return res.json([]); }
 });
 
