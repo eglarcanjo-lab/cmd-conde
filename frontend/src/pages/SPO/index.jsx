@@ -2104,16 +2104,17 @@ export default function SPO() {
                                   return gvs.reduce((s, r) => s + parseInt(r.dias_validos||0), 0);
                                 }
                                 case 4:  {
-                                  // Conta GVs que atingiram ≥ 90% dos dias com desafio aberto (OK)
+                                  // Média das % individuais por GV (ok / total dias com desafio)
                                   const mesDesafios = desafios.filter(x => (x.mes_referencia||"").startsWith(mes));
                                   if (mesDesafios.length === 0) return null;
                                   const gvsUnicos = [...new Set(mesDesafios.map(d => d.gv).filter(Boolean))];
-                                  const hitting = gvsUnicos.filter(gv => {
+                                  if (gvsUnicos.length === 0) return null;
+                                  const soma = gvsUnicos.reduce((acc, gv) => {
                                     const dias = mesDesafios.filter(d => d.gv === gv);
                                     const ok = dias.filter(d => d.status === "OK").length;
-                                    return dias.length > 0 && Math.round(ok / dias.length * 100) >= 90;
-                                  });
-                                  return hitting.length;
+                                    return acc + (dias.length > 0 ? ok / dias.length * 100 : 0);
+                                  }, 0);
+                                  return parseFloat((soma / gvsUnicos.length).toFixed(1));
                                 }
                                 case 5:  {
                                   // Conta RNs com AP OK (total da operação)
