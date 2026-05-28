@@ -2174,15 +2174,9 @@ export default function SPO() {
                               const m = spoMetas.find(x => String(x.item) === String(n) && x.mes === "TRI");
                               return (m && m.real !== "" && m.real !== null && m.real !== undefined) ? parseInt(m.real) : null;
                             };
-                            // 3 meses OK → pts inteiro | 2 → 2/3 pts | 1 → 1/3 pts | 0 → 0
-                            const triPtsReal = (n, pts) => {
-                              const r = triReal(n);
-                              if (r === null) return null;
-                              if (r === 3) return pts;
-                              if (r === 2) return Math.round(pts * 2 / 3);
-                              if (r === 1) return Math.round(pts / 3);
-                              return 0;
-                            };
+                            // TRI: binário — bateu os 3 meses = pontuação cheia, senão zero
+                            const triBateu = (n) => triReal(n) === 3;
+                            const triMeta  = (n) => MESES.filter(m => INICIO_AVAL[n] <= m).length;
 
                             const thStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
                             const thSubStyle = { padding: "3px 5px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
@@ -2201,7 +2195,7 @@ export default function SPO() {
                                           {MESES_LABEL[mes]}
                                         </th>
                                       ))}
-                                      <th colSpan={4} style={{ ...thStyle, background: "rgba(251,185,0,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
+                                      <th colSpan={5} style={{ ...thStyle, background: "rgba(251,185,0,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
                                     </tr>
                                     <tr>
                                       <th style={thSubStyle} colSpan={3}></th>
@@ -2210,15 +2204,18 @@ export default function SPO() {
                                           <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(251,185,0,0.08)" : "" }}>{h}</th>
                                         ))
                                       ))}
-                                      {["Pts","Meses OK","Pts TRI","% SPO"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
+                                      {["Pts","Meta","Real","Pts SPO","% SPO"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {ITENS_SPO.map((item) => {
                                       const tReal   = triReal(item.n);
-                                      const tPtsR   = triPtsReal(item.n, getPts(item.n));
-                                      const tPct    = tPtsR !== null ? (tPtsR / TOTAL_PTS * 100).toFixed(1) : null;
-                                      const corTri  = tReal === 3 ? "#4ade80" : tReal === 1 ? "#fbb900" : tReal === 0 ? "#f87171" : "rgba(255,255,255,0.25)";
+                                      const tOK     = triBateu(item.n);
+                                      const tPts    = tReal !== null ? (tOK ? 3 : 0) : null;
+                                      const tMeta   = triMeta(item.n);
+                                      const tPtsSPO = tReal !== null ? (tOK ? getPts(item.n) : 0) : null;
+                                      const tPctSPO = tReal !== null ? (tOK ? (getPts(item.n) / TOTAL_PTS * 100).toFixed(1) + "%" : "0.0%") : null;
+                                      const corTri  = tOK ? "#4ade80" : tReal !== null ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
                                         <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
@@ -2241,11 +2238,12 @@ export default function SPO() {
                                               <td key={mes+"p"} style={{ ...tdStyle, color: pts > 0 ? "#4ade80" : pts === 0 ? "#f87171" : "rgba(255,255,255,0.2)", fontWeight: "700" }}>{pts !== null ? pts : "—"}</td>,
                                             ];
                                           })}
-                                          {/* TRI: Pts | Real | Pts Real | % Real */}
-                                          <td style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{getPts(item.n)}</td>
+                                          {/* TRI: Pts | Meta | Real | Pts SPO | % SPO */}
+                                          <td style={{ ...tdStyle, color: tPts !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPts !== null ? tPts : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
+                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", background: "rgba(251,185,0,0.04)" }}>{tMeta}</td>
                                           <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tReal !== null ? tReal : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
-                                          <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPtsR !== null ? tPtsR : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
-                                          <td style={{ ...tdStyle, color: tPct !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "600", background: "rgba(251,185,0,0.04)" }}>{tPct !== null ? `${tPct}%` : "—"}</td>
+                                          <td style={{ ...tdStyle, color: tPtsSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPtsSPO !== null ? tPtsSPO : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
+                                          <td style={{ ...tdStyle, color: tPctSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "600", background: "rgba(251,185,0,0.04)" }}>{tPctSPO ?? "—"}</td>
                                         </tr>
                                       );
                                     })}
@@ -2258,14 +2256,15 @@ export default function SPO() {
                                         <td key={mes+"ta"} style={tdStyle}></td>,
                                         <td key={mes+"tp"} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem" }}>{pontosMes(mes)}</td>,
                                       ])}
-                                      {/* TRI rodapé: Pts total | — | Pts Real total | % Real total */}
-                                      <td style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", background: "rgba(251,185,0,0.06)" }}>{TOTAL_PTS}</td>
+                                      {/* TRI rodapé: Pts | Meta | Real | Pts SPO total | % SPO total */}
+                                      <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
+                                      <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
                                       <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
                                       <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
-                                        {ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, getPts(item.n)) ?? 0), 0)}
+                                        {ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0)}
                                       </td>
                                       <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
-                                        {(ITENS_SPO.reduce((acc, item) => acc + (triPtsReal(item.n, getPts(item.n)) ?? 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
+                                        {(ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
                                       </td>
                                     </tr>
                                   </tbody>
