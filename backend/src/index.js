@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const { initializeSheets } = require("./services/sheets");
 const { maintenanceMiddleware } = require("./middleware/maintenance");
+const { carregarEstado } = require("./services/configuracoes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,7 @@ app.use("/api/admin/produtos", require("./routes/produtos"));
 app.use("/api/spo", require("./routes/spo"));
 app.use("/api/rv", require("./routes/rv"));
 app.use("/api/incidentes", require("./routes/incidentes"));
+app.use("/api/manutencao", require("./routes/manutencao"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -74,6 +76,7 @@ async function start() {
       console.log(`🔧 Inicializando planilhas (tentativa ${tentativa + 1})...`);
       await initializeSheets();
       console.log("✅ Planilhas inicializadas.");
+      await carregarEstado();
       break;
     } catch (err) {
       tentativa++;

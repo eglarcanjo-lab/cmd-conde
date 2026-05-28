@@ -1,26 +1,25 @@
-// Verifica se o sistema está em janela de manutenção
+const { getEstado } = require("../services/configuracoes");
+
 function maintenanceMiddleware(req, res, next) {
-  // Rotas que nunca ficam em manutenção
-  const exemptRoutes = ["/health", "/api/status"];
-  if (exemptRoutes.includes(req.path)) return next();
+  // Rotas sempre isentas — admin precisa conseguir logar e desligar a manutenção
+  const exemptPrefixes = ["/health", "/api/status", "/api/manutencao", "/api/auth", "/api/admin"];
+  if (exemptPrefixes.some((p) => req.path === p || req.path.startsWith(p + "/"))) return next();
 
+  // 1) Manutenção manual (toggle do admin)
+  const { ativo, mensagem } = getEstado();
+  if (ativo) {
+    return res.status(503).json({ maintenance: true, message: mensagem });
+  }
+
+  // 2) Janela de manutenção por horário (env vars)
   const now = new Date();
-  const brazilTime = new Date(
-    now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-  );
+  const brazilTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const currentMinutes = brazilTime.getHours() * 60 + brazilTime.getMinutes();
 
-  const currentMinutes =
-    brazilTime.getHours() * 60 + brazilTime.getMinutes();
-
-  const [startH, startM] = (process.env.MAINTENANCE_START || "05:00")
-    .split(":")
-    .map(Number);
-  const [endH, endM] = (process.env.MAINTENANCE_END || "06:00")
-    .split(":")
-    .map(Number);
-
+  const [startH, startM] = (process.env.MAINTENANCE_START || "05:00").split(":").map(Number);
+  const [endH, endM]     = (process.env.MAINTENANCE_END   || "06:00").split(":").map(Number);
   const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
+  const endMinutes   = endH   * 60 + endM;
 
   if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
     return res.status(503).json({

@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ManutencaoScreen from "./components/ManutencaoScreen";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
@@ -12,25 +14,58 @@ import Tasks from "./pages/Tasks";
 import Incidentes from "./pages/Incidentes";
 import RV from "./pages/RV";
 import SPO from "./pages/SPO";
+import api from "./services/api";
+
+// Componente interno — tem acesso ao BrowserRouter e AuthContext
+function AppContent() {
+  const { user } = useAuth();
+  const location = useLocation();
+  const [manu, setManu] = useState(null); // null = verificando
+
+  useEffect(() => {
+    api.get("/api/manutencao/status")
+      .then((r) => setManu(r.data))
+      .catch(() => setManu({ ativo: false }));
+  }, []);
+
+  // Spinner brevíssimo enquanto verifica
+  if (manu === null) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0f1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "32px", height: "32px", border: "3px solid rgba(251,185,0,0.2)", borderTopColor: "#fbb900", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Manutenção ativa: bloqueia todos exceto admin logado e a própria /login
+  if (manu.ativo && user?.perfil !== "admin" && location.pathname !== "/login") {
+    return <ManutencaoScreen mensagem={manu.mensagem} />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+      <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><Admin /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/rv-admin" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><RvSimuladorPage /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/cobertura" element={<PrivateRoute><ErrorBoundary><Cobertura /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/pdvs" element={<PrivateRoute><ErrorBoundary><PDVs /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/tasks" element={<PrivateRoute><ErrorBoundary><Tasks /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/spo" element={<PrivateRoute><ErrorBoundary><SPO /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/rv" element={<PrivateRoute><ErrorBoundary><RV /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/incidentes" element={<PrivateRoute><ErrorBoundary><Incidentes /></ErrorBoundary></PrivateRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
       <span className="assinatura">Desenvolvido por Eduardo Arcanjo</span>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
-          <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><Admin /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/rv-admin" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><RvSimuladorPage /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/cobertura" element={<PrivateRoute><ErrorBoundary><Cobertura /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/pdvs" element={<PrivateRoute><ErrorBoundary><PDVs /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/tasks" element={<PrivateRoute><ErrorBoundary><Tasks /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/spo" element={<PrivateRoute><ErrorBoundary><SPO /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/rv" element={<PrivateRoute><ErrorBoundary><RV /></ErrorBoundary></PrivateRoute>} />
-          <Route path="/incidentes" element={<PrivateRoute><ErrorBoundary><Incidentes /></ErrorBoundary></PrivateRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppContent />
       </BrowserRouter>
     </AuthProvider>
   );

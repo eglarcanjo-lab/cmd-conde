@@ -94,6 +94,23 @@ async function updateRow(tabName, rowIndex, values) {
   });
 }
 
+// Sobrescreve toda uma aba (limpa e reescreve com cabeçalho + linhas)
+async function sobrescreverAba(tabName, rows) {
+  // rows: array de arrays; primeira linha = cabeçalho
+  cacheInvalidate(tabName);
+  await ensureTab(tabName);
+  const sheets = await getSheets();
+  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName });
+  if (rows.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${tabName}!A1`,
+      valueInputOption: "USER_ENTERED",
+      resource: { values: rows },
+    });
+  }
+}
+
 // Garante que uma aba existe, cria se não existir
 async function ensureTab(tabName) {
   const sheets = await getSheets();
@@ -151,6 +168,7 @@ async function initializeSheets() {
     spo_metas: ["item","mes","meta","real"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
+    configuracoes: ["chave", "valor"],
   };
 
   for (const [tab, headers] of Object.entries(tabs)) {
@@ -171,4 +189,4 @@ async function initializeSheets() {
   console.log("✅ Planilhas inicializadas com sucesso.");
 }
 
-module.exports = { readSheet, appendRow, updateRow, ensureTab, initializeSheets, cacheClearAll };
+module.exports = { readSheet, appendRow, updateRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };

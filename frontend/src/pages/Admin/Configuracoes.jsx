@@ -1,19 +1,88 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 
+const MSGS_OPCOES = ["Em Atualização", "Em Manutenção"];
+
 export default function Configuracoes() {
   const [config, setConfig] = useState({ maintenance_start: "05:00", maintenance_end: "06:00", admin_whatsapp: "", sheet_id: "" });
   const [loading, setLoading] = useState(true);
   const [sucesso, setSucesso] = useState("");
 
+  // Estado de manutenção manual
+  const [manu, setManu] = useState({ ativo: false, mensagem: "Em Atualização" });
+  const [manuSalvando, setManuSalvando] = useState(false);
+
   useEffect(() => {
     api.get("/api/admin/config").then((r) => { setConfig(r.data); setLoading(false); }).catch(() => setLoading(false));
+    api.get("/api/manutencao/status").then((r) => setManu(r.data)).catch(() => {});
   }, []);
+
+  async function toggleManutencao() {
+    setManuSalvando(true);
+    try {
+      const { data } = await api.post("/api/manutencao", { ativo: !manu.ativo, mensagem: manu.mensagem });
+      setManu(data);
+    } catch { /* silencioso */ } finally { setManuSalvando(false); }
+  }
 
   if (loading) return <p style={{ color: "rgba(255,255,255,0.4)", padding: "40px", textAlign: "center" }}>Carregando...</p>;
 
   return (
     <div style={styles.root}>
+
+      {/* ── MODO MANUTENÇÃO MANUAL ─────────────────────────────────────── */}
+      <div style={{ ...styles.section, border: manu.ativo ? "1px solid rgba(251,185,0,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h3 style={{ ...styles.sectionTitle, color: manu.ativo ? "#fbb900" : "#fff" }}>
+              {manu.ativo ? "🔴 App Offline" : "🟢 App Online"}
+            </h3>
+            <p style={styles.sectionDesc}>
+              Quando ativado, todos os usuários (exceto admin) veem a tela de bloqueio.
+            </p>
+          </div>
+          {/* Toggle switch */}
+          <button
+            onClick={toggleManutencao}
+            disabled={manuSalvando}
+            style={{
+              width: "52px", height: "28px", borderRadius: "14px", border: "none", cursor: manuSalvando ? "not-allowed" : "pointer",
+              background: manu.ativo ? "#fbb900" : "rgba(255,255,255,0.12)",
+              position: "relative", flexShrink: 0, transition: "background 0.2s", opacity: manuSalvando ? 0.6 : 1,
+            }}
+          >
+            <span style={{
+              position: "absolute", top: "3px", width: "22px", height: "22px", borderRadius: "50%", background: "#fff",
+              transition: "left 0.2s", left: manu.ativo ? "27px" : "3px",
+            }} />
+          </button>
+        </div>
+
+        {/* Seletor de mensagem */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {MSGS_OPCOES.map((msg) => (
+            <button
+              key={msg}
+              onClick={() => setManu((m) => ({ ...m, mensagem: msg }))}
+              style={{
+                background: manu.mensagem === msg ? "rgba(251,185,0,0.15)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${manu.mensagem === msg ? "rgba(251,185,0,0.5)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: "8px", padding: "6px 14px", color: manu.mensagem === msg ? "#fbb900" : "rgba(255,255,255,0.55)",
+                fontSize: "0.82rem", fontWeight: manu.mensagem === msg ? "600" : "400", cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              {msg}
+            </button>
+          ))}
+        </div>
+
+        {manu.ativo && (
+          <p style={{ margin: 0, fontSize: "0.78rem", color: "#fbb900", fontWeight: "500" }}>
+            ⚠️ App bloqueado agora — mensagem: "{manu.mensagem}"
+          </p>
+        )}
+      </div>
+
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>⏰ Janela de Manutenção</h3>
         <p style={styles.sectionDesc}>Horário em que o sistema fica offline para atualização de dados (horário de Brasília).</p>
