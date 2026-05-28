@@ -18,7 +18,7 @@ import api from "./services/api";
 
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
 function AppContent() {
-  const { user } = useAuth();
+  const { usuario, loading: authLoading } = useAuth();
   const location = useLocation();
   const [manu, setManu] = useState(null); // null = verificando
 
@@ -28,8 +28,8 @@ function AppContent() {
       .catch(() => setManu({ ativo: false }));
   }, []);
 
-  // Spinner brevíssimo enquanto verifica
-  if (manu === null) {
+  // Aguarda auth E status de manutenção — evita race condition admin vs manu
+  if (manu === null || authLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "#0a0f1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: "32px", height: "32px", border: "3px solid rgba(251,185,0,0.2)", borderTopColor: "#fbb900", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -39,7 +39,7 @@ function AppContent() {
   }
 
   // Manutenção ativa: bloqueia todos exceto admin logado e a própria /login
-  if (manu.ativo && user?.perfil !== "admin" && location.pathname !== "/login") {
+  if (manu.ativo && usuario?.perfil !== "admin" && location.pathname !== "/login") {
     return <ManutencaoScreen mensagem={manu.mensagem} />;
   }
 
