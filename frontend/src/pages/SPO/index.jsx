@@ -2157,15 +2157,29 @@ export default function SPO() {
               
                             // mesAtual definido no escopo do componente
 
-                            // Tri: lê Real (0/1/3) de spo_metas com mes="TRI"
+                            // Tri: auto-calculado para KPI >= 8 (conta meses onde real >= meta → 0-3)
+                            // KPI < 8: particularidades pendentes — lê entrada manual de spo_metas mes="TRI"
                             const triReal = (n) => {
+                              if (n >= 8) {
+                                const mesesValidos = MESES.filter(m => INICIO_AVAL[n] <= m);
+                                let count = 0;
+                                for (const mes of mesesValidos) {
+                                  const meta = getMeta(n, mes);
+                                  const real = getReal(n, mes);
+                                  if (meta !== null && real !== null && real >= meta) count++;
+                                }
+                                return count;
+                              }
+                              // KPIs 1-7: entrada manual
                               const m = spoMetas.find(x => String(x.item) === String(n) && x.mes === "TRI");
                               return (m && m.real !== "" && m.real !== null && m.real !== undefined) ? parseInt(m.real) : null;
                             };
+                            // 3 meses OK → pts inteiro | 2 → 2/3 pts | 1 → 1/3 pts | 0 → 0
                             const triPtsReal = (n, pts) => {
                               const r = triReal(n);
                               if (r === null) return null;
                               if (r === 3) return pts;
+                              if (r === 2) return Math.round(pts * 2 / 3);
                               if (r === 1) return Math.round(pts / 3);
                               return 0;
                             };
@@ -2196,7 +2210,7 @@ export default function SPO() {
                                           <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(251,185,0,0.08)" : "" }}>{h}</th>
                                         ))
                                       ))}
-                                      {["Pts","Real","Pts Real","% Real"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
+                                      {["Pts","Meses OK","Pts TRI","% SPO"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
                                     </tr>
                                   </thead>
                                   <tbody>
