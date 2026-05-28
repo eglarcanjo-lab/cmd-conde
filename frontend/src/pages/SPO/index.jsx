@@ -231,10 +231,8 @@ export default function SPO() {
   const gvsResumo = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
   const totalVisitados = gvsResumo.reduce((s, r) => s + parseInt(r.visitados || 0), 0);
   const totalMeta      = gvsResumo.reduce((s, r) => s + parseInt(r.meta || META_GV), 0);
-  // Atingimento: cap por GV (um GV não compensa o outro) → 100% só quando todos batem
-  const visitadosValidados = gvsResumo.reduce((s, r) =>
-    s + Math.min(parseInt(r.visitados || 0), parseInt(r.meta || META_GV)), 0);
-  const pctOp = totalMeta > 0 ? Math.round((visitadosValidados / totalMeta) * 100) : 0;
+  // Atingimento: soma bruta / soma das metas (= média das % por GV quando metas iguais)
+  const pctOp = totalMeta > 0 ? parseFloat((totalVisitados / totalMeta * 100).toFixed(1)) : 0;
 
   // Detalhe filtrado
   const detalheFiltrado = detalhe.filter((d) => {
@@ -2088,23 +2086,22 @@ export default function SPO() {
 
                               switch(n) {
                                 case 1:  {
-                                  // Visitas validadas com cap por GV (um não compensa o outro)
+                                  // Total de visitas realizadas (sem cap por GV)
                                   const gvs = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
                                   if (gvs.length === 0) return null;
-                                  return gvs.reduce((s, r) =>
-                                    s + Math.min(parseInt(r.visitados||0), parseInt(r.meta||META_GV)), 0);
+                                  return gvs.reduce((s, r) => s + parseInt(r.visitados||0), 0);
                                 }
                                 case 2:  {
-                                  // Conta GVs com coaching OK
-                                  const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  // Total de coachings realizados no mês (soma dos GVs)
+                                  const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal");
                                   if (gvs.length === 0) return null;
-                                  return gvs.filter(r => parseFloat(r.coachings_validos||0) >= parseFloat(r.meta||1)).length;
+                                  return gvs.reduce((s, r) => s + parseInt(r.coachings_validos||0), 0);
                                 }
                                 case 3:  {
-                                  // Conta GVs com dias de rota OK
-                                  const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  // Total de dias válidos em rota no mês (soma dos GVs)
+                                  const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal");
                                   if (gvs.length === 0) return null;
-                                  return gvs.filter(r => parseFloat(r.dias_validos||0) >= parseFloat(r.meta||1)).length;
+                                  return gvs.reduce((s, r) => s + parseInt(r.dias_validos||0), 0);
                                 }
                                 case 4:  {
                                   // Conta GVs que atingiram ≥ 90% dos dias com desafio aberto (OK)
