@@ -695,54 +695,52 @@ export default function SPO() {
                         </div>
                       </div>
                     )}
+                    {/* Detalhe por PDV */}
+                    {promoDetalhe.length > 0 && (
+                      <div>
+                        <div style={styles.filtrosRow}>
+                          <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={promoBusca} onChange={(e) => setPromoBusca(e.target.value)} />
+                          <select style={styles.inputFiltro} value={promoFiltroSetor} onChange={(e) => setPromoFiltroSetor(e.target.value)}>
+                            <option value="todos">Todos os setores</option>
+                            {[...new Set(promoDetalhe.filter(d => d.setor).map(d => d.setor))].sort().map(s => <option key={s} value={s}>Setor {s}</option>)}
+                          </select>
+                          <select style={styles.inputFiltro} value={promoFiltroDia} onChange={(e) => setPromoFiltroDia(e.target.value)}>
+                            <option value="todos">Todos os dias</option>
+                            {[...new Set(promoDetalhe.map(d => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+                          <span style={styles.countLabel}>{promoDetalhe.filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase()))).length} PDVs</span>
+                        </div>
+                        <div style={styles.tableWrap}>
+                          <table style={styles.table}>
+                            <thead>
+                              <tr>{["Setor","PDV","Dia Visita","Visitas","Acesso Promo","%"].map(h => <th key={h} style={styles.th}>{h}</th>)}</tr>
+                            </thead>
+                            <tbody>
+                              {promoDetalhe
+                                .filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase())))
+                                .slice(0, 100)
+                                .map((d, i) => {
+                                  const pct = parseFloat(d.pct || 0);
+                                  const cor = pct >= 10 ? "#4ade80" : pct >= 5 ? "#fbb900" : "#f87171";
+                                  return (
+                                    <tr key={i} style={styles.tr}>
+                                      <td style={styles.td}>{d.setor || "—"}</td>
+                                      <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
+                                      <td style={styles.td}>{d.dia_visita || "—"}</td>
+                                      <td style={styles.td}>{d.visitas}</td>
+                                      <td style={styles.td}>{d.acesso_promo}</td>
+                                      <td style={styles.td}><span style={{ color: cor, fontWeight: "700" }}>{pct}%</span></td>
+                                    </tr>
+                                  );
+                                })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
-                  {/* Detalhe por PDV */}
-                  {promoDetalhe.length > 0 && (
-                    <div>
-                      <div style={styles.filtrosRow}>
-                        <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={promoBusca} onChange={(e) => setPromoBusca(e.target.value)} />
-                        <select style={styles.inputFiltro} value={promoFiltroSetor} onChange={(e) => setPromoFiltroSetor(e.target.value)}>
-                          <option value="todos">Todos os setores</option>
-                          {[...new Set(promoDetalhe.filter(d => d.setor).map(d => d.setor))].sort().map(s => <option key={s} value={s}>Setor {s}</option>)}
-                        </select>
-                        <select style={styles.inputFiltro} value={promoFiltroDia} onChange={(e) => setPromoFiltroDia(e.target.value)}>
-                          <option value="todos">Todos os dias</option>
-                          {[...new Set(promoDetalhe.map(d => (d.dia_visita || "").split("/")[0].trim()).filter(Boolean))].sort().map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                        <span style={styles.countLabel}>{promoDetalhe.filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase()))).length} PDVs</span>
-                      </div>
-                      <div style={styles.tableWrap}>
-                        <table style={styles.table}>
-                          <thead>
-                            <tr>{["Setor","PDV","Dia Visita","Visitas","Acesso Promo","%"].map(h => <th key={h} style={styles.th}>{h}</th>)}</tr>
-                          </thead>
-                          <tbody>
-                            {promoDetalhe
-                              .filter(d => (!promoBusca || d.cod_pdv?.includes(promoBusca)) && (promoFiltroSetor === "todos" || d.setor === promoFiltroSetor) && (promoFiltroDia === "todos" || (d.dia_visita || "").toUpperCase().includes(promoFiltroDia.toUpperCase())))
-                              .slice(0, 100)
-                              .map((d, i) => {
-                                const pct = parseFloat(d.pct || 0);
-                                const cor = pct >= 10 ? "#4ade80" : pct >= 5 ? "#fbb900" : "#f87171";
-                                return (
-                                  <tr key={i} style={styles.tr}>
-                                    <td style={styles.td}>{d.setor || "—"}</td>
-                                    <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
-                                    <td style={styles.td}>{d.dia_visita || "—"}</td>
-                                    <td style={styles.td}>{d.visitas}</td>
-                                    <td style={styles.td}>{d.acesso_promo}</td>
-                                    <td style={styles.td}><span style={{ color: cor, fontWeight: "700" }}>{pct}%</span></td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
             )}
 
