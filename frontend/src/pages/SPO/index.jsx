@@ -2157,26 +2157,32 @@ export default function SPO() {
               
                             // mesAtual definido no escopo do componente
 
-                            // Tri: auto-calculado para KPI >= 8 (conta meses onde real >= meta → 0-3)
-                            // KPI < 8: particularidades pendentes — lê entrada manual de spo_metas mes="TRI"
-                            const triReal = (n) => {
-                              if (n >= 8) {
-                                const mesesValidos = MESES.filter(m => INICIO_AVAL[n] <= m);
-                                let count = 0;
-                                for (const mes of mesesValidos) {
-                                  const meta = getMeta(n, mes);
-                                  const real = getReal(n, mes);
-                                  if (meta !== null && real !== null && real >= meta) count++;
-                                }
-                                return count;
+                            // TRI: acumula metas e reais dos meses disponíveis
+                            // KPIs 1-7: particularidades pendentes — usa mesma lógica por ora
+                            const triAccumMeta = (n) => {
+                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m);
+                              let soma = 0, temDado = false;
+                              for (const mes of meses) {
+                                const v = getMeta(n, mes);
+                                if (v !== null) { soma += v; temDado = true; }
                               }
-                              // KPIs 1-7: entrada manual
-                              const m = spoMetas.find(x => String(x.item) === String(n) && x.mes === "TRI");
-                              return (m && m.real !== "" && m.real !== null && m.real !== undefined) ? parseInt(m.real) : null;
+                              return temDado ? parseFloat(soma.toFixed(1)) : null;
                             };
-                            // TRI: binário — bateu os 3 meses = pontuação cheia, senão zero
-                            const triBateu = (n) => triReal(n) === 3;
-                            const triMeta  = (n) => MESES.filter(m => INICIO_AVAL[n] <= m).length;
+                            const triAccumReal = (n) => {
+                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m);
+                              let soma = 0, temDado = false;
+                              for (const mes of meses) {
+                                const v = getReal(n, mes);
+                                if (v !== null) { soma += v; temDado = true; }
+                              }
+                              return temDado ? parseFloat(soma.toFixed(1)) : null;
+                            };
+                            const triBateu = (n) => {
+                              const meta = triAccumMeta(n);
+                              const real = triAccumReal(n);
+                              if (meta === null || real === null) return null;
+                              return real >= meta;
+                            };
 
                             const thStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
                             const thSubStyle = { padding: "3px 5px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
@@ -2209,13 +2215,13 @@ export default function SPO() {
                                   </thead>
                                   <tbody>
                                     {ITENS_SPO.map((item) => {
-                                      const tReal   = triReal(item.n);
                                       const tOK     = triBateu(item.n);
-                                      const tPts    = tReal !== null ? (tOK ? 3 : 0) : null;
-                                      const tMeta   = triMeta(item.n);
-                                      const tPtsSPO = tReal !== null ? (tOK ? getPts(item.n) : 0) : null;
-                                      const tPctSPO = tReal !== null ? (tOK ? (getPts(item.n) / TOTAL_PTS * 100).toFixed(1) + "%" : "0.0%") : null;
-                                      const corTri  = tOK ? "#4ade80" : tReal !== null ? "#f87171" : "rgba(255,255,255,0.25)";
+                                      const tMeta   = triAccumMeta(item.n);
+                                      const tReal   = triAccumReal(item.n);
+                                      const tPts    = tOK !== null ? (tOK ? 3 : 0) : null;
+                                      const tPtsSPO = tOK !== null ? (tOK ? getPts(item.n) : 0) : null;
+                                      const tPctSPO = tOK !== null ? (tOK ? (getPts(item.n) / TOTAL_PTS * 100).toFixed(1) + "%" : "0.0%") : null;
+                                      const corTri  = tOK === true ? "#4ade80" : tOK === false ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
                                         <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
