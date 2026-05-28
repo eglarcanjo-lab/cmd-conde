@@ -620,32 +620,84 @@ export default function SPO() {
               <h3 style={styles.sectionTitle}>Item 7 — % PDVs abrindo Aba de Promoção no BEES</h3>
               {promo.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Aba Promoção BEES.</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                  {/* Cards por setor */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                    {[...promo].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
-                      const pct = parseFloat(r.pct || 0);
-                      const cor = pct >= 10 ? "#4ade80" : pct >= 7 ? "#fbb900" : "#f87171";
-                      const isOp = r.setor === "OPERACAO";
-                      return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
-                          <div style={styles.gvHeader}>
-                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                              {isOp ? "🏭 Operação Total" : `Setor ${r.setor}`}
+              ) : (() => {
+                // Meta vem do spo_metas (item 7, mês atual) — entra como 10 para 10%
+                const meta7 = parseFloat(spoMetas.find(m => String(m.item) === "7" && m.mes === mesAtual)?.meta) || 10;
+
+                // Memória de cálculo trimestral — lê os 3 meses do spo_metas (real = % do mês)
+                const mesesTri = spoMetas
+                  .filter(m => String(m.item) === "7" && m.mes !== "TRI" && m.real !== "" && m.real != null)
+                  .sort((a, b) => a.mes.localeCompare(b.mes))
+                  .slice(-3);
+                const triPct7 = mesesTri.length >= 2
+                  ? (mesesTri.reduce((s, m) => s + parseFloat(m.real || 0), 0) / mesesTri.length)
+                  : null;
+
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {/* Cards por setor */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
+                      {[...promo].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
+                        const pct = parseFloat(r.pct || 0);
+                        const cor = pct >= meta7 ? "#4ade80" : pct >= meta7 * 0.7 ? "#fbb900" : "#f87171";
+                        const isOp = r.setor === "OPERACAO";
+                        const barPct = meta7 > 0 ? Math.min(pct / meta7 * 100, 150) : 0;
+                        return (
+                          <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                            <div style={styles.gvHeader}>
+                              <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
+                                {isOp ? "🏭 Operação Total" : `Setor ${r.setor}`}
+                              </span>
+                              <span style={{ ...styles.apBadge, background: pct >= meta7 ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: pct >= meta7 ? "#4ade80" : "#f87171" }}>
+                                {pct >= meta7 ? "OK" : "NOK"}
+                              </span>
+                            </div>
+                            <BarraProgresso pct={barPct} cor={cor} />
+                            <div style={styles.gvFooter}>
+                              {/* Memória: acesso / visitas = % */}
+                              <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
+                                {r.acesso_promo} / {r.visitas} = {pct}%
+                              </span>
+                              <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
+                            </div>
+                            <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ {meta7}%</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Memória de cálculo trimestral */}
+                    {mesesTri.length >= 2 && (
+                      <div style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "14px 16px" }}>
+                        <p style={{ margin: "0 0 10px", fontSize: "0.78rem", fontWeight: "600", color: "rgba(255,255,255,0.5)" }}>📊 Memória de Cálculo — Trimestral</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem" }}>
+                          {mesesTri.map((m, i) => {
+                            const v = parseFloat(m.real || 0);
+                            const cor = v >= meta7 ? "#4ade80" : "#f87171";
+                            return (
+                              <div key={m.mes} style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ color: "rgba(255,255,255,0.4)" }}>Mês {i + 1} ({fmtMes(m.mes)}):</span>
+                                <span style={{ color: cor, fontWeight: "600" }}>{v.toFixed(1)}%</span>
+                              </div>
+                            );
+                          })}
+                          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "6px", paddingTop: "6px", display: "flex", justifyContent: "space-between", fontWeight: "700" }}>
+                            <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                              Fechamento Tri (média simples):
                             </span>
-                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
+                            <span style={{ color: triPct7 >= meta7 ? "#4ade80" : "#f87171" }}>
+                              {triPct7 != null ? triPct7.toFixed(1) : "—"}%
+                            </span>
                           </div>
-                          <BarraProgresso pct={pct * 10} cor={cor} />
-                          <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{r.acesso_promo}/{r.visitas} visitas</span>
-                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                          </div>
-                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 10%</p>
+                          <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.2)", fontSize: "0.7rem" }}>
+                            Fórmula: ({mesesTri.map(m => `${parseFloat(m.real||0).toFixed(1)}%`).join(" + ")}) ÷ {mesesTri.length} = {triPct7?.toFixed(1)}%
+                          </p>
                         </div>
-                      );
-                    })}
+                      </div>
+                    )}
                   </div>
+                );
+              })()}
                   {/* Detalhe por PDV */}
                   {promoDetalhe.length > 0 && (
                     <div>
@@ -2066,7 +2118,7 @@ export default function SPO() {
                                   return d ? parseFloat(d.rns_ap_ok || 0) : null;
                                 }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
-                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.acesso_promo || 0) : null; }
+                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
                                 case 8:  { const d = op(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
                                 case 9:  { const d = op(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
