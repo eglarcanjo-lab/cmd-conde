@@ -638,7 +638,10 @@ export default function SPO() {
                     {/* Cards por setor */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
                       {[...promo].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
-                        const pct = parseFloat(r.pct || 0);
+                        // Calcula sempre de acesso_promo / visitas para evitar pct desatualizado na aba
+                        const ac  = parseFloat(r.acesso_promo || 0);
+                        const vis = parseFloat(r.visitas || 0);
+                        const pct = vis > 0 ? parseFloat((ac / vis * 100).toFixed(1)) : parseFloat(r.pct || 0);
                         const cor = pct >= meta7 ? "#4ade80" : pct >= meta7 * 0.7 ? "#fbb900" : "#f87171";
                         const isOp = r.setor === "OPERACAO";
                         const barPct = meta7 > 0 ? Math.min(pct / meta7 * 100, 150) : 0;
@@ -656,7 +659,7 @@ export default function SPO() {
                             <div style={styles.gvFooter}>
                               {/* Memória: acesso / visitas = % */}
                               <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
-                                {r.acesso_promo} / {r.visitas} = {pct}%
+                                {ac} / {vis} = {pct}%
                               </span>
                               <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
                             </div>
@@ -2116,7 +2119,7 @@ export default function SPO() {
                                   return d ? parseFloat(d.rns_ap_ok || 0) : null;
                                 }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
-                                case 7:  { const d = opMes(promo) || op(promo); return d ? parseFloat(d.pct || 0) : null; }
+                                case 7:  { const d = opMes(promo) || op(promo); if (!d) return null; const _vis = parseFloat(d.visitas||0); const _ac = parseFloat(d.acesso_promo||0); return _vis > 0 ? parseFloat((_ac / _vis * 100).toFixed(1)) : null; }
                                 case 8:  { const d = op(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
                                 case 9:  { const d = op(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
                                 case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
