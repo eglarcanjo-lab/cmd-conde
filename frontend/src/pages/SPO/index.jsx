@@ -2159,8 +2159,9 @@ export default function SPO() {
 
                             // TRI: acumula metas e reais dos meses disponíveis
                             // KPIs 1-7: particularidades pendentes — usa mesma lógica por ora
+                            // Acumula só até o mês atual (Abr→só Abr, Mai→Abr+Mai, Jun→os 3)
                             const triAccumMeta = (n) => {
-                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m);
+                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m && m <= mesAtual);
                               let soma = 0, temDado = false;
                               for (const mes of meses) {
                                 const v = getMeta(n, mes);
@@ -2169,7 +2170,7 @@ export default function SPO() {
                               return temDado ? parseFloat(soma.toFixed(1)) : null;
                             };
                             const triAccumReal = (n) => {
-                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m);
+                              const meses = MESES.filter(m => INICIO_AVAL[n] <= m && m <= mesAtual);
                               let soma = 0, temDado = false;
                               for (const mes of meses) {
                                 const v = getReal(n, mes);
