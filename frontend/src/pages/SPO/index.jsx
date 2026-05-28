@@ -2092,14 +2092,14 @@ export default function SPO() {
                                   return gvs.reduce((s, r) => s + parseInt(r.visitados||0), 0);
                                 }
                                 case 2:  {
-                                  // Total de coachings realizados no mês (soma dos GVs)
-                                  const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal");
+                                  // Total de coachings realizados no mês (soma dos GVs, filtrado por mês)
+                                  const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia||"").startsWith(mes));
                                   if (gvs.length === 0) return null;
                                   return gvs.reduce((s, r) => s + parseInt(r.coachings_validos||0), 0);
                                 }
                                 case 3:  {
-                                  // Total de dias válidos em rota no mês (soma dos GVs)
-                                  const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal");
+                                  // Total de dias válidos em rota no mês (soma dos GVs, filtrado por mês)
+                                  const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia||"").startsWith(mes));
                                   if (gvs.length === 0) return null;
                                   return gvs.reduce((s, r) => s + parseInt(r.dias_validos||0), 0);
                                 }
