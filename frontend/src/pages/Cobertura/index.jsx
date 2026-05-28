@@ -76,6 +76,8 @@ export default function Cobertura() {
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
   const [busca, setBusca]           = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [filtroRN, setFiltroRN]     = useState("");
+  const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useState("cobertura");
   const [catFiltro, setCatFiltro]   = useState(null);
 
@@ -102,6 +104,12 @@ export default function Cobertura() {
   }
 
   const isGestor = ["admin","director","gv1","gv3"].includes(usuario?.perfil);
+  const isAdmin  = usuario?.perfil === "admin";
+
+  // Opções de RN (setor) para o filtro admin — derivadas de toda a base
+  const rnOptions = isAdmin
+    ? [...new Set(pdvBase.map((p) => p.setor).filter(Boolean))].sort()
+    : [];
 
   const coberturaSetor = isGestor ? cobertura
     : cobertura.filter((r) => r.setor === usuario?.cod);
@@ -189,11 +197,13 @@ export default function Cobertura() {
   });
 
   const pdvsFiltrados = pdvsComDados.filter((p) => {
-    const buscaOk = !busca
+    const buscaOk   = !busca
       || p.nome_fantasia?.toLowerCase().includes(busca.toLowerCase())
       || p.cod_pdv?.includes(busca);
-    const statusOk = !filtroStatus || Object.values(p.cob).includes(filtroStatus);
-    return buscaOk && statusOk;
+    const statusOk  = !filtroStatus  || Object.values(p.cob).includes(filtroStatus);
+    const rnOk      = !filtroRN      || String(p.setor) === String(filtroRN);
+    const nokCatOk  = !filtroNOKCat  || p.cob[filtroNOKCat] === "NOK";
+    return buscaOk && statusOk && rnOk && nokCatOk;
   });
 
   const pdvsDistFiltrados = pdvsComDados.filter((p) =>
@@ -330,6 +340,28 @@ export default function Cobertura() {
                   <option value="PENDENTE">Pendente</option>
                   <option value="NOK">NOK</option>
                 </select>
+                <select
+                  style={{ ...styles.inputFiltro, borderColor: filtroNOKCat ? "rgba(248,113,113,0.5)" : undefined }}
+                  value={filtroNOKCat}
+                  onChange={(e) => setFiltroNOKCat(e.target.value)}
+                >
+                  <option value="">NOK por categoria...</option>
+                  {CATEGORIAS.map((c) => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
+                {isAdmin && (
+                  <select
+                    style={{ ...styles.inputFiltro, borderColor: filtroRN ? "rgba(251,185,0,0.5)" : undefined }}
+                    value={filtroRN}
+                    onChange={(e) => setFiltroRN(e.target.value)}
+                  >
+                    <option value="">Todos os RNs</option>
+                    {rnOptions.map((rn) => (
+                      <option key={rn} value={rn}>{rn}</option>
+                    ))}
+                  </select>
+                )}
                 <span style={styles.countLabel}>{pdvsFiltrados.length} PDVs</span>
               </div>
               {loading ? (
