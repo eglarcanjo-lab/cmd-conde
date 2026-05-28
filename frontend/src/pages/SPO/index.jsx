@@ -227,10 +227,14 @@ export default function SPO() {
     finally { setLoading(false); }
   }
 
-  // Resumo operação
-  const totalVisitados = resumo.reduce((s, r) => s + parseInt(r.visitados || 0), 0);
-  const totalMeta = resumo.reduce((s, r) => s + parseInt(r.meta || META_GV), 0);
-  const pctOp = totalMeta > 0 ? Math.round((totalVisitados / totalMeta) * 100) : 0;
+  // Resumo operação — filtra só linhas de GV (numérico) para não misturar com agregados
+  const gvsResumo = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+  const totalVisitados = gvsResumo.reduce((s, r) => s + parseInt(r.visitados || 0), 0);
+  const totalMeta      = gvsResumo.reduce((s, r) => s + parseInt(r.meta || META_GV), 0);
+  // Atingimento: cap por GV (um GV não compensa o outro) → 100% só quando todos batem
+  const visitadosValidados = gvsResumo.reduce((s, r) =>
+    s + Math.min(parseInt(r.visitados || 0), parseInt(r.meta || META_GV)), 0);
+  const pctOp = totalMeta > 0 ? Math.round((visitadosValidados / totalMeta) * 100) : 0;
 
   // Detalhe filtrado
   const detalheFiltrado = detalhe.filter((d) => {
@@ -2084,10 +2088,11 @@ export default function SPO() {
 
                               switch(n) {
                                 case 1:  {
-                                  // Conta GVs que atingiram sua meta individual (visitados >= meta)
+                                  // Visitas validadas com cap por GV (um não compensa o outro)
                                   const gvs = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
                                   if (gvs.length === 0) return null;
-                                  return gvs.filter(r => parseFloat(r.visitados||0) >= parseFloat(r.meta||1)).length;
+                                  return gvs.reduce((s, r) =>
+                                    s + Math.min(parseInt(r.visitados||0), parseInt(r.meta||META_GV)), 0);
                                 }
                                 case 2:  {
                                   // Conta GVs com coaching OK
