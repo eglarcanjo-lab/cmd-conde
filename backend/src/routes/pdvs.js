@@ -42,31 +42,40 @@ router.get("/inadimplentes", async (req, res) => {
     });
 
     // Normaliza cod_pdv:
-    //  1. já é um código válido → mantém, enriquece setor se faltar
+    //  1. já é um código válido → mantém, enriquece setor/nome se faltar
     //  2. cod_pdv contém o nome do PDV (coluna errada na planilha) → lookup pelo valor como nome
     //  3. nome_fantasia tem o nome → lookup pelo nome
+    // Em todos os casos: nome_fantasia vem de pdv_base (canônico), nunca da coluna trocada
     const enriched = inad.map((r) => {
       const cod  = String(r.cod_pdv      || "").trim();
       const nome = String(r.nome_fantasia || "").trim().toLowerCase();
 
       if (codSet.has(cod)) {
-        // código já correto — garante setor para filtro por perfil
         const base = baseMap[cod];
-        return base ? { ...r, setor: r.setor || base.setor, nome_fantasia: r.nome_fantasia || base.nome_fantasia } : r;
+        return base
+          ? { ...r, setor: r.setor || base.setor, nome_fantasia: base.nome_fantasia || r.nome_fantasia }
+          : r;
       }
 
       // cod_pdv está com o nome do PDV (planilha com coluna trocada)
       const byValAsName = nomeMap[cod.toLowerCase()];
       if (byValAsName) {
         const base = baseMap[byValAsName];
-        return { ...r, cod_pdv: byValAsName, nome_fantasia: r.nome_fantasia || cod, setor: r.setor || base?.setor };
+        // usa nome canônico do pdv_base — o r.nome_fantasia pode ter valor de outra coluna (ex: "1")
+        return {
+          ...r,
+          cod_pdv:       byValAsName,
+          nome_fantasia: base?.nome_fantasia || cod,
+          setor:         r.setor || base?.setor,
+        };
       }
 
-      // tenta pelo campo nome_fantasia
-      const byNome = nome ? nomeMap[nome] : null;
+      // tenta pelo campo nome_fantasia (se não for numérico/lixo)
+      const nomeValido = nome && isNaN(Number(nome)) && nome.length > 2;
+      const byNome = nomeValido ? nomeMap[nome] : null;
       if (byNome) {
         const base = baseMap[byNome];
-        return { ...r, cod_pdv: byNome, setor: r.setor || base?.setor };
+        return { ...r, cod_pdv: byNome, nome_fantasia: base?.nome_fantasia || r.nome_fantasia, setor: r.setor || base?.setor };
       }
 
       return r;

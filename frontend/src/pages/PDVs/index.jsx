@@ -406,7 +406,15 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
 }
 
 function TabelaInadimplentes({ pdvs }) {
-  if (pdvs.length === 0) return <p style={styles.msg}>Nenhum inadimplente encontrado.</p>;
+  // Ordena por valor_total decrescente; empata pela qtd_titulos
+  const lista = [...pdvs].sort((a, b) => {
+    const vA = Number(a.valor_total) || 0;
+    const vB = Number(b.valor_total) || 0;
+    if (vB !== vA) return vB - vA;
+    return (Number(b.qtd_titulos) || 0) - (Number(a.qtd_titulos) || 0);
+  });
+
+  if (lista.length === 0) return <p style={styles.msg}>Nenhum inadimplente encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
       <table style={styles.table}>
@@ -418,18 +426,24 @@ function TabelaInadimplentes({ pdvs }) {
           </tr>
         </thead>
         <tbody>
-          {pdvs.map((p) => (
-            <tr key={p.cod_pdv} style={styles.tr}>
-              <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
-              <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
-              <td style={styles.td}>{p.qtd_titulos}</td>
-              <td style={{ ...styles.td, color: "#f87171", fontWeight: "600" }}>
-                R$ {Number(p.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </td>
-              <td style={{ ...styles.td, color: "#f87171" }}>{p.maior_atraso} dias</td>
-              <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>{p.aging}</td>
-            </tr>
-          ))}
+          {lista.map((p) => {
+            const valor = Number(p.valor_total) || 0;
+            const atraso = Number(p.maior_atraso) || 0;
+            return (
+              <tr key={p.cod_pdv} style={styles.tr}>
+                <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
+                <td style={styles.td}>{p.qtd_titulos || "—"}</td>
+                <td style={{ ...styles.td, color: valor > 0 ? "#f87171" : "rgba(255,255,255,0.3)", fontWeight: valor > 0 ? "600" : "400" }}>
+                  {valor > 0 ? `R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+                </td>
+                <td style={{ ...styles.td, color: atraso > 0 ? "#f87171" : "rgba(255,255,255,0.3)" }}>
+                  {atraso > 0 ? `${atraso} dias` : "—"}
+                </td>
+                <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>{p.aging || "—"}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
