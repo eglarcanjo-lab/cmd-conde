@@ -347,14 +347,13 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
       <table style={styles.table}>
         <thead>
           <tr>
-            {["Cód", "Nome", "Cidade", "Dias s/ Compra", "Cobertura OK", "Inadimplente"].map((h) => (
+            {["Cód", "Nome", "Cidade", "Dias s/ Compra", "Inadimplente"].map((h) => (
               <th key={h} style={styles.th}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {pdvs.map((p) => {
-            const cob = coberturaOk(p.cod_pdv);
             const inad = mapaInad[p.cod_pdv];
             return (
               <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
@@ -363,10 +362,6 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
                 <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{p.cidade}</td>
                 <td style={{ ...styles.td, color: Number(p.dias_sem_compra) > 30 ? "#f87171" : "#4ade80" }}>
                   {p.dias_sem_compra || "—"} dias
-                </td>
-                <td style={styles.td}>
-                  <span style={{ color: "#4ade80", fontWeight: "700" }}>{cob.ok}</span>
-                  <span style={{ color: "rgba(255,255,255,0.3)" }}>/{cob.total}</span>
                 </td>
                 <td style={styles.td}>
                   {inad ? <span style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}

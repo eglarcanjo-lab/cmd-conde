@@ -30,21 +30,46 @@ router.get("/inadimplentes", async (req, res) => {
       readSheet("pdv_base"),
     ]);
 
-    // Mapa nome_fantasia → cod_pdv a partir da base de PDVs
+    // Mapa nome_fantasia → cod_pdv e cod_pdv → registro base
     const nomeMap = {};
-    const codSet = new Set();
+    const codSet  = new Set();
+    const baseMap = {};
     pdvBase.forEach((p) => {
-      if (p.cod_pdv) codSet.add(String(p.cod_pdv).trim());
-      if (p.nome_fantasia && p.cod_pdv)
-        nomeMap[String(p.nome_fantasia).trim().toLowerCase()] = String(p.cod_pdv).trim();
+      const cod  = String(p.cod_pdv      || "").trim();
+      const nome = String(p.nome_fantasia || "").trim().toLowerCase();
+      if (cod)  { codSet.add(cod); baseMap[cod] = p; }
+      if (nome && cod) nomeMap[nome] = cod;
     });
 
-    // Normaliza cod_pdv: se não estiver na base, tenta casar pelo nome_fantasia
+    // Normaliza cod_pdv:
+    //  1. já é um código válido → mantém, enriquece setor se faltar
+    //  2. cod_pdv contém o nome do PDV (coluna errada na planilha) → lookup pelo valor como nome
+    //  3. nome_fantasia tem o nome → lookup pelo nome
     const enriched = inad.map((r) => {
-      const cod = String(r.cod_pdv || "").trim();
-      if (codSet.has(cod)) return r;
-      const matched = nomeMap[String(r.nome_fantasia || "").trim().toLowerCase()];
-      return matched ? { ...r, cod_pdv: matched } : r;
+      const cod  = String(r.cod_pdv      || "").trim();
+      const nome = String(r.nome_fantasia || "").trim().toLowerCase();
+
+      if (codSet.has(cod)) {
+        // código já correto — garante setor para filtro por perfil
+        const base = baseMap[cod];
+        return base ? { ...r, setor: r.setor || base.setor, nome_fantasia: r.nome_fantasia || base.nome_fantasia } : r;
+      }
+
+      // cod_pdv está com o nome do PDV (planilha com coluna trocada)
+      const byValAsName = nomeMap[cod.toLowerCase()];
+      if (byValAsName) {
+        const base = baseMap[byValAsName];
+        return { ...r, cod_pdv: byValAsName, nome_fantasia: r.nome_fantasia || cod, setor: r.setor || base?.setor };
+      }
+
+      // tenta pelo campo nome_fantasia
+      const byNome = nome ? nomeMap[nome] : null;
+      if (byNome) {
+        const base = baseMap[byNome];
+        return { ...r, cod_pdv: byNome, setor: r.setor || base?.setor };
+      }
+
+      return r;
     });
 
     return res.json(filtrarPorPerfil(enriched, req.user));
