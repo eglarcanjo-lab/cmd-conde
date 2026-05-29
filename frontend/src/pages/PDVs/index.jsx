@@ -86,6 +86,10 @@ export default function PDVs() {
     return { ok, total: vals.length };
   }
 
+  // Mapa base (cod_pdv → PDV completo)
+  const mapaBase = {};
+  pdvBase.forEach((p) => { mapaBase[p.cod_pdv] = p; });
+
   // Mapa de inadimplência
   const mapaInad = {};
   inadimplentes.forEach((i) => { mapaInad[i.cod_pdv] = i; });
@@ -225,7 +229,12 @@ export default function PDVs() {
               <TabelaInadimplentes pdvs={filtrar(inadimplentes)} />
             )}
             {aba === "rank" && (
-              <TabelaRank pdvs={filtrar(rank)} mapaInad={mapaInad} />
+              <TabelaRank
+                pdvs={filtrar(rank)}
+                mapaInad={mapaInad}
+                mapaBase={mapaBase}
+                onSelect={(p) => setPdvSelecionado(mapaBase[p.cod_pdv] || p)}
+              />
             )}
           </>
         )}
@@ -450,7 +459,7 @@ function TabelaInadimplentes({ pdvs }) {
   );
 }
 
-function TabelaRank({ pdvs, mapaInad }) {
+function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum dado encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
@@ -463,17 +472,25 @@ function TabelaRank({ pdvs, mapaInad }) {
           </tr>
         </thead>
         <tbody>
-          {pdvs.map((p, i) => (
-            <tr key={p.cod_pdv} style={styles.tr}>
-              <td style={{ ...styles.td, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
-              <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
-              <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia || p.cod_pdv}</td>
-              <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
-                {parseHl(p.volume_4m_hl).toFixed(2)} HL
-              </td>
-              <td style={styles.td}>{mapaInad[p.cod_pdv] ? <span style={styles.inadTag}>⚠️ Sim</span> : "—"}</td>
-            </tr>
-          ))}
+          {pdvs.map((p, i) => {
+            const nome = mapaBase[p.cod_pdv]?.nome_fantasia || p.nome_fantasia || "—";
+            const inad = mapaInad[p.cod_pdv];
+            return (
+              <tr
+                key={p.cod_pdv}
+                style={{ ...styles.tr, cursor: "pointer" }}
+                onClick={() => onSelect(p)}
+              >
+                <td style={{ ...styles.td, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
+                <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={{ ...styles.td, textAlign: "left" }}>{nome}</td>
+                <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
+                  {parseHl(p.volume_4m_hl).toFixed(2)} HL
+                </td>
+                <td style={styles.td}>{inad ? <span style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
