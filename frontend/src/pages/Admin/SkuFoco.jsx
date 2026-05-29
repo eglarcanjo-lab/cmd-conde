@@ -1,6 +1,16 @@
-// v1.0 - Admin SKU Foco
+// v1.1 - normalizeMesRef para serial de data do Sheets
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+
+function normalizeMesRef(v) {
+  const s = String(v ?? "").trim();
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return s;
+}
 
 const SETORES = ["101","102","103","104","105","106","301","302","303","304","305"];
 
@@ -165,7 +175,7 @@ export default function SkuFoco() {
                   <td style={S.td}>{item.cod_produto}</td>
                   <td style={S.td}>{item.nome_produto}</td>
                   <td style={S.td}>{item.meta_mensal_hl}</td>
-                  <td style={S.td}>{item.mes_referencia}</td>
+                  <td style={S.td}>{normalizeMesRef(item.mes_referencia)}</td>
                   <td style={S.td}>
                     <button style={S.btnDel} onClick={() => remover(idx)}>✕ Remover</button>
                   </td>

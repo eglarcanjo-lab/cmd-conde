@@ -70,13 +70,14 @@ async function readSheet(tabName) {
 }
 
 // Escreve uma linha nova no final de uma aba
+// Usa RAW para impedir que o Sheets interprete strings como datas (ex: "2026-05" → serial 46143)
 async function appendRow(tabName, values) {
   cacheInvalidate(tabName);
   const sheets = await getSheets();
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
     range: tabName,
-    valueInputOption: "USER_ENTERED",
+    valueInputOption: "RAW",
     resource: { values: [values] },
   });
 }
@@ -89,7 +90,7 @@ async function appendRows(tabName, rowsArray) {
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
     range: tabName,
-    valueInputOption: "USER_ENTERED",
+    valueInputOption: "RAW",
     resource: { values: rowsArray },
   });
 }
@@ -102,7 +103,7 @@ async function updateRow(tabName, rowIndex, values) {
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range,
-    valueInputOption: "USER_ENTERED",
+    valueInputOption: "RAW",
     resource: { values: [values] },
   });
 }
@@ -118,7 +119,7 @@ async function sobrescreverAba(tabName, rows) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
       range: `${tabName}!A1`,
-      valueInputOption: "USER_ENTERED",
+      valueInputOption: "RAW",
       resource: { values: rows },
     });
   }

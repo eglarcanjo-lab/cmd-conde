@@ -37,6 +37,19 @@ function diasUteisAte(ano, mes, dia) {
   return count;
 }
 
+// Converte serial de data do Sheets (ex: 46143) para "YYYY-MM"
+// Necessário porque USER_ENTERED interpretava "2026-05" como data
+function normalizeMesRef(v) {
+  const s = String(v ?? "").trim();
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    // Serial Excel/Sheets: 25569 = distância entre epoch Excel e Unix (1970-01-01)
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return s;
+}
+
 // dd/mm/yyyy → Date
 function parseData(s) {
   if (!s || !s.includes("/")) return null;
@@ -131,7 +144,7 @@ router.get("/", async (req, res) => {
     const mes  = dataRef.getMonth(); // 0-based
     const mesRef = `${ano}-${String(mes + 1).padStart(2, "0")}`;
 
-    const metasFiltradas = filtrarPorPerfil(metas, usuario).filter((m) => m.mes_referencia === mesRef);
+    const metasFiltradas = filtrarPorPerfil(metas, usuario).filter((m) => normalizeMesRef(m.mes_referencia) === mesRef);
     const metaMensal = metasFiltradas.reduce(
       (s, m) => s + (parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0), 0
     );
@@ -165,7 +178,7 @@ router.get("/", async (req, res) => {
     const skuFocoFiltrado = filtrarPorPerfil(
       skuFoco.map((s) => ({ ...s, setor: String(s.setor || "").trim() })),
       usuario
-    ).filter((s) => String(s.mes_referencia || "").trim() === mesRef);
+    ).filter((s) => normalizeMesRef(s.mes_referencia) === mesRef);
 
     const skuFocoProgress = skuFocoFiltrado.map((sf) => {
       const cod = String(sf.cod_produto || "").trim().toLowerCase();

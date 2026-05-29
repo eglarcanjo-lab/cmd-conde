@@ -1,7 +1,19 @@
-// v2.2 - fix arredondamento meta
+// v2.3 - normalizeMesRef para serial de data do Sheets
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 import * as XLSX from "xlsx";
+
+// Converte serial de data do Sheets (ex: 46143 → "2026-05")
+// Ocorre quando USER_ENTERED interpretou "2026-05" como data
+function normalizeMesRef(v) {
+  const s = String(v ?? "").trim();
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return s;
+}
 
 const CATEGORIAS = [
   "CERVEJA (VOLUME)",
@@ -171,7 +183,7 @@ export default function Metas() {
   }
 
   const filtradas = metas.filter((m) => {
-    const mesOk = !filtroMes || m.mes_referencia === filtroMes;
+    const mesOk = !filtroMes || normalizeMesRef(m.mes_referencia) === filtroMes;
     const setorOk = !filtroSetor || m.setor === filtroSetor;
     return mesOk && setorOk;
   });
@@ -229,7 +241,7 @@ export default function Metas() {
                      m.categoria.includes("FATURAMENTO") ? `R$ ${Number(m.meta_volume).toLocaleString("pt-BR")}` :
                      `${Number(m.meta_volume).toLocaleString("pt-BR")} HL`}
                   </td>
-                  <td style={styles.td}>{m.mes_referencia}</td>
+                  <td style={styles.td}>{normalizeMesRef(m.mes_referencia)}</td>
                   <td style={styles.td}>{m.peso ? `${m.peso}%` : "—"}</td>
                 </tr>
               ))}
