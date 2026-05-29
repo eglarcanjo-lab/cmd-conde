@@ -148,7 +148,8 @@ export default function Metas() {
       if (res.data.erros?.length) setErro(`Atenção: ${res.data.erros.slice(0, 3).join(" | ")}`);
       await carregar();
     } catch (err) {
-      setErro("Erro ao importar planilha. Verifique o arquivo.");
+      const msg = err?.response?.data?.error || err?.message || "Erro ao importar planilha.";
+      setErro(msg);
       console.error(err);
     } finally {
       setImportando(false);

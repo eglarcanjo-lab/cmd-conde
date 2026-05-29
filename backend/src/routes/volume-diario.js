@@ -102,17 +102,20 @@ router.get("/", async (req, res) => {
 
     // Lê planilhas em paralelo
     const [volumeDiario, metas, skuFoco] = await Promise.all([
-      readSheet("volume_diario"),
-      readSheet("metas"),
+      readSheet("volume_diario").catch(() => []),
+      readSheet("metas").catch(() => []),
       readSheet("sku_foco").catch(() => []),
     ]);
 
-    // Aplica filtro de perfil
-    let dados = filtrarPorPerfil(volumeDiario, usuario);
+    // Aplica filtro de perfil (normaliza setor com trim para evitar espaços)
+    let dados = filtrarPorPerfil(
+      volumeDiario.map((r) => ({ ...r, setor: String(r.setor || "").trim() })),
+      usuario
+    );
 
     // Filtro adicional de setor (admin/director/gv podem escolher)
     if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
-      dados = dados.filter((r) => String(r.setor) === String(req.query.setor));
+      dados = dados.filter((r) => r.setor === String(req.query.setor).trim());
     }
 
     // ── Volume do dia e comparação ──────────────────────────────────────────
@@ -159,15 +162,16 @@ router.get("/", async (req, res) => {
       .map((s) => ({ ...s, volume_hl: Math.round(s.volume_hl * 100) / 100 }));
 
     // ── SKU Foco progress ───────────────────────────────────────────────────
-    const skuFocoFiltrado = filtrarPorPerfil(skuFoco, usuario).filter(
-      (s) => s.mes_referencia === mesRef
-    );
+    const skuFocoFiltrado = filtrarPorPerfil(
+      skuFoco.map((s) => ({ ...s, setor: String(s.setor || "").trim() })),
+      usuario
+    ).filter((s) => String(s.mes_referencia || "").trim() === mesRef);
 
     const skuFocoProgress = skuFocoFiltrado.map((sf) => {
-      const cod = String(sf.cod_produto || "").trim();
+      const cod = String(sf.cod_produto || "").trim().toLowerCase();
       const meta = parseFloat(String(sf.meta_mensal_hl || "0").replace(",", ".")) || 0;
-      const realizadoMes = somarVol(dadosMes.filter((r) => String(r.cod_produto || "").trim() === cod));
-      const realizadoHoje = somarVol(dadosHoje.filter((r) => String(r.cod_produto || "").trim() === cod));
+      const realizadoMes  = somarVol(dadosMes.filter( (r) => String(r.cod_produto || "").trim().toLowerCase() === cod));
+      const realizadoHoje = somarVol(dadosHoje.filter((r) => String(r.cod_produto || "").trim().toLowerCase() === cod));
       const metaDiariaFoco = totalDiasUteis > 0 ? meta / totalDiasUteis : 0;
       return {
         setor: sf.setor,

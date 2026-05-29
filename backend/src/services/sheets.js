@@ -81,6 +81,19 @@ async function appendRow(tabName, values) {
   });
 }
 
+// Escreve várias linhas em uma única chamada à API (batch)
+async function appendRows(tabName, rowsArray) {
+  if (!rowsArray || rowsArray.length === 0) return;
+  cacheInvalidate(tabName);
+  const sheets = await getSheets();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: tabName,
+    valueInputOption: "USER_ENTERED",
+    resource: { values: rowsArray },
+  });
+}
+
 // Atualiza uma linha específica pelo índice (1-based, considerando cabeçalho na linha 1)
 async function updateRow(tabName, rowIndex, values) {
   cacheInvalidate(tabName);
@@ -221,4 +234,4 @@ async function initializeSheets() {
   console.log("✅ Planilhas inicializadas com sucesso.");
 }
 
-module.exports = { readSheet, appendRow, updateRow, deleteRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };
+module.exports = { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };

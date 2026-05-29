@@ -1,8 +1,10 @@
-// v2.2 - sku_foco
+// v2.3 - sku_foco sobrescreverAba + batch metas
 const express = require("express");
 const router = express.Router();
-const { readSheet, appendRow, updateRow, deleteRow, cacheClearAll } = require("../services/sheets");
+const { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
+
+const SKU_FOCO_HEADERS = ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia"];
 
 router.use(authMiddleware, adminOnly);
 
@@ -107,28 +109,41 @@ router.post("/metas/import", async (req, res) => {
       return res.status(400).json({ error: "Envie um array de metas." });
     }
     const erros = [];
-    let importadas = 0;
+    const linhasValidas = [];
     for (const m of metas) {
       if (!m.setor || !m.categoria || !m.meta_volume || !m.mes_referencia) {
         erros.push(`Linha inválida: ${JSON.stringify(m)}`);
         continue;
       }
-      await appendRow("metas", [m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || "", m.volume_tri || "", m.meta_aplicada || ""]);
-      importadas++;
+      linhasValidas.push([m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || "", m.volume_tri || "", m.meta_aplicada || ""]);
     }
-    return res.json({ success: true, importadas, erros: erros.length > 0 ? erros : undefined });
+    if (linhasValidas.length > 0) {
+      // Uma única chamada à API em vez de N chamadas sequenciais
+      await appendRows("metas", linhasValidas);
+    }
+    return res.json({ success: true, importadas: linhasValidas.length, erros: erros.length > 0 ? erros : undefined });
   } catch (err) {
-    return res.status(500).json({ error: "Erro ao importar metas." });
+    console.error("metas/import:", err);
+    return res.status(500).json({ error: `Erro ao importar metas: ${err.message || err}` });
   }
 });
 
 // ─── SKU FOCO ────────────────────────────────────────────────────────────────
+// Usa sobrescreverAba em todas as mutações para garantir que o cabeçalho
+// sempre exista corretamente, independente do estado da aba no Sheets.
+
+async function skuFocoSobrescrever(lista) {
+  const rows = [SKU_FOCO_HEADERS, ...lista.map((r) => SKU_FOCO_HEADERS.map((h) => r[h] ?? ""))];
+  await sobrescreverAba("sku_foco", rows);
+}
 
 router.get("/sku-foco", async (req, res) => {
   try {
+    await ensureTab("sku_foco");
     const dados = await readSheet("sku_foco");
     return res.json(dados);
-  } catch {
+  } catch (err) {
+    console.error("sku-foco GET:", err);
     return res.status(500).json({ error: "Erro ao buscar SKU Foco." });
   }
 });
@@ -139,10 +154,14 @@ router.post("/sku-foco", async (req, res) => {
     if (!setor || !cod_produto || !nome_produto || !meta_mensal_hl || !mes_referencia) {
       return res.status(400).json({ error: "Campos obrigatórios: setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia." });
     }
-    await appendRow("sku_foco", [setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia]);
+    await ensureTab("sku_foco");
+    const existentes = await readSheet("sku_foco");
+    const nova = { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia };
+    await skuFocoSobrescrever([...existentes, nova]);
     return res.json({ success: true, message: "SKU Foco cadastrado." });
-  } catch {
-    return res.status(500).json({ error: "Erro ao cadastrar SKU Foco." });
+  } catch (err) {
+    console.error("sku-foco POST:", err);
+    return res.status(500).json({ error: `Erro ao cadastrar SKU Foco: ${err.message || err}` });
   }
 });
 
@@ -150,12 +169,14 @@ router.delete("/sku-foco/:idx", async (req, res) => {
   try {
     const idx = parseInt(req.params.idx, 10);
     if (isNaN(idx) || idx < 0) return res.status(400).json({ error: "Índice inválido." });
+    await ensureTab("sku_foco");
     const dados = await readSheet("sku_foco");
     if (idx >= dados.length) return res.status(404).json({ error: "SKU Foco não encontrado." });
-    await deleteRow("sku_foco", idx);
+    dados.splice(idx, 1);
+    await skuFocoSobrescrever(dados);
     return res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("sku-foco DELETE:", err);
     return res.status(500).json({ error: "Erro ao remover SKU Foco." });
   }
 });
