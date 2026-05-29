@@ -23,6 +23,18 @@ router.get("/mix", async (req, res) => {
 });
 
 // GET /api/pdvs/inadimplentes
+// Remove acentos, pontuação e espaços duplos para matching tolerante
+function normName(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")   // tira acentos
+    .replace(/[^a-z0-9 ]/g, " ")      // troca pontuação por espaço
+    .replace(/\s+/g, " ")             // colapsa espaços
+    .trim();
+}
+
 router.get("/inadimplentes", async (req, res) => {
   try {
     const [inad, pdvBase] = await Promise.all([
@@ -30,26 +42,37 @@ router.get("/inadimplentes", async (req, res) => {
       readSheet("pdv_base"),
     ]);
 
-    // Mapa nome_fantasia → cod_pdv e cod_pdv → registro base
-    const nomeMap = {};
-    const codSet  = new Set();
-    const baseMap = {};
+    // Mapas de lookup: exato (lowercase) e normalizado (sem acentos/pontuação)
+    const nomeExato = {};
+    const nomeNorm  = {};
+    const codSet    = new Set();
+    const baseMap   = {};
     pdvBase.forEach((p) => {
       const cod  = String(p.cod_pdv      || "").trim();
-      const nome = String(p.nome_fantasia || "").trim().toLowerCase();
-      if (cod)  { codSet.add(cod); baseMap[cod] = p; }
-      if (nome && cod) nomeMap[nome] = cod;
+      const nome = String(p.nome_fantasia || "").trim();
+      if (cod) { codSet.add(cod); baseMap[cod] = p; }
+      if (nome && cod) {
+        nomeExato[nome.toLowerCase()] = cod;
+        nomeNorm[normName(nome)]      = cod;
+      }
     });
 
+    function resolveByName(val) {
+      if (!val) return null;
+      return nomeExato[val.toLowerCase()]
+          || nomeNorm[normName(val)]
+          || null;
+    }
+
     // Normaliza cod_pdv:
-    //  1. já é um código válido → mantém, enriquece setor/nome se faltar
-    //  2. cod_pdv contém o nome do PDV (coluna errada na planilha) → lookup pelo valor como nome
-    //  3. nome_fantasia tem o nome → lookup pelo nome
-    // Em todos os casos: nome_fantasia vem de pdv_base (canônico), nunca da coluna trocada
+    //  1. já é código válido → garante setor/nome
+    //  2. cod_pdv contém nome (coluna errada) → lookup pelo valor como nome (exato ou normalizado)
+    //  3. nome_fantasia tem nome válido → lookup pelo nome
     const enriched = inad.map((r) => {
       const cod  = String(r.cod_pdv      || "").trim();
-      const nome = String(r.nome_fantasia || "").trim().toLowerCase();
+      const nome = String(r.nome_fantasia || "").trim();
 
+      // caso 1: código já correto
       if (codSet.has(cod)) {
         const base = baseMap[cod];
         return base
@@ -57,25 +80,24 @@ router.get("/inadimplentes", async (req, res) => {
           : r;
       }
 
-      // cod_pdv está com o nome do PDV (planilha com coluna trocada)
-      const byValAsName = nomeMap[cod.toLowerCase()];
-      if (byValAsName) {
-        const base = baseMap[byValAsName];
-        // usa nome canônico do pdv_base — o r.nome_fantasia pode ter valor de outra coluna (ex: "1")
+      // caso 2: cod_pdv contém o nome (planilha com colunas trocadas)
+      const codResolvido = resolveByName(cod);
+      if (codResolvido) {
+        const base = baseMap[codResolvido];
         return {
           ...r,
-          cod_pdv:       byValAsName,
+          cod_pdv:       codResolvido,
           nome_fantasia: base?.nome_fantasia || cod,
           setor:         r.setor || base?.setor,
         };
       }
 
-      // tenta pelo campo nome_fantasia (se não for numérico/lixo)
+      // caso 3: tenta pelo campo nome_fantasia (ignora se for numérico/lixo)
       const nomeValido = nome && isNaN(Number(nome)) && nome.length > 2;
-      const byNome = nomeValido ? nomeMap[nome] : null;
-      if (byNome) {
-        const base = baseMap[byNome];
-        return { ...r, cod_pdv: byNome, nome_fantasia: base?.nome_fantasia || r.nome_fantasia, setor: r.setor || base?.setor };
+      const codPorNome = nomeValido ? resolveByName(nome) : null;
+      if (codPorNome) {
+        const base = baseMap[codPorNome];
+        return { ...r, cod_pdv: codPorNome, nome_fantasia: base?.nome_fantasia || nome, setor: r.setor || base?.setor };
       }
 
       return r;
