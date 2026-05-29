@@ -129,24 +129,75 @@ export default function PDVs() {
 
   return (
     <div style={styles.root}>
+      <style>{`
+        @media (max-width: 600px) {
+          .pdv-content  { padding: 12px 14px !important; }
+
+          /* Header */
+          .pdv-header   { padding: 10px 14px !important; gap: 8px !important; }
+          .pdv-title    { font-size: 1rem !important; }
+          .pdv-subtitle { font-size: 0.67rem !important; max-width: 190px;
+                          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .pdv-back-btn   { padding: 5px 10px !important; font-size: 0.76rem !important; }
+          .pdv-logout-btn { padding: 4px 9px  !important; font-size: 0.74rem !important; }
+
+          /* Dias — scroll horizontal, sem quebra de linha */
+          .pdv-dias { flex-wrap: nowrap !important; overflow-x: auto !important;
+                      padding-bottom: 4px; scrollbar-width: none;
+                      -webkit-overflow-scrolling: touch; }
+          .pdv-dias::-webkit-scrollbar { display: none; }
+          .pdv-dia-btn { flex-shrink: 0 !important; font-size: 0.74rem !important;
+                         padding: 5px 11px !important; }
+
+          /* Dashboard — 2 colunas, top-compradores largura total */
+          .pdv-dash { display: grid !important; grid-template-columns: 1fr 1fr !important;
+                      gap: 8px !important; }
+          .pdv-dash > *:last-child { grid-column: 1 / -1; }
+          .pdv-dash-val   { font-size: 1.35rem !important; }
+          .pdv-dash-label { font-size: 0.69rem !important; }
+          .pdv-rank-mini-item { font-size: 0.74rem !important; }
+
+          /* Abas — scroll horizontal, sem quebra */
+          .pdv-abas { overflow-x: auto !important; scrollbar-width: none;
+                      -webkit-overflow-scrolling: touch; }
+          .pdv-abas::-webkit-scrollbar { display: none; }
+          .pdv-aba-btn { white-space: nowrap !important; flex-shrink: 0 !important;
+                         font-size: 0.76rem !important; padding: 8px 9px !important; }
+
+          /* Campo de busca — largura total */
+          .pdv-search { width: 100% !important; box-sizing: border-box !important; }
+
+          /* Tabelas */
+          .pdv-table th { font-size: 0.59rem !important; padding: 7px 5px !important;
+                          letter-spacing: 0 !important; }
+          .pdv-table td { font-size: 0.72rem !important; padding: 8px 5px !important; }
+          .pdv-badge    { font-size: 0.62rem !important; padding: 2px 5px !important; }
+          .pdv-tag      { font-size: 0.62rem !important; padding: 2px 5px !important; }
+
+          /* Esconde coluna Cidade em todas as tabelas no mobile */
+          .pdv-col-hide { display: none !important; }
+        }
+      `}</style>
+
       {/* Header */}
-      <div style={styles.header}>
+      <div style={styles.header} className="pdv-header">
         <div style={styles.headerLeft}>
-          <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
+          <button style={styles.backBtn} className="pdv-back-btn" onClick={() => navigate("/")}>← Voltar</button>
           <div>
-            <h1 style={styles.title}>🗺️ PDVs</h1>
-            <p style={styles.subtitle}>Setor {usuario?.cod} · {usuario?.nome}</p>
+            <h1 style={styles.title} className="pdv-title">🗺️ PDVs</h1>
+            <p style={styles.subtitle} className="pdv-subtitle">Setor {usuario?.cod} · {usuario?.nome}</p>
           </div>
         </div>
-        <button style={styles.logoutBtn} onClick={logout}>Sair</button>
+        <button style={styles.logoutBtn} className="pdv-logout-btn" onClick={logout}>Sair</button>
       </div>
 
-      <div style={styles.content}>
+      <div style={styles.content} className="pdv-content">
         {/* Seletor de dia */}
-        <div style={styles.diasRow}>
+        <div style={styles.diasRow} className="pdv-dias">
           {DIAS.map((d) => (
             <button
               key={d.key}
+              className="pdv-dia-btn"
               style={{ ...styles.diaBtn, ...(diaFiltro === d.key ? styles.diaBtnAtivo : {}) }}
               onClick={() => setDiaFiltro(d.key)}
             >
@@ -156,28 +207,28 @@ export default function PDVs() {
         </div>
 
         {/* Dashboard */}
-        <div style={styles.dashRow}>
+        <div style={styles.dashRow} className="pdv-dash">
           <div style={styles.dashCard}>
-            <p style={styles.dashLabel}>📅 Visitas hoje</p>
-            <p style={styles.dashVal}>{totalDia}</p>
+            <p style={styles.dashLabel} className="pdv-dash-label">📅 Visitas hoje</p>
+            <p style={styles.dashVal} className="pdv-dash-val">{totalDia}</p>
           </div>
           <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }}>
-            <p style={styles.dashLabel}>⚠️ Inadimplentes</p>
-            <p style={{ ...styles.dashVal, color: "#f87171" }}>{inadDia}</p>
+            <p style={styles.dashLabel} className="pdv-dash-label">⚠️ Inadimplentes</p>
+            <p style={{ ...styles.dashVal, color: "#f87171" }} className="pdv-dash-val">{inadDia}</p>
           </div>
           <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.3)" }}>
-            <p style={styles.dashLabel}>🕐 +30 dias s/ compra</p>
-            <p style={{ ...styles.dashVal, color: "#fbb900" }}>{semCompraDia}</p>
+            <p style={styles.dashLabel} className="pdv-dash-label">🕐 +30 dias s/ compra</p>
+            <p style={{ ...styles.dashVal, color: "#fbb900" }} className="pdv-dash-val">{semCompraDia}</p>
           </div>
           <div style={{ ...styles.dashCard, flex: 2, borderColor: "rgba(251,185,0,0.15)" }}>
-            <p style={styles.dashLabel}>🏆 Top compradores do dia</p>
+            <p style={styles.dashLabel} className="pdv-dash-label">🏆 Top compradores do dia</p>
             <div style={styles.rankMini}>
               {rankDia.length === 0
                 ? <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem" }}>—</span>
                 : rankDia.map((r, i) => (
-                  <span key={r.cod_pdv} style={styles.rankMiniItem}>
+                  <span key={r.cod_pdv} style={styles.rankMiniItem} className="pdv-rank-mini-item">
                     <span style={styles.rankPos}>{i + 1}°</span>
-                    {r.nome_fantasia || r.cod_pdv}
+                    {mapaBase[r.cod_pdv]?.nome_fantasia || r.nome_fantasia || r.cod_pdv}
                     <span style={styles.rankVol}>{parseHl(r.volume_4m_hl).toFixed(0)} HL</span>
                   </span>
                 ))
@@ -187,10 +238,11 @@ export default function PDVs() {
         </div>
 
         {/* Abas */}
-        <div style={styles.abas}>
+        <div style={styles.abas} className="pdv-abas">
           {ABAS.map((a) => (
             <button
               key={a.key}
+              className="pdv-aba-btn"
               style={{ ...styles.abaBtn, ...(aba === a.key ? styles.abaBtnAtivo : {}) }}
               onClick={() => { setAba(a.key); setBusca(""); }}
             >
@@ -202,6 +254,7 @@ export default function PDVs() {
         {/* Busca */}
         <div style={styles.filtroRow}>
           <input
+            className="pdv-search"
             style={styles.inputFiltro}
             placeholder="Buscar por nome ou código..."
             value={busca}
@@ -353,12 +406,14 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
-      <table style={styles.table}>
+      <table style={styles.table} className="pdv-table">
         <thead>
           <tr>
-            {["Cód", "Nome", "Cidade", "Dias s/ Compra", "Inadimplente"].map((h) => (
-              <th key={h} style={styles.th}>{h}</th>
-            ))}
+            <th style={styles.th}>Cód</th>
+            <th style={styles.th}>Nome</th>
+            <th style={styles.th} className="pdv-col-hide">Cidade</th>
+            <th style={styles.th}>Dias s/ Compra</th>
+            <th style={styles.th}>Inad.</th>
           </tr>
         </thead>
         <tbody>
@@ -366,14 +421,14 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
             const inad = mapaInad[p.cod_pdv];
             return (
               <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
-                <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
-                <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{p.cidade}</td>
+                <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
                 <td style={{ ...styles.td, color: Number(p.dias_sem_compra) > 30 ? "#f87171" : "#4ade80" }}>
                   {p.dias_sem_compra || "—"} dias
                 </td>
                 <td style={styles.td}>
-                  {inad ? <span style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
+                  {inad ? <span className="pdv-tag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
                 </td>
               </tr>
             );
@@ -388,24 +443,28 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
-      <table style={styles.table}>
+      <table style={styles.table} className="pdv-table">
         <thead>
           <tr>
-            {["#", "Cód", "Nome", "Cidade", "Dias s/ Compra", "Última Compra", "Inadimplente"].map((h) => (
-              <th key={h} style={styles.th}>{h}</th>
-            ))}
+            <th style={styles.th}>#</th>
+            <th style={styles.th}>Cód</th>
+            <th style={styles.th}>Nome</th>
+            <th style={styles.th} className="pdv-col-hide">Cidade</th>
+            <th style={styles.th}>Dias</th>
+            <th style={styles.th} className="pdv-col-hide">Última Compra</th>
+            <th style={styles.th}>Inad.</th>
           </tr>
         </thead>
         <tbody>
           {pdvs.map((p, i) => (
             <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.3)" }}>{i + 1}</td>
-              <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+              <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
               <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
-              <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{p.cidade}</td>
+              <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
               <td style={{ ...styles.td, color: "#f87171", fontWeight: "700" }}>{p.dias_sem_compra} dias</td>
-              <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>{p.ultima_compra}</td>
-              <td style={styles.td}>{mapaInad[p.cod_pdv] ? <span style={styles.inadTag}>⚠️ Sim</span> : "—"}</td>
+              <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.ultima_compra}</td>
+              <td style={styles.td}>{mapaInad[p.cod_pdv] ? <span className="pdv-tag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
             </tr>
           ))}
         </tbody>
@@ -426,12 +485,15 @@ function TabelaInadimplentes({ pdvs }) {
   if (lista.length === 0) return <p style={styles.msg}>Nenhum inadimplente encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
-      <table style={styles.table}>
+      <table style={styles.table} className="pdv-table">
         <thead>
           <tr>
-            {["Cód", "Nome", "Qtd Títulos", "Valor Total", "Maior Atraso", "Aging"].map((h) => (
-              <th key={h} style={styles.th}>{h}</th>
-            ))}
+            <th style={styles.th}>Cód</th>
+            <th style={styles.th}>Nome</th>
+            <th style={styles.th}>Títulos</th>
+            <th style={styles.th}>Valor Total</th>
+            <th style={styles.th}>Atraso</th>
+            <th style={styles.th} className="pdv-col-hide">Aging</th>
           </tr>
         </thead>
         <tbody>
@@ -440,7 +502,7 @@ function TabelaInadimplentes({ pdvs }) {
             const atraso = Number(p.maior_atraso) || 0;
             return (
               <tr key={p.cod_pdv} style={styles.tr}>
-                <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
                 <td style={styles.td}>{p.qtd_titulos || "—"}</td>
                 <td style={{ ...styles.td, color: valor > 0 ? "#f87171" : "rgba(255,255,255,0.3)", fontWeight: valor > 0 ? "600" : "400" }}>
@@ -449,7 +511,7 @@ function TabelaInadimplentes({ pdvs }) {
                 <td style={{ ...styles.td, color: atraso > 0 ? "#f87171" : "rgba(255,255,255,0.3)" }}>
                   {atraso > 0 ? `${atraso} dias` : "—"}
                 </td>
-                <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>{p.aging || "—"}</td>
+                <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.aging || "—"}</td>
               </tr>
             );
           })}
@@ -463,20 +525,14 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum dado encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
-      <style>{`
-        @media (max-width: 600px) {
-          .rank-tbl th { font-size: 0.6rem !important; padding: 7px 6px !important; letter-spacing: 0 !important; }
-          .rank-tbl td { font-size: 0.72rem !important; padding: 8px 6px !important; }
-          .rank-tbl .rbadge { font-size: 0.62rem !important; padding: 2px 5px !important; }
-          .rank-tbl .rtag   { font-size: 0.62rem !important; padding: 2px 5px !important; }
-        }
-      `}</style>
-      <table style={styles.table} className="rank-tbl">
+      <table style={styles.table} className="pdv-table">
         <thead>
           <tr>
-            {["#", "Cód", "Nome", "Volume 4m (HL)", "Inadimplente"].map((h) => (
-              <th key={h} style={styles.th}>{h}</th>
-            ))}
+            <th style={styles.th}>#</th>
+            <th style={styles.th}>Cód</th>
+            <th style={styles.th}>Nome</th>
+            <th style={styles.th}>Volume 4m</th>
+            <th style={styles.th}>Inad.</th>
           </tr>
         </thead>
         <tbody>
@@ -490,12 +546,12 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
                 onClick={() => onSelect(p)}
               >
                 <td style={{ ...styles.td, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
-                <td style={styles.td}><span className="rbadge" style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{nome}</td>
                 <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
                   {parseHl(p.volume_4m_hl).toFixed(2)} HL
                 </td>
-                <td style={styles.td}>{inad ? <span className="rtag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
+                <td style={styles.td}>{inad ? <span className="pdv-tag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
               </tr>
             );
           })}
