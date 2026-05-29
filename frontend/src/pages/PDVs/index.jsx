@@ -463,7 +463,15 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum dado encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
-      <table style={styles.table}>
+      <style>{`
+        @media (max-width: 600px) {
+          .rank-tbl th { font-size: 0.6rem !important; padding: 7px 6px !important; letter-spacing: 0 !important; }
+          .rank-tbl td { font-size: 0.72rem !important; padding: 8px 6px !important; }
+          .rank-tbl .rbadge { font-size: 0.62rem !important; padding: 2px 5px !important; }
+          .rank-tbl .rtag   { font-size: 0.62rem !important; padding: 2px 5px !important; }
+        }
+      `}</style>
+      <table style={styles.table} className="rank-tbl">
         <thead>
           <tr>
             {["#", "Cód", "Nome", "Volume 4m (HL)", "Inadimplente"].map((h) => (
@@ -482,12 +490,12 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
                 onClick={() => onSelect(p)}
               >
                 <td style={{ ...styles.td, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
-                <td style={styles.td}><span style={styles.codBadge}>{p.cod_pdv}</span></td>
+                <td style={styles.td}><span className="rbadge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{nome}</td>
                 <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
                   {parseHl(p.volume_4m_hl).toFixed(2)} HL
                 </td>
-                <td style={styles.td}>{inad ? <span style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
+                <td style={styles.td}>{inad ? <span className="rtag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
               </tr>
             );
           })}
