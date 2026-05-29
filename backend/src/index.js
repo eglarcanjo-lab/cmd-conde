@@ -48,6 +48,7 @@ app.use("/api/spo", require("./routes/spo"));
 app.use("/api/rv", require("./routes/rv"));
 app.use("/api/incidentes", require("./routes/incidentes"));
 app.use("/api/manutencao", require("./routes/manutencao"));
+app.use("/api/volume-diario", require("./routes/volume-diario"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

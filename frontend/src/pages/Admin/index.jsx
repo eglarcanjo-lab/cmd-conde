@@ -7,8 +7,9 @@ import Metas from "./Metas";
 import Arquivos from "./Arquivos";
 import Configuracoes from "./Configuracoes";
 import Incidentes from "./Incidentes";
-// v2.7 - spo desafios tab
+// v2.8 - sku foco tab
 import Produtos from "./Produtos";
+import SkuFoco from "./SkuFoco";
 import AtendimentoProdutivo from "./AtendimentoProdutivo";
 import SpoDesafios from "./SpoDesafios";
 import SpoMetas from "./SpoMetas";
@@ -17,6 +18,7 @@ import RvSimulador from "./RvSimulador";
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
   { id: "metas", label: "🎯 Metas" },
+  { id: "sku_foco", label: "📈 SKU Foco" },
   { id: "arquivos", label: "📁 Arquivos" },
   { id: "produtos", label: "📦 Produtos" },
   { id: "ap", label: "🎯 AT. Produtivo" },
@@ -97,6 +99,7 @@ export default function Admin() {
         {tab === "rv_simulador" && <RvSimulador />}
         {tab === "spo_desafios" && <SpoDesafios />}
         {tab === "spo_metas" && <SpoMetas />}
+        {tab === "sku_foco" && <SkuFoco />}
         {tab === "incidentes" && <Incidentes />}
         {tab === "configuracoes" && <Configuracoes />}
       </div>

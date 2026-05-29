@@ -111,6 +111,36 @@ async function sobrescreverAba(tabName, rows) {
   }
 }
 
+// Remove uma linha de dados pelo índice 0-based (sem contar o cabeçalho)
+async function deleteRow(tabName, dataRowIdx) {
+  cacheInvalidate(tabName);
+  const sheets = await getSheets();
+
+  const resp = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: tabName,
+    valueRenderOption: "UNFORMATTED_VALUE",
+  });
+
+  const allRows = resp.data.values || [];
+  if (allRows.length <= 1) return; // só cabeçalho ou vazia
+
+  // dataRowIdx 0-based → posição no array (índice 0 = cabeçalho, índice 1 = 1ª linha de dados)
+  const spliceIdx = dataRowIdx + 1;
+  if (spliceIdx >= allRows.length) return;
+  allRows.splice(spliceIdx, 1);
+
+  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName });
+  if (allRows.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${tabName}!A1`,
+      valueInputOption: "USER_ENTERED",
+      resource: { values: allRows },
+    });
+  }
+}
+
 // Garante que uma aba existe, cria se não existir
 async function ensureTab(tabName) {
   const sheets = await getSheets();
@@ -166,6 +196,8 @@ async function initializeSheets() {
     spo_dto_resumo: ["mes_referencia","status_final","matinal_meta","matinal_real","matinal_pct","matinal_status","vespertina_meta","vespertina_real","vespertina_pct","vespertina_status","coaching_meta","coaching_real","coaching_pct","coaching_status"],
     spo_desafios: ["gv","dia","mes_referencia","status"],
     spo_metas: ["item","mes","meta","real"],
+    volume_diario: ["data","setor","cod_produto","nome_produto","volume_hl"],
+    sku_foco: ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
     configuracoes: ["chave", "valor"],
@@ -189,4 +221,4 @@ async function initializeSheets() {
   console.log("✅ Planilhas inicializadas com sucesso.");
 }
 
-module.exports = { readSheet, appendRow, updateRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };
+module.exports = { readSheet, appendRow, updateRow, deleteRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };

@@ -1,7 +1,7 @@
-// v2.1 - fix importacao metas
+// v2.2 - sku_foco
 const express = require("express");
 const router = express.Router();
-const { readSheet, appendRow, updateRow, cacheClearAll } = require("../services/sheets");
+const { readSheet, appendRow, updateRow, deleteRow, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 
 router.use(authMiddleware, adminOnly);
@@ -119,6 +119,44 @@ router.post("/metas/import", async (req, res) => {
     return res.json({ success: true, importadas, erros: erros.length > 0 ? erros : undefined });
   } catch (err) {
     return res.status(500).json({ error: "Erro ao importar metas." });
+  }
+});
+
+// ─── SKU FOCO ────────────────────────────────────────────────────────────────
+
+router.get("/sku-foco", async (req, res) => {
+  try {
+    const dados = await readSheet("sku_foco");
+    return res.json(dados);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar SKU Foco." });
+  }
+});
+
+router.post("/sku-foco", async (req, res) => {
+  try {
+    const { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia } = req.body;
+    if (!setor || !cod_produto || !nome_produto || !meta_mensal_hl || !mes_referencia) {
+      return res.status(400).json({ error: "Campos obrigatórios: setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia." });
+    }
+    await appendRow("sku_foco", [setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia]);
+    return res.json({ success: true, message: "SKU Foco cadastrado." });
+  } catch {
+    return res.status(500).json({ error: "Erro ao cadastrar SKU Foco." });
+  }
+});
+
+router.delete("/sku-foco/:idx", async (req, res) => {
+  try {
+    const idx = parseInt(req.params.idx, 10);
+    if (isNaN(idx) || idx < 0) return res.status(400).json({ error: "Índice inválido." });
+    const dados = await readSheet("sku_foco");
+    if (idx >= dados.length) return res.status(404).json({ error: "SKU Foco não encontrado." });
+    await deleteRow("sku_foco", idx);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao remover SKU Foco." });
   }
 });
 

@@ -14,6 +14,7 @@ import Tasks from "./pages/Tasks";
 import Incidentes from "./pages/Incidentes";
 import RV from "./pages/RV";
 import SPO from "./pages/SPO";
+import VolumeDiario from "./pages/VolumeDiario";
 import api from "./services/api";
 
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
@@ -55,6 +56,7 @@ function AppContent() {
       <Route path="/spo" element={<PrivateRoute><ErrorBoundary><SPO /></ErrorBoundary></PrivateRoute>} />
       <Route path="/rv" element={<PrivateRoute><ErrorBoundary><RV /></ErrorBoundary></PrivateRoute>} />
       <Route path="/incidentes" element={<PrivateRoute><ErrorBoundary><Incidentes /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/volume-diario" element={<PrivateRoute><ErrorBoundary><VolumeDiario /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
