@@ -1,10 +1,10 @@
-// v2.3 - sku_foco sobrescreverAba + batch metas
+// v2.4 - motivo no sku_foco + GET /produtos para auto-fill
 const express = require("express");
 const router = express.Router();
 const { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 
-const SKU_FOCO_HEADERS = ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia"];
+const SKU_FOCO_HEADERS = ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia","motivo"];
 
 router.use(authMiddleware, adminOnly);
 
@@ -37,8 +37,7 @@ router.post("/usuarios", async (req, res) => {
     }
 
     const criado_em = new Date().toISOString();
-    // Ordem: cod, nome, cpf, telefone, perfil, gv, ativo, senha, criado_em
-    await appendRow("usuarios", [cod, nome, cpfLimpo, telefone?.replace(/\D/g, "") || "", perfil, gv || "", "true", "", criado_em]); // always lowercase true
+    await appendRow("usuarios", [cod, nome, cpfLimpo, telefone?.replace(/\D/g, "") || "", perfil, gv || "", "true", "", criado_em]);
 
     return res.json({ success: true, message: "Usuário cadastrado com sucesso." });
   } catch (err) {
@@ -118,13 +117,25 @@ router.post("/metas/import", async (req, res) => {
       linhasValidas.push([m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || "", m.volume_tri || "", m.meta_aplicada || ""]);
     }
     if (linhasValidas.length > 0) {
-      // Uma única chamada à API em vez de N chamadas sequenciais
       await appendRows("metas", linhasValidas);
     }
     return res.json({ success: true, importadas: linhasValidas.length, erros: erros.length > 0 ? erros : undefined });
   } catch (err) {
     console.error("metas/import:", err);
     return res.status(500).json({ error: `Erro ao importar metas: ${err.message || err}` });
+  }
+});
+
+// ─── PRODUTOS BASE ───────────────────────────────────────────────────────────
+
+// GET /api/admin/produtos — retorna lista de produtos para auto-fill de nome
+router.get("/produtos", async (req, res) => {
+  try {
+    const produtos = await readSheet("produtos_base");
+    return res.json(produtos.map((p) => ({ cod: String(p.cod || "").trim(), nome: String(p.nome || "").trim() })));
+  } catch (err) {
+    console.error("admin/produtos GET:", err);
+    return res.status(500).json({ error: "Erro ao buscar produtos." });
   }
 });
 
@@ -150,13 +161,13 @@ router.get("/sku-foco", async (req, res) => {
 
 router.post("/sku-foco", async (req, res) => {
   try {
-    const { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia } = req.body;
+    const { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia, motivo } = req.body;
     if (!setor || !cod_produto || !nome_produto || !meta_mensal_hl || !mes_referencia) {
       return res.status(400).json({ error: "Campos obrigatórios: setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia." });
     }
     await ensureTab("sku_foco");
     const existentes = await readSheet("sku_foco");
-    const nova = { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia };
+    const nova = { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia, motivo: motivo || "" };
     await skuFocoSobrescrever([...existentes, nova]);
     return res.json({ success: true, message: "SKU Foco cadastrado." });
   } catch (err) {

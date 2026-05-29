@@ -211,7 +211,7 @@ async function initializeSheets() {
     spo_desafios: ["gv","dia","mes_referencia","status"],
     spo_metas: ["item","mes","meta","real"],
     volume_diario: ["data","setor","cod_produto","nome_produto","volume_hl"],
-    sku_foco: ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia"],
+    sku_foco: ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia","motivo"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
     configuracoes: ["chave", "valor"],

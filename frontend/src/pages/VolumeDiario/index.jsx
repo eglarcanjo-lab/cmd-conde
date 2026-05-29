@@ -1,4 +1,4 @@
-// v1.0 - Volume Diário
+// v1.1 - 3 cards (sem tendência), categorias breakdown, motivo no sku_foco
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -23,11 +23,11 @@ function fmtHL(v) {
 }
 
 /* ─── sub-components ───────────────────────────────────────────────────────── */
-function ProgressBar({ pct }) {
+function ProgressBar({ pct, thin }) {
   const p = Math.min(100, Math.max(0, pct || 0));
   const cor = p >= 100 ? "#4ade80" : p >= 70 ? "#fbb900" : "#f87171";
   return (
-    <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
+    <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "4px", height: thin ? "5px" : "8px", overflow: "hidden" }}>
       <div style={{ width: `${p}%`, background: cor, height: "100%", borderRadius: "4px", transition: "width 0.5s ease" }} />
     </div>
   );
@@ -130,7 +130,7 @@ export default function VolumeDiario() {
 
       {d && !loading && (
         <>
-          {/* ── 4 Cards ── */}
+          {/* ── 3 Cards ── */}
           <div className="vd-cards">
 
             {/* Volume Hoje */}
@@ -168,18 +168,43 @@ export default function VolumeDiario() {
               </div>
               <div style={S.cardPct}>{d.dias_uteis_passados} de {d.dias_uteis_mes} dias úteis</div>
             </Card>
-
-            {/* Tendência */}
-            <Card label="Tendência Mensal">
-              <div style={{ ...S.cardValue, color: d.pct_tendencia >= 100 ? "#4ade80" : d.pct_tendencia >= 75 ? "#fbb900" : "#f87171" }}>
-                {fmtHL(d.tendencia_hl)} <span style={S.cardUnit}>HL</span>
-              </div>
-              <div style={{ margin: "10px 0 4px" }}>
-                <ProgressBar pct={d.pct_tendencia} />
-              </div>
-              <div style={S.cardPct}>{d.pct_tendencia}% da meta mensal</div>
-            </Card>
           </div>
+
+          {/* ── Volume por Categoria ── */}
+          {d.categorias?.length > 0 && (
+            <div style={S.section}>
+              <h3 style={S.sectionTitle}>📊 Volume por Categoria</h3>
+              <div style={S.catGrid}>
+                {d.categorias.map((c) => (
+                  <div key={c.categoria} style={S.catCard}>
+                    <div style={S.catNome}>{c.categoria}</div>
+                    <div style={S.catRow}>
+                      <div style={S.catBlock}>
+                        <div style={S.catBlockLabel}>Hoje</div>
+                        <div style={S.catBlockValue}>{fmtHL(c.volume_hoje_hl)} <span style={S.catUnit}>HL</span></div>
+                        <div style={{ margin: "5px 0 2px" }}>
+                          <ProgressBar pct={c.pct_dia} thin />
+                        </div>
+                        <div style={S.catPct}>{c.pct_dia}% da meta dia</div>
+                      </div>
+                      <div style={S.catDivider} />
+                      <div style={S.catBlock}>
+                        <div style={S.catBlockLabel}>Mês</div>
+                        <div style={S.catBlockValue}>{fmtHL(c.volume_mes_hl)} <span style={S.catUnit}>HL</span></div>
+                        <div style={{ margin: "5px 0 2px" }}>
+                          <ProgressBar pct={c.pct_mes} thin />
+                        </div>
+                        <div style={S.catPct}>{c.pct_mes}% da meta mensal</div>
+                      </div>
+                    </div>
+                    <div style={S.catMeta}>
+                      Meta mensal: <strong style={{ color: "#fff" }}>{fmtHL(c.meta_mensal_hl)} HL</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Top SKUs ── */}
           {d.top_skus?.length > 0 && (
@@ -210,6 +235,9 @@ export default function VolumeDiario() {
                     <div style={{ flex: 1 }}>
                       <div style={S.focoNome}>{sf.nome_produto}</div>
                       <div style={S.focoCod}>cod {sf.cod_produto} · Setor {sf.setor}</div>
+                      {sf.motivo && (
+                        <div style={S.focoMotivo}>💡 {sf.motivo}</div>
+                      )}
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
                       <div style={{ ...S.focoPct, color: sf.pct_mes >= 100 ? "#4ade80" : sf.pct_mes >= 70 ? "#fbb900" : "#f87171" }}>
@@ -232,7 +260,7 @@ export default function VolumeDiario() {
                       </strong>
                     </span>
                     <span>Meta dia: <strong style={{ color: "#fff" }}>{fmtHL(sf.meta_diaria_hl)} HL</strong></span>
-                    <span style={{ marginLeft: "auto", ...( sf.pct_hoje >= 100 ? { color: "#4ade80" } : sf.pct_hoje >= 70 ? { color: "#fbb900" } : { color: "#f87171" } ) }}>
+                    <span style={{ marginLeft: "auto", ...(sf.pct_hoje >= 100 ? { color: "#4ade80" } : sf.pct_hoje >= 70 ? { color: "#fbb900" } : { color: "#f87171" }) }}>
                       {sf.pct_hoje}%
                     </span>
                   </div>
@@ -242,7 +270,7 @@ export default function VolumeDiario() {
           )}
 
           {/* Empty state */}
-          {d.top_skus?.length === 0 && d.sku_foco?.length === 0 && (
+          {d.top_skus?.length === 0 && d.sku_foco?.length === 0 && d.categorias?.length === 0 && (
             <div style={S.empty}>
               Nenhuma venda registrada para {d.data}.<br />
               <span style={{ fontSize: "0.78rem" }}>Importe o arquivo de pedidos para gerar os dados.</span>
@@ -256,40 +284,55 @@ export default function VolumeDiario() {
 
 /* ─── styles ────────────────────────────────────────────────────────────────── */
 const S = {
-  root:        { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "900px", margin: "0 auto", color: "#fff" },
-  header:      { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "22px" },
-  backBtn:     { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
-  title:       { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
-  subtitle:    { color: "rgba(255,255,255,0.4)", margin: 0, fontSize: "0.82rem" },
-  filters:     { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
-  filterGroup: { display: "flex", flexDirection: "column", gap: "4px" },
-  filterLabel: { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },
-  filterInput: { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", colorScheme: "dark" },
-  loadingWrap: { display: "flex", justifyContent: "center", padding: "48px 0" },
-  erro:        { background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", fontSize: "0.85rem" },
-  card:        { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px" },
-  cardLabel:   { color: "rgba(255,255,255,0.4)", fontSize: "0.68rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" },
-  cardValue:   { color: "#fff", fontSize: "clamp(1.1rem,4vw,1.55rem)", fontWeight: "700" },
-  cardUnit:    { fontSize: "0.78rem", color: "rgba(255,255,255,0.4)", fontWeight: "400" },
-  cardDelta:   { fontSize: "0.76rem", marginTop: "6px", fontWeight: "500" },
-  cardPct:     { color: "rgba(255,255,255,0.35)", fontSize: "0.68rem", marginTop: "4px" },
-  section:     { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px 20px", marginBottom: "16px" },
-  sectionTitle:{ color: "#fff", margin: "0 0 14px", fontSize: "0.9rem", fontWeight: "700" },
-  skuRow:      { display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" },
-  skuPos:      { fontWeight: "700", fontSize: "0.82rem", width: "22px", textAlign: "center", flexShrink: 0 },
-  skuInfo:     { flex: 1, minWidth: 0 },
-  skuNome:     { color: "#fff", fontSize: "0.85rem", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  skuCod:      { color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" },
-  skuVol:      { color: "#fbb900", fontWeight: "700", fontSize: "0.88rem", flexShrink: 0 },
-  focoCard:    { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "14px", marginBottom: "10px" },
-  focoHeader:  { display: "flex", alignItems: "flex-start", gap: "10px" },
-  focoNome:    { color: "#fff", fontWeight: "600", fontSize: "0.9rem" },
-  focoCod:     { color: "rgba(255,255,255,0.3)", fontSize: "0.68rem", marginTop: "2px" },
-  focoPct:     { fontSize: "1.4rem", fontWeight: "700", lineHeight: 1 },
-  focoSub:     { color: "rgba(255,255,255,0.35)", fontSize: "0.62rem" },
-  focoStats:   { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
-  focoDia:     { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
-  empty:       { textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "48px 0", fontSize: "0.9rem", lineHeight: 1.6 },
+  root:          { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "900px", margin: "0 auto", color: "#fff" },
+  header:        { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "22px" },
+  backBtn:       { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
+  title:         { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
+  subtitle:      { color: "rgba(255,255,255,0.4)", margin: 0, fontSize: "0.82rem" },
+  filters:       { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
+  filterGroup:   { display: "flex", flexDirection: "column", gap: "4px" },
+  filterLabel:   { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },
+  filterInput:   { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", colorScheme: "dark" },
+  loadingWrap:   { display: "flex", justifyContent: "center", padding: "48px 0" },
+  erro:          { background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", fontSize: "0.85rem" },
+  card:          { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px" },
+  cardLabel:     { color: "rgba(255,255,255,0.4)", fontSize: "0.68rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" },
+  cardValue:     { color: "#fff", fontSize: "clamp(1.1rem,4vw,1.55rem)", fontWeight: "700" },
+  cardUnit:      { fontSize: "0.78rem", color: "rgba(255,255,255,0.4)", fontWeight: "400" },
+  cardDelta:     { fontSize: "0.76rem", marginTop: "6px", fontWeight: "500" },
+  cardPct:       { color: "rgba(255,255,255,0.35)", fontSize: "0.68rem", marginTop: "4px" },
+  section:       { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px 20px", marginBottom: "16px" },
+  sectionTitle:  { color: "#fff", margin: "0 0 14px", fontSize: "0.9rem", fontWeight: "700" },
+  // Categorias
+  catGrid:       { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" },
+  catCard:       { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 14px" },
+  catNome:       { color: "#fbb900", fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" },
+  catRow:        { display: "flex", gap: "12px", alignItems: "flex-start" },
+  catBlock:      { flex: 1 },
+  catBlockLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.62rem", fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" },
+  catBlockValue: { color: "#fff", fontSize: "1rem", fontWeight: "700" },
+  catUnit:       { fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: "400" },
+  catPct:        { color: "rgba(255,255,255,0.3)", fontSize: "0.62rem", marginTop: "2px" },
+  catDivider:    { width: "1px", background: "rgba(255,255,255,0.08)", alignSelf: "stretch", flexShrink: 0 },
+  catMeta:       { color: "rgba(255,255,255,0.35)", fontSize: "0.68rem", marginTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px" },
+  // Top SKUs
+  skuRow:        { display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" },
+  skuPos:        { fontWeight: "700", fontSize: "0.82rem", width: "22px", textAlign: "center", flexShrink: 0 },
+  skuInfo:       { flex: 1, minWidth: 0 },
+  skuNome:       { color: "#fff", fontSize: "0.85rem", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  skuCod:        { color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" },
+  skuVol:        { color: "#fbb900", fontWeight: "700", fontSize: "0.88rem", flexShrink: 0 },
+  // SKU Foco
+  focoCard:      { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "14px", marginBottom: "10px" },
+  focoHeader:    { display: "flex", alignItems: "flex-start", gap: "10px" },
+  focoNome:      { color: "#fff", fontWeight: "600", fontSize: "0.9rem" },
+  focoCod:       { color: "rgba(255,255,255,0.3)", fontSize: "0.68rem", marginTop: "2px" },
+  focoMotivo:    { color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", marginTop: "6px", lineHeight: 1.45, fontStyle: "italic" },
+  focoPct:       { fontSize: "1.4rem", fontWeight: "700", lineHeight: 1 },
+  focoSub:       { color: "rgba(255,255,255,0.35)", fontSize: "0.62rem" },
+  focoStats:     { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
+  focoDia:       { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
+  empty:         { textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "48px 0", fontSize: "0.9rem", lineHeight: 1.6 },
 };
 
 const CSS = `
@@ -304,12 +347,12 @@ const CSS = `
 
 .vd-cards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
 
-@media (max-width: 540px) {
+@media (max-width: 680px) {
   .vd-cards {
     grid-template-columns: 1fr !important;
   }
