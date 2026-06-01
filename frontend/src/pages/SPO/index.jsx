@@ -126,6 +126,7 @@ export default function SPO() {
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroDia, setFiltroDia] = useState("todos");
+  const [painelFull, setPainelFull] = useState(false); // modo tela-cheia do painel consolidado
 
   // ── Status TRI por KPI: true=bateu / false=não bateu / null=sem dados ──────
   // Acumula meta e real de spoMetas para os meses do TRI até o mês atual.
@@ -295,15 +296,28 @@ export default function SPO() {
           .spo-layout { flex-direction: column !important; }
           .spo-col-left  { flex: 0 0 100% !important; width: 100%; order: 2; }
           .spo-col-right { flex: 0 0 100% !important; width: 100%; position: static !important; order: 1; }
-          .spo-header { padding: clamp(12px,3vw,20px) clamp(14px,4vw,32px) !important; }
-          .spo-header h1 { font-size: clamp(1rem,5vw,1.3rem) !important; }
+          .spo-header { padding: 8px 12px !important; gap: 8px !important; }
+          .spo-header h1 { font-size: 0.82rem !important; margin: 0 !important; }
+          .spo-header p  { font-size: 0.65rem !important; margin: 0 !important; }
           .spo-kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          .spo-backBtn { min-height: 44px; padding: 10px 14px !important; }
-          .spo-logoutBtn { min-height: 44px; }
+          .spo-backBtn { min-height: 36px !important; padding: 6px 10px !important; font-size: 0.78rem !important; }
+          .spo-logoutBtn { min-height: 36px !important; padding: 6px 10px !important; font-size: 0.78rem !important; }
           .spo-painel-tr { cursor: pointer; }
         }
         @media (max-width: 420px) {
           .spo-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        /* Painel full-screen (lupa) */
+        .spo-painel-fullscreen {
+          position: fixed !important;
+          top: 0; left: 0; right: 0; bottom: 0;
+          z-index: 9999;
+          background: #0a0f1e;
+          overflow: auto;
+          -webkit-overflow-scrolling: touch;
+          padding: 0;
+          border-radius: 0 !important;
+          border: none !important;
         }
       `}</style>
       <div style={styles.header} className="spo-header">
@@ -2050,8 +2064,27 @@ export default function SPO() {
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
         <div className="spo-col-right" style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
-          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }}>
-            <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
+          <div
+            className={painelFull ? "spo-painel-fullscreen" : ""}
+            style={painelFull
+              ? { padding: "0" }
+              : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }
+            }
+          >
+            {/* Header do painel: título + botão lupa/fechar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px",
+              ...(painelFull ? { position: "sticky", top: 0, background: "#0a0f1e", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
+              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
+              <button
+                onClick={() => setPainelFull(f => !f)}
+                title={painelFull ? "Fechar" : "Expandir tabela"}
+                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: "8px", color: "#fff", padding: "5px 10px", cursor: "pointer", fontSize: "1rem", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 }}
+              >
+                {painelFull ? "✕" : "🔍"}
+              </button>
+            </div>
+            {/* Wrapper de scroll da tabela */}
+            <div style={painelFull ? { padding: "0 14px 14px", overflowX: "auto" } : {}}>
             {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0" }}>
             {[1,2,3].map(i => (
@@ -2327,6 +2360,7 @@ export default function SPO() {
                           })()}
               </>
             )}
+            </div>{/* fim wrapper scroll */}
           </div>
         </div>
 
