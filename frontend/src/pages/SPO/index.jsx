@@ -128,6 +128,18 @@ export default function SPO() {
   const [filtroDia, setFiltroDia] = useState("todos");
   const [painelFull, setPainelFull] = useState(false); // modo tela-cheia do painel consolidado
 
+  // Entra/sai do modo full-screen — tenta travar orientação em paisagem (Android Chrome)
+  // Se não suportado (iOS), o CSS rotate(90deg) faz o fallback automaticamente
+  async function togglePainelFull() {
+    if (!painelFull) {
+      setPainelFull(true);
+      try { await screen.orientation.lock("landscape"); } catch (_) {}
+    } else {
+      setPainelFull(false);
+      try { screen.orientation.unlock(); } catch (_) {}
+    }
+  }
+
   // ── Status TRI por KPI: true=bateu / false=não bateu / null=sem dados ──────
   // Acumula meta e real de spoMetas para os meses do TRI até o mês atual.
   // Usado para colorir as bordas dos cards do scoreboard (verde/vermelho).
@@ -310,7 +322,8 @@ export default function SPO() {
         /* Painel full-screen (lupa) */
         .spo-painel-fullscreen {
           position: fixed !important;
-          top: 0; left: 0; right: 0; bottom: 0;
+          top: 0 !important; left: 0 !important;
+          width: 100vw !important; height: 100vh !important;
           z-index: 9999;
           background: #0a0f1e;
           overflow: auto;
@@ -318,6 +331,17 @@ export default function SPO() {
           padding: 0;
           border-radius: 0 !important;
           border: none !important;
+        }
+        /* Fallback iOS: rotaciona via CSS quando orientation lock não é suportado */
+        @media (orientation: portrait) {
+          .spo-painel-fullscreen {
+            width: 100vh !important;
+            height: 100vw !important;
+            top: calc(50vh - 50vw) !important;
+            left: calc(50vw - 50vh) !important;
+            transform: rotate(90deg) !important;
+            transform-origin: center center !important;
+          }
         }
       `}</style>
       <div style={styles.header} className="spo-header">
@@ -2076,7 +2100,7 @@ export default function SPO() {
               ...(painelFull ? { position: "sticky", top: 0, background: "#0a0f1e", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
               <p style={{ margin: 0, fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
               <button
-                onClick={() => setPainelFull(f => !f)}
+                onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: "8px", color: "#fff", padding: "5px 10px", cursor: "pointer", fontSize: "1rem", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 }}
               >
