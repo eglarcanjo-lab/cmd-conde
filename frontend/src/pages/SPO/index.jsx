@@ -6,6 +6,10 @@ import api from "../../services/api";
 
 const META_GV = 36;
 
+// Meses e início de avaliação por KPI — espelha as constantes do painel consolidado
+const MESES_TRI = ["2026-04","2026-05","2026-06"];
+const INICIO_AVAL_KPI = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
+
 const SPO_ITEMS = [
   { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
   { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
@@ -122,6 +126,25 @@ export default function SPO() {
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroDia, setFiltroDia] = useState("todos");
+
+  // ── Status TRI por KPI: true=bateu / false=não bateu / null=sem dados ──────
+  // Acumula meta e real de spoMetas para os meses do TRI até o mês atual.
+  // Usado para colorir as bordas dos cards do scoreboard (verde/vermelho).
+  const _mesAtualStr = new Date().toISOString().slice(0, 7);
+  const kpiTriStatus = (() => {
+    const status = {};
+    SPO_ITEMS.forEach(({ n }) => {
+      const meses = MESES_TRI.filter(m => (INICIO_AVAL_KPI[n] || "2026-04") <= m && m <= _mesAtualStr);
+      let metaTot = 0, realTot = 0, hasMeta = false, hasReal = false;
+      for (const mes of meses) {
+        const row = spoMetas.find(r => String(r.item) === String(n) && r.mes === mes);
+        if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; hasMeta = true; }
+        if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; hasReal = true; }
+      }
+      status[n] = (hasMeta && hasReal) ? realTot >= metaTot : null;
+    });
+    return status;
+  })();
 
   useEffect(() => { carregar(); }, []);
 
@@ -308,25 +331,41 @@ export default function SPO() {
             <span style={styles.scoreboardSub}>KPIs ativos em amarelo</span>
           </div>
           <div className="spo-kpi-grid" style={styles.kpiGrid}>
-            {SPO_ITEMS.map((item) => (
-              <div
-                key={item.n}
-                onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)}
-                style={{
-                  ...styles.kpiCard,
-                  ...(item.ativo ? styles.kpiCardAtivo : {}),
-                  ...(kpiAtivo === item.n ? { border: "1px solid #fbb900", boxShadow: "0 0 12px rgba(251,185,0,0.2)" } : {}),
-                  cursor: "pointer",
-                }}
-              >
-                <span style={styles.kpiN}>#{item.n}</span>
-                <span style={styles.kpiLabel}>{item.label}</span>
-                <div style={styles.kpiPts}>
-                  <span style={{ color: item.ativo ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
-                  <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{item.peso}%</span>
+            {SPO_ITEMS.map((item) => {
+              const triOk = kpiTriStatus[item.n];
+              // Selecionado → borda amarela; bateu TRI → verde; não bateu → vermelho; sem dados → neutro
+              const isSelected = kpiAtivo === item.n;
+              const borderColor = isSelected
+                ? "#fbb900"
+                : triOk === true  ? "rgba(74,222,128,0.65)"
+                : triOk === false ? "rgba(248,113,113,0.65)"
+                : item.ativo ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)";
+              const glow = isSelected
+                ? "0 0 12px rgba(251,185,0,0.2)"
+                : triOk === true  ? "0 0 8px rgba(74,222,128,0.15)"
+                : triOk === false ? "0 0 8px rgba(248,113,113,0.12)"
+                : "none";
+              return (
+                <div
+                  key={item.n}
+                  onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)}
+                  style={{
+                    ...styles.kpiCard,
+                    ...(item.ativo ? styles.kpiCardAtivo : {}),
+                    border: `1px solid ${borderColor}`,
+                    boxShadow: glow,
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={styles.kpiN}>#{item.n}</span>
+                  <span style={styles.kpiLabel}>{item.label}</span>
+                  <div style={styles.kpiPts}>
+                    <span style={{ color: item.ativo ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
+                    <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{item.peso}%</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
