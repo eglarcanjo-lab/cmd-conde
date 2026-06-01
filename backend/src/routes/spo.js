@@ -174,7 +174,7 @@ router.post("/desafios", async (req, res) => {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
       range: "spo_desafios!A1",
-      valueInputOption: "USER_ENTERED",
+      valueInputOption: "RAW",  // RAW evita que "2026-04" seja convertido para serial 46113
       resource: { values: rows },
     });
 
@@ -446,7 +446,7 @@ router.post("/painel/metas", async (req, res) => {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
       range: "spo_metas!A1",
-      valueInputOption: "USER_ENTERED",
+      valueInputOption: "RAW",  // RAW evita que "2026-04" ou números sejam interpretados como datas
       resource: { values: rows },
     });
 
@@ -543,36 +543,40 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       readSheet("spo_portfolio_ideal_resumo"),
     ].map((p) => p.catch(() => [])));
 
-    // Helper: linha OPERACAO filtrada pelo mês
+    // Helper: linha OPERACAO filtrada pelo mês (normaliza seriais de data antes de comparar)
     const opMes = (arr) =>
       arr.find((r) =>
         ["OPERACAO","operacao"].includes(String(r.setor || "")) &&
-        (r.mes_referencia || "").startsWith(mes)
+        normalizeMes(r.mes_referencia || "").startsWith(mes)
       );
+    // Helper: filtra array por mês normalizando mes_referencia
+    const filtraMes = (arr) => arr.filter((r) => normalizeMes(r.mes_referencia || "").startsWith(mes));
 
     // ── Computa real por KPI (mesma lógica do getRealDados no frontend) ────
     const computeReal = (n) => {
       switch (n) {
         case 1: {
+          // normalizeMes: converte seriais de data para "YYYY-MM" antes de comparar
           const gvs = visitacaoGV.filter(
-            (r) => r.gv && !isNaN(parseInt(r.gv)) && (r.mes_referencia || "").startsWith(mes)
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && normalizeMes(r.mes_referencia || "").startsWith(mes)
           );
           return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.visitados || 0), 0) : null;
         }
         case 2: {
           const gvs = coaching.filter(
-            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia || "").startsWith(mes)
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && normalizeMes(r.mes_referencia || "").startsWith(mes)
           );
           return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.coachings_validos || 0), 0) : null;
         }
         case 3: {
           const gvs = diasRota.filter(
-            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia || "").startsWith(mes)
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && normalizeMes(r.mes_referencia || "").startsWith(mes)
           );
           return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.dias_validos || 0), 0) : null;
         }
         case 4: {
-          const mesDesafios = desafios.filter((r) => (r.mes_referencia || "").startsWith(mes));
+          // filtraMes usa normalizeMes para lidar com seriais de data no spo_desafios
+          const mesDesafios = filtraMes(desafios);
           if (!mesDesafios.length) return null;
           const gvsU = [...new Set(mesDesafios.map((d) => d.gv).filter(Boolean))];
           if (!gvsU.length) return null;
@@ -586,7 +590,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
           return d ? parseFloat(d.rns_ap_ok || 0) : null;
         }
         case 6: {
-          const d = dtoResumo.find((r) => (r.mes_referencia || "").startsWith(mes));
+          const d = dtoResumo.find((r) => normalizeMes(r.mes_referencia || "").startsWith(mes));
           return d
             ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0)
             : null;
