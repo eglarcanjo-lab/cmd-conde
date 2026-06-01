@@ -1,9 +1,17 @@
-// v1.0 - import/edit spo_metas
+// v1.1 - botão Snapshot (fechar mês) + import/edit spo_metas
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 
 const MESES = ["2026-04","2026-05","2026-06"];
 const MESES_LABEL = { "2026-04":"Abril","2026-05":"Maio","2026-06":"Junho" };
+
+// Calcula o mês anterior ao atual (padrão do snapshot)
+function mesAnterior() {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 const ITENS = [
   {n:1,  label:"Visitação GV na Base Foco"},
@@ -38,6 +46,11 @@ export default function SpoMetas() {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
+
+  // Snapshot state
+  const [mesFecha, setMesFecha] = useState(mesAnterior());
+  const [fechando, setFechando] = useState(false);
+  const [snapshotResult, setSnapshotResult] = useState(null); // { salvos, mes, reais }
 
   useEffect(() => { carregar(); }, []);
 
@@ -94,19 +107,41 @@ export default function SpoMetas() {
     }
   }
 
+  // ── Snapshot: grava os reais calculados do mês em spo_metas ─────────────
+  async function fecharMes() {
+    const label = MESES_LABEL[mesFecha] || mesFecha;
+    if (!window.confirm(
+      `Gravar os realizados de ${label} no histórico?\n\n` +
+      `Isso vai ler todos os dados atuais de ${label} e salvar os valores calculados na coluna "Real" do spo_metas.\n\n` +
+      `Faça isso ANTES de importar arquivos de outro mês para não perder os dados de ${label}.`
+    )) return;
+
+    setFechando(true);
+    setSnapshotResult(null);
+    setMsg("");
+    try {
+      const res = await api.patch("/api/spo/painel/fechar-mes", { mes: mesFecha });
+      setSnapshotResult(res.data);
+      setMsg(`✅ Snapshot de ${label} gravado — ${res.data.salvos} KPIs salvos.`);
+      await carregar(); // atualiza a tabela com os novos reais
+    } catch (err) {
+      setMsg(err.response?.data?.error || "❌ Erro ao fechar o mês.");
+    } finally {
+      setFechando(false);
+      setTimeout(() => setMsg(""), 8000);
+    }
+  }
+
   // Importar Excel (lê via FileReader como CSV-like via SheetJS se disponível, ou JSON)
   function importarExcel(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Tenta ler como JSON/CSV via texto
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        // Tenta JSON primeiro
         const json = JSON.parse(ev.target.result);
         aplicarLinhas(json);
       } catch {
-        // Tenta CSV
         const lines = ev.target.result.split("\n").filter(Boolean);
         const header = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/"/g,""));
         const parsed = lines.slice(1).map((l) => {
@@ -160,6 +195,8 @@ export default function SpoMetas() {
 
   return (
     <div style={{ padding: "0 4px" }}>
+
+      {/* ── Cabeçalho + ações ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
         <div>
           <h3 style={{ margin: 0, fontWeight: "700", fontSize: "1rem" }}>📊 Metas SPO — Painel Consolidado</h3>
@@ -183,12 +220,72 @@ export default function SpoMetas() {
         </div>
       </div>
 
+      {/* ── Painel de Snapshot ── */}
+      <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "12px", padding: "14px 18px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "220px" }}>
+            <p style={{ margin: "0 0 3px", fontWeight: "700", fontSize: "0.88rem", color: "#a5b4fc" }}>
+              📸 Snapshot de Fechamento
+            </p>
+            <p style={{ margin: 0, fontSize: "0.76rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
+              Lê os dados calculados do mês selecionado e grava os realizados no histórico.<br />
+              <strong style={{ color: "rgba(255,255,255,0.6)" }}>Use antes de importar arquivos de outro mês.</strong>
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, flexWrap: "wrap" }}>
+            <select
+              value={mesFecha}
+              onChange={(e) => setMesFecha(e.target.value)}
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer" }}
+            >
+              {MESES.map((m) => (
+                <option key={m} value={m}>{MESES_LABEL[m] || m}</option>
+              ))}
+            </select>
+            <button
+              onClick={fecharMes}
+              disabled={fechando}
+              style={{ background: fechando ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.25)", border: "1px solid rgba(99,102,241,0.5)", color: "#a5b4fc", padding: "7px 18px", borderRadius: "8px", cursor: fechando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit", whiteSpace: "nowrap" }}
+            >
+              {fechando ? "⏳ Calculando..." : "📸 Gerar Snapshot"}
+            </button>
+          </div>
+        </div>
+
+        {/* Resultado do último snapshot */}
+        {snapshotResult && (
+          <div style={{ marginTop: "12px", borderTop: "1px solid rgba(99,102,241,0.2)", paddingTop: "10px" }}>
+            <p style={{ margin: "0 0 8px", fontSize: "0.78rem", color: "rgba(165,180,252,0.8)", fontWeight: "600" }}>
+              ✅ {snapshotResult.salvos} KPIs gravados para {MESES_LABEL[snapshotResult.mes] || snapshotResult.mes}:
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {(snapshotResult.reais || []).map(({ item, real }) => {
+                const it = ITENS.find((x) => x.n === item);
+                return (
+                  <span key={item} style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>
+                    <span style={{ color: "rgba(165,180,252,0.7)", fontWeight: "700" }}>#{item}</span>{" "}
+                    {it?.label.split(" ").slice(0, 2).join(" ")}:{" "}
+                    <strong style={{ color: "#4ade80" }}>{real}</strong>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Mensagem de status ── */}
       {msg && (
-        <div style={{ background: msg.startsWith("✅") ? "rgba(74,222,128,0.1)" : msg.startsWith("📥") ? "rgba(251,185,0,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${msg.startsWith("✅") ? "rgba(74,222,128,0.3)" : msg.startsWith("📥") ? "rgba(251,185,0,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: "8px", padding: "10px 14px", marginBottom: "14px", fontSize: "0.85rem" }}>
+        <div style={{
+          background: msg.startsWith("✅") ? "rgba(74,222,128,0.1)" : msg.startsWith("📥") ? "rgba(251,185,0,0.1)" : "rgba(239,68,68,0.1)",
+          border: `1px solid ${msg.startsWith("✅") ? "rgba(74,222,128,0.3)" : msg.startsWith("📥") ? "rgba(251,185,0,0.3)" : "rgba(239,68,68,0.3)"}`,
+          borderRadius: "8px", padding: "10px 14px", marginBottom: "14px", fontSize: "0.85rem"
+        }}>
           {msg}
         </div>
       )}
 
+      {/* ── Tabela ── */}
       {loading ? (
         <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" }}>Carregando...</p>
       ) : (
@@ -230,7 +327,7 @@ export default function SpoMetas() {
                       </td>,
                       <td key={mes + "r"} style={{ padding: "4px 6px" }}>
                         <input
-                          style={{ ...inpStyle, borderColor: getVal(n, mes, "real") !== "" ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)" }}
+                          style={{ ...inpStyle, borderColor: getVal(n, mes, "real") !== "" ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.12)", background: getVal(n, mes, "real") !== "" ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.07)" }}
                           value={getVal(n, mes, "real")}
                           onChange={(e) => setVal(n, mes, "real", e.target.value)}
                           placeholder="ao vivo"

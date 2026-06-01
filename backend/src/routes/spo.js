@@ -2,7 +2,7 @@
 // updated: 2026-05-16 21:47:53
 const express = require("express");
 const router = express.Router();
-const { readSheet } = require("../services/sheets");
+const { readSheet, sobrescreverAba } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 
 router.use(authMiddleware);
@@ -458,6 +458,170 @@ router.post("/painel/metas", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao salvar metas SPO." });
+  }
+});
+
+
+// PATCH /api/spo/painel/fechar-mes
+// Lê todas as abas SPO do mês informado, computa os reais de cada KPI
+// e os grava no spo_metas (merge — preserva metas existentes).
+// Use ANTES de importar dados do próximo mês para não perder os reais do mês atual.
+router.patch("/painel/fechar-mes", async (req, res) => {
+  try {
+    const { mes } = req.body; // "YYYY-MM", ex: "2026-05"
+    if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
+      return res.status(400).json({ error: "Envie { mes: 'YYYY-MM' }. Ex: 2026-05." });
+    }
+    if (!["admin","director"].includes(req.user?.perfil)) {
+      return res.status(403).json({ error: "Acesso negado." });
+    }
+
+    // ── Lê todas as abas SPO necessárias em paralelo ───────────────────────
+    const [
+      visitacaoGV, coaching, diasRota, desafios, apResumo,
+      dtoResumo, promoResumo, politicaResumo, menuResumo,
+      tasksCerveja, score5, tasksNab, tasksVolume, tasksMktp,
+      tasksMatch, tasksCervZero, tasksDigit, alone, rgb,
+      cupons, lojaIdeal, scanntech, portIdeal,
+    ] = await Promise.all([
+      readSheet("spo_visitacao_gv_resumo"),
+      readSheet("spo_coaching_resumo"),
+      readSheet("spo_dias_rota_resumo"),
+      readSheet("spo_desafios"),
+      readSheet("spo_ap_resumo"),
+      readSheet("spo_dto_resumo"),
+      readSheet("spo_promo_resumo"),
+      readSheet("spo_politica_resumo"),
+      readSheet("spo_menu_resumo"),
+      readSheet("spo_tasks_cerveja_resumo"),
+      readSheet("spo_score5_resumo"),
+      readSheet("spo_tasks_nab_resumo"),
+      readSheet("spo_tasks_volume_resumo"),
+      readSheet("spo_tasks_marketplace_resumo"),
+      readSheet("spo_tasks_match_resumo"),
+      readSheet("spo_tasks_cerv_zero_resumo"),
+      readSheet("spo_tasks_digit_resumo"),
+      readSheet("spo_pedido_alone_resumo"),
+      readSheet("spo_rgb_total"),
+      readSheet("spo_cupons_resumo"),
+      readSheet("spo_loja_ideal_resumo"),
+      readSheet("spo_scanntech_resumo"),
+      readSheet("spo_portfolio_ideal_resumo"),
+    ].map((p) => p.catch(() => [])));
+
+    // Helper: linha OPERACAO filtrada pelo mês
+    const opMes = (arr) =>
+      arr.find((r) =>
+        ["OPERACAO","operacao"].includes(String(r.setor || "")) &&
+        (r.mes_referencia || "").startsWith(mes)
+      );
+
+    // ── Computa real por KPI (mesma lógica do getRealDados no frontend) ────
+    const computeReal = (n) => {
+      switch (n) {
+        case 1: {
+          const gvs = visitacaoGV.filter(
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && (r.mes_referencia || "").startsWith(mes)
+          );
+          return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.visitados || 0), 0) : null;
+        }
+        case 2: {
+          const gvs = coaching.filter(
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia || "").startsWith(mes)
+          );
+          return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.coachings_validos || 0), 0) : null;
+        }
+        case 3: {
+          const gvs = diasRota.filter(
+            (r) => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia || "").startsWith(mes)
+          );
+          return gvs.length ? gvs.reduce((s, r) => s + parseInt(r.dias_validos || 0), 0) : null;
+        }
+        case 4: {
+          const mesDesafios = desafios.filter((r) => (r.mes_referencia || "").startsWith(mes));
+          if (!mesDesafios.length) return null;
+          const gvsU = [...new Set(mesDesafios.map((d) => d.gv).filter(Boolean))];
+          if (!gvsU.length) return null;
+          const somaOk = gvsU.reduce(
+            (acc, gv) => acc + mesDesafios.filter((d) => d.gv === gv && d.status === "OK").length, 0
+          );
+          return parseFloat((somaOk / gvsU.length).toFixed(1));
+        }
+        case 5: {
+          const d = opMes(apResumo);
+          return d ? parseFloat(d.rns_ap_ok || 0) : null;
+        }
+        case 6: {
+          const d = dtoResumo.find((r) => (r.mes_referencia || "").startsWith(mes));
+          return d
+            ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0)
+            : null;
+        }
+        case 7: {
+          const d = opMes(promoResumo);
+          if (!d) return null;
+          const vis = parseFloat(d.visitas || 0);
+          const ac  = parseFloat(d.acesso_promo || 0);
+          return vis > 0 ? parseFloat((ac / vis * 100).toFixed(1)) : null;
+        }
+        case 8:  { const d = opMes(politicaResumo); return d ? parseFloat(d.pdvs_execucao || 0)             : null; }
+        case 9:  { const d = opMes(menuResumo);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 11: { const d = opMes(tasksCerveja);   return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0): null; }
+        case 12: { const d = opMes(score5);         return d ? parseFloat(d.pdvs_ok || 0)                  : null; }
+        case 13: { const d = opMes(tasksNab);       return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 14: { const d = opMes(tasksVolume);    return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 15: { const d = opMes(tasksMktp);      return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 16: { const d = opMes(tasksMatch);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 17: { const d = opMes(tasksCervZero);  return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 18: { const d = opMes(tasksDigit);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
+        case 19: { const d = opMes(alone);          return d ? parseFloat(d.pdvs_alone || 0)                : null; }
+        case 20: { const d = opMes(rgb);            return d ? parseFloat(d.pdvs_bateu_meta || 0)           : null; }
+        case 21: { const d = opMes(cupons);         return d ? parseFloat(d.cupons_mes || 0)                : null; }
+        case 22: { const d = opMes(lojaIdeal);      return d ? parseFloat(d.pdvs_ideais || 0)              : null; }
+        case 23: { const d = opMes(scanntech);      return d ? parseFloat(d.pdvs_ativos || d.ativos || 0)  : null; }
+        case 24: { const d = opMes(portIdeal);      return d ? parseFloat(d.pdvs_ideais || 0)              : null; }
+        default: return null;
+      }
+    };
+
+    const reais = [];
+    for (let n = 1; n <= 24; n++) {
+      if (n === 10) continue; // Academia Bees RN (inativo)
+      const real = computeReal(n);
+      if (real !== null) reais.push({ item: n, real });
+    }
+
+    if (reais.length === 0) {
+      return res.status(404).json({
+        error: `Nenhum dado encontrado para ${mes}. Verifique se os arquivos do mês foram importados.`,
+      });
+    }
+
+    // ── Merge com spo_metas — preserva metas existentes ──────────────────
+    const existentes = await readSheet("spo_metas");
+    const mapa = {};
+    existentes.forEach((r) => {
+      const mesNorm = normalizeMes(r.mes);
+      mapa[`${r.item}_${mesNorm}`] = { item: r.item, mes: mesNorm, meta: r.meta ?? "", real: r.real ?? "" };
+    });
+
+    for (const { item, real } of reais) {
+      const k = `${item}_${mes}`;
+      if (mapa[k]) {
+        mapa[k].real = String(real);
+      } else {
+        mapa[k] = { item: String(item), mes, meta: "", real: String(real) };
+      }
+    }
+
+    const headers = ["item","mes","meta","real"];
+    const rows = [headers, ...Object.values(mapa).map((r) => [r.item, r.mes, r.meta, r.real])];
+    await sobrescreverAba("spo_metas", rows);
+
+    return res.json({ success: true, salvos: reais.length, mes, reais });
+  } catch (err) {
+    console.error("fechar-mes:", err);
+    return res.status(500).json({ error: `Erro ao fechar mês: ${err.message}` });
   }
 });
 
