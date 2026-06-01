@@ -2086,25 +2086,22 @@ export default function SPO() {
 
                               switch(n) {
                                 case 1:  {
-                                  // Total de visitas realizadas (sem cap por GV)
-                                  const gvs = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)));
+                                  // Filtra visitação pelo mês — evita exibir dados de mês anterior como "atual"
+                                  const gvs = resumo.filter(r => r.gv && !isNaN(parseInt(r.gv)) && (r.mes_referencia||"").startsWith(mes));
                                   if (gvs.length === 0) return null;
                                   return gvs.reduce((s, r) => s + parseInt(r.visitados||0), 0);
                                 }
                                 case 2:  {
-                                  // Total de coachings realizados no mês (soma dos GVs, filtrado por mês)
                                   const gvs = coaching.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia||"").startsWith(mes));
                                   if (gvs.length === 0) return null;
                                   return gvs.reduce((s, r) => s + parseInt(r.coachings_validos||0), 0);
                                 }
                                 case 3:  {
-                                  // Total de dias válidos em rota no mês (soma dos GVs, filtrado por mês)
                                   const gvs = diasRota.filter(r => r.gv && !isNaN(parseInt(r.gv)) && r.periodo === "mensal" && (r.mes_referencia||"").startsWith(mes));
                                   if (gvs.length === 0) return null;
                                   return gvs.reduce((s, r) => s + parseInt(r.dias_validos||0), 0);
                                 }
                                 case 4:  {
-                                  // Média de dias abertos por GV (ex: GV1=11, GV2=11 → média=11)
                                   const mesDesafios = desafios.filter(x => (x.mes_referencia||"").startsWith(mes));
                                   if (mesDesafios.length === 0) return null;
                                   const gvsUnicos = [...new Set(mesDesafios.map(d => d.gv).filter(Boolean))];
@@ -2116,28 +2113,30 @@ export default function SPO() {
                                   return parseFloat((somaOk / gvsUnicos.length).toFixed(1));
                                 }
                                 case 5:  {
-                                  // Conta RNs com AP OK (total da operação)
-                                  const d = op(ap);
+                                  // Filtra AP pelo mês — sem fallback para mês anterior
+                                  const d = opMes(ap);
                                   return d ? parseFloat(d.rns_ap_ok || 0) : null;
                                 }
                                 case 6:  { const d = dto.find(x => (x.mes_referencia||"").startsWith(mes)); return d ? parseFloat(d.matinal_real || 0) + parseFloat(d.vespertina_real || 0) + parseFloat(d.coaching_real || 0) : null; }
-                                case 7:  { const d = opMes(promo) || op(promo); if (!d) return null; const _vis = parseFloat(d.visitas||0); const _ac = parseFloat(d.acesso_promo||0); return _vis > 0 ? parseFloat((_ac / _vis * 100).toFixed(1)) : null; }
-                                case 8:  { const d = op(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
-                                case 9:  { const d = op(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 11: { const d = opMes(tasksCerveja) || op(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
-                                case 12: { const d = op(score5);   return d ? parseFloat(d.pdvs_ok || 0) : null; }
-                                case 13: { const d = opMes(tasksNab) || op(tasksNab); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 14: { const d = opMes(tasksVolume) || op(tasksVolume); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 15: { const d = opMes(tasksMktp) || op(tasksMktp); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 16: { const d = opMes(tasksMatch) || op(tasksMatch); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 17: { const d = opMes(tasksCervZero) || op(tasksCervZero); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 18: { const d = opMes(tasksDigit) || op(tasksDigit); return d ? parseFloat(d.tasks_validas || 0) : null; }
-                                case 19: { const d = opMes(alone) || op(alone); return d ? parseFloat(d.pdvs_alone || 0) : null; }
-                                case 20: { const d = opMes(rgb) || op(rgb); return d ? parseFloat(d.pdvs_bateu_meta || 0) : null; }
-                                case 21: { const d = opMes(cupons) || op(cupons); return d ? parseFloat(d.cupons_mes || 0) : null; }
-                                case 22: { const d = opMes(lojaIdeal) || op(lojaIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
-                                case 23: { const d = opMes(scanntech) || op(scanntech); return d ? parseFloat(d.pdvs_ativos || d.ativos || 0) : null; }
-                                case 24: { const d = opMes(portIdeal) || op(portIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
+                                // Todos os casos abaixo usam opMes (sem || op fallback) para garantir que
+                                // apenas dados do mês exato apareçam — evita que dados de maio "vazem" para junho
+                                case 7:  { const d = opMes(promo); if (!d) return null; const _vis = parseFloat(d.visitas||0); const _ac = parseFloat(d.acesso_promo||0); return _vis > 0 ? parseFloat((_ac / _vis * 100).toFixed(1)) : null; }
+                                case 8:  { const d = opMes(politica); return d ? parseFloat(d.pdvs_execucao || 0) : null; }
+                                case 9:  { const d = opMes(menu);     return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 11: { const d = opMes(tasksCerveja); return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0) : null; }
+                                case 12: { const d = opMes(score5);   return d ? parseFloat(d.pdvs_ok || 0) : null; }
+                                case 13: { const d = opMes(tasksNab); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 14: { const d = opMes(tasksVolume); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 15: { const d = opMes(tasksMktp); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 16: { const d = opMes(tasksMatch); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 17: { const d = opMes(tasksCervZero); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 18: { const d = opMes(tasksDigit); return d ? parseFloat(d.tasks_validas || 0) : null; }
+                                case 19: { const d = opMes(alone); return d ? parseFloat(d.pdvs_alone || 0) : null; }
+                                case 20: { const d = opMes(rgb); return d ? parseFloat(d.pdvs_bateu_meta || 0) : null; }
+                                case 21: { const d = opMes(cupons); return d ? parseFloat(d.cupons_mes || 0) : null; }
+                                case 22: { const d = opMes(lojaIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
+                                case 23: { const d = opMes(scanntech); return d ? parseFloat(d.pdvs_ativos || d.ativos || 0) : null; }
+                                case 24: { const d = opMes(portIdeal); return d ? parseFloat(d.pdvs_ideais || 0) : null; }
                                 default: return null;
                               }
                             };
