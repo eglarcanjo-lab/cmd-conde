@@ -34,12 +34,21 @@ const GRUPOS = [
 
 const hoje = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
+function mesAnterior() {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function Arquivos() {
   const [arquivos, setArquivos] = useState({});
   const [processando, setProcessando] = useState(false);
   const [status, setStatus] = useState([]);
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState("");
+  // Mês de referência: garante que relatórios sem data sejam atribuídos ao mês correto
+  const [mesRef, setMesRef] = useState(mesAnterior());
   const inputRefs = useRef({});
 
   useEffect(() => { carregarStatus(); }, []);
@@ -72,6 +81,8 @@ export default function Arquivos() {
     try {
       const form = new FormData();
       ARQUIVOS_CONFIG.forEach(cfg => { if (arquivos[cfg.campo]) form.append(cfg.campo, arquivos[cfg.campo]); });
+      // Passa o mês explicitamente para o processador corrigir relatórios sem data
+      if (mesRef) form.append("mes_ref", mesRef);
       const res = await api.post("/api/arquivos/processar", form, {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 300000,
@@ -97,13 +108,28 @@ export default function Arquivos() {
             Clique em um card para selecionar o arquivo. Borda verde = importado hoje.
           </p>
         </div>
-        <button
-          style={{ background: temSelecionado ? "linear-gradient(135deg,#fbb900,#e6a200)" : "rgba(255,255,255,0.07)", color: temSelecionado ? "#0a0f1e" : "rgba(255,255,255,0.35)", border: "none", borderRadius: "10px", padding: "10px 28px", fontSize: "0.9rem", fontWeight: "700", cursor: temSelecionado ? "pointer" : "not-allowed", fontFamily: "inherit", opacity: processando ? 0.7 : 1 }}
-          onClick={processar}
-          disabled={processando || !temSelecionado}
-        >
-          {processando ? "⏳ Processando..." : "⚡ Processar"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {/* Seletor de mês — define qual mês será atribuído aos relatórios sem data (Visitação, Score5, etc.) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <label style={{ color: "rgba(165,180,252,0.7)", fontSize: "0.62rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Mês de Referência
+            </label>
+            <input
+              type="month"
+              value={mesRef}
+              onChange={e => setMesRef(e.target.value)}
+              title="Define o mês para relatórios que não têm data no arquivo (Visitação GV, Score5, etc.)"
+              style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "8px", color: "#a5b4fc", padding: "6px 10px", fontSize: "0.85rem", fontFamily: "inherit", colorScheme: "dark", minHeight: "36px" }}
+            />
+          </div>
+          <button
+            style={{ background: temSelecionado ? "linear-gradient(135deg,#fbb900,#e6a200)" : "rgba(255,255,255,0.07)", color: temSelecionado ? "#0a0f1e" : "rgba(255,255,255,0.35)", border: "none", borderRadius: "10px", padding: "10px 28px", fontSize: "0.9rem", fontWeight: "700", cursor: temSelecionado ? "pointer" : "not-allowed", fontFamily: "inherit", opacity: processando ? 0.7 : 1 }}
+            onClick={processar}
+            disabled={processando || !temSelecionado}
+          >
+            {processando ? "⏳ Processando..." : "⚡ Processar"}
+          </button>
+        </div>
       </div>
 
       {erro && <p style={{ color: "#f87171", fontSize: "0.85rem", marginBottom: "16px" }}>{erro}</p>}

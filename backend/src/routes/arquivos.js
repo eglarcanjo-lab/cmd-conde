@@ -23,6 +23,14 @@ router.post(
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
       const form = new FormData();
 
+      // Passa o mês de referência explícito para o processador
+      // O processador usará esse valor em relatórios sem coluna de data (visitação, score5, etc.)
+      const mesRef = req.body?.mes_ref || "";
+      if (mesRef) {
+        form.append("mes_ref", mesRef);
+        console.log("Mês de referência:", mesRef);
+      }
+
       if (req.files?.clientes?.[0]) {
         const f = req.files.clientes[0];
         form.append("clientes", f.buffer, { filename: f.originalname, contentType: f.mimetype });
