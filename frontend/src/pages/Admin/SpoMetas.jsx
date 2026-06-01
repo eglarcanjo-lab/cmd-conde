@@ -107,6 +107,30 @@ export default function SpoMetas() {
     }
   }
 
+  // ── Limpar reais de um mês do spo_metas ───────────────────────────────────
+  async function limparReais() {
+    const label = MESES_LABEL[mesFecha] || mesFecha;
+    if (!window.confirm(
+      `Limpar todos os realizados de ${label} do histórico?\n\n` +
+      `As METAS de ${label} serão preservadas. Apenas os valores da coluna "Real" serão apagados.\n\n` +
+      `Use isso para corrigir realizados gravados incorretamente.`
+    )) return;
+
+    setFechando(true);
+    setSnapshotResult(null);
+    setMsg("");
+    try {
+      const res = await api.patch("/api/spo/painel/limpar-reais", { mes: mesFecha });
+      setMsg(`🗑️ ${res.data.limpos} realizados de ${label} foram limpos.`);
+      await carregar();
+    } catch (err) {
+      setMsg(err.response?.data?.error || "❌ Erro ao limpar realizados.");
+    } finally {
+      setFechando(false);
+      setTimeout(() => setMsg(""), 6000);
+    }
+  }
+
   // ── Snapshot: grava os reais calculados do mês em spo_metas ─────────────
   async function fecharMes() {
     const label = MESES_LABEL[mesFecha] || mesFecha;
@@ -248,6 +272,14 @@ export default function SpoMetas() {
               style={{ background: fechando ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.25)", border: "1px solid rgba(99,102,241,0.5)", color: "#a5b4fc", padding: "7px 18px", borderRadius: "8px", cursor: fechando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit", whiteSpace: "nowrap" }}
             >
               {fechando ? "⏳ Calculando..." : "📸 Gerar Snapshot"}
+            </button>
+            <button
+              onClick={limparReais}
+              disabled={fechando}
+              title="Apaga os valores da coluna Real para o mês selecionado — preserva as metas"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", padding: "7px 14px", borderRadius: "8px", cursor: fechando ? "not-allowed" : "pointer", fontSize: "0.82rem", fontFamily: "inherit", whiteSpace: "nowrap" }}
+            >
+              🗑️ Limpar Reais
             </button>
           </div>
         </div>

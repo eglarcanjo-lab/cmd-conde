@@ -462,6 +462,40 @@ router.post("/painel/metas", async (req, res) => {
 });
 
 
+// PATCH /api/spo/painel/limpar-reais — zera os realizados de um mês em spo_metas (preserva metas)
+router.patch("/painel/limpar-reais", async (req, res) => {
+  try {
+    const { mes } = req.body;
+    if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
+      return res.status(400).json({ error: "Envie { mes: 'YYYY-MM' }." });
+    }
+    if (!["admin","director"].includes(req.user?.perfil)) {
+      return res.status(403).json({ error: "Acesso negado." });
+    }
+
+    const existentes = await readSheet("spo_metas");
+    let limpos = 0;
+    const atualizados = existentes.map((r) => {
+      const mesNorm = normalizeMes(r.mes);
+      if (mesNorm === mes && r.real !== "" && r.real !== null && r.real !== undefined) {
+        limpos++;
+        return { ...r, mes: mesNorm, real: "" };
+      }
+      return { ...r, mes: mesNorm };
+    });
+
+    const headers = ["item","mes","meta","real"];
+    const rows = [headers, ...atualizados.map((r) => [r.item, r.mes, r.meta ?? "", r.real ?? ""])];
+    await sobrescreverAba("spo_metas", rows);
+
+    return res.json({ success: true, limpos, mes });
+  } catch (err) {
+    console.error("limpar-reais:", err);
+    return res.status(500).json({ error: `Erro ao limpar: ${err.message}` });
+  }
+});
+
+
 // PATCH /api/spo/painel/fechar-mes
 // Lê todas as abas SPO do mês informado, computa os reais de cada KPI
 // e os grava no spo_metas (merge — preserva metas existentes).
