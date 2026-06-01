@@ -337,13 +337,16 @@ export default function SPO() {
               const isSelected = kpiAtivo === item.n;
               const borderColor = isSelected
                 ? "#fbb900"
-                : triOk === true  ? "rgba(74,222,128,0.65)"
-                : triOk === false ? "rgba(248,113,113,0.65)"
+                : triOk === true  ? "#4ade80"
+                : triOk === false ? "#f87171"
                 : item.ativo ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)";
+              const borderWidth = isSelected || triOk !== null ? "2px" : "1px";
               const glow = isSelected
-                ? "0 0 12px rgba(251,185,0,0.2)"
-                : triOk === true  ? "0 0 8px rgba(74,222,128,0.15)"
-                : triOk === false ? "0 0 8px rgba(248,113,113,0.12)"
+                ? "0 0 12px rgba(251,185,0,0.35)"
+                : triOk === true
+                  ? "0 0 6px #4ade80, 0 0 18px rgba(74,222,128,0.45), inset 0 0 6px rgba(74,222,128,0.08)"
+                : triOk === false
+                  ? "0 0 6px #f87171, 0 0 18px rgba(248,113,113,0.45), inset 0 0 6px rgba(248,113,113,0.08)"
                 : "none";
               return (
                 <div
@@ -352,7 +355,7 @@ export default function SPO() {
                   style={{
                     ...styles.kpiCard,
                     ...(item.ativo ? styles.kpiCardAtivo : {}),
-                    border: `1px solid ${borderColor}`,
+                    border: `${borderWidth} solid ${borderColor}`,
                     boxShadow: glow,
                     cursor: "pointer",
                   }}
