@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 const META_PONTOS = 100000;
 
@@ -224,8 +224,25 @@ export default function RvSimulador() {
     const r2 = (v) => Math.round(v * 100) / 100;
     const totalPO = linhas.reduce((a, l) => a + l.poTotal, 0);
 
+    // ── Estilos (xlsx-js-style) ──────────────────────────────────
+    const FMT_BRL = 'R$ #,##0.00';
+    const FMT_PCT = '0.0"%"';
+    const FMT_NUM = '#,##0.0';
+    const bd = { style: "thin", color: { rgb: "D9DBE0" } };
+    const border = { top: bd, bottom: bd, left: bd, right: bd };
+    const stHeader = { font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 }, fill: { patternType: "solid", fgColor: { rgb: "111827" } }, alignment: { horizontal: "center", vertical: "center" }, border };
+    const stCell   = { font: { sz: 10, color: { rgb: "1F2937" } }, alignment: { vertical: "center" }, border };
+    const stAlt    = { ...stCell, fill: { patternType: "solid", fgColor: { rgb: "F6F7F9" } } };
+    const stTotal  = { font: { bold: true, sz: 10, color: { rgb: "111827" } }, fill: { patternType: "solid", fgColor: { rgb: "FCE8A6" } }, alignment: { vertical: "center" }, border };
+    const setStyle = (ws, r, c, st, fmt) => {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+      ws[addr].s = st;
+      if (fmt && typeof ws[addr].v === "number") ws[addr].z = fmt;
+    };
+
     // ════════════════════════════════════════════════════════════
-    // ABA 1 — RESUMO CONSOLIDADO (espelha a tabela resumo do PDF)
+    // ABA 1 — RESUMO CONSOLIDADO
     // ════════════════════════════════════════════════════════════
     const resumo = linhas.map(l => ({
       "Setor":            l.cod,
@@ -249,53 +266,102 @@ export default function RvSimulador() {
       "% do PO": totalPO > 0 ? r2((somaTotal / totalPO) * 100) : 0, "Status": "",
     });
     const wsResumo = XLSX.utils.json_to_sheet(resumo);
-    wsResumo["!cols"] = [14,22,10,6,14,14,12,10,14,10,14,10,20].map(w => ({ wch: w }));
+    wsResumo["!cols"] = [10,22,10,7,16,15,12,10,14,10,16,10,20].map(w => ({ wch: w }));
+    wsResumo["!autofilter"] = { ref: `A1:M${resumo.length + 1}` };
+
+    const curCols = new Set([4, 10]);              // PO Total, RV Total
+    const pctCols = new Set([5, 6, 7, 8, 9, 11]);  // % indicadores + % PO
+    const ctrCols = new Set([0, 2, 3]);            // Setor, Segmento, AP
+    const NR = resumo.length + 1;                  // total de linhas (com header)
+    for (let R = 0; R < NR; R++) {
+      const isHead = R === 0;
+      const isTot  = R === NR - 1;
+      for (let C = 0; C <= 12; C++) {
+        let st = isHead ? stHeader : isTot ? stTotal : (R % 2 === 0 ? stAlt : stCell);
+        if (!isHead) {
+          const align = ctrCols.has(C) ? "center" : (curCols.has(C) || pctCols.has(C)) ? "right" : "left";
+          st = { ...st, alignment: { ...st.alignment, horizontal: align } };
+        }
+        const fmt = curCols.has(C) ? FMT_BRL : pctCols.has(C) ? FMT_PCT : null;
+        setStyle(wsResumo, R, C, st, fmt);
+      }
+    }
 
     // ════════════════════════════════════════════════════════════
     // ABA 2 — DETALHAMENTO POR REPRESENTANTE (blocos como no PDF)
     // ════════════════════════════════════════════════════════════
     const aoa = [];
-    aoa.push([`RELATÓRIO DE REMUNERAÇÃO VARIÁVEL — Competência ${mesRef}`]);
-    aoa.push([]);
+    const types = [];                 // tipo de cada linha (para estilizar)
+    const merges = [];
+    const push = (row, type) => { aoa.push(row); types.push(type); };
+
+    push([`RELATÓRIO DE REMUNERAÇÃO VARIÁVEL — Competência ${mesRef}`, "", "", "", ""], "title");
+    push(["", "", "", "", ""], "blank");
 
     linhas.forEach(l => {
       const ap = getAp(l.cod);
-      aoa.push([`Setor ${l.cod} — ${l.nome}  (${l.tipo})`, "", "", "", l.apOk ? "AP OK" : "AP NOK — RV bloqueada"]);
-      aoa.push([`PO Total: R$ ${fmtBrl(l.poTotal)}`]);
+      const r0 = aoa.length;
+      push([`Setor ${l.cod} — ${l.nome}  (${l.tipo})`, "", "", "", l.apOk ? "AP OK" : "AP NOK — bloqueada"], "rn");
+      merges.push({ s: { r: r0, c: 0 }, e: { r: r0, c: 3 } });
+      push([`PO Total: R$ ${fmtBrl(l.poTotal)}`, "", "", "", ""], "po");
       if (ap) {
         const gates = KPIS_AP.map(k => {
           const real = parseFloat(ap[`${k.key}_real`] || 0);
           const meta = parseFloat(ap[`${k.key}_meta`] || 0);
           return `${k.label}: ${real.toFixed(0)}/${meta.toFixed(0)} ${real >= meta ? "OK" : "NOK"}`;
         });
-        aoa.push(["Atendimento Produtivo:", ...gates]);
+        push(["AP →", gates[0] || "", gates[1] || "", gates[2] || "", gates[3] || ""], "gates");
       }
-      // Tabela de indicadores — SEM coluna de peso
-      aoa.push(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"]);
-      aoa.push([
-        "Pontos Force",
-        r2(META_PONTOS),
-        r2(l.pontosReal),
-        r2(pct(l.pontosReal, META_PONTOS)),
-        r2(l.apOk ? l.rvPontos : l.rvPontsPot),
-      ]);
+      push(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"], "thead");
+      push(["Pontos Force", r2(META_PONTOS), r2(l.pontosReal), r2(pct(l.pontosReal, META_PONTOS)), r2(l.apOk ? l.rvPontos : l.rvPontsPot)], "row");
       l.indicadores.forEach(ind => {
-        aoa.push([
-          ind.nome,
-          r2(ind.meta),
-          r2(ind.real),
-          r2(pct(ind.real, ind.meta)),
-          r2(l.apOk ? ind.rv : ind.rvPot),
-        ]);
+        push([ind.nome, r2(ind.meta), r2(ind.real), r2(pct(ind.real, ind.meta)), r2(l.apOk ? ind.rv : ind.rvPot)], "row");
       });
       const rvExibido = l.apOk ? l.total : l.totalPot;
-      aoa.push(["TOTAL RV", "", "", "", r2(rvExibido)]);
-      if (!l.apOk) aoa.push(["Potencial caso AP fosse OK", "", "", "", r2(l.totalPot)]);
-      aoa.push([]);
+      push(["TOTAL RV", "", "", "", r2(rvExibido)], "total");
+      if (!l.apOk) push(["Potencial caso AP fosse OK", "", "", "", r2(l.totalPot)], "pot");
+      push(["", "", "", "", ""], "blank");
     });
 
     const wsDet = XLSX.utils.aoa_to_sheet(aoa);
-    wsDet["!cols"] = [26, 16, 16, 16, 16].map(w => ({ wch: w }));
+    wsDet["!cols"] = [28, 16, 16, 16, 16].map(w => ({ wch: w }));
+    wsDet["!merges"] = merges;
+    merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }); // título
+
+    const stTitle = { font: { bold: true, sz: 13, color: { rgb: "111827" } }, alignment: { vertical: "center" } };
+    const stRN    = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { patternType: "solid", fgColor: { rgb: "1F2937" } }, alignment: { vertical: "center" } };
+    const stPO    = { font: { bold: true, sz: 10, color: { rgb: "374151" } }, fill: { patternType: "solid", fgColor: { rgb: "F3F4F6" } } };
+    const stGates = { font: { sz: 9, color: { rgb: "6B7280" } } };
+    const stThead = { font: { bold: true, sz: 9, color: { rgb: "374151" } }, fill: { patternType: "solid", fgColor: { rgb: "E5E7EB" } }, alignment: { horizontal: "center", vertical: "center" }, border };
+    const stPot   = { font: { italic: true, sz: 9, color: { rgb: "92400E" } }, fill: { patternType: "solid", fgColor: { rgb: "FFF7ED" } } };
+
+    types.forEach((type, R) => {
+      if (type === "title") setStyle(wsDet, R, 0, stTitle);
+      else if (type === "rn") {
+        for (let C = 0; C <= 4; C++) {
+          const st = C === 4
+            ? { ...stRN, font: { ...stRN.font, color: { rgb: aoa[R][4].includes("NOK") ? "FCA5A5" : "86EFAC" } }, alignment: { horizontal: "right", vertical: "center" } }
+            : stRN;
+          setStyle(wsDet, R, C, st);
+        }
+      } else if (type === "po")    setStyle(wsDet, R, 0, stPO);
+      else if (type === "gates")   { for (let C = 0; C <= 4; C++) setStyle(wsDet, R, C, stGates); }
+      else if (type === "thead")   { for (let C = 0; C <= 4; C++) setStyle(wsDet, R, C, stThead); }
+      else if (type === "row") {
+        for (let C = 0; C <= 4; C++) {
+          const fmt = C === 4 ? FMT_BRL : C === 3 ? FMT_PCT : (C === 1 || C === 2) ? FMT_NUM : null;
+          const al  = C === 0 ? "left" : C === 3 ? "center" : "right";
+          setStyle(wsDet, R, C, { ...stCell, alignment: { vertical: "center", horizontal: al } }, fmt);
+        }
+      } else if (type === "total") {
+        for (let C = 0; C <= 4; C++) {
+          const al = C === 0 ? "left" : "right";
+          setStyle(wsDet, R, C, { ...stTotal, alignment: { vertical: "center", horizontal: al } }, C === 4 ? FMT_BRL : null);
+        }
+      } else if (type === "pot") {
+        for (let C = 0; C <= 4; C++) setStyle(wsDet, R, C, { ...stPot, alignment: { horizontal: C === 4 ? "right" : "left" } }, C === 4 ? FMT_BRL : null);
+      }
+    });
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
