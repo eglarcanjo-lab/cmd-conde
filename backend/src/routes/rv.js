@@ -88,6 +88,40 @@ router.post("/ap", adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/rv/relatorio — dados completos para o relatório PDF (admin + director)
+router.get("/relatorio", async (req, res) => {
+  if (!["admin","director"].includes(req.user?.perfil)) {
+    return res.status(403).json({ error: "Acesso negado." });
+  }
+  try {
+    const [rvData, apData, usuarios] = await Promise.all([
+      readSheet("rv_resultado"),
+      readSheet("rv_ap"),
+      readSheet("usuarios").catch(() => []),
+    ]);
+
+    const nomeMap = {};
+    usuarios.forEach(u => { if (u.cod) nomeMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+
+    const apMap = {};
+    apData.forEach(a => { if (a.setor) apMap[String(a.setor).trim()] = a; });
+
+    const resultado = rvData
+      .filter(r => r.setor)
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor)))
+      .map(r => ({
+        ...r,
+        nome_rn: nomeMap[String(r.setor).trim()] || `Setor ${r.setor}`,
+        ap_detalhe: apMap[String(r.setor).trim()] || null,
+      }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error("rv/relatorio:", err);
+    return res.status(500).json({ error: "Erro ao gerar relatório." });
+  }
+});
+
 // POST /api/rv/calcular
 router.post("/calcular", adminOnly, async (req, res) => {
   try {
