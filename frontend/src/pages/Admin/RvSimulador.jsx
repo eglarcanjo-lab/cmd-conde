@@ -4,6 +4,14 @@ import * as XLSX from "xlsx";
 
 const META_PONTOS = 100000;
 
+// Pesos oficiais do regulamento de RV (% do PO). Pontos Force = 50% (Meios);
+// os 50% restantes (Resultados) se dividem conforme o segmento.
+// Fixos no código — NÃO usar o campo "peso" da planilha de metas (vem corrompido).
+const PESOS = {
+  OFF: { pontos: 50, cerveja: 25, nab: 12.5, marketplace: 7.5, match: 5 }, // AS/Rota/Sub
+  ON:  { pontos: 50, cerveja: 25, nab: 15,   marketplace: 10,  match: 0 }, // On Trade
+};
+
 const SETORES = [
   { cod: "101", nome: "João Victor",        tipo: "OFF" },
   { cod: "102", nome: "Eliel Lima",         tipo: "OFF" },
@@ -144,53 +152,62 @@ export default function RvSimulador() {
 
     const apOk    = ap?.ap_ok === "OK";
     const poTotal = parseFloat(rv?.po_total || 1000);
+    const w       = PESOS[seg] || PESOS.ON;
 
+    // ── Pontos Force (Meios) — 50%, sem piso (paga de 0% a 150%) ──
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
-    const pesoPontos = normPeso(rv?.peso_pontos, 50);
+    const pesoPontos = w.pontos;
     const pctPts = Math.min(pontosReal / META_PONTOS * 100, 150);
     const rvPontos = apOk && pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
 
-    const realCerv   = parseFloat(rv?.real_cerveja  || 0);
-    const metaCerv   = parseFloat(rv?.meta_cerveja  || 0);
-    const pesoCerv   = normPeso(rv?.peso_cerveja, 25);
+    // ── Resultados — piso 70% ──
+    const realCerv = parseFloat(rv?.real_cerveja || 0);
+    const metaCerv = parseFloat(rv?.meta_cerveja || 0);
+    const pesoCerv = w.cerveja;
 
-    const realNab    = parseFloat(rv?.real_nab   || 0);
-    const metaNab    = parseFloat(rv?.meta_nab   || 0);
-    const pesoNab    = normPeso(rv?.peso_nab, 15);
+    const realNab  = parseFloat(rv?.real_nab || 0);
+    const metaNab  = parseFloat(rv?.meta_nab || 0);
+    const pesoNab  = w.nab;
 
-    const realVar    = seg === "OFF"
-      ? parseFloat(rv?.real_match  || 0)
-      : parseFloat(rv?.real_marketplace  || 0);
-    const metaVar    = seg === "OFF"
-      ? parseFloat(rv?.meta_match  || 0)
-      : parseFloat(rv?.meta_marketplace  || 0);
-    const pesoVar    = seg === "OFF"
-      ? normPeso(rv?.peso_match, 10)
-      : normPeso(rv?.peso_marketplace, 10);
-    const varLabel   = seg === "OFF" ? "Match" : "Marketplace";
+    const realMktp = parseFloat(rv?.real_marketplace || 0);
+    const metaMktp = parseFloat(rv?.meta_marketplace || 0);
+    const pesoMktp = w.marketplace;
 
-    const rvCerv = calcRv(realCerv, metaCerv, pesoCerv, poTotal, apOk);
-    const rvNab  = calcRv(realNab,  metaNab,  pesoNab,  poTotal, apOk);
-    const rvVar  = calcRv(realVar,  metaVar,  pesoVar,  poTotal, apOk);
-    // Pontos Bees não tem mínimo — paga proporcional a partir de 0%
-    // (regra do regulamento: "0% - 150%" no range de Meios)
-    const total  = rvPontos + rvCerv + rvNab + rvVar;
+    const realMatch = parseFloat(rv?.real_match || 0);
+    const metaMatch = parseFloat(rv?.meta_match || 0);
+    const pesoMatch = w.match;
 
-    // Potencial (como se AP fosse OK) — exibido em amarelo quando bloqueado
+    const rvCerv  = calcRv(realCerv,  metaCerv,  pesoCerv,  poTotal, apOk);
+    const rvNab   = calcRv(realNab,   metaNab,   pesoNab,   poTotal, apOk);
+    const rvMktp  = pesoMktp  > 0 ? calcRv(realMktp,  metaMktp,  pesoMktp,  poTotal, apOk) : 0;
+    const rvMatch = pesoMatch > 0 ? calcRv(realMatch, metaMatch, pesoMatch, poTotal, apOk) : 0;
+    const total   = rvPontos + rvCerv + rvNab + rvMktp + rvMatch;
+
+    // Potencial (como se AP fosse OK)
     const rvPontsPot = pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
-    const rvCervPot  = calcRvPot(realCerv, metaCerv, pesoCerv, poTotal);
-    const rvNabPot   = calcRvPot(realNab,  metaNab,  pesoNab,  poTotal);
-    const rvVarPot   = calcRvPot(realVar,  metaVar,  pesoVar,  poTotal);
-    const totalPot   = rvPontsPot + rvCervPot + rvNabPot + rvVarPot;
+    const rvCervPot  = calcRvPot(realCerv,  metaCerv,  pesoCerv,  poTotal);
+    const rvNabPot   = calcRvPot(realNab,   metaNab,   pesoNab,   poTotal);
+    const rvMktpPot  = pesoMktp  > 0 ? calcRvPot(realMktp,  metaMktp,  pesoMktp,  poTotal) : 0;
+    const rvMatchPot = pesoMatch > 0 ? calcRvPot(realMatch, metaMatch, pesoMatch, poTotal) : 0;
+    const totalPot   = rvPontsPot + rvCervPot + rvNabPot + rvMktpPot + rvMatchPot;
+
+    // Indicadores de resultado com peso > 0 (para render dinâmico das barras e export)
+    const indicadores = [
+      { key: "cerveja",     nome: "Cerveja",     label: "🍺 Cerveja (Volume HL)",  real: realCerv,  meta: metaCerv,  peso: pesoCerv,  rv: rvCerv,  rvPot: rvCervPot  },
+      { key: "nab",         nome: "NAB",         label: "🥤 NAB (Volume HL)",      real: realNab,   meta: metaNab,   peso: pesoNab,   rv: rvNab,   rvPot: rvNabPot   },
+      { key: "marketplace", nome: "Marketplace", label: "🛒 Marketplace (GMV R$)", real: realMktp,  meta: metaMktp,  peso: pesoMktp,  rv: rvMktp,  rvPot: rvMktpPot  },
+      { key: "match",       nome: "Match",       label: "🤝 Match (Vol HL)",       real: realMatch, meta: metaMatch, peso: pesoMatch, rv: rvMatch, rvPot: rvMatchPot },
+    ].filter(i => i.peso > 0);
 
     return {
-      apOk, poTotal, seg, varLabel,
-      pontosReal, pesoPontos, pctPontos: pct(pontosReal, META_PONTOS), rvPontos,
-      realCerv, metaCerv, pesoCerv, rvCerv,
-      realNab,  metaNab,  pesoNab,  rvNab,
-      realVar,  metaVar,  pesoVar,  rvVar,
+      apOk, poTotal, seg,
+      pontosReal, pesoPontos, pctPontos: pct(pontosReal, META_PONTOS), rvPontos, rvPontsPot,
+      realCerv, metaCerv, pesoCerv, rvCerv, rvCervPot,
+      realNab,  metaNab,  pesoNab,  rvNab,  rvNabPot,
+      realMktp, metaMktp, pesoMktp, rvMktp, rvMktpPot,
+      realMatch, metaMatch, pesoMatch, rvMatch, rvMatchPot,
+      indicadores,
       total, totalPot,
-      rvPontsPot, rvCervPot, rvNabPot, rvVarPot,
     };
   }
 
@@ -217,14 +234,16 @@ export default function RvSimulador() {
         "AP":                l.apOk ? "OK" : "NOK",
         "Status RV":         l.apOk ? "Confirmada" : "Potencial (AP NOK)",
         "PO Total (R$)":     r2(l.poTotal),
-        "Pontos Bees %":     p1(pct(l.pontosReal, META_PONTOS)),
-        "Pontos Bees (R$)":  r2(l.apOk ? l.rvPontos : l.rvPontsPot),
+        "Pontos Force %":    p1(pct(l.pontosReal, META_PONTOS)),
+        "Pontos Force (R$)": r2(l.apOk ? l.rvPontos : l.rvPontsPot),
         "Cerveja %":         p1(pct(l.realCerv, l.metaCerv)),
         "Cerveja (R$)":      r2(l.apOk ? l.rvCerv : l.rvCervPot),
         "NAB %":             p1(pct(l.realNab, l.metaNab)),
         "NAB (R$)":          r2(l.apOk ? l.rvNab : l.rvNabPot),
-        [l.varLabel + " %"]: p1(pct(l.realVar, l.metaVar)),
-        [l.varLabel + " (R$)"]: r2(l.apOk ? l.rvVar : l.rvVarPot),
+        "Marketplace %":     l.pesoMktp  > 0 ? p1(pct(l.realMktp, l.metaMktp))   : "—",
+        "Marketplace (R$)":  l.pesoMktp  > 0 ? r2(l.apOk ? l.rvMktp  : l.rvMktpPot)  : "—",
+        "Match %":           l.pesoMatch > 0 ? p1(pct(l.realMatch, l.metaMatch)) : "—",
+        "Match (R$)":        l.pesoMatch > 0 ? r2(l.apOk ? l.rvMatch : l.rvMatchPot) : "—",
         "Total RV (R$)":     r2(rvExibido),
         "% do PO":           l.poTotal > 0 ? p1((rvExibido / l.poTotal) * 100) : 0,
       };
@@ -270,10 +289,10 @@ export default function RvSimulador() {
           "Status":      l.apOk ? "Confirmada" : "Potencial (AP NOK)",
         });
       };
-      addLinha("Pontos Bees",  l.pesoPontos, l.pontosReal, META_PONTOS, l.apOk ? l.rvPontos : l.rvPontsPot);
-      addLinha("Cerveja",      l.pesoCerv,   l.realCerv,   l.metaCerv,  l.apOk ? l.rvCerv  : l.rvCervPot);
-      addLinha("NAB",          l.pesoNab,    l.realNab,    l.metaNab,   l.apOk ? l.rvNab   : l.rvNabPot);
-      addLinha(l.varLabel,     l.pesoVar,    l.realVar,    l.metaVar,   l.apOk ? l.rvVar   : l.rvVarPot);
+      addLinha("Pontos Force", l.pesoPontos, l.pontosReal, META_PONTOS, l.apOk ? l.rvPontos : l.rvPontsPot);
+      l.indicadores.forEach(ind =>
+        addLinha(ind.nome, ind.peso, ind.real, ind.meta, l.apOk ? ind.rv : ind.rvPot)
+      );
       detalhe.push({ "Setor": "", "Nome RN": `── Total ${l.cod}`, "AP": "", "Indicador": "", "Peso %": "", "Meta": "", "Realizado": "", "Atingimento %": "", "Piso 70%": "", "RV (R$)": r2(rvExibido), "Status": "" });
     });
 
@@ -402,26 +421,22 @@ export default function RvSimulador() {
 
             {/* Indicadores */}
             <div style={s.barsWrap}>
+              {/* Pontos Force — sem piso (paga de 0%) */}
               <BarRow
-                label={`⭐ Pontos Bees`}
+                label={`⭐ Pontos Force`}
                 real={tot.pontosReal} meta={META_PONTOS}
                 peso={tot.pesoPontos} poTotal={tot.poTotal} apOk={tot.apOk}
+                minPct={0}
               />
-              <BarRow
-                label="🍺 Cerveja (Volume HL)"
-                real={tot.realCerv} meta={tot.metaCerv}
-                peso={tot.pesoCerv} poTotal={tot.poTotal} apOk={tot.apOk}
-              />
-              <BarRow
-                label="🥤 NAB (Volume HL)"
-                real={tot.realNab} meta={tot.metaNab}
-                peso={tot.pesoNab} poTotal={tot.poTotal} apOk={tot.apOk}
-              />
-              <BarRow
-                label={`${tot.varLabel === "Match" ? "🤝" : "🛒"} ${tot.varLabel} (${tot.varLabel === "Match" ? "Vol HL" : "GMV R$"})`}
-                real={tot.realVar} meta={tot.metaVar}
-                peso={tot.pesoVar} poTotal={tot.poTotal} apOk={tot.apOk}
-              />
+              {/* Resultados — piso 70%, renderizados conforme peso do segmento */}
+              {tot.indicadores.map(ind => (
+                <BarRow
+                  key={ind.key}
+                  label={ind.label}
+                  real={ind.real} meta={ind.meta}
+                  peso={ind.peso} poTotal={tot.poTotal} apOk={tot.apOk}
+                />
+              ))}
             </div>
           </div>
 
@@ -452,7 +467,8 @@ export default function RvSimulador() {
                       const pPts  = l.pctPontos;
                       const pCerv = pct(l.realCerv, l.metaCerv);
                       const pNab  = pct(l.realNab,  l.metaNab);
-                      const pVar  = pct(l.realVar,  l.metaVar);
+                      // Var % = indicador variável principal do segmento (OFF→Match, ON→Marketplace)
+                      const pVar  = l.seg === "OFF" ? pct(l.realMatch, l.metaMatch) : pct(l.realMktp, l.metaMktp);
                       const ppPO  = l.poTotal > 0 ? (l.total / l.poTotal * 100) : 0;
                       const cor = (v) => v >= 100 ? "#4ade80" : v >= 70 ? "#fbb900" : "#f87171";
                       return (

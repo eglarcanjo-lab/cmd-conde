@@ -5,11 +5,16 @@ import api from "../../services/api";
 
 const META_PONTOS = 100_000;
 
+// Pesos oficiais do regulamento de RV (% do PO). Fixos — não usar o campo da planilha.
+const PESOS = {
+  OFF: { pontos: 50, cerveja: 25, nab: 12.5, marketplace: 7.5, match: 5 }, // AS/Rota/Sub
+  ON:  { pontos: 50, cerveja: 25, nab: 15,   marketplace: 10,  match: 0 }, // On Trade
+};
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 const n = (v) => parseFloat(v || 0);
 const brl = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = (real, meta) => meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
-const normPeso = (val, fallback) => { const v = n(val); return (v > 0 && v <= 100) ? v : fallback; };
 
 function calcRv(real, meta, peso, po, apOk, minPct = 70) {
   if (!apOk || !meta) return 0;
@@ -28,35 +33,36 @@ function rvRN(r) {
   const apOk = r.ap_ok === "OK";
   const po   = n(r.po_total);
   const seg  = r.segmento || "OFF";
+  const w    = PESOS[seg] || PESOS.ON;
 
-  const pesoPt  = normPeso(r.peso_pontos, 50);
-  const pctPt   = pct(n(r.pontos_real), META_PONTOS);
-  const rvPt    = apOk && pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
+  // Pontos Force — sem piso
+  const pesoPt = w.pontos;
+  const pctPt  = pct(n(r.pontos_real), META_PONTOS);
+  const rvPt   = apOk && pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
+  const potPt  = pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
 
-  const pesoCv  = normPeso(r.peso_cerveja, 25);
-  const pesoNb  = normPeso(r.peso_nab, 15);
-  const rvCv    = calcRv(n(r.real_cerveja), n(r.meta_cerveja), pesoCv, po, apOk);
-  const rvNb    = calcRv(n(r.real_nab), n(r.meta_nab), pesoNb, po, apOk);
+  // Resultados — piso 70%, conforme peso do segmento (peso 0 = não entra)
+  const defs = [
+    { key: "cerveja",     nome: "Cerveja",     peso: w.cerveja,     real: n(r.real_cerveja),     meta: n(r.meta_cerveja),     unidade: "HL" },
+    { key: "nab",         nome: "NAB",         peso: w.nab,         real: n(r.real_nab),         meta: n(r.meta_nab),         unidade: "HL" },
+    { key: "marketplace", nome: "Marketplace", peso: w.marketplace, real: n(r.real_marketplace), meta: n(r.meta_marketplace), unidade: "R$" },
+    { key: "match",       nome: "Match",       peso: w.match,       real: n(r.real_match),       meta: n(r.meta_match),       unidade: "HL" },
+  ];
+  const indicadores = defs.filter(d => d.peso > 0).map(d => ({
+    ...d,
+    pctVal: pct(d.real, d.meta),
+    rv:     calcRv(d.real, d.meta, d.peso, po, apOk),
+    rvPot:  calcPot(d.real, d.meta, d.peso, po),
+  }));
 
-  const isOff   = seg === "OFF";
-  const pesoVar = normPeso(isOff ? r.peso_match : r.peso_marketplace, 10);
-  const realVar = n(isOff ? r.real_match : r.real_marketplace);
-  const metaVar = n(isOff ? r.meta_match : r.meta_marketplace);
-  const rvVar   = calcRv(realVar, metaVar, pesoVar, po, apOk);
+  const total = rvPt + indicadores.reduce((s, i) => s + i.rv, 0);
+  const pot   = potPt + indicadores.reduce((s, i) => s + i.rvPot, 0);
 
-  const total   = rvPt + rvCv + rvNb + rvVar;
-  const potPt   = pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
-  const pot     = potPt + calcPot(n(r.real_cerveja), n(r.meta_cerveja), pesoCv, po) +
-                  calcPot(n(r.real_nab), n(r.meta_nab), pesoNb, po) +
-                  calcPot(realVar, metaVar, pesoVar, po);
+  // Variável principal do segmento (para a coluna resumo): OFF→Match, ON→Marketplace
+  const varKey = seg === "OFF" ? "match" : "marketplace";
+  const varInd = indicadores.find(i => i.key === varKey) || { pctVal: 0 };
 
-  return {
-    apOk, po, seg, pesoPt, pctPt, rvPt,
-    pesoCv, rvCv, pesoNb, rvNb,
-    pesoVar, realVar, metaVar, rvVar,
-    total, pot,
-    varLabel: isOff ? "Match" : "Marketplace",
-  };
+  return { apOk, po, seg, pesoPt, pctPt, rvPt, indicadores, total, pot, pctVar: varInd.pctVal };
 }
 
 // ── componente principal ──────────────────────────────────────────────────────
@@ -191,7 +197,7 @@ export default function RVRelatorio() {
                     const c = rvRN(r);
                     const pctCv = pct(n(r.real_cerveja), n(r.meta_cerveja));
                     const pctNb = pct(n(r.real_nab), n(r.meta_nab));
-                    const pctVr = pct(c.realVar, c.metaVar);
+                    const pctVr = c.pctVar;
                     return (
                       <tr key={r.setor} style={{ background: i % 2 === 0 ? "#f8f8f8" : "#fff", borderBottom: "1px solid #ddd" }}>
                         <td style={{ padding: "6px 8px", fontWeight: "700" }}>{r.setor}</td>
@@ -250,11 +256,20 @@ export default function RVRelatorio() {
               {dados.map((r) => {
                 const c = rvRN(r);
                 const ap = r.ap_detalhe;
+                const fmtVal = (v, unit) => unit === "R$"
+                  ? `R$ ${brl(v)}`
+                  : `${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`;
                 const rows = [
                   { label: "Pontos Force", peso: c.pesoPt, real: n(r.pontos_real).toLocaleString("pt-BR"), meta: META_PONTOS.toLocaleString("pt-BR"), pctVal: c.pctPt, rv: c.rvPt, unit: "pts", minPct: 70 },
-                  { label: "Cerveja", peso: c.pesoCv, real: `${n(r.real_cerveja).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`, meta: `${n(r.meta_cerveja).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`, pctVal: pct(n(r.real_cerveja), n(r.meta_cerveja)), rv: c.rvCv, unit: "HL" },
-                  { label: "NAB", peso: c.pesoNb, real: `${n(r.real_nab).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`, meta: `${n(r.meta_nab).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`, pctVal: pct(n(r.real_nab), n(r.meta_nab)), rv: c.rvNb, unit: "HL" },
-                  { label: c.varLabel, peso: c.pesoVar, real: c.seg === "OFF" ? `${c.realVar.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL` : `R$ ${brl(c.realVar)}`, meta: c.seg === "OFF" ? `${c.metaVar.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL` : `R$ ${brl(c.metaVar)}`, pctVal: pct(c.realVar, c.metaVar), rv: c.rvVar, unit: c.seg === "OFF" ? "HL" : "R$" },
+                  ...c.indicadores.map(ind => ({
+                    label: ind.nome,
+                    peso:  ind.peso,
+                    real:  fmtVal(ind.real, ind.unidade),
+                    meta:  fmtVal(ind.meta, ind.unidade),
+                    pctVal: ind.pctVal,
+                    rv:    ind.rv,
+                    unit:  ind.unidade,
+                  })),
                 ];
                 return (
                   <div key={r.setor} className="avoid-break" style={{ border: `2px solid ${c.apOk ? "#e5e7eb" : "#fca5a5"}`, borderRadius: "8px", overflow: "hidden", fontSize: "0.75rem" }}>
