@@ -17,6 +17,9 @@ export default function RvSimuladorPage() {
           </div>
         </div>
         <div style={styles.headerRight}>
+          <button style={styles.relatorioBtn} onClick={() => navigate("/rv-relatorio")} title="Relatório consolidado para diretoria">
+            📄 Relatório RV
+          </button>
           <span style={styles.badge}>{usuario?.nome}</span>
           <button style={styles.logoutBtn} onClick={logout}>Sair</button>
         </div>
@@ -39,4 +42,5 @@ const styles = {
   badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
   content: { padding: "32px", maxWidth: "1100px", margin: "0 auto" },
+  relatorioBtn: { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600", whiteSpace: "nowrap" },
 };

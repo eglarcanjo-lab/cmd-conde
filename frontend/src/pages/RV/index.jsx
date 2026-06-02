@@ -126,15 +126,6 @@ export default function RV() {
           </div>
         </div>
         <div style={styles.headerRight}>
-          {["admin", "director"].includes(usuario?.perfil) && (
-            <button
-              style={styles.relatorioBtn}
-              onClick={() => navigate("/rv-relatorio")}
-              title="Relatório consolidado para diretoria"
-            >
-              📄 Relatório
-            </button>
-          )}
           <input type="month" style={styles.inputMes} value={mesRef} onChange={(e) => setMesRef(e.target.value)} />
           <button style={styles.logoutBtn} onClick={logout}>Sair</button>
         </div>
@@ -249,7 +240,6 @@ const styles = {
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
   inputMes: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "10px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none", minHeight: "44px" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "10px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", minHeight: "44px" },
-  relatorioBtn: { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600", minHeight: "44px", whiteSpace: "nowrap" },
   content: { padding: "clamp(16px,4vw,24px) clamp(16px,4vw,32px)", maxWidth: "900px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px" },
   apCard: { background: "rgba(255,255,255,0.03)", border: "1px solid", borderRadius: "14px", padding: "20px" },
