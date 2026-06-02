@@ -222,91 +222,84 @@ export default function RvSimulador() {
 
   function exportarRelatorio() {
     const r2 = (v) => Math.round(v * 100) / 100;
-    const p1 = (v) => r2(v);
+    const totalPO = linhas.reduce((a, l) => a + l.poTotal, 0);
 
-    // ── Aba 1: Resumo por RN ────────────────────────────────────────────────
-    const resumo = linhas.map(l => {
-      const rvExibido = l.apOk ? l.total : l.totalPot;
-      return {
-        "Setor":             l.cod,
-        "Nome RN":           l.nome,
-        "Segmento":          l.tipo,
-        "AP":                l.apOk ? "OK" : "NOK",
-        "Status RV":         l.apOk ? "Confirmada" : "Potencial (AP NOK)",
-        "PO Total (R$)":     r2(l.poTotal),
-        "Pontos Force %":    p1(pct(l.pontosReal, META_PONTOS)),
-        "Pontos Force (R$)": r2(l.apOk ? l.rvPontos : l.rvPontsPot),
-        "Cerveja %":         p1(pct(l.realCerv, l.metaCerv)),
-        "Cerveja (R$)":      r2(l.apOk ? l.rvCerv : l.rvCervPot),
-        "NAB %":             p1(pct(l.realNab, l.metaNab)),
-        "NAB (R$)":          r2(l.apOk ? l.rvNab : l.rvNabPot),
-        "Marketplace %":     l.pesoMktp  > 0 ? p1(pct(l.realMktp, l.metaMktp))   : "—",
-        "Marketplace (R$)":  l.pesoMktp  > 0 ? r2(l.apOk ? l.rvMktp  : l.rvMktpPot)  : "—",
-        "Match %":           l.pesoMatch > 0 ? p1(pct(l.realMatch, l.metaMatch)) : "—",
-        "Match (R$)":        l.pesoMatch > 0 ? r2(l.apOk ? l.rvMatch : l.rvMatchPot) : "—",
-        "Total RV (R$)":     r2(rvExibido),
-        "% do PO":           l.poTotal > 0 ? p1((rvExibido / l.poTotal) * 100) : 0,
-      };
-    });
-
-    // linha de totais
+    // ════════════════════════════════════════════════════════════
+    // ABA 1 — RESUMO CONSOLIDADO (espelha a tabela resumo do PDF)
+    // ════════════════════════════════════════════════════════════
+    const resumo = linhas.map(l => ({
+      "Setor":            l.cod,
+      "Representante":    l.nome,
+      "Segmento":         l.tipo,
+      "AP":               l.apOk ? "OK" : "NOK",
+      "PO Total (R$)":    r2(l.poTotal),
+      "Pontos Force %":   r2(pct(l.pontosReal, META_PONTOS)),
+      "Cerveja %":        r2(pct(l.realCerv, l.metaCerv)),
+      "NAB %":            r2(pct(l.realNab, l.metaNab)),
+      "Marketplace %":    l.pesoMktp  > 0 ? r2(pct(l.realMktp, l.metaMktp))   : "—",
+      "Match %":          l.pesoMatch > 0 ? r2(pct(l.realMatch, l.metaMatch)) : "—",
+      "RV Total (R$)":    r2(l.apOk ? l.total : l.totalPot),
+      "% do PO":          l.poTotal > 0 ? r2(((l.apOk ? l.total : l.totalPot) / l.poTotal) * 100) : 0,
+      "Status":           l.apOk ? "Confirmada" : "Potencial (AP NOK)",
+    }));
     resumo.push({
-      "Setor": "TOTAL",
-      "Nome RN": "",
-      "Segmento": "",
-      "AP": "",
-      "Status RV": "",
-      "PO Total (R$)": r2(linhas.reduce((a, l) => a + l.poTotal, 0)),
-      "Pontos Bees %": "",
-      "Pontos Bees (R$)": "",
-      "Cerveja %": "",
-      "Cerveja (R$)": "",
-      "NAB %": "",
-      "NAB (R$)": "",
-      "Match %": "",
-      "Match (R$)": "",
-      "Total RV (R$)": r2(somaPotencial),
-      "% do PO": "",
+      "Setor": "TOTAL OPERAÇÃO", "Representante": "", "Segmento": "", "AP": "",
+      "PO Total (R$)": r2(totalPO), "Pontos Force %": "", "Cerveja %": "", "NAB %": "",
+      "Marketplace %": "", "Match %": "", "RV Total (R$)": r2(somaTotal),
+      "% do PO": totalPO > 0 ? r2((somaTotal / totalPO) * 100) : 0, "Status": "",
+    });
+    const wsResumo = XLSX.utils.json_to_sheet(resumo);
+    wsResumo["!cols"] = [14,22,10,6,14,14,12,10,14,10,14,10,20].map(w => ({ wch: w }));
+
+    // ════════════════════════════════════════════════════════════
+    // ABA 2 — DETALHAMENTO POR REPRESENTANTE (blocos como no PDF)
+    // ════════════════════════════════════════════════════════════
+    const aoa = [];
+    aoa.push([`RELATÓRIO DE REMUNERAÇÃO VARIÁVEL — Competência ${mesRef}`]);
+    aoa.push([]);
+
+    linhas.forEach(l => {
+      const ap = getAp(l.cod);
+      aoa.push([`Setor ${l.cod} — ${l.nome}  (${l.tipo})`, "", "", "", l.apOk ? "AP OK" : "AP NOK — RV bloqueada"]);
+      aoa.push([`PO Total: R$ ${fmtBrl(l.poTotal)}`]);
+      if (ap) {
+        const gates = KPIS_AP.map(k => {
+          const real = parseFloat(ap[`${k.key}_real`] || 0);
+          const meta = parseFloat(ap[`${k.key}_meta`] || 0);
+          return `${k.label}: ${real.toFixed(0)}/${meta.toFixed(0)} ${real >= meta ? "OK" : "NOK"}`;
+        });
+        aoa.push(["Atendimento Produtivo:", ...gates]);
+      }
+      // Tabela de indicadores — SEM coluna de peso
+      aoa.push(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"]);
+      aoa.push([
+        "Pontos Force",
+        r2(META_PONTOS),
+        r2(l.pontosReal),
+        r2(pct(l.pontosReal, META_PONTOS)),
+        r2(l.apOk ? l.rvPontos : l.rvPontsPot),
+      ]);
+      l.indicadores.forEach(ind => {
+        aoa.push([
+          ind.nome,
+          r2(ind.meta),
+          r2(ind.real),
+          r2(pct(ind.real, ind.meta)),
+          r2(l.apOk ? ind.rv : ind.rvPot),
+        ]);
+      });
+      const rvExibido = l.apOk ? l.total : l.totalPot;
+      aoa.push(["TOTAL RV", "", "", "", r2(rvExibido)]);
+      if (!l.apOk) aoa.push(["Potencial caso AP fosse OK", "", "", "", r2(l.totalPot)]);
+      aoa.push([]);
     });
 
-    // ── Aba 2: Detalhamento por indicador ───────────────────────────────────
-    const detalhe = [];
-    linhas.forEach(l => {
-      const rvExibido = l.apOk ? l.total : l.totalPot;
-      const addLinha = (indicador, peso, real, meta, rvVal) => {
-        const pctAting = pct(real, meta);
-        detalhe.push({
-          "Setor":       l.cod,
-          "Nome RN":     l.nome,
-          "AP":          l.apOk ? "OK" : "NOK",
-          "Indicador":   indicador,
-          "Peso %":      peso,
-          "Meta":        r2(meta),
-          "Realizado":   r2(real),
-          "Atingimento %": p1(pctAting),
-          "Piso 70%":    pctAting >= 70 ? "Atingido" : "Abaixo — R$0",
-          "RV (R$)":     r2(rvVal),
-          "Status":      l.apOk ? "Confirmada" : "Potencial (AP NOK)",
-        });
-      };
-      addLinha("Pontos Force", l.pesoPontos, l.pontosReal, META_PONTOS, l.apOk ? l.rvPontos : l.rvPontsPot);
-      l.indicadores.forEach(ind =>
-        addLinha(ind.nome, ind.peso, ind.real, ind.meta, l.apOk ? ind.rv : ind.rvPot)
-      );
-      detalhe.push({ "Setor": "", "Nome RN": `── Total ${l.cod}`, "AP": "", "Indicador": "", "Peso %": "", "Meta": "", "Realizado": "", "Atingimento %": "", "Piso 70%": "", "RV (R$)": r2(rvExibido), "Status": "" });
-    });
+    const wsDet = XLSX.utils.aoa_to_sheet(aoa);
+    wsDet["!cols"] = [26, 16, 16, 16, 16].map(w => ({ wch: w }));
 
     const wb = XLSX.utils.book_new();
-    const wsResumo  = XLSX.utils.json_to_sheet(resumo);
-    const wsDetalhe = XLSX.utils.json_to_sheet(detalhe);
-
-    wsResumo["!cols"]  = [8,20,10,6,22,14,14,16,10,12,6,8,12,16,14,10].map(w=>({wch:w}));
-    wsDetalhe["!cols"] = [8,20,6,14,8,10,12,14,20,10,22].map(w=>({wch:w}));
-
-    XLSX.utils.book_append_sheet(wb, wsResumo,  "Resumo RV");
-    XLSX.utils.book_append_sheet(wb, wsDetalhe, "Detalhamento");
-
-    const mesLabel = mesRef.replace("-", "-");
+    XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
+    XLSX.utils.book_append_sheet(wb, wsDet,    "Detalhamento");
     XLSX.writeFile(wb, `relatorio_rv_${mesRef}.xlsx`);
   }
 

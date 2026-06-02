@@ -314,7 +314,6 @@ export default function RVRelatorio() {
                       <thead>
                         <tr style={{ background: "#f3f4f6", borderBottom: "1px solid #ddd" }}>
                           <th style={{ padding: "5px 8px", textAlign: "left", fontWeight: "600", color: "#666", fontSize: "0.68rem" }}>Indicador</th>
-                          <th style={{ padding: "5px 8px", textAlign: "center", fontWeight: "600", color: "#666", fontSize: "0.68rem" }}>Peso</th>
                           <th style={{ padding: "5px 8px", textAlign: "right", fontWeight: "600", color: "#666", fontSize: "0.68rem" }}>Meta</th>
                           <th style={{ padding: "5px 8px", textAlign: "right", fontWeight: "600", color: "#666", fontSize: "0.68rem" }}>Realizado</th>
                           <th style={{ padding: "5px 8px", textAlign: "center", fontWeight: "600", color: "#666", fontSize: "0.68rem" }}>%</th>
@@ -327,7 +326,6 @@ export default function RVRelatorio() {
                           return (
                             <tr key={row.label} style={{ borderBottom: "1px solid #eee", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
                               <td style={{ padding: "5px 8px", fontWeight: "600" }}>{row.label}</td>
-                              <td style={{ padding: "5px 8px", textAlign: "center", color: "#555" }}>{row.peso}%</td>
                               <td style={{ padding: "5px 8px", textAlign: "right", color: "#444" }}>{row.meta}</td>
                               <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "600" }}>{row.real}</td>
                               <td style={{ padding: "5px 8px", textAlign: "center", color: cor, fontWeight: "700" }}>{row.pctVal.toFixed(1)}%</td>
@@ -340,7 +338,7 @@ export default function RVRelatorio() {
                       </tbody>
                       <tfoot>
                         <tr style={{ background: c.apOk ? "#fefce8" : "#fef2f2", borderTop: "2px solid #e5e7eb" }}>
-                          <td colSpan={5} style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "0.78rem", color: "#444" }}>
+                          <td colSpan={4} style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "0.78rem", color: "#444" }}>
                             {!c.apOk && <span style={{ color: "#dc2626", marginRight: "8px", fontSize: "0.7rem" }}>AP NOK — RV bloqueada</span>}
                             TOTAL RV:
                           </td>
@@ -350,7 +348,7 @@ export default function RVRelatorio() {
                         </tr>
                         {!c.apOk && (
                           <tr style={{ background: "#fff7ed" }}>
-                            <td colSpan={5} style={{ padding: "4px 8px", textAlign: "right", fontSize: "0.68rem", color: "#92400e" }}>
+                            <td colSpan={4} style={{ padding: "4px 8px", textAlign: "right", fontSize: "0.68rem", color: "#92400e" }}>
                               Potencial caso AP fosse OK:
                             </td>
                             <td style={{ padding: "4px 8px", textAlign: "right", fontSize: "0.78rem", fontWeight: "700", color: "#92400e" }}>
