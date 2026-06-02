@@ -17,9 +17,6 @@ export default function RvSimuladorPage() {
           </div>
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.relatorioBtn} onClick={() => navigate("/rv-relatorio")} title="Relatório consolidado para diretoria">
-            📄 Relatório RV
-          </button>
           <span style={styles.badge}>{usuario?.nome}</span>
           <button style={styles.logoutBtn} onClick={logout}>Sair</button>
         </div>

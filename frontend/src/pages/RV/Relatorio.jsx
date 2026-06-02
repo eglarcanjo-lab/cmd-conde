@@ -66,6 +66,8 @@ export default function RVRelatorio() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro]     = useState("");
   const [mesRef, setMesRef] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get("mes");
+    if (q && /^\d{4}-\d{2}$/.test(q)) return q;
     const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });

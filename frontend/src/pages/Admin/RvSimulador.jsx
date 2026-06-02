@@ -304,8 +304,11 @@ export default function RvSimulador() {
           <button style={{ ...s.btnCalc, opacity: recalc ? 0.7 : 1 }} onClick={recalcular} disabled={recalc}>
             {recalc ? "Recalculando..." : "🔄 Recalcular RV"}
           </button>
-          <button style={s.btnExport} onClick={exportarRelatorio}>
-            ⬇️ Exportar Relatório
+          <button style={s.btnExport} onClick={() => window.open(`/rv-relatorio?mes=${mesRef}`, "_blank")}>
+            📄 Relatório PDF
+          </button>
+          <button style={s.btnExcel} onClick={exportarRelatorio} title="Baixar dados brutos em Excel">
+            ⬇️ Excel
           </button>
         </div>
       </div>
@@ -505,7 +508,8 @@ const s = {
   desc: { margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" },
   inputMes: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   btnCalc: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "8px 18px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
-  btnExport: { background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", borderRadius: "8px", padding: "8px 18px", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnExport: { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", borderRadius: "8px", padding: "8px 18px", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnExcel: { background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", color: "#4ade80", borderRadius: "8px", padding: "8px 14px", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   msgLoad: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px" },
 
   // Seletor de RN
