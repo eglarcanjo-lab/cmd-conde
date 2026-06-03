@@ -32,6 +32,7 @@ export default function PopupsAdmin() {
   const [preview, setPreview] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
+  const [testPopup, setTestPopup] = useState(null); // pré-visualização
   const fileRef = useRef(null);
 
   useEffect(() => { carregar(); }, []);
@@ -208,11 +209,30 @@ export default function PopupsAdmin() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                <button style={ST.btnTest} onClick={() => setTestPopup(p)} title="Pré-visualizar">👁️</button>
                 <button style={ST.btnEdit} onClick={() => editar(p)}>✏️</button>
                 <button style={ST.btnDel} onClick={() => remover(p.id)}>✕</button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pré-visualização (como aparece no app) */}
+      {testPopup && (
+        <div style={ST.testOverlay} onClick={() => setTestPopup(null)}>
+          <div style={{ position: "relative", maxWidth: "440px", width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <button style={ST.testClose} onClick={() => setTestPopup(null)}>✕</button>
+            <img src={testPopup.imagem_url} alt="" style={ST.testImg} />
+            {(testPopup.acao_tipo === "rota" || testPopup.acao_tipo === "link") && testPopup.acao_valor && (
+              <div style={{ textAlign: "center", marginTop: "12px" }}>
+                <span style={ST.testCta}>{testPopup.acao_tipo === "link" ? "Acessar →" : "Ver mais →"}</span>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", marginTop: "6px" }}>
+                  ação: {testPopup.acao_valor}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -236,6 +256,11 @@ const ST = {
   rowTitle:  { color: "#fff", fontWeight: "600", fontSize: "0.9rem" },
   rowSub:    { color: "rgba(255,255,255,0.4)", fontSize: "0.74rem", marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   tag:       { fontSize: "0.66rem", fontWeight: "700", padding: "2px 8px", borderRadius: "10px" },
+  btnTest:   { background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", color: "#a5b4fc", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
   btnEdit:   { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
   btnDel:    { background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
+  testOverlay:{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", zIndex: 2000 },
+  testClose: { position: "absolute", top: "-14px", right: "-14px", background: "#0a0f1e", border: "2px solid rgba(255,255,255,0.2)", color: "#fff", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", zIndex: 2 },
+  testImg:   { width: "100%", maxHeight: "78vh", objectFit: "contain", borderRadius: "14px", boxShadow: "0 16px 50px rgba(0,0,0,0.6)" },
+  testCta:   { background: "linear-gradient(135deg,#fbb900,#e6a200)", color: "#0a0f1e", borderRadius: "10px", padding: "10px 24px", fontWeight: "700", fontSize: "0.9rem", display: "inline-block" },
 };
