@@ -16,6 +16,8 @@ import RV from "./pages/RV";
 import RVRelatorio from "./pages/RV/Relatorio";
 import SPO from "./pages/SPO";
 import VolumeDiario from "./pages/VolumeDiario";
+import Incentivos from "./pages/Incentivos";
+import PopupDiario from "./components/PopupDiario";
 import api from "./services/api";
 
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
@@ -46,7 +48,9 @@ function AppContent() {
   }
 
   return (
-    <Routes>
+    <>
+      {usuario && location.pathname !== "/login" && <PopupDiario />}
+      <Routes>
       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
       <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><Admin /></ErrorBoundary></PrivateRoute>} />
@@ -59,8 +63,10 @@ function AppContent() {
       <Route path="/rv-relatorio" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><RVRelatorio /></ErrorBoundary></PrivateRoute>} />
       <Route path="/incidentes" element={<PrivateRoute><ErrorBoundary><Incidentes /></ErrorBoundary></PrivateRoute>} />
       <Route path="/volume-diario" element={<PrivateRoute><ErrorBoundary><VolumeDiario /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/incentivos" element={<PrivateRoute><ErrorBoundary><Incentivos /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

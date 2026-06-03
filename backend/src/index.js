@@ -49,6 +49,8 @@ app.use("/api/rv", require("./routes/rv"));
 app.use("/api/incidentes", require("./routes/incidentes"));
 app.use("/api/manutencao", require("./routes/manutencao"));
 app.use("/api/volume-diario", require("./routes/volume-diario"));
+app.use("/api/incentivos", require("./routes/incentivos"));
+app.use("/api/popups", require("./routes/popups"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
