@@ -71,14 +71,14 @@ function AppContent() {
   );
 }
 
-// Marcador de versão — muda a cada deploy para validar a atualização no mobile
-const APP_BUILD = "2026-06-03 · teste-att-1";
+// Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
+export const APP_VERSION = "v2.9.0";
 
 export default function App() {
   return (
     <AuthProvider>
       <AtualizacaoApp />
-      <span className="assinatura">Desenvolvido por Eduardo Arcanjo · {APP_BUILD}</span>
+      <span className="assinatura">Desenvolvido por Eduardo Arcanjo · {APP_VERSION}</span>
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
