@@ -18,6 +18,7 @@ import SPO from "./pages/SPO";
 import VolumeDiario from "./pages/VolumeDiario";
 import Incentivos from "./pages/Incentivos";
 import PopupDiario from "./components/PopupDiario";
+import AtualizacaoApp from "./components/AtualizacaoApp";
 import api from "./services/api";
 
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
@@ -73,6 +74,7 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
+      <AtualizacaoApp />
       <span className="assinatura">Desenvolvido por Eduardo Arcanjo</span>
       <BrowserRouter>
         <AppContent />

@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",       // controlamos o refresh via banner (registerSW manual)
+      injectRegister: false,        // registramos manualmente em components/AtualizacaoApp
       includeAssets: ["icon-192.png", "icon-512.png", "apple-touch-icon.png"],
       manifest: {
         name: "CMD Ambev · Conde",
