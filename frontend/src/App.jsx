@@ -71,11 +71,14 @@ function AppContent() {
   );
 }
 
+// Marcador de versão — muda a cada deploy para validar a atualização no mobile
+const APP_BUILD = "2026-06-03 · teste-att-1";
+
 export default function App() {
   return (
     <AuthProvider>
       <AtualizacaoApp />
-      <span className="assinatura">Desenvolvido por Eduardo Arcanjo</span>
+      <span className="assinatura">Desenvolvido por Eduardo Arcanjo · {APP_BUILD}</span>
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
