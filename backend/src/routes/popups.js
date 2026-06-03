@@ -42,11 +42,15 @@ async function sobrescreverPopups(lista) {
   await sobrescreverAba("popups", [POPUP_HEADERS, ...lista.map((r) => POPUP_HEADERS.map((h) => r[h] ?? ""))]);
 }
 
+function cloudinaryConfigurado() {
+  return !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+}
+
 function uploadCloudinary(buffer, mimetype) {
   return new Promise((resolve, reject) => {
     const resourceType = mimetype?.startsWith("video") ? "video" : "image";
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "cmd-conde/popups", resource_type: resourceType },
+      { folder: "cmd-conde/popups", resource_type: resourceType, timeout: 60000 },
       (error, result) => (error ? reject(error) : resolve(result))
     );
     stream.end(buffer);
@@ -97,6 +101,9 @@ router.post("/admin", adminOnly, upload.single("imagem"), async (req, res) => {
   try {
     const b = req.body || {};
     if (!req.file && !b.imagem_url) return res.status(400).json({ error: "Envie a imagem do popup." });
+    if (req.file && !cloudinaryConfigurado()) {
+      return res.status(500).json({ error: "Upload de imagem indisponível: Cloudinary não configurado no servidor (CLOUDINARY_*)." });
+    }
 
     let imagemUrl = b.imagem_url || "";
     if (req.file) {
@@ -136,6 +143,9 @@ router.put("/admin/:id", adminOnly, upload.single("imagem"), async (req, res) =>
     if (idx === -1) return res.status(404).json({ error: "Popup não encontrado." });
 
     const b = req.body || {};
+    if (req.file && !cloudinaryConfigurado()) {
+      return res.status(500).json({ error: "Upload de imagem indisponível: Cloudinary não configurado no servidor (CLOUDINARY_*)." });
+    }
     let imagemUrl = existentes[idx].imagem_url;
     if (req.file) {
       const r = await uploadCloudinary(req.file.buffer, req.file.mimetype);

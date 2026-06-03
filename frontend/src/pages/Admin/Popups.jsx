@@ -73,14 +73,17 @@ export default function PopupsAdmin() {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       if (arquivo) fd.append("imagem", arquivo);
-      const cfg = { headers: { "Content-Type": "multipart/form-data" } };
+      // timeout maior: upload de imagem + cold-start do backend pode passar de 15s
+      const cfg = { headers: { "Content-Type": "multipart/form-data" }, timeout: 120000 };
       if (editId) await api.put(`/api/popups/admin/${editId}`, fd, cfg);
       else        await api.post("/api/popups/admin", fd, cfg);
       setMsg("✅ Salvo!");
       cancelar();
       await carregar();
     } catch (err) {
-      setMsg(err.response?.data?.error || "❌ Erro ao salvar.");
+      const status = err.response?.status;
+      const detalhe = err.response?.data?.error || (err.code === "ECONNABORTED" ? "tempo esgotado (upload demorou demais)" : err.message);
+      setMsg(`❌ Erro ao salvar${status ? ` [${status}]` : ""}: ${detalhe}`);
     } finally {
       setSalvando(false);
       setTimeout(() => setMsg(""), 4000);
