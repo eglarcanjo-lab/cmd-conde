@@ -108,10 +108,16 @@ export default function RVRelatorio() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          @page { size: A4; margin: 12mm 15mm 15mm 15mm; }
-          .page-break { page-break-before: always; }
-          .avoid-break { page-break-inside: avoid; }
+          html, body { height: auto !important; overflow: visible !important; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { size: A4; margin: 12mm 14mm; }
+          .page-break { page-break-before: always; break-before: page; }
+          .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+          /* CSS Grid não pagina no Chrome — vira blocos que fluem entre páginas */
+          .rv-cards { display: block !important; }
+          .rv-cards > div { width: 100% !important; margin: 0 0 12px !important; page-break-inside: avoid; break-inside: avoid; }
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; break-inside: avoid; }
+          thead { display: table-header-group; }
         }
         @media screen {
           .rv-relatorio-wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
@@ -252,7 +258,7 @@ export default function RVRelatorio() {
               Detalhamento por Representante
             </h2>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+            <div className="rv-cards" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
               {dados.map((r) => {
                 const c = rvRN(r);
                 const ap = r.ap_detalhe;
