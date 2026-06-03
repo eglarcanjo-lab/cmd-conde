@@ -186,7 +186,7 @@ export default function RVRelatorio() {
             {/* ══════════════════════════════════════════════════════
                 TABELA RESUMO
             ══════════════════════════════════════════════════════ */}
-            <div className="avoid-break" style={{ marginBottom: "28px" }}>
+            <div style={{ marginBottom: "28px" }}>
               <h2 style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #fbb900", paddingLeft: "8px", margin: "0 0 10px" }}>
                 Resumo Consolidado
               </h2>
@@ -252,9 +252,7 @@ export default function RVRelatorio() {
             {/* ══════════════════════════════════════════════════════
                 DETALHAMENTO POR RN
             ══════════════════════════════════════════════════════ */}
-            <div className="page-break" />
-
-            <h2 style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #fbb900", paddingLeft: "8px", margin: "0 0 16px" }}>
+            <h2 className="page-break" style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #fbb900", paddingLeft: "8px", margin: "0 0 16px" }}>
               Detalhamento por Representante
             </h2>
 
