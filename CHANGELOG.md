@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.3 — 2026-06-04
+- **Fix:** seletor "Mês de Referência" da importação vinha com default no
+  **mês anterior**, fazendo relatórios sem data própria (Visitação, Score5,
+  Alone, RGB, Cupons, etc.) serem gravados no mês errado se o usuário não
+  trocasse. Default agora é o **mês atual** + banner grande mostrando o mês
+  de destino antes de processar.
+
 ### v2.9.2 — 2026-06-04
 - **Fix:** página Produtos do admin mostrava tudo como "sem categoria".
   Causa: endpoint duplicado `GET /produtos` no admin.js (criado para o

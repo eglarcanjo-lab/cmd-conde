@@ -33,12 +33,18 @@ const GRUPOS = [
 ];
 
 const hoje = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+const MESES_NOMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-function mesAnterior() {
+// Default = mês ATUAL (caso comum: importar dados do mês corrente no dia a dia).
+// Para fechar/reimportar um mês passado, é só trocar o seletor.
+function mesAtualStr() {
   const d = new Date();
-  d.setDate(1);
-  d.setMonth(d.getMonth() - 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function mesPorExtenso(mesRef) {
+  const [y, m] = (mesRef || "").split("-");
+  const nome = MESES_NOMES[(parseInt(m, 10) || 1) - 1];
+  return nome ? `${nome} ${y}` : mesRef;
 }
 
 export default function Arquivos() {
@@ -48,7 +54,7 @@ export default function Arquivos() {
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState("");
   // Mês de referência: garante que relatórios sem data sejam atribuídos ao mês correto
-  const [mesRef, setMesRef] = useState(mesAnterior());
+  const [mesRef, setMesRef] = useState(mesAtualStr());
   const inputRefs = useRef({});
 
   useEffect(() => { carregarStatus(); }, []);
@@ -130,6 +136,20 @@ export default function Arquivos() {
             {processando ? "⏳ Processando..." : "⚡ Processar"}
           </button>
         </div>
+      </div>
+
+      {/* Banner do mês de destino — bem visível para evitar importar no mês errado */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "10px", padding: "10px 16px", marginBottom: "18px", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "1.1rem" }}>📅</span>
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>
+          Importando para o mês:
+        </span>
+        <span style={{ color: "#a5b4fc", fontWeight: "800", fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+          {mesPorExtenso(mesRef)}
+        </span>
+        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem", marginLeft: "4px" }}>
+          — confira antes de processar (afeta relatórios sem data própria)
+        </span>
       </div>
 
       {erro && <p style={{ color: "#f87171", fontSize: "0.85rem", marginBottom: "16px" }}>{erro}</p>}
