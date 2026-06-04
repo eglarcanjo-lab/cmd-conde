@@ -2098,7 +2098,7 @@ export default function SPO() {
             {/* Header do painel: título + botão lupa/fechar */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px",
               ...(painelFull ? { position: "sticky", top: 0, background: "#0a0f1e", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
-              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.9rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
+              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
               <button
                 onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}
@@ -2283,13 +2283,13 @@ export default function SPO() {
                               return real >= meta;
                             };
 
-                            const thStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
-                            const thSubStyle = { padding: "3px 5px", color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
-                            const tdStyle = { padding: "4px 5px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
-              
+                            const thStyle = { padding: "6px 7px", color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
+                            const thSubStyle = { padding: "4px 6px", color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
+                            const tdStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
+
                             return (
                               <div style={{ overflowX: "auto" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.83rem" }}>
                                   <thead>
                                     <tr>
                                       <th style={thStyle}>#</th>
@@ -2406,36 +2406,36 @@ const styles = {
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   scoreboard: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
   scoreboardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
-  scoreboardTitle: { fontWeight: "700", fontSize: "0.95rem" },
-  scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" },
+  scoreboardTitle: { fontWeight: "700", fontSize: "1rem" },
+  scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.8rem" },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" },
   kpiCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "4px" },
   kpiCardAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.04)" },
-  kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" },
-  kpiLabel: { color: "rgba(255,255,255,0.7)", fontSize: "0.78rem", lineHeight: "1.3" },
+  kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.74rem" },
+  kpiLabel: { color: "rgba(255,255,255,0.7)", fontSize: "0.84rem", lineHeight: "1.3" },
   kpiPts: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" },
   abas: { display: "flex", gap: "4px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px" },
   abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
   section: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
-  sectionTitle: { margin: "0 0 16px", fontSize: "0.95rem", fontWeight: "600" },
+  sectionTitle: { margin: "0 0 16px", fontSize: "1.02rem", fontWeight: "600" },
   opGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "12px" },
   opCard: { background: "rgba(255,255,255,0.04)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" },
-  opLabel: { margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.78rem" },
+  opLabel: { margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.84rem" },
   opVal: { margin: 0, fontSize: "1.6rem", fontWeight: "800" },
   gvGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "14px" },
   gvCard: { background: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", gap: "8px" },
   gvHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  gvLabel: { fontWeight: "600", fontSize: "0.95rem" },
+  gvLabel: { fontWeight: "600", fontSize: "1rem" },
   gvFooter: { display: "flex", justifyContent: "space-between" },
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
   tableWrap: { overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" },
   table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.04em", padding: "9px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.04em", padding: "9px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
-  td: { padding: "8px 12px", color: "rgba(255,255,255,0.75)", fontSize: "0.85rem", textAlign: "center" },
+  td: { padding: "8px 12px", color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", textAlign: "center" },
   codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 7px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" },
   statusTag: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "600", whiteSpace: "nowrap" },
 };

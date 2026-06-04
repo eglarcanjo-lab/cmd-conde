@@ -82,32 +82,43 @@ export default function Admin() {
         </div>
       </div>
 
-      <div style={styles.tabs}>
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            style={{ ...styles.tab, ...(tab === t.id ? styles.tabActive : {}) }}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <style>{`
+        @media (max-width: 820px) {
+          .admin-body { flex-direction: column !important; }
+          .admin-sidebar { flex-direction: row !important; overflow-x: auto; min-width: 0 !important; width: 100%;
+            border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 10px 12px !important; }
+          .admin-content { padding: 20px 16px !important; max-width: 100% !important; }
+        }
+      `}</style>
 
-      <div style={styles.content}>
-        {tab === "usuarios" && <Usuarios />}
-        {tab === "metas" && <Metas />}
-        {tab === "arquivos" && <Arquivos />}
-        {tab === "produtos" && <Produtos />}
-        {tab === "ap" && <AtendimentoProdutivo />}
-        {tab === "rv_simulador" && <RvSimulador />}
-        {tab === "spo_desafios" && <SpoDesafios />}
-        {tab === "spo_metas" && <SpoMetas />}
-        {tab === "sku_foco" && <SkuFoco />}
-        {tab === "incentivos" && <IncentivosAdmin />}
-        {tab === "popups" && <PopupsAdmin />}
-        {tab === "incidentes" && <Incidentes />}
-        {tab === "configuracoes" && <Configuracoes />}
+      <div className="admin-body" style={styles.body}>
+        <nav className="admin-sidebar" style={styles.sidebar}>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              style={{ ...styles.tab, ...(tab === t.id ? styles.tabActive : {}) }}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="admin-content" style={styles.content}>
+          {tab === "usuarios" && <Usuarios />}
+          {tab === "metas" && <Metas />}
+          {tab === "arquivos" && <Arquivos />}
+          {tab === "produtos" && <Produtos />}
+          {tab === "ap" && <AtendimentoProdutivo />}
+          {tab === "rv_simulador" && <RvSimulador />}
+          {tab === "spo_desafios" && <SpoDesafios />}
+          {tab === "spo_metas" && <SpoMetas />}
+          {tab === "sku_foco" && <SkuFoco />}
+          {tab === "incentivos" && <IncentivosAdmin />}
+          {tab === "popups" && <PopupsAdmin />}
+          {tab === "incidentes" && <Incidentes />}
+          {tab === "configuracoes" && <Configuracoes />}
+        </div>
       </div>
     </div>
   );
@@ -126,8 +137,9 @@ const styles = {
   cacheBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600" },
   cacheBtnLoading: { opacity: 0.6, cursor: "not-allowed" },
   msgCache: { fontSize: "0.75rem", color: "rgba(255,255,255,0.6)" },
-  tabs: { display: "flex", gap: "4px", padding: "16px 32px 0", borderBottom: "1px solid rgba(255,255,255,0.08)" },
-  tab: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", transition: "all 0.2s" },
-  tabActive: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
-  content: { padding: "32px", maxWidth: "1100px", margin: "0 auto" },
+  body: { display: "flex", alignItems: "flex-start" },
+  sidebar: { display: "flex", flexDirection: "column", gap: "2px", padding: "18px 12px", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "208px", flexShrink: 0, position: "sticky", top: 0 },
+  tab: { background: "transparent", border: "none", borderLeft: "3px solid transparent", color: "rgba(255,255,255,0.55)", padding: "11px 14px", cursor: "pointer", fontSize: "0.95rem", fontFamily: "inherit", textAlign: "left", borderRadius: "0 8px 8px 0", transition: "all 0.15s", whiteSpace: "nowrap" },
+  tabActive: { color: "#fbb900", borderLeft: "3px solid #fbb900", background: "rgba(251,185,0,0.08)", fontWeight: "600" },
+  content: { flex: 1, padding: "28px 32px", minWidth: 0, maxWidth: "1200px" },
 };

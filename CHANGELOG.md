@@ -47,6 +47,12 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.1 — 2026-06-03
+- Menu do admin reorganizado: sub-abas agora em **barra lateral à esquerda**
+  (conteúdo abre à direita), responsivo no mobile.
+- Fontes do **SPO** (painel consolidado + cards de detalhe) aumentadas para legibilidade.
+- Fontes da aba **Arquivos** (importação) aumentadas.
+
 ### v2.9.0 — 2026-06-03  *(marco / baseline)*
 Consolidação a partir da linhagem informal (~v2.8) com o pacote recente:
 - **Incentivos** — campanhas data-driven (ranking automático por SKU ou manual), aba no app + admin.

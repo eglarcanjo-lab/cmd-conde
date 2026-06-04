@@ -139,8 +139,8 @@ export default function Arquivos() {
         {GRUPOS.map(grupo => (
           <div key={grupo.id}>
             <div style={{ marginBottom: "10px", paddingBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.88rem", color: "#fbb900" }}>{grupo.label}</p>
-              <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>{grupo.desc}</p>
+              <p style={{ margin: 0, fontWeight: "700", fontSize: "1rem", color: "#fbb900" }}>{grupo.label}</p>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{grupo.desc}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {ARQUIVOS_CONFIG.filter(c => c.grupo === grupo.id).map(cfg => {
@@ -159,7 +159,7 @@ export default function Arquivos() {
                       background: selecionado ? "rgba(251,185,0,0.07)" : "rgba(255,255,255,0.03)",
                       border: `1px solid ${selecionado ? "rgba(251,185,0,0.5)" : hoje_ok ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.08)"}`,
                       borderRadius: "8px",
-                      padding: "8px 10px",
+                      padding: "10px 12px",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
@@ -170,10 +170,10 @@ export default function Arquivos() {
                         width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
                         background: selecionado ? "#fbb900" : hoje_ok ? "#4ade80" : "rgba(255,255,255,0.15)",
                       }} />
-                      <span style={{ fontSize: "0.95rem", flexShrink: 0 }}>{cfg.icon}</span>
+                      <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{cfg.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: "0.78rem", fontWeight: "600", color: selecionado ? "#fbb900" : "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {cfg.numero ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", marginRight: "4px" }}>{cfg.numero}</span> : cfg.item ? <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.68rem", marginRight: "4px" }}>#{cfg.item}</span> : null}
+                        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: "600", color: selecionado ? "#fbb900" : "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {cfg.numero ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem", marginRight: "4px" }}>{cfg.numero}</span> : cfg.item ? <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.74rem", marginRight: "4px" }}>#{cfg.item}</span> : null}
                           {selecionado ? selecionado.name : cfg.rotulo}
                         </p>
                         {selecionado && (
