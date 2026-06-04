@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.2 — 2026-06-04
+- **Fix:** página Produtos do admin mostrava tudo como "sem categoria".
+  Causa: endpoint duplicado `GET /produtos` no admin.js (criado para o
+  auto-fill do SKU Foco) sombreava a rota real de `routes/produtos.js` e
+  devolvia só cod+nome, sem a coluna `categorias`. Endpoint removido —
+  a rota volta a servir a base completa. Auto-fill segue funcionando.
+
 ### v2.9.1 — 2026-06-03
 - Menu do admin reorganizado: sub-abas agora em **barra lateral à esquerda**
   (conteúdo abre à direita), responsivo no mobile.

@@ -128,16 +128,9 @@ router.post("/metas/import", async (req, res) => {
 
 // ─── PRODUTOS BASE ───────────────────────────────────────────────────────────
 
-// GET /api/admin/produtos — retorna lista de produtos para auto-fill de nome
-router.get("/produtos", async (req, res) => {
-  try {
-    const produtos = await readSheet("produtos_base");
-    return res.json(produtos.map((p) => ({ cod: String(p.cod || "").trim(), nome: String(p.nome || "").trim() })));
-  } catch (err) {
-    console.error("admin/produtos GET:", err);
-    return res.status(500).json({ error: "Erro ao buscar produtos." });
-  }
-});
+// NOTA: a rota GET /api/admin/produtos é servida por routes/produtos.js
+// (retorna a base completa, incluindo a coluna 'categorias'). Não definir
+// aqui um /produtos — senão ele sombreia a rota real e remove as categorias.
 
 // ─── SKU FOCO ────────────────────────────────────────────────────────────────
 // Usa sobrescreverAba em todas as mutações para garantir que o cabeçalho
