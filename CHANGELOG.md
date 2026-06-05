@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.4.0** — Detalhamento HOP: filtros, clique-no-mês e top clientes
+Versão atual: **v3.5.0** — Detalhamento HOP: drill-downs, itens da nota e tabelas ordenáveis
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,21 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.0 — 2026-06-05
+- **Tabelas ordenáveis** em todo o Detalhamento — clique no cabeçalho para ordenar
+  (números/volume/valor e datas do maior p/ menor; nomes em ordem alfabética).
+- **Entrega:**
+  - **Busca por PDV** (uma caixa só — digita código *ou* nome).
+  - Clicar numa linha do **Detalhe** abre os **itens da nota fiscal** (modal),
+    cruzando a Nota com a base de pedidos (`nota_itens`).
+- **Ruptura:**
+  - **Drill-down:** clicar num **produto** mostra os clientes e as **datas de
+    ocorrência**; clicar num **cliente** mostra o **top de produtos** em falta.
+  - Gráfico com **cores por média do quadrimestre** (🔴 acima da média ·
+    🟡 ≥90% · 🟢 abaixo) e **linha de referência** da média.
+  - Processador passa a gerar `ruptura_detalhe` (ocorrência: cliente × produto ×
+    dia) e `nota_itens` (itens das notas frustradas).
 
 ### v3.4.0 — 2026-06-05
 - **Detalhamento HOP — Ruptura repaginada:** o detalhe agora cobre **todo o

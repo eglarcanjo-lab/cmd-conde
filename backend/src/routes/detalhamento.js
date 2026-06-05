@@ -17,13 +17,15 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const r2 = (n) => Math.round(n * 100) / 100;
 const r3 = (n) => Math.round(n * 1000) / 1000;
 const uniqSort = (arr) => [...new Set(arr.filter(Boolean))].sort();
+const normNota = (v) => String(v ?? "").trim().replace(/^0+/, "");
 
-// GET /api/detalhamento/entrega?mes=&setor=&motivo=   (todos opcionais; vazio = consolidado)
+// GET /api/detalhamento/entrega?mes=&setor=&motivo=&pdv=
 router.get("/entrega", async (req, res) => {
   try {
     const mes = String(req.query.mes || "").trim();
     const setor = String(req.query.setor || "").trim();
     const motivo = String(req.query.motivo || "").trim();
+    const pdv = String(req.query.pdv || "").trim().toLowerCase();
 
     const [frustradasRaw, efetivadasRaw] = await Promise.all([
       readSheet("entregas_frustradas").catch(() => []),
@@ -33,20 +35,28 @@ router.get("/entrega", async (req, res) => {
     const frustradas = filtrarPorPerfil(frustradasRaw, req.user);
     const efetivadas = filtrarPorPerfil(efetivadasRaw, req.user);
 
-    // Opções de filtro (a partir do universo visível)
     const opcoes = {
       meses: uniqSort(frustradas.map((r) => String(r.mes_referencia))),
       setores: uniqSort(frustradas.map((r) => String(r.setor))),
       motivos: uniqSort(frustradas.map((r) => String(r.desc_motivo))),
     };
 
-    const matchMes = (r, campo = "mes_referencia") => !mes || String(r[campo]) === mes;
-    const matchSetor = (r) => !setor || String(r.setor) === setor;
-    const matchMotivo = (r) => !motivo || String(r.desc_motivo) === motivo;
+    const matchPdv = (r) =>
+      !pdv ||
+      String(r.cod_pdv || "").toLowerCase().includes(pdv) ||
+      String(r.nome_pdv || "").toLowerCase().includes(pdv);
 
-    const fFilt = frustradas.filter((r) => matchMes(r) && matchSetor(r) && matchMotivo(r));
-    // Efetivado ignora o filtro de motivo (motivo só existe na frustrada)
-    const eFilt = efetivadas.filter((r) => matchMes(r) && matchSetor(r));
+    const fFilt = frustradas.filter(
+      (r) =>
+        (!mes || String(r.mes_referencia) === mes) &&
+        (!setor || String(r.setor) === setor) &&
+        (!motivo || String(r.desc_motivo) === motivo) &&
+        matchPdv(r)
+    );
+    // Efetivado ignora motivo/pdv (não existem nessa base)
+    const eFilt = efetivadas.filter(
+      (r) => (!mes || String(r.mes_referencia) === mes) && (!setor || String(r.setor) === setor)
+    );
 
     const volEfetivado = r3(eFilt.reduce((s, r) => s + num(r.volume_entregue_hl), 0));
     const volFrustrado = r3(fFilt.reduce((s, r) => s + num(r.volume_hl), 0));
@@ -71,7 +81,6 @@ router.get("/entrega", async (req, res) => {
     const porMotivo = agrupar(fFilt, "desc_motivo", "desc_motivo");
     const porSetor = agrupar(fFilt, "setor", "setor");
 
-    // Por PDV
     const mapPdv = {};
     fFilt.forEach((r) => {
       const k = String(r.cod_pdv || "—");
@@ -91,10 +100,10 @@ router.get("/entrega", async (req, res) => {
         desc_motivo: r.desc_motivo, volume_hl: r3(num(r.volume_hl)), valor: r2(num(r.valor)),
       }))
       .sort((a, b) => b.volume_hl - a.volume_hl)
-      .slice(0, 800);
+      .slice(0, 1500);
 
     return res.json({
-      filtros: { mes, setor, motivo },
+      filtros: { mes, setor, motivo, pdv },
       opcoes,
       volume_efetivado_hl: volEfetivado,
       volume_frustrado_hl: volFrustrado,
@@ -113,21 +122,38 @@ router.get("/entrega", async (req, res) => {
   }
 });
 
+// GET /api/detalhamento/nota?nota=123  — itens da nota fiscal frustrada
+router.get("/nota", async (req, res) => {
+  try {
+    const nota = normNota(req.query.nota);
+    if (!nota) return res.json({ nota, itens: [] });
+    const todos = await readSheet("nota_itens").catch(() => []);
+    const itens = todos
+      .filter((r) => normNota(r.nota) === nota)
+      .map((r) => ({
+        cod_produto: r.cod_produto,
+        nome_produto: r.nome_produto,
+        volume_marcacao_hl: r3(num(r.volume_marcacao_hl)),
+        volume_entrega_hl: r3(num(r.volume_entrega_hl)),
+      }))
+      .sort((a, b) => b.volume_marcacao_hl - a.volume_marcacao_hl);
+    return res.json({ nota, itens });
+  } catch (err) {
+    console.error("detalhamento/nota:", err);
+    return res.status(500).json({ error: "Erro ao buscar itens da nota." });
+  }
+});
+
 // GET /api/detalhamento/ruptura?mes=   (vazio = consolidado do quadrimestre)
 router.get("/ruptura", async (req, res) => {
   try {
     const mes = String(req.query.mes || "").trim();
-    const [produtoRaw, clienteRaw] = await Promise.all([
-      readSheet("ruptura_produto").catch(() => []),
-      readSheet("ruptura_cliente").catch(() => []),
-    ]);
+    const detRaw = await readSheet("ruptura_detalhe").catch(() => []);
+    const det = filtrarPorPerfil(detRaw, req.user);
 
-    const cliente = filtrarPorPerfil(clienteRaw, req.user);
-    const produto = produtoRaw; // produto não tem setor (visão admin)
-
-    // Chart: total por mês (sempre todos os meses)
+    // Chart: total por mês (todos) + média do período
     const mapMes = {};
-    produto.forEach((r) => {
+    det.forEach((r) => {
       const m = String(r.mes);
       if (!mapMes[m]) mapMes[m] = { mes: m, volume_falta_hl: 0, qtd_faltas: 0 };
       mapMes[m].volume_falta_hl += num(r.volume_falta_hl);
@@ -135,12 +161,13 @@ router.get("/ruptura", async (req, res) => {
     });
     const meses = uniqSort(Object.keys(mapMes));
     const porMes = meses.map((m) => ({ ...mapMes[m], volume_falta_hl: r3(mapMes[m].volume_falta_hl) }));
+    const media = porMes.length ? r3(porMes.reduce((s, m) => s + m.volume_falta_hl, 0) / porMes.length) : 0;
 
-    const matchMes = (r) => !mes || String(r.mes) === mes;
+    // Escopo (mês ou consolidado)
+    const escopo = det.filter((r) => !mes || String(r.mes) === mes);
 
-    // Produtos (consolida meses do escopo)
     const mapProd = {};
-    produto.filter(matchMes).forEach((r) => {
+    escopo.forEach((r) => {
       const k = String(r.cod_produto || "").trim();
       if (!mapProd[k]) mapProd[k] = { cod_produto: k, nome_produto: r.nome_produto, categoria: r.categoria || "", qtd_faltas: 0, volume_falta_hl: 0 };
       mapProd[k].qtd_faltas += Math.round(num(r.qtd_faltas));
@@ -150,9 +177,8 @@ router.get("/ruptura", async (req, res) => {
       .map((p) => ({ ...p, volume_falta_hl: r3(p.volume_falta_hl) }))
       .sort((a, b) => b.volume_falta_hl - a.volume_falta_hl);
 
-    // Clientes (consolida meses do escopo) — top 101
     const mapCli = {};
-    cliente.filter(matchMes).forEach((r) => {
+    escopo.forEach((r) => {
       const k = String(r.cod_pdv || "").trim();
       if (!mapCli[k]) mapCli[k] = { cod_pdv: k, nome_pdv: r.nome_pdv, setor: r.setor, qtd_faltas: 0, volume_falta_hl: 0 };
       mapCli[k].qtd_faltas += Math.round(num(r.qtd_faltas));
@@ -165,6 +191,14 @@ router.get("/ruptura", async (req, res) => {
 
     const totalVolume = r3(porProduto.reduce((s, p) => s + p.volume_falta_hl, 0));
 
+    // Detalhe do escopo (para drill-down produto↔cliente↔data no frontend)
+    const detalhe = escopo.map((r) => ({
+      setor: r.setor, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv,
+      cod_produto: r.cod_produto, nome_produto: r.nome_produto, categoria: r.categoria,
+      data: r.data, mes: r.mes, qtd_faltas: Math.round(num(r.qtd_faltas)),
+      volume_falta_hl: r3(num(r.volume_falta_hl)),
+    }));
+
     return res.json({
       filtros: { mes },
       total_volume_falta_hl: totalVolume,
@@ -172,8 +206,9 @@ router.get("/ruptura", async (req, res) => {
       clientes_afetados: porCliente.length,
       por_produto: porProduto,
       por_cliente: porCliente,
-      quadrimestre: { meses, por_mes: porMes },
-      tem_dados: produto.length > 0 || cliente.length > 0,
+      detalhe,
+      quadrimestre: { meses, por_mes: porMes, media },
+      tem_dados: det.length > 0,
     });
   } catch (err) {
     console.error("detalhamento/ruptura:", err);
