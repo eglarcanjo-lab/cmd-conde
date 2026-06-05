@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.10 — 2026-06-04
+- **Fix:** página de Remuneração (RN) não mostrava o **Marketplace** para o
+  segmento OFF. Agora usa os pesos fixos do regulamento e exibe todos os
+  indicadores com peso > 0 (OFF: Cerveja, NAB, Marketplace 7,5%, Match 5%;
+  ON: Cerveja, NAB, Marketplace), alinhado ao simulador e ao relatório.
+  Também corrige o label do mês (estava fixo em 2026-05).
+
 ### v2.9.9 — 2026-06-04
 - **Backend (fix):** inicialização das planilhas batia na quota do Google
   Sheets (60 leituras/min) ao ler as ~50 abas uma a uma no startup,
