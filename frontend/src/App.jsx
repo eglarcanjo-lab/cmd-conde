@@ -19,6 +19,7 @@ import VolumeDiario from "./pages/VolumeDiario";
 import Incentivos from "./pages/Incentivos";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
+import HopAssistente from "./components/HopAssistente";
 import api from "./services/api";
 
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
@@ -51,6 +52,7 @@ function AppContent() {
   return (
     <>
       {usuario && location.pathname !== "/login" && <PopupDiario />}
+      {usuario && location.pathname !== "/login" && <HopAssistente />}
       <Routes>
       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
       <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
@@ -72,7 +74,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.0.0";
+export const APP_VERSION = "v3.1.0";
 
 export default function App() {
   return (

@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v3.1.0 — 2026-06-04
+- **Hop, a assistente** 🤖 — balão flutuante em todas as telas. Ao abrir,
+  a Hop analisa os dados do RN e mostra **insights automáticos** (sem IA/custo):
+  volume do dia, status do AP (gate da RV), posição nos incentivos e tasks
+  em aberto. Backend `GET /api/hop/insights`.
+- Campo de chat já preparado (desabilitado) para ligar uma IA/LLM no futuro.
+
 ### v3.0.0 — 2026-06-04  *(MAJOR — rebrand Hop Follow-up)* 🎨
 Nova identidade visual e marca: **CMD Ambev · Conde → Hop Follow-up**.
 - **Paleta:** azul/âmbar → verde Hop (`#7DBA3D` acento · `#0c1410` fundo). 404 cores trocadas em 35 telas.
