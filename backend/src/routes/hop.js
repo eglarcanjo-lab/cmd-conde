@@ -1,8 +1,13 @@
-// Hop — assistente de insights (sem IA/LLM): analisa os dados do RN e gera destaques.
+// Hop — assistente. /insights = destaques automáticos (sem IA).
+// /chat = perguntas livres via IA (Google Gemini, tier grátis).
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
+
+const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+const HOP_MODEL = process.env.HOP_MODEL || "gemini-2.0-flash";
 
 router.use(authMiddleware);
 
@@ -169,6 +174,80 @@ router.get("/insights", async (req, res) => {
     : `Olá, ${primeiroNome}! 👋 Por enquanto não tenho destaques novos. Assim que rolar movimento, eu te aviso por aqui! 💚`;
 
   return res.json({ saudacao, insights, mes_referencia: mesRef });
+});
+
+// POST /api/hop/chat — pergunta livre, respondida pela IA com base nos dados do RN
+router.post("/chat", async (req, res) => {
+  const user = req.user;
+  const setor = String(user.cod || "").trim();
+  const pergunta = String(req.body?.pergunta || "").trim();
+  if (!pergunta) return res.status(400).json({ error: "Pergunta vazia." });
+
+  if (!GEMINI_KEY) {
+    return res.json({
+      resposta: "O chat com IA ainda não está ligado (falta configurar a chave). Por enquanto, toque no balão pra ver seus destaques automáticos! 💚",
+      sem_chave: true,
+    });
+  }
+
+  try {
+    // ── Monta o contexto de dados do RN ──────────────────────────────────────
+    const [vendas, rvAp, tasks, volumeDiario] = await Promise.all([
+      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheet("rv_ap").catch(() => []),
+      readSheet("tasks").catch(() => []),
+      readSheet("volume_diario").catch(() => []),
+    ]);
+
+    const minhasVendas = vendas
+      .filter((r) => String(r.setor || "").trim() === setor)
+      .slice(0, 4000);
+
+    let tabela = "PDV (cliente)\tProduto\tVolume(HL)\n";
+    minhasVendas.forEach((r) => {
+      tabela += `${r.nome_pdv || r.cod_pdv}\t${r.nome_produto || r.cod_produto}\t${r.volume_hl}\n`;
+    });
+
+    const ap = rvAp.find((r) => String(r.setor || "").trim() === setor);
+    const apTxt = ap ? (String(ap.ap_ok).toUpperCase() === "OK" ? "OK (RV liberada)" : "NOK (RV bloqueada)") : "sem dado";
+    const tasksAbertas = tasks.filter((t) => String(t.setor || "").trim() === setor && String(t.status || "").toUpperCase() !== "VALID").length;
+
+    const hoje = hojeBR();
+    const volHoje = volumeDiario
+      .filter((r) => String(r.setor || "").trim() === setor && r.data === dataStr(hoje))
+      .reduce((s, r) => s + (parseFloat(r.volume_hl) || 0), 0);
+
+    const mesNome = hoje.toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" });
+
+    const prompt = [
+      "Você é a Hop, assistente de resultados do app \"Hop Follow-up\", falando com um RN (vendedor) de cervejaria.",
+      "Responda em português do Brasil, de forma CURTA, amigável e direta. Use no máximo 4 linhas.",
+      "Baseie-se SOMENTE nos dados abaixo. Se a informação não estiver nos dados, diga que ainda não tem esse dado (não invente).",
+      "Volumes estão em HL (hectolitros). Pode usar um emoji 💚🍺🏆 quando fizer sentido.",
+      "",
+      `RN: ${user.nome} — Setor ${setor}. Mês de referência: ${mesNome}.`,
+      `Atendimento Produtivo (AP): ${apTxt}. Tasks em aberto: ${tasksAbertas}. Volume de hoje: ${volHoje.toFixed(1)} HL.`,
+      "",
+      `VENDAS DO MÊS por cliente x produto (${minhasVendas.length} registros):`,
+      tabela.slice(0, 120000), // hard cap de segurança
+      "",
+      `PERGUNTA DO RN: ${pergunta}`,
+      "RESPOSTA DA HOP:",
+    ].join("\n");
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${HOP_MODEL}:generateContent?key=${GEMINI_KEY}`;
+    const r = await axios.post(url, {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 600 },
+    }, { timeout: 30000 });
+
+    const resposta = r.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+      || "Não consegui formular uma resposta agora. Tenta reformular a pergunta? 💚";
+    return res.json({ resposta });
+  } catch (err) {
+    console.error("hop/chat:", err.response?.data || err.message);
+    return res.status(500).json({ error: "A Hop teve um problema pra pensar agora. Tenta de novo em instantes! 💚" });
+  }
 });
 
 module.exports = router;

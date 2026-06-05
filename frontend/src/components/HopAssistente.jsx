@@ -18,8 +18,28 @@ export default function HopAssistente() {
   const [loading, setLoading] = useState(false);
   const [dados, setDados] = useState({ saudacao: "", insights: [] });
   const [avatarOk, setAvatarOk] = useState(true);
+  const [mensagens, setMensagens] = useState([]); // { de:"rn"|"hop", texto }
+  const [pergunta, setPergunta] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   if (!usuario) return null;
+
+  async function enviar(e) {
+    e?.preventDefault?.();
+    const q = pergunta.trim();
+    if (!q || enviando) return;
+    setMensagens((m) => [...m, { de: "rn", texto: q }]);
+    setPergunta("");
+    setEnviando(true);
+    try {
+      const r = await api.post("/api/hop/chat", { pergunta: q }, { timeout: 35000 });
+      setMensagens((m) => [...m, { de: "hop", texto: r.data?.resposta || "Não consegui responder agora. 💚" }]);
+    } catch (err) {
+      setMensagens((m) => [...m, { de: "hop", texto: err.response?.data?.error || "Tive um problema pra pensar agora. Tenta de novo! 💚" }]);
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   async function abrir() {
     setAberto(true);
@@ -91,15 +111,34 @@ export default function HopAssistente() {
                       </div>
                     );
                   })}
+                  {dados.insights.length > 0 && (
+                    <div style={S.dica}>💬 Pode me perguntar coisas como “qual cliente comprou mais guaraná esse mês?”</div>
+                  )}
+
+                  {/* Conversa (chat IA) */}
+                  {mensagens.map((m, i) => (
+                    m.de === "rn"
+                      ? <div key={i} style={S.bolhaRn}>{m.texto}</div>
+                      : <div key={i} style={S.bolha}>{m.texto}</div>
+                  ))}
+                  {enviando && <div style={S.bolha}><span className="hop-dots">a Hop está pensando…</span></div>}
                 </>
               )}
             </div>
 
-            {/* Campo de chat — preparado para a IA (desabilitado por enquanto) */}
-            <div style={S.footer}>
-              <input style={S.input} placeholder="Em breve: pergunte qualquer coisa à Hop…" disabled />
-              <button style={S.enviar} disabled title="Chat com IA em breve">▶</button>
-            </div>
+            {/* Campo de chat com IA */}
+            <form style={S.footer} onSubmit={enviar}>
+              <input
+                style={S.input}
+                value={pergunta}
+                onChange={(e) => setPergunta(e.target.value)}
+                placeholder="Pergunte à Hop…"
+                disabled={enviando}
+              />
+              <button type="submit" style={S.enviar} disabled={enviando || !pergunta.trim()}>
+                {enviando ? "…" : "➤"}
+              </button>
+            </form>
           </div>
         </>
       )}
@@ -122,15 +161,17 @@ const S = {
 
   body: { flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" },
   loading: { color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "10px", padding: "20px 4px" },
-  bolha: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px 14px 14px 4px", padding: "12px 14px", color: "rgba(255,255,255,0.9)", fontSize: "0.88rem", lineHeight: 1.5 },
+  bolha: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px 14px 14px 4px", padding: "12px 14px", color: "rgba(255,255,255,0.9)", fontSize: "0.88rem", lineHeight: 1.5, whiteSpace: "pre-wrap" },
+  bolhaRn: { alignSelf: "flex-end", maxWidth: "85%", background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", borderRadius: "14px 14px 4px 14px", padding: "10px 13px", fontSize: "0.86rem", fontWeight: "600", lineHeight: 1.45 },
+  dica: { color: "rgba(255,255,255,0.4)", fontSize: "0.74rem", textAlign: "center", padding: "4px 8px", fontStyle: "italic" },
   insight: { display: "flex", gap: "10px", alignItems: "flex-start", border: "1px solid", borderRadius: "12px", padding: "11px 13px" },
   insIcone: { fontSize: "1.2rem", flexShrink: 0, lineHeight: 1.2 },
   insTitulo: { color: "#fff", fontWeight: "700", fontSize: "0.85rem", marginBottom: "2px" },
   insTexto: { color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", lineHeight: 1.45 },
 
   footer: { display: "flex", gap: "8px", padding: "12px", borderTop: "1px solid rgba(255,255,255,0.08)" },
-  input: { flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#fff", padding: "10px 12px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none", opacity: 0.6 },
-  enviar: { background: "rgba(125,186,61,0.2)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", borderRadius: "10px", width: "42px", cursor: "not-allowed", fontSize: "0.9rem" },
+  input: { flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#fff", padding: "10px 12px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none" },
+  enviar: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", border: "none", color: "#0c1410", borderRadius: "10px", width: "44px", cursor: "pointer", fontSize: "0.95rem", fontWeight: "700" },
 };
 
 const CSS = `

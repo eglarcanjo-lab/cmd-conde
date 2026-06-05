@@ -47,6 +47,17 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v3.2.0 — 2026-06-04
+- **Hop com chat IA** (Google Gemini, tier grátis) — o RN pergunta em
+  linguagem natural (ex: "qual cliente comprou mais guaraná esse mês?") e a
+  Hop responde com base nos dados. Backend `POST /api/hop/chat`; degrada com
+  graça se `GEMINI_API_KEY` não estiver configurada.
+- **Processador:** nova aba `vendas_cliente_produto` (setor×cliente×produto do
+  mês) gerada do arquivo de pedidos — base das perguntas no nível de cliente.
+- Campo de chat do balão da Hop ativado.
+- *Setup:* criar chave grátis em aistudio.google.com → `GEMINI_API_KEY` no
+  Railway; reimportar pedidos para gerar a aba nova.
+
 ### v3.1.0 — 2026-06-04
 - **Hop, a assistente** 🤖 — balão flutuante em todas as telas. Ao abrir,
   a Hop analisa os dados do RN e mostra **insights automáticos** (sem IA/custo):

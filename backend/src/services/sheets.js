@@ -215,6 +215,7 @@ async function initializeSheets() {
     incentivos: ["id","titulo","descricao","tipo","sku_codigo","premio","unidade","data_inicio","data_fim","ativo","publico_alvo","ordem","cor","criado_em"],
     incentivos_resultados: ["id_incentivo","setor","nome","valor","atualizado_em"],
     popups: ["id","titulo","imagem_url","ativo","data_inicio","data_fim","acao_tipo","acao_valor","publico_alvo","ordem","criado_em"],
+    vendas_cliente_produto: ["setor","cod_pdv","nome_pdv","cod_produto","nome_produto","volume_hl","mes_referencia"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
     configuracoes: ["chave", "valor"],
