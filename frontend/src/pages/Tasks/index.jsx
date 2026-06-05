@@ -15,7 +15,7 @@ const DIAS = [
 const STATUS_CONFIG = {
   VALID:   { label: "Validada", bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
   INVALID: { label: "Inválida", bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
-  OPEN:    { label: "Aberta",   bg: "rgba(251,185,0,0.15)",  color: "#fbb900" },
+  OPEN:    { label: "Aberta",   bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
 };
 
 function getDiaHoje() {
@@ -27,7 +27,7 @@ function QtdBar({ solicitada, comprada }) {
   const sol = Number(solicitada) || 0;
   const com = Number(comprada)   || 0;
   const pct = sol > 0 ? Math.min(100, Math.round((com / sol) * 100)) : 0;
-  const cor  = pct >= 100 ? "#4ade80" : pct > 0 ? "#fbb900" : "rgba(255,255,255,0.2)";
+  const cor  = pct >= 100 ? "#4ade80" : pct > 0 ? "#7DBA3D" : "rgba(255,255,255,0.2)";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
       <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
@@ -340,7 +340,7 @@ export default function Tasks() {
               return (
                 <div key={descricao} style={styles.pdvCard}>
                   <div
-                    style={{ ...styles.pdvHeader, borderLeft: "3px solid rgba(251,185,0,0.5)" }}
+                    style={{ ...styles.pdvHeader, borderLeft: "3px solid rgba(125,186,61,0.5)" }}
                     onClick={() => setTaskExpandida(aberto ? null : descricao)}
                   >
                     <div style={{ ...styles.pdvHeaderLeft, flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
@@ -429,7 +429,7 @@ export default function Tasks() {
                 </div>
                 <div style={styles.detalheItem}>
                   <span style={styles.detalheLabel}>Pontuação</span>
-                  <span style={{ ...styles.detalheVal, color: "#fbb900" }}>
+                  <span style={{ ...styles.detalheVal, color: "#7DBA3D" }}>
                     {taskDetalhe.task.pontuacao ? `${taskDetalhe.task.pontuacao} pts` : "—"}
                   </span>
                 </div>
@@ -458,7 +458,7 @@ export default function Tasks() {
 }
 
 const styles = {
-  root:       { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root:       { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header:     { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px" },
   backBtn:    { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
@@ -468,14 +468,14 @@ const styles = {
   content:    { padding: "24px 32px", maxWidth: "1100px", margin: "0 auto" },
   diasRow:    { display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" },
   diaBtn:     { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 16px", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  diaBtnAtivo:{ background: "rgba(251,185,0,0.15)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", fontWeight: "600" },
+  diaBtnAtivo:{ background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", fontWeight: "600" },
   dashRow:    { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   dashCard:   { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 18px", flex: 1, minWidth: "100px" },
   dashLabel:  { margin: "0 0 6px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)" },
   dashVal:    { margin: 0, fontSize: "1.6rem", fontWeight: "700" },
   viewToggle: { display: "flex", gap: "6px", marginBottom: "16px" },
   viewBtn:    { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "500" },
-  viewBtnAtivo:{ background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", fontWeight: "700" },
+  viewBtnAtivo:{ background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", fontWeight: "700" },
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" },
   inputBusca: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none", minWidth: "200px" },
   inputSelect:{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none", cursor: "pointer" },
@@ -484,13 +484,13 @@ const styles = {
   lista:      { display: "flex", flexDirection: "column", gap: "8px" },
   pdvCard:    { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", overflow: "hidden" },
   pdvHeader:  { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", cursor: "pointer", transition: "background 0.15s" },
-  pdvHeaderAberto: { borderLeft: "3px solid #fbb900" },
+  pdvHeaderAberto: { borderLeft: "3px solid #7DBA3D" },
   pdvHeaderLeft:   { display: "flex", alignItems: "center", gap: "8px", flex: 1, flexWrap: "wrap" },
   pdvHeaderRight:  { display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 },
-  codBadge:   { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700", whiteSpace: "nowrap" },
+  codBadge:   { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700", whiteSpace: "nowrap" },
   pdvNome:    { color: "#fff", fontSize: "0.88rem", fontWeight: "500" },
   pdvCidade:  { color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" },
-  tagAberta:  { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "2px 8px", borderRadius: "20px", fontSize: "0.72rem", fontWeight: "600" },
+  tagAberta:  { background: "rgba(125,186,61,0.15)", color: "#7DBA3D", padding: "2px 8px", borderRadius: "20px", fontSize: "0.72rem", fontWeight: "600" },
   expandIcon: { color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginLeft: "4px" },
   tasksList:  { borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column" },
   taskItem:   { padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", gap: "8px" },
@@ -498,7 +498,7 @@ const styles = {
   statusTag:  { padding: "2px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: "700" },
   catTag:     { background: "rgba(96,165,250,0.15)", color: "#60a5fa", padding: "2px 8px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "600" },
   clusterTag: { background: "rgba(167,139,250,0.15)", color: "#a78bfa", padding: "2px 7px", borderRadius: "6px", fontSize: "0.68rem", fontWeight: "500" },
-  ptsTag:     { color: "#fbb900", fontSize: "0.75rem", fontWeight: "600" },
+  ptsTag:     { color: "#7DBA3D", fontSize: "0.75rem", fontWeight: "600" },
   taskDesc:   { margin: 0, color: "rgba(255,255,255,0.75)", fontSize: "0.85rem", lineHeight: "1.4" },
   // Modal
   overlay:    { position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },

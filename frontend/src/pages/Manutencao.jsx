@@ -23,8 +23,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#0a0f1e",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    background: "#0c1410",
+    fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
   },
   card: {
     textAlign: "center",
@@ -47,7 +47,7 @@ const styles = {
   barFill: {
     height: "100%",
     width: "60%",
-    background: "linear-gradient(90deg, #fbb900, #e6a200)",
+    background: "linear-gradient(90deg, #7DBA3D, #2E7D32)",
     borderRadius: "2px",
     animation: "pulse 2s ease-in-out infinite",
   },

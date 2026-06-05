@@ -6,7 +6,7 @@ export default function PrivateRoute({ children, perfisPermitidos }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0f1e" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0c1410" }}>
         <p style={{ color: "rgba(255,255,255,0.4)" }}>Carregando...</p>
       </div>
     );

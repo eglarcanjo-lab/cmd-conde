@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 
 const STATUS_CONFIG = {
-  "Aguardando": { bg: "rgba(251,185,0,0.15)", color: "#fbb900" },
+  "Aguardando": { bg: "rgba(125,186,61,0.15)", color: "#7DBA3D" },
   "Respondido": { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
 };
 
@@ -166,7 +166,7 @@ const styles = {
   toolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
   toolbarLeft: { display: "flex", alignItems: "center", gap: "12px" },
   secTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "10px" },
-  badge: { background: "rgba(251,185,0,0.2)", color: "#fbb900", padding: "2px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700" },
+  badge: { background: "rgba(125,186,61,0.2)", color: "#7DBA3D", padding: "2px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700" },
   select: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none", cursor: "pointer" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", textAlign: "center", marginBottom: "12px" },
@@ -178,7 +178,7 @@ const styles = {
   incRn: { color: "rgba(255,255,255,0.6)", fontSize: "0.82rem" },
   incData: { color: "rgba(255,255,255,0.35)", fontSize: "0.75rem" },
   incDesc: { margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", lineHeight: "1.5", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" },
-  evidenciaLink: { color: "#fbb900", fontSize: "0.8rem", textDecoration: "none" },
+  evidenciaLink: { color: "#7DBA3D", fontSize: "0.8rem", textDecoration: "none" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
   modal: { background: "#111827", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "100%", maxWidth: "580px", maxHeight: "90vh", overflow: "auto" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
@@ -191,7 +191,7 @@ const styles = {
   descricao: { margin: 0, color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", lineHeight: "1.6", background: "rgba(255,255,255,0.04)", padding: "12px", borderRadius: "8px" },
   evidenciaMedia: { maxWidth: "100%", maxHeight: "280px", borderRadius: "8px", objectFit: "contain" },
   textarea: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "12px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none", resize: "vertical" },
-  btnResponder: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "10px", padding: "12px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" },
+  btnResponder: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "12px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" },
   respostaBox: { background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" },
   respostaLabel: { margin: 0, color: "#4ade80", fontSize: "0.78rem", fontWeight: "600" },
   respostaTexto: { margin: 0, color: "rgba(255,255,255,0.75)", fontSize: "0.88rem", lineHeight: "1.5" },

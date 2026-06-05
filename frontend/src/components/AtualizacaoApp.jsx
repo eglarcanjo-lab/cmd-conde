@@ -65,15 +65,15 @@ export default function AtualizacaoApp() {
 const S = {
   banner: {
     position: "fixed", top: 0, left: 0, right: 0, zIndex: 5000,
-    background: "linear-gradient(135deg,#fbb900,#e6a200)", color: "#0a0f1e",
+    background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410",
     display: "flex", alignItems: "center", justifyContent: "center", gap: "14px",
-    padding: "10px 16px", fontFamily: "'Segoe UI', system-ui, sans-serif",
+    padding: "10px 16px", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
     fontSize: "0.88rem", fontWeight: "700", boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
     animation: "att-slide 0.3s ease",
   },
   txt:  { display: "flex", alignItems: "center", gap: "8px" },
-  dot:  { width: "8px", height: "8px", borderRadius: "50%", background: "#0a0f1e", display: "inline-block", animation: "att-pulse 1.2s infinite" },
-  btn:  { background: "#0a0f1e", color: "#fbb900", border: "none", borderRadius: "8px", padding: "7px 16px", fontWeight: "700", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit" },
+  dot:  { width: "8px", height: "8px", borderRadius: "50%", background: "#0c1410", display: "inline-block", animation: "att-pulse 1.2s infinite" },
+  btn:  { background: "#0c1410", color: "#7DBA3D", border: "none", borderRadius: "8px", padding: "7px 16px", fontWeight: "700", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit" },
 };
 
 // injeta as animações uma vez

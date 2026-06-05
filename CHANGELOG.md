@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v2.9.0**
+Versão atual: **v3.0.0** — rebrand **Hop Follow-up**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.0.0 — 2026-06-04  *(MAJOR — rebrand Hop Follow-up)* 🎨
+Nova identidade visual e marca: **CMD Ambev · Conde → Hop Follow-up**.
+- **Paleta:** azul/âmbar → verde Hop (`#7DBA3D` acento · `#0c1410` fundo). 404 cores trocadas em 35 telas.
+- **Tipografia:** Poppins (fonte da marca).
+- **Nome/PWA:** título, manifest, ícone do app, meta tags → Hop Follow-up.
+- **Login** e cabeçalhos rebrandeados com logo + slogan "Inteligência que gera resultados".
+- **Hop (assistente):** janela de boas-vindas na Home — **só no celular, só para RN, 1x/dia**.
+- Relatório PDF com a marca Hop.
+- Botões secundários (índigo) realinhados ao verde.
+- *Pendente de assets do usuário:* `public/brand/logo.png`, `public/brand/hop-welcome.png` e os ícones do app (`icon-192/512`, `apple-touch-icon`).
 
 ### v2.9.10 — 2026-06-04
 - **Fix:** página de Remuneração (RN) não mostrava o **Marketplace** para o

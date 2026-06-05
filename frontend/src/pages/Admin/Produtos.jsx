@@ -21,19 +21,19 @@ const CATEGORIAS = [
 ];
 
 const CAT_COLORS = {
-  "GIRO RGB":                    { bg: "rgba(251,185,0,0.15)",  color: "#fbb900" },
+  "GIRO RGB":                    { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
   "CERVEJA":                     { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
   "CERVEJA ZERO":                { bg: "rgba(96,165,250,0.1)",  color: "#93c5fd" },
   "CERVEJA MULTIPACK":           { bg: "rgba(96,165,250,0.1)",  color: "#bfdbfe" },
   "HE":                          { bg: "rgba(167,139,250,0.15)",color: "#a78bfa" },
   "HE RGB":                      { bg: "rgba(167,139,250,0.12)",color: "#c4b5fd" },
-  "TRIMARCA RGB HE (Original)":  { bg: "rgba(251,185,0,0.12)", color: "#fcd34d" },
-  "TRIMARCA RGB HE (Stella)":    { bg: "rgba(251,185,0,0.10)", color: "#fde68a" },
-  "TRIMARCA RGB HE (Spaten)":    { bg: "rgba(251,185,0,0.08)", color: "#fef3c7" },
+  "TRIMARCA RGB HE (Original)":  { bg: "rgba(125,186,61,0.12)", color: "#fcd34d" },
+  "TRIMARCA RGB HE (Stella)":    { bg: "rgba(125,186,61,0.10)", color: "#fde68a" },
+  "TRIMARCA RGB HE (Spaten)":    { bg: "rgba(125,186,61,0.08)", color: "#fef3c7" },
   "NAB":                         { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
   "NAB ZERO":                    { bg: "rgba(34,197,94,0.1)",   color: "#86efac" },
   "MATCH":                       { bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
-  "LITRINHO":                    { bg: "rgba(251,185,0,0.15)",  color: "#fbbf24" },
+  "LITRINHO":                    { bg: "rgba(125,186,61,0.15)",  color: "#fbbf24" },
   "MKTP":                        { bg: "rgba(255,255,255,0.08)",color: "rgba(255,255,255,0.6)" },
   "BALANCED CHOICE":             { bg: "rgba(20,184,166,0.15)",  color: "#2dd4bf" },
 };
@@ -248,9 +248,9 @@ export default function Produtos() {
         <button
           style={{
             ...styles.catChip,
-            background: !filtroCat ? "rgba(251,185,0,0.18)" : "rgba(255,255,255,0.05)",
-            color: !filtroCat ? "#fbb900" : "rgba(255,255,255,0.35)",
-            border: !filtroCat ? "1px solid rgba(251,185,0,0.4)" : "1px solid rgba(255,255,255,0.08)",
+            background: !filtroCat ? "rgba(125,186,61,0.18)" : "rgba(255,255,255,0.05)",
+            color: !filtroCat ? "#7DBA3D" : "rgba(255,255,255,0.35)",
+            border: !filtroCat ? "1px solid rgba(125,186,61,0.4)" : "1px solid rgba(255,255,255,0.08)",
             fontWeight: !filtroCat ? "700" : "400",
           }}
           onClick={() => { setFiltroCat(""); setFiltro("todos"); }}
@@ -333,7 +333,7 @@ export default function Produtos() {
 const styles = {
   abas: { display: "flex", gap: "4px", marginBottom: "20px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", display: "flex", alignItems: "center", gap: "6px" },
-  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
+  abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
   badge: { background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "1px 6px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: "700" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", marginBottom: "12px", textAlign: "center" },
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center", flexWrap: "wrap" },
@@ -345,9 +345,9 @@ const styles = {
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
   lista: { display: "flex", flexDirection: "column", gap: "6px" },
   prodRow: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" },
-  prodRowAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.03)" },
+  prodRowAtivo: { border: "1px solid rgba(125,186,61,0.3)", background: "rgba(125,186,61,0.03)" },
   prodInfo: { display: "flex", alignItems: "center", gap: "10px", minWidth: "220px" },
-  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700", whiteSpace: "nowrap" },
+  codBadge: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700", whiteSpace: "nowrap" },
   prodNome: { color: "rgba(255,255,255,0.75)", fontSize: "0.83rem" },
   prodCats: { flex: 1 },
   prodCatsRow: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
@@ -359,6 +359,6 @@ const styles = {
   tagsGrid: { display: "flex", flexWrap: "wrap", gap: "6px" },
   tagToggle: { border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", transition: "all 0.15s" },
   tagsActions: { display: "flex", gap: "8px", justifyContent: "flex-end" },
-  btnSalvar: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "7px 16px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnSalvar: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", border: "none", borderRadius: "8px", padding: "7px 16px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   btnCancelar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
 };

@@ -88,7 +88,7 @@ export default function PopupDiario() {
 const S = {
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", zIndex: 2000, backdropFilter: "blur(4px)" },
   box:     { position: "relative", maxWidth: "440px", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" },
-  close:   { position: "absolute", top: "-14px", right: "-14px", background: "#0a0f1e", border: "2px solid rgba(255,255,255,0.2)", color: "#fff", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", fontSize: "1rem", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center" },
+  close:   { position: "absolute", top: "-14px", right: "-14px", background: "#0c1410", border: "2px solid rgba(255,255,255,0.2)", color: "#fff", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", fontSize: "1rem", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center" },
   img:     { width: "100%", maxHeight: "78vh", objectFit: "contain", borderRadius: "14px", boxShadow: "0 16px 50px rgba(0,0,0,0.6)" },
-  cta:     { background: "linear-gradient(135deg,#fbb900,#e6a200)", color: "#0a0f1e", border: "none", borderRadius: "10px", padding: "12px 28px", fontWeight: "700", fontSize: "0.95rem", cursor: "pointer", fontFamily: "inherit" },
+  cta:     { background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "12px 28px", fontWeight: "700", fontSize: "0.95rem", cursor: "pointer", fontFamily: "inherit" },
 };

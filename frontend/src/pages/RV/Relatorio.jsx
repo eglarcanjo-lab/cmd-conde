@@ -125,7 +125,7 @@ export default function RVRelatorio() {
       `}</style>
 
       {/* ── Toolbar (somente tela) ── */}
-      <div className="no-print" style={{ background: "#0a0f1e", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+      <div className="no-print" style={{ background: "#0c1410", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <button onClick={() => navigate(-1)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" }}>
           ← Voltar
         </button>
@@ -136,7 +136,7 @@ export default function RVRelatorio() {
         </div>
         <div style={{ flex: 1 }} />
         <button onClick={() => window.print()}
-          style={{ background: "linear-gradient(135deg,#fbb900,#e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit" }}>
+          style={{ background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit" }}>
           📄 Imprimir / Salvar PDF
         </button>
       </div>
@@ -150,20 +150,20 @@ export default function RVRelatorio() {
             {/* ══════════════════════════════════════════════════════
                 CABEÇALHO TIMBRADO
             ══════════════════════════════════════════════════════ */}
-            <div className="avoid-break" style={{ borderBottom: "4px solid #e6a200", marginBottom: "24px", paddingBottom: "16px" }}>
+            <div className="avoid-break" style={{ borderBottom: "4px solid #2E7D32", marginBottom: "24px", paddingBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
                 {/* Identidade */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "44px", height: "44px", background: "#fbb900", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "1.1rem", color: "#0a0f1e", flexShrink: 0 }}>
-                      CMD
+                    <div style={{ width: "44px", height: "44px", background: "#7DBA3D", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "1.3rem", color: "#fff", flexShrink: 0 }}>
+                      🌿
                     </div>
                     <div>
-                      <div style={{ fontWeight: "900", fontSize: "1.05rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                        Ambev · Conde
+                      <div style={{ fontWeight: "900", fontSize: "1.05rem", letterSpacing: "0.02em" }}>
+                        Hop <span style={{ fontWeight: "400" }}>Follow-up</span>
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                        Sistema de Gestão Comercial
+                      <div style={{ fontSize: "0.72rem", color: "#2E7D32", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: "600" }}>
+                        Inteligência que gera resultados
                       </div>
                     </div>
                   </div>
@@ -187,7 +187,7 @@ export default function RVRelatorio() {
                 TABELA RESUMO
             ══════════════════════════════════════════════════════ */}
             <div style={{ marginBottom: "28px" }}>
-              <h2 style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #fbb900", paddingLeft: "8px", margin: "0 0 10px" }}>
+              <h2 style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #7DBA3D", paddingLeft: "8px", margin: "0 0 10px" }}>
                 Resumo Consolidado
               </h2>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
@@ -227,7 +227,7 @@ export default function RVRelatorio() {
                         <td style={{ padding: "6px 8px", textAlign: "center", color: pctVr >= 100 ? "#16a34a" : pctVr >= 70 ? "#b45309" : "#dc2626", fontWeight: "600" }}>
                           {pctVr.toFixed(1)}%
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "800", fontSize: "0.85rem", color: c.apOk ? "#0a0f1e" : "#dc2626" }}>
+                        <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "800", fontSize: "0.85rem", color: c.apOk ? "#0c1410" : "#dc2626" }}>
                           R$ {brl(c.total)}
                           {!c.apOk && <div style={{ fontSize: "0.65rem", color: "#dc2626", fontWeight: "400" }}>AP NOK</div>}
                         </td>
@@ -235,13 +235,13 @@ export default function RVRelatorio() {
                     );
                   })}
                   {/* Totais */}
-                  <tr style={{ background: "#111", color: "#fff", fontWeight: "700", borderTop: "2px solid #fbb900" }}>
+                  <tr style={{ background: "#111", color: "#fff", fontWeight: "700", borderTop: "2px solid #7DBA3D" }}>
                     <td colSpan={4} style={{ padding: "7px 8px", fontSize: "0.75rem", letterSpacing: "0.04em" }}>TOTAL OPERAÇÃO</td>
                     <td style={{ padding: "7px 8px", textAlign: "right" }}>R$ {brl(totais.po)}</td>
                     <td colSpan={4} style={{ padding: "7px 8px", textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
                       Potencial: R$ {brl(totais.pot)}
                     </td>
-                    <td style={{ padding: "7px 8px", textAlign: "right", color: "#fbb900", fontSize: "0.95rem" }}>
+                    <td style={{ padding: "7px 8px", textAlign: "right", color: "#7DBA3D", fontSize: "0.95rem" }}>
                       R$ {brl(totais.total)}
                     </td>
                   </tr>
@@ -252,7 +252,7 @@ export default function RVRelatorio() {
             {/* ══════════════════════════════════════════════════════
                 DETALHAMENTO POR RN
             ══════════════════════════════════════════════════════ */}
-            <h2 className="page-break" style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #fbb900", paddingLeft: "8px", margin: "0 0 16px" }}>
+            <h2 className="page-break" style={{ fontSize: "0.82rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", borderLeft: "4px solid #7DBA3D", paddingLeft: "8px", margin: "0 0 16px" }}>
               Detalhamento por Representante
             </h2>
 
@@ -333,7 +333,7 @@ export default function RVRelatorio() {
                               <td style={{ padding: "5px 8px", textAlign: "right", color: "#444" }}>{row.meta}</td>
                               <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "600" }}>{row.real}</td>
                               <td style={{ padding: "5px 8px", textAlign: "center", color: cor, fontWeight: "700" }}>{row.pctVal.toFixed(1)}%</td>
-                              <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700", color: row.rv > 0 ? "#0a0f1e" : "#dc2626" }}>
+                              <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700", color: row.rv > 0 ? "#0c1410" : "#dc2626" }}>
                                 R$ {brl(row.rv)}
                               </td>
                             </tr>
@@ -346,7 +346,7 @@ export default function RVRelatorio() {
                             {!c.apOk && <span style={{ color: "#dc2626", marginRight: "8px", fontSize: "0.7rem" }}>AP NOK — RV bloqueada</span>}
                             TOTAL RV:
                           </td>
-                          <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "900", fontSize: "0.88rem", color: c.apOk ? "#0a0f1e" : "#dc2626" }}>
+                          <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "900", fontSize: "0.88rem", color: c.apOk ? "#0c1410" : "#dc2626" }}>
                             R$ {brl(c.total)}
                           </td>
                         </tr>
@@ -372,13 +372,12 @@ export default function RVRelatorio() {
             ══════════════════════════════════════════════════════ */}
             <div style={{ marginTop: "40px", borderTop: "2px solid #e5e7eb", paddingTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.68rem", color: "#888", flexWrap: "wrap", gap: "4px" }}>
               <div>
-                <strong style={{ color: "#444" }}>CMD Ambev · Conde</strong>
-                {" · "}Sistema de Gestão Comercial
+                <strong style={{ color: "#2E7D32" }}>Hop Follow-up</strong>
+                {" · "}Inteligência que gera resultados
                 {" · "}Relatório gerado em {hoje}
               </div>
               <div style={{ textAlign: "right" }}>
                 Desenvolvido por <strong style={{ color: "#444" }}>Eduardo Arcanjo</strong>
-                {" · "}CMD Conde App
               </div>
             </div>
           </>

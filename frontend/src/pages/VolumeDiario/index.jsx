@@ -25,7 +25,7 @@ function fmtHL(v) {
 /* ─── sub-components ───────────────────────────────────────────────────────── */
 function ProgressBar({ pct, thin }) {
   const p = Math.min(100, Math.max(0, pct || 0));
-  const cor = p >= 100 ? "#4ade80" : p >= 70 ? "#fbb900" : "#f87171";
+  const cor = p >= 100 ? "#4ade80" : p >= 70 ? "#7DBA3D" : "#f87171";
   return (
     <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "4px", height: thin ? "5px" : "8px", overflow: "hidden" }}>
       <div style={{ width: `${p}%`, background: cor, height: "100%", borderRadius: "4px", transition: "width 0.5s ease" }} />
@@ -213,7 +213,7 @@ export default function VolumeDiario() {
               <div>
                 {d.top_skus.map((s, i) => (
                   <div key={s.cod_produto} style={{ ...S.skuRow, borderBottom: i < d.top_skus.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                    <span style={{ ...S.skuPos, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)" }}>{i + 1}</span>
+                    <span style={{ ...S.skuPos, color: i < 3 ? "#7DBA3D" : "rgba(255,255,255,0.3)" }}>{i + 1}</span>
                     <div style={S.skuInfo}>
                       <div style={S.skuNome}>{s.nome_produto}</div>
                       <div style={S.skuCod}>cod: {s.cod_produto}</div>
@@ -240,7 +240,7 @@ export default function VolumeDiario() {
                       )}
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ ...S.focoPct, color: sf.pct_mes >= 100 ? "#4ade80" : sf.pct_mes >= 70 ? "#fbb900" : "#f87171" }}>
+                      <div style={{ ...S.focoPct, color: sf.pct_mes >= 100 ? "#4ade80" : sf.pct_mes >= 70 ? "#7DBA3D" : "#f87171" }}>
                         {sf.pct_mes}%
                       </div>
                       <div style={S.focoSub}>do mês</div>
@@ -255,12 +255,12 @@ export default function VolumeDiario() {
                   </div>
                   <div style={S.focoDia}>
                     <span>Hoje:{" "}
-                      <strong style={{ color: sf.pct_hoje >= 100 ? "#4ade80" : sf.pct_hoje > 0 ? "#fbb900" : "rgba(255,255,255,0.3)" }}>
+                      <strong style={{ color: sf.pct_hoje >= 100 ? "#4ade80" : sf.pct_hoje > 0 ? "#7DBA3D" : "rgba(255,255,255,0.3)" }}>
                         {fmtHL(sf.realizado_hoje_hl)} HL
                       </strong>
                     </span>
                     <span>Meta dia: <strong style={{ color: "#fff" }}>{fmtHL(sf.meta_diaria_hl)} HL</strong></span>
-                    <span style={{ marginLeft: "auto", ...(sf.pct_hoje >= 100 ? { color: "#4ade80" } : sf.pct_hoje >= 70 ? { color: "#fbb900" } : { color: "#f87171" }) }}>
+                    <span style={{ marginLeft: "auto", ...(sf.pct_hoje >= 100 ? { color: "#4ade80" } : sf.pct_hoje >= 70 ? { color: "#7DBA3D" } : { color: "#f87171" }) }}>
                       {sf.pct_hoje}%
                     </span>
                   </div>
@@ -284,7 +284,7 @@ export default function VolumeDiario() {
 
 /* ─── styles ────────────────────────────────────────────────────────────────── */
 const S = {
-  root:          { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "900px", margin: "0 auto", color: "#fff" },
+  root:          { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "900px", margin: "0 auto", color: "#fff" },
   header:        { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "22px" },
   backBtn:       { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
   title:         { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
@@ -306,7 +306,7 @@ const S = {
   // Categorias
   catGrid:       { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" },
   catCard:       { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 14px" },
-  catNome:       { color: "#fbb900", fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" },
+  catNome:       { color: "#7DBA3D", fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" },
   catRow:        { display: "flex", gap: "12px", alignItems: "flex-start" },
   catBlock:      { flex: 1 },
   catBlockLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.62rem", fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" },
@@ -321,7 +321,7 @@ const S = {
   skuInfo:       { flex: 1, minWidth: 0 },
   skuNome:       { color: "#fff", fontSize: "0.85rem", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   skuCod:        { color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" },
-  skuVol:        { color: "#fbb900", fontWeight: "700", fontSize: "0.88rem", flexShrink: 0 },
+  skuVol:        { color: "#7DBA3D", fontWeight: "700", fontSize: "0.88rem", flexShrink: 0 },
   // SKU Foco
   focoCard:      { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "14px", marginBottom: "10px" },
   focoHeader:    { display: "flex", alignItems: "flex-start", gap: "10px" },
@@ -338,8 +338,8 @@ const S = {
 const CSS = `
 .vd-spinner {
   width: 32px; height: 32px;
-  border: 3px solid rgba(251,185,0,0.15);
-  border-top-color: #fbb900;
+  border: 3px solid rgba(125,186,61,0.15);
+  border-top-color: #7DBA3D;
   border-radius: 50%;
   animation: vd-spin 0.8s linear infinite;
 }

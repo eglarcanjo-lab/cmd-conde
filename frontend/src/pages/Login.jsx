@@ -49,10 +49,19 @@ export default function Login() {
       <div style={styles.card}>
         <div style={styles.header}>
           <div style={styles.logoMark}>
-            <span style={styles.logoText}>CMD</span>
+            {/* logo da marca (cai no emoji se o arquivo ainda não estiver em /brand/logo.png) */}
+            <img
+              src="/brand/logo.png"
+              alt="Hop Follow-up"
+              style={styles.logoImg}
+              onError={(e) => { e.currentTarget.style.display = "none"; if (e.currentTarget.nextSibling) e.currentTarget.nextSibling.style.display = "block"; }}
+            />
+            <span style={styles.logoEmoji}>🌿</span>
           </div>
-          <h1 style={styles.title}>Ambev Conde</h1>
-          <p style={styles.subtitle}>Plataforma de Gestão de Campo</p>
+          <h1 style={styles.title}>
+            <span style={{ color: "#7DBA3D" }}>Hop</span> Follow-up
+          </h1>
+          <p style={styles.subtitle}>Inteligência que gera resultados</p>
         </div>
 
         <div style={styles.divider} />
@@ -110,7 +119,7 @@ export default function Login() {
           </p>
         </div>
 
-        <p style={styles.footer}>CMD Ambev · Equipe Conde</p>
+        <p style={styles.footer}>Hop Follow-up · Análise de dados para cervejarias</p>
       </div>
     </div>
   );
@@ -122,8 +131,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#0a0f1e",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    background: "#0c1410",
+    fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
     position: "relative",
     overflow: "hidden",
   },
@@ -131,8 +140,8 @@ const styles = {
     position: "absolute",
     inset: 0,
     background: `
-      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(251,185,0,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 60%, rgba(251,185,0,0.05) 0%, transparent 60%)
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(125,186,61,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 60%, rgba(125,186,61,0.05) 0%, transparent 60%)
     `,
     pointerEvents: "none",
   },
@@ -149,22 +158,19 @@ const styles = {
   },
   header: { textAlign: "center", marginBottom: "8px" },
   logoMark: {
-    width: "56px",
-    height: "56px",
-    background: "linear-gradient(135deg, #fbb900, #e6a200)",
-    borderRadius: "14px",
+    width: "72px",
+    height: "72px",
+    background: "radial-gradient(circle at 35% 30%, #8FCF4A, #2E7D32 75%)",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     margin: "0 auto 16px",
-    boxShadow: "0 8px 24px rgba(251,185,0,0.3)",
+    boxShadow: "0 8px 28px rgba(125,186,61,0.35)",
+    overflow: "hidden",
   },
-  logoText: {
-    color: "#0a0f1e",
-    fontWeight: "900",
-    fontSize: "1.1rem",
-    letterSpacing: "0.05em",
-  },
+  logoImg: { width: "100%", height: "100%", objectFit: "cover" },
+  logoEmoji: { display: "none", fontSize: "2rem" },
   title: { color: "#ffffff", fontSize: "1.5rem", fontWeight: "700", margin: "0 0 4px" },
   subtitle: { color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", margin: 0 },
   divider: { height: "1px", background: "rgba(255,255,255,0.08)", margin: "24px 0" },
@@ -205,8 +211,8 @@ const styles = {
     fontSize: "1rem",
   },
   btn: {
-    background: "linear-gradient(135deg, #fbb900, #e6a200)",
-    color: "#0a0f1e",
+    background: "linear-gradient(135deg, #7DBA3D, #2E7D32)",
+    color: "#0c1410",
     border: "none",
     borderRadius: "10px",
     padding: "14px",

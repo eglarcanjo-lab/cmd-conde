@@ -9,7 +9,7 @@ export default function ManutencaoScreen({ mensagem = "Em Manutenção" }) {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#0a0f1e",
+      background: "#0c1410",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -37,7 +37,7 @@ export default function ManutencaoScreen({ mensagem = "Em Manutenção" }) {
           margin: 0,
           fontSize: "1.5rem",
           fontWeight: "800",
-          color: "#fbb900",
+          color: "#7DBA3D",
           letterSpacing: "-0.02em",
         }}>
           {mensagem}
@@ -58,7 +58,7 @@ export default function ManutencaoScreen({ mensagem = "Em Manutenção" }) {
           width: "40px",
           height: "3px",
           borderRadius: "2px",
-          background: "linear-gradient(90deg, #fbb900, rgba(251,185,0,0.3))",
+          background: "linear-gradient(90deg, #7DBA3D, rgba(125,186,61,0.3))",
           animation: "pulse 2s ease-in-out infinite",
         }} />
       </div>

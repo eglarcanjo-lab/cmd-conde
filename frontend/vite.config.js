@@ -10,11 +10,11 @@ export default defineConfig({
       injectRegister: false,        // registramos manualmente em components/AtualizacaoApp
       includeAssets: ["icon-192.png", "icon-512.png", "apple-touch-icon.png"],
       manifest: {
-        name: "CMD Ambev · Conde",
-        short_name: "CMD Conde",
-        description: "Painel de gestão de campo CMD Ambev Conde",
-        theme_color: "#0a0f1e",
-        background_color: "#0a0f1e",
+        name: "Hop Follow-up",
+        short_name: "Hop",
+        description: "Hop Follow-up — Inteligência que gera resultados. Análise de dados comerciais para cervejarias.",
+        theme_color: "#0c1410",
+        background_color: "#0c1410",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",

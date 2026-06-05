@@ -42,7 +42,7 @@ const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
 
 function BarraProgresso({ pct, cor }) {
   const w = Math.min(pct, 100);
-  const c = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+  const c = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
 
   return (
     <div style={{ height: "8px", background: "rgba(255,255,255,0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "6px" }}>
@@ -325,7 +325,7 @@ export default function SPO() {
           top: 0 !important; left: 0 !important;
           width: 100vw !important; height: 100vh !important;
           z-index: 9999;
-          background: #0a0f1e;
+          background: #0c1410;
           overflow: auto;
           -webkit-overflow-scrolling: touch;
           padding: 0;
@@ -349,7 +349,7 @@ export default function SPO() {
           <button style={styles.backBtn} className="spo-backBtn" onClick={() => navigate("/")}>← Voltar</button>
           <div>
             <h1 style={styles.title}>📊 SPO — Excelência Operacional</h1>
-            <p style={styles.subtitle}>CMD Ambev · Conde</p>
+            <p style={styles.subtitle}>Hop Follow-up</p>
           </div>
         </div>
         <button style={styles.logoutBtn} className="spo-logoutBtn" onClick={logout}>Sair</button>
@@ -374,13 +374,13 @@ export default function SPO() {
               // Selecionado → borda amarela; bateu TRI → verde; não bateu → vermelho; sem dados → neutro
               const isSelected = kpiAtivo === item.n;
               const borderColor = isSelected
-                ? "#fbb900"
+                ? "#7DBA3D"
                 : triOk === true  ? "#4ade80"
                 : triOk === false ? "#f87171"
                 : item.ativo ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)";
               const borderWidth = isSelected || triOk !== null ? "2px" : "1px";
               const glow = isSelected
-                ? "0 0 12px rgba(251,185,0,0.35)"
+                ? "0 0 12px rgba(125,186,61,0.35)"
                 : triOk === true
                   ? "0 0 6px #4ade80, 0 0 18px rgba(74,222,128,0.45), inset 0 0 6px rgba(74,222,128,0.08)"
                 : triOk === false
@@ -401,7 +401,7 @@ export default function SPO() {
                   <span style={styles.kpiN}>#{item.n}</span>
                   <span style={styles.kpiLabel}>{item.label}</span>
                   <div style={styles.kpiPts}>
-                    <span style={{ color: item.ativo ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
+                    <span style={{ color: item.ativo ? "#7DBA3D" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
                     <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{item.peso}%</span>
                   </div>
                 </div>
@@ -463,8 +463,8 @@ export default function SPO() {
                   {[
                     { label: "Meta Total", val: totalMeta, color: "#fff" },
                     { label: "Visitados", val: totalVisitados, color: "#4ade80" },
-                    { label: "Atingimento", val: `${pctOp}%`, color: pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#fbb900" : "#f87171" },
-                    { label: "Pontos SPO", val: pctOp >= 100 ? "14 pts" : `${Math.round(14 * pctOp / 100)} pts`, color: "#fbb900" },
+                    { label: "Atingimento", val: `${pctOp}%`, color: pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#7DBA3D" : "#f87171" },
+                    { label: "Pontos SPO", val: pctOp >= 100 ? "14 pts" : `${Math.round(14 * pctOp / 100)} pts`, color: "#7DBA3D" },
                   ].map((c) => (
                     <div key={c.label} style={styles.opCard}>
                       <p style={styles.opLabel}>{c.label}</p>
@@ -483,7 +483,7 @@ export default function SPO() {
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 {["mensal", "trimestral"].map((p) => (
                   <button key={p} onClick={() => setPeriodoCoaching(p)}
-                    style={{ ...styles.abaBtn, ...(periodoCoaching === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoCoaching === p ? "rgba(251,185,0,0.12)" : "rgba(255,255,255,0.04)" }}>
+                    style={{ ...styles.abaBtn, ...(periodoCoaching === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoCoaching === p ? "rgba(125,186,61,0.12)" : "rgba(255,255,255,0.04)" }}>
                     {p === "mensal" ? "📅 Mensal" : "📊 Trimestral"}
                   </button>
                 ))}
@@ -491,7 +491,7 @@ export default function SPO() {
               <div style={styles.gvGrid}>
                 {coaching.filter(c => c.periodo === periodoCoaching).map((c) => {
                   const pct = parseFloat(c.pct || 0);
-                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                   return (
                     <div key={`${c.gv}-${c.periodo}-${c.mes_referencia}`} style={styles.gvCard}>
                       <div style={styles.gvHeader}>
@@ -524,7 +524,7 @@ export default function SPO() {
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 {["mensal", "trimestral"].map((p) => (
                   <button key={p} onClick={() => setPeriodoDiasRota(p)}
-                    style={{ ...styles.abaBtn, ...(periodoDiasRota === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoDiasRota === p ? "rgba(251,185,0,0.12)" : "rgba(255,255,255,0.04)" }}>
+                    style={{ ...styles.abaBtn, ...(periodoDiasRota === p ? styles.abaBtnAtivo : {}), padding: "6px 14px", fontSize: "0.82rem", borderBottom: "none", borderRadius: "6px", background: periodoDiasRota === p ? "rgba(125,186,61,0.12)" : "rgba(255,255,255,0.04)" }}>
                     {p === "mensal" ? "📅 Mensal" : "📊 Trimestral"}
                   </button>
                 ))}
@@ -532,7 +532,7 @@ export default function SPO() {
               <div style={styles.gvGrid}>
                 {diasRota.filter(d => d.periodo === periodoDiasRota).map((d) => {
                   const pct = parseFloat(d.pct || 0);
-                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                   return (
                     <div key={`${d.gv}-${d.periodo}-${d.mes_referencia}`} style={styles.gvCard}>
                       <div style={styles.gvHeader}>
@@ -569,13 +569,13 @@ export default function SPO() {
                   const realOp = (ok1 + ok3) / 2;
                   const metaOp = (tot1 * 0.9 + tot3 * 0.9) / 2;
                   const pctOp = metaOp > 0 ? Math.round(realOp / metaOp * 100) : 0;
-                  const corOp = pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#fbb900" : "#f87171";
+                  const corOp = pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#7DBA3D" : "#f87171";
                   const okOp = realOp >= metaOp && metaOp > 0;
                   if (tot1 === 0 && tot3 === 0) return null;
                   return (
-                    <div style={{ ...styles.gvCard, borderColor: "rgba(251,185,0,0.25)", background: "rgba(251,185,0,0.04)" }}>
+                    <div style={{ ...styles.gvCard, borderColor: "rgba(125,186,61,0.25)", background: "rgba(125,186,61,0.04)" }}>
                       <div style={styles.gvHeader}>
-                        <span style={{ ...styles.gvLabel, color: "#fbb900" }}>Operação</span>
+                        <span style={{ ...styles.gvLabel, color: "#7DBA3D" }}>Operação</span>
                         <span style={{ ...styles.apBadge, background: okOp ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okOp ? "#4ade80" : "#f87171" }}>{okOp ? "OK" : "NOK"}</span>
                       </div>
                       <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", margin: "8px 0" }}>
@@ -594,7 +594,7 @@ export default function SPO() {
                   const ok = dias.filter(d => d.status === "OK").length;
                   const total = dias.length;
                   const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
-                  const cor = pct >= 90 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                  const cor = pct >= 90 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                   return (
                     <div key={gv} style={styles.gvCard}>
                       <div style={styles.gvHeader}>
@@ -655,7 +655,7 @@ export default function SPO() {
                       <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px" }}>
                         {["mensal","trimestral"].map(v => (
                           <button key={v} onClick={() => setDtoView(v)}
-                            style={{ background: dtoView === v ? "rgba(251,185,0,0.2)" : "transparent", border: "none", color: dtoView === v ? "#fbb900" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: dtoView === v ? "600" : "400" }}>
+                            style={{ background: dtoView === v ? "rgba(125,186,61,0.2)" : "transparent", border: "none", color: dtoView === v ? "#7DBA3D" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: dtoView === v ? "600" : "400" }}>
                             {v === "mensal" ? "Mensal" : "Trimestral"}
                           </button>
                         ))}
@@ -674,7 +674,7 @@ export default function SPO() {
                         { label: "Rota Coaching", real: d.coaching_real,   meta: d.coaching_meta,   pct: d.coaching_pct,   status: d.coaching_status },
                       ].map((item) => {
                         const pct = parseFloat(item.pct || 0);
-                        const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                        const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                         return (
                           <div key={item.label} style={styles.gvCard}>
                             <div style={styles.gvHeader}>
@@ -724,11 +724,11 @@ export default function SPO() {
                         const ac  = parseFloat(r.acesso_promo || 0);
                         const vis = parseFloat(r.visitas || 0);
                         const pct = vis > 0 ? parseFloat((ac / vis * 100).toFixed(1)) : parseFloat(r.pct || 0);
-                        const cor = pct >= meta7 ? "#4ade80" : pct >= meta7 * 0.7 ? "#fbb900" : "#f87171";
+                        const cor = pct >= meta7 ? "#4ade80" : pct >= meta7 * 0.7 ? "#7DBA3D" : "#f87171";
                         const isOp = r.setor === "OPERACAO";
                         const barPct = meta7 > 0 ? Math.min(pct / meta7 * 100, 150) : 0;
                         return (
-                          <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                          <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                             <div style={styles.gvHeader}>
                               <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                                 {isOp ? "🏭 Operação Total" : `Setor ${r.setor}`}
@@ -806,7 +806,7 @@ export default function SPO() {
                                 .slice(0, 100)
                                 .map((d, i) => {
                                   const pct = parseFloat(d.pct || 0);
-                                  const cor = pct >= 10 ? "#4ade80" : pct >= 5 ? "#fbb900" : "#f87171";
+                                  const cor = pct >= 10 ? "#4ade80" : pct >= 5 ? "#7DBA3D" : "#f87171";
                                   return (
                                     <tr key={i} style={styles.tr}>
                                       <td style={styles.td}>{d.setor || "—"}</td>
@@ -843,10 +843,10 @@ export default function SPO() {
                     const _ader = parseFloat(r.pdvs_aderidos || 0);
                     const metaRef = _ader > 0 ? Math.ceil(_ader * 0.60) : (isOp ? spoMetaTotal(8) : null);
                     const pct = metaRef !== null && metaRef > 0 ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -884,10 +884,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot9 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot9) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -927,10 +927,10 @@ export default function SPO() {
                       const mRN = (mOp !== null && _opTot11 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot11) * 1.10) : null;
                       const metaRef = isOp ? mOp : mRN;
                       const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                      const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                       const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                               {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -989,7 +989,7 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
                                 <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
                                 <td style={{ padding: "7px 10px" }}>
-                                  <span style={{ color: r.status_task === "OPEN" ? "#fbb900" : "#f87171", fontWeight: "600", fontSize: "0.75rem" }}>{r.status_task}</span>
+                                  <span style={{ color: r.status_task === "OPEN" ? "#7DBA3D" : "#f87171", fontWeight: "600", fontSize: "0.75rem" }}>{r.status_task}</span>
                                 </td>
                               </tr>
                             ))}
@@ -1020,10 +1020,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot12 > 0) ? Math.ceil(parseFloat(r.pdvs_total || 0) * (mOp / _opTot12)) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1061,10 +1061,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot13 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot13) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1102,10 +1102,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot14 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot14) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1143,10 +1143,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot15 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot15) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1184,10 +1184,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot16 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot16) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1225,10 +1225,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot17 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot17) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1266,10 +1266,10 @@ export default function SPO() {
                     const mRN = (mOp !== null && _opTot18 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot18) * 1.10) : null;
                     const metaRef = isOp ? mOp : mRN;
                     const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
                     return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
                             {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1304,7 +1304,7 @@ export default function SPO() {
                     <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px" }}>
                       {["mensal","trimestral"].map(v => (
                         <button key={v} onClick={() => setAloneView(v)}
-                          style={{ background: aloneView === v ? "rgba(251,185,0,0.2)" : "transparent", border: "none", color: aloneView === v ? "#fbb900" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: aloneView === v ? "600" : "400" }}>
+                          style={{ background: aloneView === v ? "rgba(125,186,61,0.2)" : "transparent", border: "none", color: aloneView === v ? "#7DBA3D" : "rgba(255,255,255,0.4)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: aloneView === v ? "600" : "400" }}>
                           {v === "mensal" ? "Mensal" : "Trimestral"}
                         </button>
                       ))}
@@ -1316,10 +1316,10 @@ export default function SPO() {
                     const val   = parseInt(opRow?.pdvs_alone || 0);
                     const mOp   = spoMetaTotal(19);
                     const pct   = mOp ? Math.round(val / mOp * 100) : 0;
-                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = mOp !== null ? val >= mOp : opRow?.ok === "OK";
                     return (
-                      <div style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "12px" }}>
+                      <div style={{ ...styles.gvCard, border: "1px solid rgba(125,186,61,0.3)", marginBottom: "12px" }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
                           <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
@@ -1341,9 +1341,9 @@ export default function SPO() {
                       const metaRN  = total > 0 ? Math.ceil(total * 0.90) : 0;
                       const pct     = metaRN > 0 ? Math.round(val / metaRN * 100) : 0;
                       const okBadge = val >= metaRN && metaRN > 0;
-                      const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
-                      const tarjaBg     = okBadge ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(251,185,0,0.08)" : "rgba(248,113,113,0.08)";
-                      const tarjaBorder = okBadge ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(251,185,0,0.25)" : "rgba(248,113,113,0.25)";
+                      const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
+                      const tarjaBg     = okBadge ? "rgba(74,222,128,0.08)" : pct >= 70 ? "rgba(125,186,61,0.08)" : "rgba(248,113,113,0.08)";
+                      const tarjaBorder = okBadge ? "rgba(74,222,128,0.25)" : pct >= 70 ? "rgba(125,186,61,0.25)" : "rgba(248,113,113,0.25)";
                       return (
                         <div key={r.setor} style={{ ...styles.gvCard, background: tarjaBg, border: `1px solid ${tarjaBorder}` }}>
                           <div style={styles.gvHeader}>
@@ -1404,7 +1404,7 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "130px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
                                 <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)", textAlign: "right" }}>{r.pedidos_total}</td>
-                                <td style={{ padding: "7px 10px", color: "#fbb900", textAlign: "right", fontWeight: "600" }}>{r.pedidos_alone}</td>
+                                <td style={{ padding: "7px 10px", color: "#7DBA3D", textAlign: "right", fontWeight: "600" }}>{r.pedidos_alone}</td>
                                 <td style={{ padding: "7px 10px" }}>
                                   <span style={{ color: r.is_alone === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.is_alone}</span>
                                 </td>
@@ -1440,10 +1440,10 @@ export default function SPO() {
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px" }}>
                           {dados.map((r) => {
                             const pct = parseFloat(r.pct_meta || 0);
-                            const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171";
+                            const cor = pct >= 60 ? "#4ade80" : pct >= 40 ? "#7DBA3D" : "#f87171";
                             const isOp = r.setor === "OPERACAO";
                             return (
-                              <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                              <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                                 <div style={styles.gvHeader}>
                                   <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                                     {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1482,9 +1482,9 @@ export default function SPO() {
                       const meta = parseInt(r.meta || 0);
                       const real = parseInt(r.cupons_mes || 0);
                       const pct  = meta > 0 ? Math.round(real / meta * 100) : null;
-                      const cor  = pct === null ? "#fbb900" : pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                      const cor  = pct === null ? "#7DBA3D" : pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                               {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1550,7 +1550,7 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.pdv}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
                                 <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
-                                <td style={{ padding: "7px 10px", color: "#fbb900" }}>{r.campanha}</td>
+                                <td style={{ padding: "7px 10px", color: "#7DBA3D" }}>{r.campanha}</td>
                                 <td style={{ padding: "7px 10px", color: "#4ade80", fontWeight: "600" }}>{r.cupons}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.proxima_visita}</td>
                                 <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.4)" }}>{r.ultimo_resgate}</td>
@@ -1579,10 +1579,10 @@ export default function SPO() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {[...lojaIdeal].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
                       const pct = parseFloat(r.pct || 0);
-                      const cor = pct >= 40 ? "#4ade80" : pct >= 25 ? "#fbb900" : "#f87171";
+                      const cor = pct >= 40 ? "#4ade80" : pct >= 25 ? "#7DBA3D" : "#f87171";
                       const isOp = r.setor === "OPERACAO";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                               {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1637,7 +1637,7 @@ export default function SPO() {
                               (lojaFiltroStatus === "TODOS" || r.loja_ideal === lojaFiltroStatus)
                             ).sort((a,b) => parseFloat(b.pts_total||0) - parseFloat(a.pts_total||0)).map((r, i) => {
                               const pts = parseFloat(r.pts_total || 0);
-                              const cor = pts >= 60 ? "#4ade80" : pts >= 40 ? "#fbb900" : "#f87171";
+                              const cor = pts >= 60 ? "#4ade80" : pts >= 40 ? "#7DBA3D" : "#f87171";
                               return (
                                 <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                   <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
@@ -1679,10 +1679,10 @@ export default function SPO() {
                     const real  = parseInt(opRow?.pdvs_ativos || opRow?.ativos || 0);
                     const mOp   = spoMetaTotal(23);
                     const pct   = mOp ? Math.round(real / mOp * 100) : 0;
-                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor   = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     const okBadge = mOp !== null ? real >= mOp : opRow?.ok === "OK";
                     return (
-                      <div style={{ ...styles.gvCard, border: "1px solid rgba(251,185,0,0.3)", marginBottom: "14px" }}>
+                      <div style={{ ...styles.gvCard, border: "1px solid rgba(125,186,61,0.3)", marginBottom: "14px" }}>
                         <div style={styles.gvHeader}>
                           <span style={{ fontWeight: "700", fontSize: "1rem" }}>🏭 Operação</span>
                           <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
@@ -1787,10 +1787,10 @@ export default function SPO() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {portIdeal.map((r) => {
                       const pct = parseFloat(r.pct || 0);
-                      const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#fbb900" : "#f87171";
+                      const cor = pct >= 46 ? "#4ade80" : pct >= 30 ? "#7DBA3D" : "#f87171";
                       const isOp = r.setor === "OPERACAO";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                               {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
@@ -1857,7 +1857,7 @@ export default function SPO() {
                                 <td style={{ padding: "7px 10px" }}>
                                   <span style={{ color: r.portfolio_ideal === "SIM" ? "#4ade80" : "#f87171", fontWeight: "600" }}>{r.portfolio_ideal}</span>
                                 </td>
-                                <td style={{ padding: "7px 10px", color: "#fbb900", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
+                                <td style={{ padding: "7px 10px", color: "#7DBA3D", fontSize: "0.75rem" }}>{r.itens_faltantes}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1883,10 +1883,10 @@ export default function SPO() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
                     {ap.map((r) => {
                       const pct = parseFloat(r.pct || 0);
-                      const cor = pct >= 90 ? "#4ade80" : pct >= 60 ? "#fbb900" : "#f87171";
+                      const cor = pct >= 90 ? "#4ade80" : pct >= 60 ? "#7DBA3D" : "#f87171";
                       const isOp = r.setor === "OPERACAO";
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(251,185,0,0.3)", gridColumn: "1/-1" } : {}) }}>
+                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
                           <div style={styles.gvHeader}>
                             <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
                               {isOp ? "🏭 Operação" : `GV ${r.gv}`}
@@ -1932,7 +1932,7 @@ export default function SPO() {
                               (apFiltroStatus === "TODOS" || r.ap_ok === apFiltroStatus)
                             ).map((r, i) => {
                               const corAP = r.ap_ok === "Sim" ? "#4ade80" : "#f87171";
-                              const corKPI = parseInt(r.kpis_ok) === 4 ? "#4ade80" : parseInt(r.kpis_ok) >= 2 ? "#fbb900" : "#f87171";
+                              const corKPI = parseInt(r.kpis_ok) === 4 ? "#4ade80" : parseInt(r.kpis_ok) >= 2 ? "#7DBA3D" : "#f87171";
                               return (
                                 <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                                   <td style={{ padding: "7px 10px", textAlign: "center", color: "rgba(255,255,255,0.5)" }}>{r.gv}</td>
@@ -1968,7 +1968,7 @@ export default function SPO() {
                 <div style={styles.gvGrid}>
                   {resumo.map((r) => {
                     const pct = Math.round((parseInt(r.visitados) / parseInt(r.meta)) * 100);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
                     return (
                       <div key={r.gv} style={styles.gvCard}>
                         <div style={styles.gvHeader}>
@@ -1978,7 +1978,7 @@ export default function SPO() {
                         <BarraProgresso pct={pct} cor={cor} />
                         <div style={styles.gvFooter}>
                           <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{r.visitados} / {r.meta} PDVs</span>
-                          <span style={{ color: "#fbb900", fontSize: "0.82rem", fontWeight: "600" }}>
+                          <span style={{ color: "#7DBA3D", fontSize: "0.82rem", fontWeight: "600" }}>
                             {pct >= 100 ? "14 pts" : `~${Math.round(14 * pct / 100)} pts`}
                           </span>
                         </div>
@@ -2097,8 +2097,8 @@ export default function SPO() {
           >
             {/* Header do painel: título + botão lupa/fechar */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px",
-              ...(painelFull ? { position: "sticky", top: 0, background: "#0a0f1e", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
-              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#fbb900" }}>📊 Painel SPO Consolidado</p>
+              ...(painelFull ? { position: "sticky", top: 0, background: "#0c1410", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
+              <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#7DBA3D" }}>📊 Painel SPO Consolidado</p>
               <button
                 onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}
@@ -2296,20 +2296,20 @@ export default function SPO() {
                                       <th style={{ ...thStyle, textAlign: "left", minWidth: "140px" }}>Indicador</th>
                                       <th style={thStyle}>Início</th>
                                       {MESES.map(mes => (
-                                        <th key={mes} colSpan={4} style={{ ...thStyle, background: mes === mesAtual ? "rgba(251,185,0,0.15)" : "rgba(255,255,255,0.04)", borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
+                                        <th key={mes} colSpan={4} style={{ ...thStyle, background: mes === mesAtual ? "rgba(125,186,61,0.15)" : "rgba(255,255,255,0.04)", borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
                                           {MESES_LABEL[mes]}
                                         </th>
                                       ))}
-                                      <th colSpan={5} style={{ ...thStyle, background: "rgba(251,185,0,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
+                                      <th colSpan={5} style={{ ...thStyle, background: "rgba(125,186,61,0.1)", borderLeft: "1px solid rgba(255,255,255,0.15)" }}>TRI</th>
                                     </tr>
                                     <tr>
                                       <th style={thSubStyle} colSpan={3}></th>
                                       {MESES.map(mes => (
                                         ["Meta","Real","% Ating","Pts"].map(h => (
-                                          <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(251,185,0,0.08)" : "" }}>{h}</th>
+                                          <th key={mes+h} style={{ ...thSubStyle, background: mes === mesAtual ? "rgba(125,186,61,0.08)" : "" }}>{h}</th>
                                         ))
                                       ))}
-                                      {["Pts","Meta","Real","Pts SPO","% SPO"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(251,185,0,0.06)" }}>{h}</th>)}
+                                      {["Pts","Meta","Real","Pts SPO","% SPO"].map(h => <th key={"tri"+h} style={{ ...thSubStyle, background: "rgba(125,186,61,0.06)" }}>{h}</th>)}
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -2322,7 +2322,7 @@ export default function SPO() {
                                       const tPctSPO = tOK !== null ? (tOK ? (getPts(item.n) / TOTAL_PTS * 100).toFixed(1) + "%" : "0.0%") : null;
                                       const corTri  = tOK === true ? "#4ade80" : tOK === false ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
-                                        <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(251,185,0,0.08)", boxShadow: "inset 3px 0 0 #fbb900" } : {}) }}>
+                                        <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(125,186,61,0.08)", boxShadow: "inset 3px 0 0 #7DBA3D" } : {}) }}>
                                           <td style={tdStyle}>{item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
@@ -2335,7 +2335,7 @@ export default function SPO() {
                                             const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
                                             const bateu = meta !== null && real !== null && real >= meta;
                                             const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
-                                            const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#fbb900" : "#f87171";
+                                            const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#7DBA3D" : "#f87171";
                                             return [
                                               <td key={mes+"m"} style={tdStyle}>{meta !== null ? meta : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
                                               <td key={mes+"r"} style={tdStyle}>{real !== null ? real : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>,
@@ -2344,31 +2344,31 @@ export default function SPO() {
                                             ];
                                           })}
                                           {/* TRI: Pts | Meta | Real | Pts SPO | % SPO */}
-                                          <td style={{ ...tdStyle, color: tPts !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPts !== null ? tPts : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
-                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", background: "rgba(251,185,0,0.04)" }}>{tMeta}</td>
-                                          <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tReal !== null ? tReal : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
-                                          <td style={{ ...tdStyle, color: tPtsSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(251,185,0,0.04)" }}>{tPtsSPO !== null ? tPtsSPO : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
-                                          <td style={{ ...tdStyle, color: tPctSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "600", background: "rgba(251,185,0,0.04)" }}>{tPctSPO ?? "—"}</td>
+                                          <td style={{ ...tdStyle, color: tPts !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(125,186,61,0.04)" }}>{tPts !== null ? tPts : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
+                                          <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", background: "rgba(125,186,61,0.04)" }}>{tMeta}</td>
+                                          <td style={{ ...tdStyle, color: corTri, fontWeight: "700", background: "rgba(125,186,61,0.04)" }}>{tReal !== null ? tReal : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
+                                          <td style={{ ...tdStyle, color: tPtsSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "700", background: "rgba(125,186,61,0.04)" }}>{tPtsSPO !== null ? tPtsSPO : <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>}</td>
+                                          <td style={{ ...tdStyle, color: tPctSPO !== null ? corTri : "rgba(255,255,255,0.2)", fontWeight: "600", background: "rgba(125,186,61,0.04)" }}>{tPctSPO ?? "—"}</td>
                                         </tr>
                                       );
                                     })}
                                     {/* Rodapé pontos */}
-                                    <tr style={{ borderTop: "2px solid rgba(255,255,255,0.15)", background: "rgba(251,185,0,0.05)" }}>
-                                      <td colSpan={3} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", textAlign: "left" }}>Total de Pontos</td>
+                                    <tr style={{ borderTop: "2px solid rgba(255,255,255,0.15)", background: "rgba(125,186,61,0.05)" }}>
+                                      <td colSpan={3} style={{ ...tdStyle, color: "#7DBA3D", fontWeight: "700", textAlign: "left" }}>Total de Pontos</td>
                                       {MESES.map(mes => [
                                         <td key={mes+"tm"} style={tdStyle}></td>,
                                         <td key={mes+"tr"} style={tdStyle}></td>,
                                         <td key={mes+"ta"} style={tdStyle}></td>,
-                                        <td key={mes+"tp"} style={{ ...tdStyle, color: "#fbb900", fontWeight: "700", fontSize: "0.9rem" }}>{pontosMes(mes)}</td>,
+                                        <td key={mes+"tp"} style={{ ...tdStyle, color: "#7DBA3D", fontWeight: "700", fontSize: "0.9rem" }}>{pontosMes(mes)}</td>,
                                       ])}
                                       {/* TRI rodapé: Pts | Meta | Real | Pts SPO total | % SPO total */}
-                                      <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
-                                      <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
-                                      <td style={{ ...tdStyle, background: "rgba(251,185,0,0.06)" }}></td>
-                                      <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
+                                      <td style={{ ...tdStyle, background: "rgba(125,186,61,0.06)" }}></td>
+                                      <td style={{ ...tdStyle, background: "rgba(125,186,61,0.06)" }}></td>
+                                      <td style={{ ...tdStyle, background: "rgba(125,186,61,0.06)" }}></td>
+                                      <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(125,186,61,0.06)" }}>
                                         {ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0)}
                                       </td>
-                                      <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(251,185,0,0.06)" }}>
+                                      <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(125,186,61,0.06)" }}>
                                         {(ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
                                       </td>
                                     </tr>
@@ -2395,7 +2395,7 @@ export default function SPO() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
@@ -2410,13 +2410,13 @@ const styles = {
   scoreboardSub: { color: "rgba(255,255,255,0.35)", fontSize: "0.8rem" },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" },
   kpiCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", display: "flex", flexDirection: "column", gap: "4px" },
-  kpiCardAtivo: { border: "1px solid rgba(251,185,0,0.3)", background: "rgba(251,185,0,0.04)" },
+  kpiCardAtivo: { border: "1px solid rgba(125,186,61,0.3)", background: "rgba(125,186,61,0.04)" },
   kpiN: { color: "rgba(255,255,255,0.3)", fontSize: "0.74rem" },
   kpiLabel: { color: "rgba(255,255,255,0.7)", fontSize: "0.84rem", lineHeight: "1.3" },
   kpiPts: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" },
   abas: { display: "flex", gap: "4px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px" },
-  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
+  abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
   section: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
   sectionTitle: { margin: "0 0 16px", fontSize: "1.02rem", fontWeight: "600" },
   opGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "12px" },
@@ -2436,6 +2436,6 @@ const styles = {
   th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.04em", padding: "9px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
   td: { padding: "8px 12px", color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", textAlign: "center" },
-  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 7px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" },
+  codBadge: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", padding: "2px 7px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" },
   statusTag: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "600", whiteSpace: "nowrap" },
 };

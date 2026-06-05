@@ -3,17 +3,17 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #0a0f1e;
+  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  background: #0c1410;
   color: #ffffff;
 }
 
 select {
-  background-color: #1a2235 !important;
+  background-color: #16241b !important;
   color: #ffffff !important;
 }
 select option {
-  background-color: #1a2235 !important;
+  background-color: #16241b !important;
   color: #ffffff !important;
 }
 
@@ -36,6 +36,6 @@ input[type="time"] {
   color: rgba(255,255,255,0.2);
   pointer-events: none;
   z-index: 10;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
   letter-spacing: 0.02em;
 }

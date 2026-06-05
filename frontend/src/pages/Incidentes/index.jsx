@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const STATUS_CONFIG = {
-  "Aguardando": { bg: "rgba(251,185,0,0.15)",  color: "#fbb900" },
+  "Aguardando": { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
   "Respondido": { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
 };
 
@@ -219,7 +219,7 @@ export default function Incidentes() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "clamp(12px,3vw,20px) clamp(16px,4vw,32px)", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "44px" },
@@ -229,7 +229,7 @@ const styles = {
   content: { padding: "clamp(16px,4vw,24px) clamp(16px,4vw,32px)", maxWidth: "700px", margin: "0 auto" },
   abas: { display: "flex", gap: "4px", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)", overflowX: "auto" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "12px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", whiteSpace: "nowrap", minHeight: "44px" },
-  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
+  abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
   formCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "clamp(16px,4vw,28px)", display: "flex", flexDirection: "column", gap: "20px" },
   formTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", color: "rgba(255,255,255,0.8)" },
   field: { display: "flex", flexDirection: "column", gap: "8px" },
@@ -239,11 +239,11 @@ const styles = {
   textarea: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "12px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none", resize: "vertical" },
   uploadLabel: { cursor: "pointer" },
   uploadArea: { border: "2px dashed rgba(255,255,255,0.12)", borderRadius: "10px", padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" },
-  uploadAreaAtivo: { border: "2px dashed rgba(251,185,0,0.4)", background: "rgba(251,185,0,0.04)" },
+  uploadAreaAtivo: { border: "2px dashed rgba(125,186,61,0.4)", background: "rgba(125,186,61,0.04)" },
   uploadNome: { color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" },
   uploadTam: { color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" },
   previewImg: { maxWidth: "100%", maxHeight: "240px", borderRadius: "8px", objectFit: "contain", marginTop: "8px" },
-  btnEnviar: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "10px", padding: "14px", fontSize: "0.95rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" },
+  btnEnviar: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "14px", fontSize: "0.95rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" },
   erro: { color: "#f87171", fontSize: "0.85rem", margin: 0, textAlign: "center" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", margin: 0, textAlign: "center" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
@@ -255,7 +255,7 @@ const styles = {
   incData: { color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" },
   incId: { color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" },
   incDesc: { margin: 0, color: "rgba(255,255,255,0.75)", fontSize: "0.88rem", lineHeight: "1.5" },
-  evidenciaLink: { color: "#fbb900", fontSize: "0.82rem", textDecoration: "none" },
+  evidenciaLink: { color: "#7DBA3D", fontSize: "0.82rem", textDecoration: "none" },
   respostaBox: { background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px" },
   respostaLabel: { margin: 0, color: "#4ade80", fontSize: "0.78rem", fontWeight: "600" },
   respostaTexto: { margin: 0, color: "rgba(255,255,255,0.75)", fontSize: "0.88rem", lineHeight: "1.5" },

@@ -31,10 +31,10 @@ export default function Configuracoes() {
     <div style={styles.root}>
 
       {/* ── MODO MANUTENÇÃO MANUAL ─────────────────────────────────────── */}
-      <div style={{ ...styles.section, border: manu.ativo ? "1px solid rgba(251,185,0,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ ...styles.section, border: manu.ativo ? "1px solid rgba(125,186,61,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h3 style={{ ...styles.sectionTitle, color: manu.ativo ? "#fbb900" : "#fff" }}>
+            <h3 style={{ ...styles.sectionTitle, color: manu.ativo ? "#7DBA3D" : "#fff" }}>
               {manu.ativo ? "🔴 App Offline" : "🟢 App Online"}
             </h3>
             <p style={styles.sectionDesc}>
@@ -47,7 +47,7 @@ export default function Configuracoes() {
             disabled={manuSalvando}
             style={{
               width: "52px", height: "28px", borderRadius: "14px", border: "none", cursor: manuSalvando ? "not-allowed" : "pointer",
-              background: manu.ativo ? "#fbb900" : "rgba(255,255,255,0.12)",
+              background: manu.ativo ? "#7DBA3D" : "rgba(255,255,255,0.12)",
               position: "relative", flexShrink: 0, transition: "background 0.2s", opacity: manuSalvando ? 0.6 : 1,
             }}
           >
@@ -65,9 +65,9 @@ export default function Configuracoes() {
               key={msg}
               onClick={() => setManu((m) => ({ ...m, mensagem: msg }))}
               style={{
-                background: manu.mensagem === msg ? "rgba(251,185,0,0.15)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${manu.mensagem === msg ? "rgba(251,185,0,0.5)" : "rgba(255,255,255,0.1)"}`,
-                borderRadius: "8px", padding: "6px 14px", color: manu.mensagem === msg ? "#fbb900" : "rgba(255,255,255,0.55)",
+                background: manu.mensagem === msg ? "rgba(125,186,61,0.15)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${manu.mensagem === msg ? "rgba(125,186,61,0.5)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: "8px", padding: "6px 14px", color: manu.mensagem === msg ? "#7DBA3D" : "rgba(255,255,255,0.55)",
                 fontSize: "0.82rem", fontWeight: manu.mensagem === msg ? "600" : "400", cursor: "pointer", fontFamily: "inherit",
               }}
             >
@@ -77,7 +77,7 @@ export default function Configuracoes() {
         </div>
 
         {manu.ativo && (
-          <p style={{ margin: 0, fontSize: "0.78rem", color: "#fbb900", fontWeight: "500" }}>
+          <p style={{ margin: 0, fontSize: "0.78rem", color: "#7DBA3D", fontWeight: "500" }}>
             ⚠️ App bloqueado agora — mensagem: "{manu.mensagem}"
           </p>
         )}

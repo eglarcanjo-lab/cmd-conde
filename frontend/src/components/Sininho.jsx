@@ -91,7 +91,7 @@ const styles = {
     padding: "1px 5px",
     minWidth: "16px",
     textAlign: "center",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
   },
   tooltip: {
     position: "absolute",

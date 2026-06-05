@@ -16,7 +16,7 @@ const ALVOS = [
 const emptyForm = () => ({
   titulo: "", descricao: "", tipo: "volume_sku", sku_codigo: "", premio: "",
   unidade: "HL", data_inicio: "", data_fim: "", ativo: true,
-  publico_alvo: "todos", ordem: "1", cor: "#fbb900",
+  publico_alvo: "todos", ordem: "1", cor: "#7DBA3D",
 });
 
 export default function IncentivosAdmin() {
@@ -56,7 +56,7 @@ export default function IncentivosAdmin() {
       sku_codigo: inc.sku_codigo || "", premio: inc.premio || "", unidade: inc.unidade || "",
       data_inicio: (inc.data_inicio || "").slice(0, 10), data_fim: (inc.data_fim || "").slice(0, 10),
       ativo: String(inc.ativo) !== "false", publico_alvo: inc.publico_alvo || "todos",
-      ordem: inc.ordem || "1", cor: inc.cor || "#fbb900",
+      ordem: inc.ordem || "1", cor: inc.cor || "#7DBA3D",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -209,7 +209,7 @@ export default function IncentivosAdmin() {
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {lista.map((inc) => (
             <div key={inc.id} style={ST.row}>
-              <div style={{ ...ST.rowBar, background: inc.cor || "#fbb900" }} />
+              <div style={{ ...ST.rowBar, background: inc.cor || "#7DBA3D" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <span style={ST.rowTitle}>{inc.titulo}</span>
@@ -272,7 +272,7 @@ const ST = {
   fg:        { display: "flex", flexDirection: "column", gap: "5px" },
   label:     { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.05em", textTransform: "uppercase" },
   input:     { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "9px 12px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", colorScheme: "dark", width: "100%", boxSizing: "border-box" },
-  btnAdd:    { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
+  btnAdd:    { background: "rgba(125,186,61,0.14)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
   btnCancel: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
   row:       { display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden", paddingRight: "12px" },
   rowBar:    { width: "5px", alignSelf: "stretch", flexShrink: 0 },
@@ -280,10 +280,10 @@ const ST = {
   rowSub:    { color: "rgba(255,255,255,0.4)", fontSize: "0.74rem", paddingBottom: "10px" },
   tag:       { fontSize: "0.66rem", fontWeight: "700", padding: "2px 8px", borderRadius: "10px" },
   tagTipo:   { fontSize: "0.66rem", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: "10px" },
-  btnRank:   { background: "rgba(99,102,241,0.14)", border: "1px solid rgba(99,102,241,0.4)", color: "#a5b4fc", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.76rem", fontFamily: "inherit", whiteSpace: "nowrap" },
+  btnRank:   { background: "rgba(46,125,50,0.14)", border: "1px solid rgba(46,125,50,0.4)", color: "#7DBA3D", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.76rem", fontFamily: "inherit", whiteSpace: "nowrap" },
   btnEdit:   { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
   btnDel:    { background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
   overlay:   { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", zIndex: 1000 },
-  modal:     { background: "#0f1424", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", width: "100%", maxWidth: "440px", maxHeight: "85vh", overflowY: "auto", padding: "20px" },
+  modal:     { background: "#0e1712", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", width: "100%", maxWidth: "440px", maxHeight: "85vh", overflowY: "auto", padding: "20px" },
   closeBtn:  { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", borderRadius: "8px", width: "30px", height: "30px", cursor: "pointer" },
 };

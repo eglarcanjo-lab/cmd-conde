@@ -102,7 +102,7 @@ export default function SpoDesafios() {
       <div style={styles.statsRow}>
         {GVS.map((gv) => {
           const s = stats(gv);
-          const cor = s.pct >= 100 ? "#4ade80" : s.pct >= META_PCT ? "#4ade80" : s.pct >= 70 ? "#fbb900" : "#f87171";
+          const cor = s.pct >= 100 ? "#4ade80" : s.pct >= META_PCT ? "#4ade80" : s.pct >= 70 ? "#7DBA3D" : "#f87171";
           return (
             <div key={gv} style={styles.statCard}>
               <div style={styles.statHeader}>
@@ -181,7 +181,7 @@ const styles = {
   title: { margin: "0 0 4px", fontSize: "1rem", fontWeight: "600" },
   desc: { margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" },
   sel: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
-  btnSalvar: { background: "linear-gradient(135deg, #fbb900, #e6a200)", color: "#0a0f1e", border: "none", borderRadius: "8px", padding: "8px 18px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
+  btnSalvar: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", border: "none", borderRadius: "8px", padding: "8px 18px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", textAlign: "center", marginBottom: "12px" },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "12px", marginBottom: "20px" },
   statCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px" },

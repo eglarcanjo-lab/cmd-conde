@@ -63,7 +63,7 @@ export default function Admin() {
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
             <h1 style={styles.title}>Painel Admin</h1>
-            <p style={styles.subtitle}>CMD Ambev · Conde</p>
+            <p style={styles.subtitle}>Hop Follow-up</p>
           </div>
         </div>
         <div style={styles.headerRight}>
@@ -125,21 +125,21 @@ export default function Admin() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" },
   headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
   headerRight: { display: "flex", alignItems: "center", gap: "12px" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
-  badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
+  badge: { background: "rgba(125,186,61,0.15)", color: "#7DBA3D", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  cacheBtn: { background: "rgba(251,185,0,0.12)", border: "1px solid rgba(251,185,0,0.3)", color: "#fbb900", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600" },
+  cacheBtn: { background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.3)", color: "#7DBA3D", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600" },
   cacheBtnLoading: { opacity: 0.6, cursor: "not-allowed" },
   msgCache: { fontSize: "0.75rem", color: "rgba(255,255,255,0.6)" },
   body: { display: "flex", alignItems: "flex-start" },
   sidebar: { display: "flex", flexDirection: "column", gap: "2px", padding: "18px 12px", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "208px", flexShrink: 0, position: "sticky", top: 0 },
   tab: { background: "transparent", border: "none", borderLeft: "3px solid transparent", color: "rgba(255,255,255,0.55)", padding: "11px 14px", cursor: "pointer", fontSize: "0.95rem", fontFamily: "inherit", textAlign: "left", borderRadius: "0 8px 8px 0", transition: "all 0.15s", whiteSpace: "nowrap" },
-  tabActive: { color: "#fbb900", borderLeft: "3px solid #fbb900", background: "rgba(251,185,0,0.08)", fontWeight: "600" },
+  tabActive: { color: "#7DBA3D", borderLeft: "3px solid #7DBA3D", background: "rgba(125,186,61,0.08)", fontWeight: "600" },
   content: { flex: 1, padding: "28px 32px", minWidth: 0, maxWidth: "1200px" },
 };

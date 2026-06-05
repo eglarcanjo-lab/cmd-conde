@@ -238,17 +238,17 @@ export default function SpoMetas() {
           <button
             onClick={salvar}
             disabled={salvando}
-            style={{ background: salvando ? "rgba(251,185,0,0.1)" : "rgba(251,185,0,0.2)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "7px 18px", borderRadius: "8px", cursor: salvando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit" }}>
+            style={{ background: salvando ? "rgba(125,186,61,0.1)" : "rgba(125,186,61,0.2)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", padding: "7px 18px", borderRadius: "8px", cursor: salvando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit" }}>
             {salvando ? "⏳ Salvando..." : "💾 Salvar"}
           </button>
         </div>
       </div>
 
       {/* ── Painel de Snapshot ── */}
-      <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "12px", padding: "14px 18px", marginBottom: "20px" }}>
+      <div style={{ background: "rgba(46,125,50,0.08)", border: "1px solid rgba(46,125,50,0.25)", borderRadius: "12px", padding: "14px 18px", marginBottom: "20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: "220px" }}>
-            <p style={{ margin: "0 0 3px", fontWeight: "700", fontSize: "0.88rem", color: "#a5b4fc" }}>
+            <p style={{ margin: "0 0 3px", fontWeight: "700", fontSize: "0.88rem", color: "#7DBA3D" }}>
               📸 Snapshot de Fechamento
             </p>
             <p style={{ margin: 0, fontSize: "0.76rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
@@ -260,7 +260,7 @@ export default function SpoMetas() {
             <select
               value={mesFecha}
               onChange={(e) => setMesFecha(e.target.value)}
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer" }}
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(46,125,50,0.35)", borderRadius: "8px", color: "#fff", padding: "7px 12px", fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer" }}
             >
               {MESES.map((m) => (
                 <option key={m} value={m}>{MESES_LABEL[m] || m}</option>
@@ -269,7 +269,7 @@ export default function SpoMetas() {
             <button
               onClick={fecharMes}
               disabled={fechando}
-              style={{ background: fechando ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.25)", border: "1px solid rgba(99,102,241,0.5)", color: "#a5b4fc", padding: "7px 18px", borderRadius: "8px", cursor: fechando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit", whiteSpace: "nowrap" }}
+              style={{ background: fechando ? "rgba(46,125,50,0.1)" : "rgba(46,125,50,0.25)", border: "1px solid rgba(46,125,50,0.5)", color: "#7DBA3D", padding: "7px 18px", borderRadius: "8px", cursor: fechando ? "not-allowed" : "pointer", fontSize: "0.85rem", fontWeight: "600", fontFamily: "inherit", whiteSpace: "nowrap" }}
             >
               {fechando ? "⏳ Calculando..." : "📸 Gerar Snapshot"}
             </button>
@@ -286,7 +286,7 @@ export default function SpoMetas() {
 
         {/* Resultado do último snapshot */}
         {snapshotResult && (
-          <div style={{ marginTop: "12px", borderTop: "1px solid rgba(99,102,241,0.2)", paddingTop: "10px" }}>
+          <div style={{ marginTop: "12px", borderTop: "1px solid rgba(46,125,50,0.2)", paddingTop: "10px" }}>
             <p style={{ margin: "0 0 8px", fontSize: "0.78rem", color: "rgba(165,180,252,0.8)", fontWeight: "600" }}>
               ✅ {snapshotResult.salvos} KPIs gravados para {MESES_LABEL[snapshotResult.mes] || snapshotResult.mes}:
             </p>
@@ -294,7 +294,7 @@ export default function SpoMetas() {
               {(snapshotResult.reais || []).map(({ item, real }) => {
                 const it = ITENS.find((x) => x.n === item);
                 return (
-                  <span key={item} style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>
+                  <span key={item} style={{ background: "rgba(46,125,50,0.15)", border: "1px solid rgba(46,125,50,0.25)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>
                     <span style={{ color: "rgba(165,180,252,0.7)", fontWeight: "700" }}>#{item}</span>{" "}
                     {it?.label.split(" ").slice(0, 2).join(" ")}:{" "}
                     <strong style={{ color: "#4ade80" }}>{real}</strong>
@@ -309,8 +309,8 @@ export default function SpoMetas() {
       {/* ── Mensagem de status ── */}
       {msg && (
         <div style={{
-          background: msg.startsWith("✅") ? "rgba(74,222,128,0.1)" : msg.startsWith("📥") ? "rgba(251,185,0,0.1)" : "rgba(239,68,68,0.1)",
-          border: `1px solid ${msg.startsWith("✅") ? "rgba(74,222,128,0.3)" : msg.startsWith("📥") ? "rgba(251,185,0,0.3)" : "rgba(239,68,68,0.3)"}`,
+          background: msg.startsWith("✅") ? "rgba(74,222,128,0.1)" : msg.startsWith("📥") ? "rgba(125,186,61,0.1)" : "rgba(239,68,68,0.1)",
+          border: `1px solid ${msg.startsWith("✅") ? "rgba(74,222,128,0.3)" : msg.startsWith("📥") ? "rgba(125,186,61,0.3)" : "rgba(239,68,68,0.3)"}`,
           borderRadius: "8px", padding: "10px 14px", marginBottom: "14px", fontSize: "0.85rem"
         }}>
           {msg}
@@ -328,7 +328,7 @@ export default function SpoMetas() {
                 <th style={{ ...thS, textAlign: "left", minWidth: "40px" }}>#</th>
                 <th style={{ ...thS, textAlign: "left", minWidth: "200px" }}>Indicador</th>
                 {MESES.map((mes) => (
-                  <th key={mes} colSpan={2} style={{ ...thS, background: "rgba(251,185,0,0.06)", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
+                  <th key={mes} colSpan={2} style={{ ...thS, background: "rgba(125,186,61,0.06)", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
                     {MESES_LABEL[mes]}
                   </th>
                 ))}
@@ -337,7 +337,7 @@ export default function SpoMetas() {
                 <th style={thS} colSpan={2}></th>
                 {MESES.map((mes) => (
                   ["Meta", "Real"].map((h) => (
-                    <th key={mes + h} style={{ ...thS, background: "rgba(251,185,0,0.04)", fontSize: "0.68rem" }}>{h}</th>
+                    <th key={mes + h} style={{ ...thS, background: "rgba(125,186,61,0.04)", fontSize: "0.68rem" }}>{h}</th>
                   ))
                 ))}
               </tr>

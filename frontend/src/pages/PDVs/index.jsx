@@ -216,11 +216,11 @@ export default function PDVs() {
             <p style={styles.dashLabel} className="pdv-dash-label">⚠️ Inadimplentes</p>
             <p style={{ ...styles.dashVal, color: "#f87171" }} className="pdv-dash-val">{inadDia}</p>
           </div>
-          <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.3)" }}>
+          <div style={{ ...styles.dashCard, borderColor: "rgba(125,186,61,0.3)" }}>
             <p style={styles.dashLabel} className="pdv-dash-label">🕐 +30 dias s/ compra</p>
-            <p style={{ ...styles.dashVal, color: "#fbb900" }} className="pdv-dash-val">{semCompraDia}</p>
+            <p style={{ ...styles.dashVal, color: "#7DBA3D" }} className="pdv-dash-val">{semCompraDia}</p>
           </div>
-          <div style={{ ...styles.dashCard, flex: 2, borderColor: "rgba(251,185,0,0.15)" }}>
+          <div style={{ ...styles.dashCard, flex: 2, borderColor: "rgba(125,186,61,0.15)" }}>
             <p style={styles.dashLabel} className="pdv-dash-label">🏆 Top compradores do dia</p>
             <div style={styles.rankMini}>
               {rankDia.length === 0
@@ -365,8 +365,8 @@ export default function PDVs() {
                   {Object.entries(cobPdv).map(([cat, st]) => (
                     <span key={cat} style={{
                       ...styles.cobPill,
-                      background: st === "OK" ? "rgba(34,197,94,0.15)" : st === "PENDENTE" ? "rgba(251,185,0,0.15)" : "rgba(239,68,68,0.15)",
-                      color: st === "OK" ? "#4ade80" : st === "PENDENTE" ? "#fbb900" : "#f87171",
+                      background: st === "OK" ? "rgba(34,197,94,0.15)" : st === "PENDENTE" ? "rgba(125,186,61,0.15)" : "rgba(239,68,68,0.15)",
+                      color: st === "OK" ? "#4ade80" : st === "PENDENTE" ? "#7DBA3D" : "#f87171",
                     }}>
                       {cat.replace("TRIMARCA RGB HE ", "").replace("CERVEJA ", "C.")} · {st}
                     </span>
@@ -545,7 +545,7 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
                 style={{ ...styles.tr, cursor: "pointer" }}
                 onClick={() => onSelect(p)}
               >
-                <td style={{ ...styles.td, color: i < 3 ? "#fbb900" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
+                <td style={{ ...styles.td, color: i < 3 ? "#7DBA3D" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{i + 1}°</td>
                 <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{nome}</td>
                 <td style={{ ...styles.td, color: "#4ade80", fontWeight: "600" }}>
@@ -562,7 +562,7 @@ function TabelaRank({ pdvs, mapaInad, mapaBase, onSelect }) {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" },
   headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
@@ -572,18 +572,18 @@ const styles = {
   content: { padding: "24px 32px", maxWidth: "1200px", margin: "0 auto" },
   diasRow: { display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" },
   diaBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 16px", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  diaBtnAtivo: { background: "rgba(251,185,0,0.15)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", fontWeight: "600" },
+  diaBtnAtivo: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", fontWeight: "600" },
   dashRow: { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   dashCard: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 18px", flex: 1, minWidth: "120px" },
   dashLabel: { margin: "0 0 6px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)" },
   dashVal: { margin: 0, fontSize: "1.6rem", fontWeight: "700" },
   rankMini: { display: "flex", flexDirection: "column", gap: "4px" },
   rankMiniItem: { display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "rgba(255,255,255,0.7)" },
-  rankPos: { color: "#fbb900", fontWeight: "700", minWidth: "20px" },
+  rankPos: { color: "#7DBA3D", fontWeight: "700", minWidth: "20px" },
   rankVol: { marginLeft: "auto", color: "#4ade80", fontWeight: "600" },
   abas: { display: "flex", gap: "4px", marginBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "0" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 16px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px" },
-  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900" },
+  abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
   filtroRow: { marginBottom: "14px" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 14px", fontSize: "0.88rem", fontFamily: "inherit", outline: "none", width: "280px" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
@@ -592,7 +592,7 @@ const styles = {
   th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
   td: { padding: "10px 12px", color: "rgba(255,255,255,0.8)", fontSize: "0.85rem", textAlign: "center" },
-  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
+  codBadge: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
   inadTag: { background: "rgba(239,68,68,0.15)", color: "#f87171", padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "600" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
   modal: { background: "#111827", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "100%", maxWidth: "620px", maxHeight: "90vh", overflow: "auto" },

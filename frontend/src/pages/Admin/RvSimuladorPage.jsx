@@ -13,7 +13,7 @@ export default function RvSimuladorPage() {
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
             <h1 style={styles.title}>💰 RV Simulador</h1>
-            <p style={styles.subtitle}>CMD Ambev · Conde</p>
+            <p style={styles.subtitle}>Hop Follow-up</p>
           </div>
         </div>
         <div style={styles.headerRight}>
@@ -29,15 +29,15 @@ export default function RvSimuladorPage() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
   headerRight: { display: "flex", alignItems: "center", gap: "12px" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit" },
   title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
-  badge: { background: "rgba(251,185,0,0.15)", color: "#fbb900", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
+  badge: { background: "rgba(125,186,61,0.15)", color: "#7DBA3D", padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "600" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
   content: { padding: "32px", maxWidth: "1100px", margin: "0 auto" },
-  relatorioBtn: { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600", whiteSpace: "nowrap" },
+  relatorioBtn: { background: "rgba(125,186,61,0.14)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", fontWeight: "600", whiteSpace: "nowrap" },
 };

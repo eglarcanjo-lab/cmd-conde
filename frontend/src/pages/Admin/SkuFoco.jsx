@@ -175,7 +175,7 @@ export default function SkuFoco() {
                     style={S.dropdownItem}
                     onMouseDown={() => selecionarSugestao(p)}
                   >
-                    <span style={{ color: "#fbb900", fontSize: "0.72rem", marginRight: "8px", flexShrink: 0 }}>{p.cod}</span>
+                    <span style={{ color: "#7DBA3D", fontSize: "0.72rem", marginRight: "8px", flexShrink: 0 }}>{p.cod}</span>
                     <span style={{ color: "#fff", fontSize: "0.82rem" }}>{p.nome}</span>
                   </div>
                 ))}
@@ -293,9 +293,9 @@ const S = {
   label:        { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },
   input:        { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "9px 12px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", colorScheme: "dark" },
   inputReadonly:{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center" },
-  dropdown:     { position: "absolute", top: "100%", left: 0, right: 0, background: "#1a2035", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", zIndex: 100, marginTop: "2px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)", maxHeight: "200px", overflowY: "auto" },
+  dropdown:     { position: "absolute", top: "100%", left: 0, right: 0, background: "#16241b", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", zIndex: 100, marginTop: "2px", boxShadow: "0 8px 24px rgba(0,0,0,0.5)", maxHeight: "200px", overflowY: "auto" },
   dropdownItem: { padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "4px" },
-  btnAdd:       { background: "rgba(251,185,0,0.14)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
+  btnAdd:       { background: "rgba(125,186,61,0.14)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600" },
   table:        { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: "620px" },
   th:           { color: "rgba(255,255,255,0.4)", fontWeight: "700", textAlign: "left", padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em" },
   tr:           { borderBottom: "1px solid rgba(255,255,255,0.05)" },

@@ -300,8 +300,8 @@ const styles = {
     outline: "none",
   },
   btnPrimary: {
-    background: "linear-gradient(135deg, #fbb900, #e6a200)",
-    color: "#0a0f1e",
+    background: "linear-gradient(135deg, #7DBA3D, #2E7D32)",
+    color: "#0c1410",
     border: "none",
     borderRadius: "10px",
     padding: "10px 20px",
@@ -338,8 +338,8 @@ const styles = {
   tr: { borderBottom: "1px solid rgba(255,255,255,0.05)", transition: "background 0.15s" },
   td: { padding: "12px 16px", color: "rgba(255,255,255,0.8)", fontSize: "0.88rem" },
   codBadge: {
-    background: "rgba(251,185,0,0.12)",
-    color: "#fbb900",
+    background: "rgba(125,186,61,0.12)",
+    color: "#7DBA3D",
     padding: "2px 8px",
     borderRadius: "6px",
     fontSize: "0.8rem",

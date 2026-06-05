@@ -161,11 +161,11 @@ export default function Arquivos() {
               value={mesRef}
               onChange={e => setMesRef(e.target.value)}
               title="Define o mês para relatórios que não têm data no arquivo (Visitação GV, Score5, etc.)"
-              style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "8px", color: "#a5b4fc", padding: "6px 10px", fontSize: "0.85rem", fontFamily: "inherit", colorScheme: "dark", minHeight: "36px" }}
+              style={{ background: "rgba(46,125,50,0.12)", border: "1px solid rgba(46,125,50,0.35)", borderRadius: "8px", color: "#7DBA3D", padding: "6px 10px", fontSize: "0.85rem", fontFamily: "inherit", colorScheme: "dark", minHeight: "36px" }}
             />
           </div>
           <button
-            style={{ background: temSelecionado ? "linear-gradient(135deg,#fbb900,#e6a200)" : "rgba(255,255,255,0.07)", color: temSelecionado ? "#0a0f1e" : "rgba(255,255,255,0.35)", border: "none", borderRadius: "10px", padding: "10px 28px", fontSize: "0.9rem", fontWeight: "700", cursor: temSelecionado ? "pointer" : "not-allowed", fontFamily: "inherit", opacity: processando ? 0.7 : 1 }}
+            style={{ background: temSelecionado ? "linear-gradient(135deg,#7DBA3D,#2E7D32)" : "rgba(255,255,255,0.07)", color: temSelecionado ? "#0c1410" : "rgba(255,255,255,0.35)", border: "none", borderRadius: "10px", padding: "10px 28px", fontSize: "0.9rem", fontWeight: "700", cursor: temSelecionado ? "pointer" : "not-allowed", fontFamily: "inherit", opacity: processando ? 0.7 : 1 }}
             onClick={processar}
             disabled={processando || !temSelecionado}
           >
@@ -175,12 +175,12 @@ export default function Arquivos() {
       </div>
 
       {/* Banner do mês de destino — bem visível para evitar importar no mês errado */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "10px", padding: "10px 16px", marginBottom: "18px", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(46,125,50,0.1)", border: "1px solid rgba(46,125,50,0.3)", borderRadius: "10px", padding: "10px 16px", marginBottom: "18px", flexWrap: "wrap" }}>
         <span style={{ fontSize: "1.1rem" }}>📅</span>
         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>
           Importando para o mês:
         </span>
-        <span style={{ color: "#a5b4fc", fontWeight: "800", fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+        <span style={{ color: "#7DBA3D", fontWeight: "800", fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
           {mesPorExtenso(mesRef)}
         </span>
         <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem", marginLeft: "4px" }}>
@@ -195,7 +195,7 @@ export default function Arquivos() {
         {GRUPOS.map(grupo => (
           <div key={grupo.id}>
             <div style={{ marginBottom: "10px", paddingBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <p style={{ margin: 0, fontWeight: "700", fontSize: "1rem", color: "#fbb900" }}>{grupo.label}</p>
+              <p style={{ margin: 0, fontWeight: "700", fontSize: "1rem", color: "#7DBA3D" }}>{grupo.label}</p>
               <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{grupo.desc}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -212,8 +212,8 @@ export default function Arquivos() {
                       onChange={e => selecionarArquivo(cfg.campo, e.target.files[0])}
                     />
                     <div style={{
-                      background: selecionado ? "rgba(251,185,0,0.07)" : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${selecionado ? "rgba(251,185,0,0.5)" : hoje_ok ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.08)"}`,
+                      background: selecionado ? "rgba(125,186,61,0.07)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${selecionado ? "rgba(125,186,61,0.5)" : hoje_ok ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.08)"}`,
                       borderRadius: "8px",
                       padding: "10px 12px",
                       display: "flex",
@@ -224,11 +224,11 @@ export default function Arquivos() {
                       {/* dot de status */}
                       <span style={{
                         width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
-                        background: selecionado ? "#fbb900" : hoje_ok ? "#4ade80" : "rgba(255,255,255,0.15)",
+                        background: selecionado ? "#7DBA3D" : hoje_ok ? "#4ade80" : "rgba(255,255,255,0.15)",
                       }} />
                       <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{cfg.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: "600", color: selecionado ? "#fbb900" : "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: "600", color: selecionado ? "#7DBA3D" : "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {cfg.numero ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem", marginRight: "4px" }}>{cfg.numero}</span> : cfg.item ? <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.74rem", marginRight: "4px" }}>#{cfg.item}</span> : null}
                           {selecionado ? selecionado.name : cfg.rotulo}
                         </p>

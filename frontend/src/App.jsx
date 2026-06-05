@@ -36,8 +36,8 @@ function AppContent() {
   // Aguarda auth E status de manutenção — evita race condition admin vs manu
   if (manu === null || authLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0f1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: "32px", height: "32px", border: "3px solid rgba(251,185,0,0.2)", borderTopColor: "#fbb900", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ minHeight: "100vh", background: "#0c1410", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "32px", height: "32px", border: "3px solid rgba(125,186,61,0.2)", borderTopColor: "#7DBA3D", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -72,7 +72,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v2.9.10";
+export const APP_VERSION = "v3.0.0";
 
 export default function App() {
   return (

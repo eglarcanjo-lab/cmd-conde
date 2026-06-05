@@ -34,7 +34,7 @@ const DIAS = [
 
 const STATUS_COLORS = {
   OK:       { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
-  PENDENTE: { bg: "rgba(251,185,0,0.15)",  color: "#fbb900" },
+  PENDENTE: { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
   NOK:      { bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
   "—":      { bg: "transparent",           color: "rgba(255,255,255,0.15)" },
 };
@@ -61,7 +61,7 @@ function normalizeDia(raw) {
 function corNumDist(n) {
   if (n === 0) return "#f87171";
   if (n === 1) return "#fb923c";
-  if (n <= 3)  return "#fbb900";
+  if (n <= 3)  return "#7DBA3D";
   return "#4ade80";
 }
 
@@ -279,17 +279,17 @@ export default function Cobertura() {
                 <p style={styles.dashLabel}>✅ OK (total base)</p>
                 <p style={{ ...styles.dashVal, color: "#4ade80" }}>{totalOk}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.3)" }}>
+              <div style={{ ...styles.dashCard, borderColor: "rgba(125,186,61,0.3)" }}>
                 <p style={styles.dashLabel}>⏳ Pendente</p>
-                <p style={{ ...styles.dashVal, color: "#fbb900" }}>{totalPend}</p>
+                <p style={{ ...styles.dashVal, color: "#7DBA3D" }}>{totalPend}</p>
               </div>
               <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }}>
                 <p style={styles.dashLabel}>❌ NOK</p>
                 <p style={{ ...styles.dashVal, color: "#f87171" }}>{totalNok}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(251,185,0,0.2)" }}>
+              <div style={{ ...styles.dashCard, borderColor: "rgba(125,186,61,0.2)" }}>
                 <p style={styles.dashLabel}>📅 Visitas hoje</p>
-                <p style={{ ...styles.dashVal, color: "#fbb900" }}>{pdvsDia.length}</p>
+                <p style={{ ...styles.dashVal, color: "#7DBA3D" }}>{pdvsDia.length}</p>
               </div>
             </div>
 
@@ -305,11 +305,11 @@ export default function Cobertura() {
                       <p style={styles.catLabel}>{c.label}</p>
                       <p style={styles.catPct}>{pct}%</p>
                       <div style={styles.catBar}>
-                        <div style={{ ...styles.catBarFill, width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 40 ? "#fbb900" : "#f87171" }} />
+                        <div style={{ ...styles.catBarFill, width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 40 ? "#7DBA3D" : "#f87171" }} />
                       </div>
                       <div style={styles.catCounts}>
                         <span style={{ color: "#4ade80" }}>{r.OK}</span>
-                        <span style={{ color: "#fbb900" }}>{r.PENDENTE}</span>
+                        <span style={{ color: "#7DBA3D" }}>{r.PENDENTE}</span>
                         <span style={{ color: "#f87171" }}>{r.NOK}</span>
                       </div>
                     </div>
@@ -352,7 +352,7 @@ export default function Cobertura() {
                 </select>
                 {isAdmin && (
                   <select
-                    style={{ ...styles.inputFiltro, borderColor: filtroRN ? "rgba(251,185,0,0.5)" : undefined }}
+                    style={{ ...styles.inputFiltro, borderColor: filtroRN ? "rgba(125,186,61,0.5)" : undefined }}
                     value={filtroRN}
                     onChange={(e) => setFiltroRN(e.target.value)}
                   >
@@ -427,7 +427,7 @@ export default function Cobertura() {
                     onClick={() => setCatFiltro(ativo ? null : c.key)}
                   >
                     <p style={styles.distCatLabel}>{c.label}</p>
-                    <p style={{ ...styles.distCatNum, color: ativo ? "#fbb900" : "#fff" }}>
+                    <p style={{ ...styles.distCatNum, color: ativo ? "#7DBA3D" : "#fff" }}>
                       {s.total}
                     </p>
                     <p style={styles.distCatPdvs}>{s.pdvsComDist} PDVs cobertos</p>
@@ -442,8 +442,8 @@ export default function Cobertura() {
 
             {/* ── Detalhe da categoria selecionada ────────────────────────── */}
             {catFiltro && catStats[catFiltro] && (
-              <div style={{ ...styles.section, borderColor: "rgba(251,185,0,0.25)", marginTop: "4px" }}>
-                <h3 style={{ ...styles.sectionTitle, color: "#fbb900" }}>
+              <div style={{ ...styles.section, borderColor: "rgba(125,186,61,0.25)", marginTop: "4px" }}>
+                <h3 style={{ ...styles.sectionTitle, color: "#7DBA3D" }}>
                   🔍 {CAT_MAIN.find((c) => c.key === catFiltro)?.label} — SKUs por distribuição
                 </h3>
                 <div style={styles.top3Grid}>
@@ -519,7 +519,7 @@ export default function Cobertura() {
                 <p style={styles.msg}>Carregando...</p>
               ) : pdvsDia.length === 0 ? (
                 <p style={{ ...styles.msg, color: "rgba(255,255,255,0.55)" }}>
-                  Nenhum PDV no roteiro de <strong style={{ color: "#fbb900" }}>{diaFiltro}</strong>. Selecione outro dia.
+                  Nenhum PDV no roteiro de <strong style={{ color: "#7DBA3D" }}>{diaFiltro}</strong>. Selecione outro dia.
                 </p>
               ) : pdvsDistFiltrados.length === 0 ? (
                 <p style={{ ...styles.msg, color: "rgba(255,255,255,0.55)" }}>
@@ -577,7 +577,7 @@ export default function Cobertura() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "clamp(12px,3vw,20px) clamp(16px,4vw,32px)", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "44px" },
@@ -587,7 +587,7 @@ const styles = {
   content: { padding: "clamp(16px,4vw,24px) clamp(16px,4vw,32px)", maxWidth: "1400px", margin: "0 auto" },
   abas: { display: "flex", gap: "6px", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "0" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "10px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", fontWeight: "500" },
-  abaBtnAtivo: { color: "#fbb900", borderBottom: "2px solid #fbb900", fontWeight: "700" },
+  abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D", fontWeight: "700" },
   // Cobertura
   dashRow: { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   dashCard: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "16px 20px", minWidth: "120px", flex: 1 },
@@ -605,7 +605,7 @@ const styles = {
   diaRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" },
   diasBtns: { display: "flex", gap: "6px", flexWrap: "wrap" },
   diaBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "10px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", minHeight: "44px" },
-  diaBtnAtivo: { background: "rgba(251,185,0,0.15)", border: "1px solid rgba(251,185,0,0.4)", color: "#fbb900", fontWeight: "600" },
+  diaBtnAtivo: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", fontWeight: "600" },
   filtrosRow: { display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" },
   inputFiltro: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
   countLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", marginLeft: "auto" },
@@ -618,15 +618,15 @@ const styles = {
   tr: { borderBottom: "1px solid rgba(255,255,255,0.04)" },
   td: { padding: "10px 8px", color: "rgba(255,255,255,0.8)", fontSize: "0.85rem", textAlign: "center" },
   tdCat: { padding: "8px 4px" },
-  codBadge: { background: "rgba(251,185,0,0.12)", color: "#fbb900", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
+  codBadge: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" },
   statusPill: { display: "inline-block", padding: "3px 6px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: "700", minWidth: "36px" },
   // Distribuição
   catFiltroRow: { display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" },
   catFiltroBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "8px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit", minHeight: "36px", whiteSpace: "nowrap" },
-  catFiltroBtnAtivo: { background: "rgba(251,185,0,0.15)", border: "1px solid rgba(251,185,0,0.5)", color: "#fbb900", fontWeight: "700" },
+  catFiltroBtnAtivo: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.5)", color: "#7DBA3D", fontWeight: "700" },
   distCatGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px", marginBottom: "20px" },
   distCatCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 12px", cursor: "pointer", transition: "border-color 0.2s, background 0.2s" },
-  distCatCardAtivo: { background: "rgba(251,185,0,0.06)", border: "1px solid rgba(251,185,0,0.45)" },
+  distCatCardAtivo: { background: "rgba(125,186,61,0.06)", border: "1px solid rgba(125,186,61,0.45)" },
   distCatLabel: { margin: "0 0 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em" },
   distCatNum: { margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", lineHeight: 1 },
   distCatPdvs: { margin: "0 0 10px", fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" },

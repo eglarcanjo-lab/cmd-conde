@@ -21,7 +21,7 @@ const KPIS_AP = [
 
 function BarIndicador({ label, real, meta, peso, po_total, bloqueado, minPct = 70 }) {
   const pct     = meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
-  const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#fbb900" : "#f87171";
+  const cor     = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
   const base    = meta > 0 && pct >= minPct ? (po_total * (peso / 100)) * (pct / 100) : 0;
   const valReal = bloqueado ? 0 : base;
   const valPot  = base;
@@ -42,7 +42,7 @@ function BarIndicador({ label, real, meta, peso, po_total, bloqueado, minPct = 7
           {Number(real).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} /&nbsp;
           {Number(meta).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
         </span>
-        <span style={{ color: bloqueado ? "#fbb900" : cor, fontWeight: "600", fontSize: "0.82rem" }}>
+        <span style={{ color: bloqueado ? "#7DBA3D" : cor, fontWeight: "600", fontSize: "0.82rem" }}>
           {bloqueado
             ? `⚠️ R$ ${valPot.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             : `R$ ${valReal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -170,7 +170,7 @@ export default function RV() {
                 <p style={{ margin: "0 0 4px", color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>
                   Estimativa RV — {mesRef}
                 </p>
-                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: apOk ? "#4ade80" : "#fbb900" }}>
+                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: apOk ? "#4ade80" : "#7DBA3D" }}>
                   R$ {(apOk ? rvTotal : rvTotalPot).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 {!apOk && (
@@ -183,7 +183,7 @@ export default function RV() {
                 </p>
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: "2.5rem", fontWeight: "800", color: "#fbb900" }}>
+                <p style={{ margin: 0, fontSize: "2.5rem", fontWeight: "800", color: "#7DBA3D" }}>
                   {poTotal > 0 ? (((apOk ? rvTotal : rvTotalPot) / poTotal) * 100).toFixed(1) : "0"}%
                 </p>
                 <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{apOk ? "do PO" : "potencial"}</p>
@@ -197,9 +197,9 @@ export default function RV() {
                 {[
                   { label: "Pontos realizados", val: Number(pontos?.pontos_real || 0).toLocaleString("pt-BR"), color: "#fff" },
                   { label: "Meta", val: META_PONTOS.toLocaleString("pt-BR"), color: "#fff" },
-                  { label: "Atingimento", val: `${pctPontos.toFixed(1)}%`, color: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#fbb900" : "#f87171" },
+                  { label: "Atingimento", val: `${pctPontos.toFixed(1)}%`, color: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#7DBA3D" : "#f87171" },
                   { label: "Peso no PO", val: `${pesoPontos}%`, color: "#fff" },
-                  { label: "Valor estimado", val: `${apOk ? "" : "⚠️ "}R$ ${(apOk ? rvPontos : rvPontosPot).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: apOk ? "#4ade80" : "#fbb900" },
+                  { label: "Valor estimado", val: `${apOk ? "" : "⚠️ "}R$ ${(apOk ? rvPontos : rvPontosPot).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: apOk ? "#4ade80" : "#7DBA3D" },
                 ].map((item) => (
                   <div key={item.label} style={styles.pontosItem}>
                     <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem" }}>{item.label}</span>
@@ -208,7 +208,7 @@ export default function RV() {
                 ))}
               </div>
               <div style={styles.barTrack}>
-                <div style={{ ...styles.barFill, width: `${Math.min(pctPontos, 100)}%`, background: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#fbb900" : "#f87171" }} />
+                <div style={{ ...styles.barFill, width: `${Math.min(pctPontos, 100)}%`, background: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#7DBA3D" : "#f87171" }} />
                 <div style={styles.barMark70}/>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function RV() {
 }
 
 const styles = {
-  root: { minHeight: "100vh", background: "#0a0f1e", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#fff" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "clamp(12px,3vw,20px) clamp(16px,4vw,32px)", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", flexWrap: "wrap", gap: "12px" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
   headerRight: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
@@ -248,7 +248,7 @@ const styles = {
   apKpi: { background: "rgba(255,255,255,0.04)", border: "1px solid", borderRadius: "10px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" },
   apKpiLabel: { color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", textAlign: "center" },
   apAviso: { margin: "12px 0 0", color: "#f87171", fontSize: "0.82rem", textAlign: "center" },
-  totalCard: { background: "linear-gradient(135deg, rgba(251,185,0,0.08), rgba(251,185,0,0.03))", border: "1px solid rgba(251,185,0,0.2)", borderRadius: "14px", padding: "clamp(16px,4vw,20px) clamp(16px,4vw,28px)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" },
+  totalCard: { background: "linear-gradient(135deg, rgba(125,186,61,0.08), rgba(125,186,61,0.03))", border: "1px solid rgba(125,186,61,0.2)", borderRadius: "14px", padding: "clamp(16px,4vw,20px) clamp(16px,4vw,28px)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" },
   section: { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
   sectionTitle: { margin: "0 0 16px", fontSize: "0.95rem", fontWeight: "600" },
   pontosGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "10px", marginBottom: "14px" },

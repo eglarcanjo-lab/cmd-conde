@@ -19,12 +19,12 @@ export default class ErrorBoundary extends Component {
       return (
         <div style={{
           minHeight: "100vh",
-          background: "#0a0f1e",
+          background: "#0c1410",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
           gap: "16px",
           padding: "32px",
         }}>
@@ -36,9 +36,9 @@ export default class ErrorBoundary extends Component {
           <button
             onClick={() => window.location.reload()}
             style={{
-              background: "rgba(251,185,0,0.12)",
-              border: "1px solid rgba(251,185,0,0.3)",
-              color: "#fbb900",
+              background: "rgba(125,186,61,0.12)",
+              border: "1px solid rgba(125,186,61,0.3)",
+              color: "#7DBA3D",
               padding: "10px 20px",
               borderRadius: "8px",
               cursor: "pointer",
