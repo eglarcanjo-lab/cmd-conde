@@ -80,19 +80,48 @@ export default function Arquivos() {
     setArquivos(prev => ({ ...prev, [campo]: file }));
   }
 
+  // monta um FormData novo a cada tentativa (File pode ser reenviado)
+  function montarForm() {
+    const form = new FormData();
+    ARQUIVOS_CONFIG.forEach(cfg => { if (arquivos[cfg.campo]) form.append(cfg.campo, arquivos[cfg.campo]); });
+    if (mesRef) form.append("mes_ref", mesRef); // mês para relatórios sem data própria
+    return form;
+  }
+
+  // erro de cold start / conexão (processador acordando) — vale a pena re-tentar
+  function ehColdStart(err) {
+    return err.code === "ECONNABORTED" || (err.message || "").includes("Network") || (err.response?.status >= 502 && err.response?.status <= 504);
+  }
+
   async function processar() {
     const selecionados = Object.values(arquivos).filter(Boolean);
     if (selecionados.length === 0) { setErro("Selecione pelo menos um arquivo."); return; }
     setErro(""); setResultado(null); setProcessando(true);
+
+    const enviar = () => api.post("/api/arquivos/processar", montarForm(), {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300000,
+    });
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     try {
-      const form = new FormData();
-      ARQUIVOS_CONFIG.forEach(cfg => { if (arquivos[cfg.campo]) form.append(cfg.campo, arquivos[cfg.campo]); });
-      // Passa o mês explicitamente para o processador corrigir relatórios sem data
-      if (mesRef) form.append("mes_ref", mesRef);
-      const res = await api.post("/api/arquivos/processar", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 300000,
-      });
+      let res;
+      try {
+        res = await enviar();
+      } catch (err1) {
+        if (!ehColdStart(err1)) throw err1;
+        // processador estava dormindo — a 1ª tentativa o acordou. Espera e tenta de novo.
+        setErro("⏳ Processador iniciando (pode levar ~1 min)… tentando novamente, aguarde.");
+        await sleep(20000);
+        try {
+          res = await enviar();
+        } catch (err2) {
+          if (!ehColdStart(err2)) throw err2;
+          await sleep(25000);
+          res = await enviar(); // última tentativa
+        }
+      }
+      setErro("");
       setResultado(res.data.resultados);
       setArquivos({});
       await carregarStatus();
@@ -100,8 +129,8 @@ export default function Arquivos() {
       const status = err.response?.status;
       let detalhe = err.response?.data?.error;
       if (!detalhe) {
-        if (err.code === "ECONNABORTED") detalhe = "tempo esgotado — o processador pode estar iniciando (cold start). Tente de novo em ~30s.";
-        else if (err.message?.includes("Network")) detalhe = "sem resposta do servidor (processador offline ou reiniciando).";
+        if (err.code === "ECONNABORTED") detalhe = "tempo esgotado. Tente de novo em ~30s.";
+        else if ((err.message || "").includes("Network")) detalhe = "sem resposta do processador mesmo após tentativas. Pode estar fora do ar — tente novamente em 1-2 min.";
         else detalhe = err.message || "erro desconhecido";
       }
       setErro(`Erro ao processar${status ? ` [${status}]` : ""}: ${detalhe}`);

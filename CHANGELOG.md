@@ -47,6 +47,12 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.5 — 2026-06-04
+- Importação com **retry automático** no cold start do processador (Render
+  free hiberna). Detecta a falha de conexão, aguarda o processador subir e
+  re-tenta sozinho (até 2x). Seguro pois o processamento é idempotente
+  (sobrescreve, não duplica).
+
 ### v2.9.4 — 2026-06-04
 - Erro de importação agora mostra o **detalhe real** (status, timeout/cold
   start, processador offline) em vez do genérico "Erro ao processar arquivos".
