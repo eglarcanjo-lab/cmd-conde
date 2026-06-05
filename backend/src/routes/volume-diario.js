@@ -126,12 +126,12 @@ router.get("/", async (req, res) => {
       readSheet("produtos_base").catch(() => []),
     ]);
 
-    // ── Mapa código produto → categoria principal ───────────────────────────
+    // ── Mapa código produto → TODAS as categorias (em caixa alta) ───────────
     const catMap = {};
     prodBase.forEach((p) => {
       const cod  = normCod(p.cod);
-      const cats = String(p.categorias || "").split("|").map((c) => c.trim()).filter(Boolean);
-      if (cod && cats.length > 0) catMap[cod] = cats[0];
+      const cats = String(p.categorias || "").split("|").map((c) => c.trim().toUpperCase()).filter(Boolean);
+      if (cod && cats.length > 0) catMap[cod] = cats;
     });
 
     // ── Filtra volume por perfil ────────────────────────────────────────────
@@ -159,12 +159,23 @@ router.get("/", async (req, res) => {
     const totalDiasUteis = diasUteisMes(ano, mes);
     const diasPassados   = diasUteisAte(ano, mes, dataRef.getDate());
 
-    const metasFiltradas = filtrarPorPerfil(metas, usuario)
-      .filter((m) => normalizeMesRef(m.mes_referencia) === mesRef);
+    // Só categorias de VOLUME (Marketplace=faturamento e Pontos Force ficam de fora)
+    const ehVolume = (cat) => {
+      const c = String(cat || "").toUpperCase();
+      return !c.includes("FATURAMENTO") && c !== "PONTOS FORCE";
+    };
 
-    const metaMensal = metasFiltradas.reduce(
-      (s, m) => s + (parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0), 0
-    );
+    let metasFiltradas = filtrarPorPerfil(metas, usuario)
+      .filter((m) => normalizeMesRef(m.mes_referencia) === mesRef);
+    // Respeita o setor selecionado (senão soma/duplica todos os setores)
+    if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
+      metasFiltradas = metasFiltradas.filter((m) => String(m.setor).trim() === String(req.query.setor).trim());
+    }
+
+    // Meta de VOLUME (HL) — não soma faturamento (R$) nem pontos
+    const metaMensal = metasFiltradas
+      .filter((m) => ehVolume(m.categoria))
+      .reduce((s, m) => s + (parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0), 0);
     const metaDiaria = totalDiasUteis > 0 ? metaMensal / totalDiasUteis : 0;
 
     // ── Acumulado do mês ────────────────────────────────────────────────────
@@ -175,31 +186,39 @@ router.get("/", async (req, res) => {
     const volumeAcumMes = somarVol(dadosMes);
 
     // ── Volume por categoria (breakdown) ────────────────────────────────────
+    // Soma o volume em CADA categoria do produto (um produto pode ter mais de uma).
     function volPorCategoria(linhas) {
       const m = {};
       linhas.forEach((r) => {
-        const cod = normCod(r.cod_produto);
-        const cat = catMap[cod];
-        if (!cat) return;
-        m[cat] = (m[cat] || 0) + (parseFloat(r.volume_hl) || 0);
+        const cats = catMap[normCod(r.cod_produto)];
+        if (!cats) return;
+        const v = parseFloat(r.volume_hl) || 0;
+        cats.forEach((cat) => { m[cat] = (m[cat] || 0) + v; });
       });
       return m;
     }
     const catVolHoje = volPorCategoria(dadosHoje);
     const catVolMes  = volPorCategoria(dadosMes);
 
-    const categoriasBreakdown = metasFiltradas
-      .filter((m) => {
-        const cat = String(m.categoria || "").trim();
-        const v   = parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0;
-        return cat && v > 0;
-      })
-      .map((m) => {
-        const cat      = String(m.categoria || "").trim();
-        const metaVol  = parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0;
-        const metaDia  = totalDiasUteis > 0 ? metaVol / totalDiasUteis : 0;
-        const volHoje  = catVolHoje[cat] || 0;
-        const volMes   = catVolMes[cat]  || 0;
+    // Categoria da meta ("CERVEJA (VOLUME)") → categoria do produto ("CERVEJA")
+    const baseCat = (s) =>
+      String(s || "").toUpperCase().replace(/\s*\((VOLUME|FATURAMENTO)\)\s*$/i, "").trim();
+
+    // Consolida as metas por categoria (soma os setores do escopo) → 1 card cada.
+    const metaPorCat = {};
+    metasFiltradas.forEach((m) => {
+      const cat = String(m.categoria || "").trim();
+      const v   = parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0;
+      if (!cat || v <= 0 || !ehVolume(cat)) return;
+      metaPorCat[cat] = (metaPorCat[cat] || 0) + v;
+    });
+
+    const categoriasBreakdown = Object.entries(metaPorCat)
+      .map(([cat, metaVol]) => {
+        const base    = baseCat(cat);
+        const metaDia = totalDiasUteis > 0 ? metaVol / totalDiasUteis : 0;
+        const volHoje = catVolHoje[base] || 0;
+        const volMes  = catVolMes[base]  || 0;
         return {
           categoria:      cat,
           meta_mensal_hl: Math.round(metaVol * 100) / 100,
@@ -209,7 +228,8 @@ router.get("/", async (req, res) => {
           pct_dia: metaDia > 0 ? Math.round((volHoje / metaDia) * 100) : 0,
           pct_mes: metaVol > 0 ? Math.round((volMes  / metaVol) * 100) : 0,
         };
-      });
+      })
+      .sort((a, b) => b.meta_mensal_hl - a.meta_mensal_hl);
 
     // ── Top SKUs do dia ─────────────────────────────────────────────────────
     const skuMap = {};

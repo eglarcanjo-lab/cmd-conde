@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.0** — Detalhamento HOP: drill-downs, itens da nota e tabelas ordenáveis
+Versão atual: **v3.5.2** — fix Volume Diário (barras por categoria + cards duplicados)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.2 — 2026-06-05
+- **Fix Volume Diário › Volume por Categoria:**
+  - **Barras não enchiam:** a meta "CERVEJA (VOLUME)" não casava com a categoria
+    do produto ("CERVEJA"). Agora o nome da meta é normalizado (tira o sufixo
+    "(VOLUME)") e o volume é somado em **todas** as categorias do produto.
+  - **Cards duplicados por setor:** agora consolida **1 card por categoria**
+    (soma os setores do escopo) e respeita o **setor selecionado** no filtro.
+  - **Meta mensal/diária** deixam de somar Marketplace (R$) e Pontos Force como
+    se fossem HL; o bloco de categorias mostra só indicadores de **volume**.
 
 ### v3.5.1 — 2026-06-05
 - **Entrega › itens da nota:** removida a coluna "Entregue (HL)" do modal — em
