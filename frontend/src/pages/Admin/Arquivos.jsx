@@ -97,7 +97,14 @@ export default function Arquivos() {
       setArquivos({});
       await carregarStatus();
     } catch (err) {
-      setErro(err.response?.data?.error || "Erro ao processar arquivos.");
+      const status = err.response?.status;
+      let detalhe = err.response?.data?.error;
+      if (!detalhe) {
+        if (err.code === "ECONNABORTED") detalhe = "tempo esgotado — o processador pode estar iniciando (cold start). Tente de novo em ~30s.";
+        else if (err.message?.includes("Network")) detalhe = "sem resposta do servidor (processador offline ou reiniciando).";
+        else detalhe = err.message || "erro desconhecido";
+      }
+      setErro(`Erro ao processar${status ? ` [${status}]` : ""}: ${detalhe}`);
     } finally {
       setProcessando(false);
     }

@@ -47,6 +47,10 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.4 — 2026-06-04
+- Erro de importação agora mostra o **detalhe real** (status, timeout/cold
+  start, processador offline) em vez do genérico "Erro ao processar arquivos".
+
 ### v2.9.3 — 2026-06-04
 - **Fix:** seletor "Mês de Referência" da importação vinha com default no
   **mês anterior**, fazendo relatórios sem data própria (Visitação, Score5,
