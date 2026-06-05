@@ -47,6 +47,10 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.6 — 2026-06-04
+- Importação: limite de upload por arquivo subido para **200MB** e erro de
+  tamanho/upload com mensagem clara (413) em vez do genérico.
+
 ### v2.9.5 — 2026-06-04
 - Importação com **retry automático** no cold start do processador (Render
   free hiberna). Detecta a falha de conexão, aguarda o processador subir e

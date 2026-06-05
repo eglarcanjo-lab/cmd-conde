@@ -7,17 +7,32 @@ const FormData = require("form-data");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 const { cacheClearAll } = require("../services/sheets");
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
+const MAX_FILE_MB = 200;
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_FILE_MB * 1024 * 1024 } });
 
 const PROCESSOR_URL = process.env.PROCESSOR_URL || "http://localhost:5000";
 const PROCESSOR_TOKEN = process.env.PROCESSOR_TOKEN || "cmd_processor_secret";
 
 router.use(authMiddleware, adminOnly);
 
+const uploadFields = upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }]);
+
+// Wrapper que captura erros do multer (ex: arquivo grande demais) com mensagem clara
+function uploadHandler(req, res, next) {
+  uploadFields(req, res, (err) => {
+    if (err) {
+      console.error("Erro no upload (multer):", err.code, err.message);
+      if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: `Arquivo muito grande (máximo ${MAX_FILE_MB}MB por arquivo).` });
+      return res.status(400).json({ error: `Falha no upload do arquivo: ${err.message}` });
+    }
+    next();
+  });
+}
+
 // POST /api/arquivos/processar — envia arquivos para o processador Python
 router.post(
   "/processar",
-  upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }]),
+  uploadHandler,
   async (req, res) => {
     try {
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
