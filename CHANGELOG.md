@@ -47,6 +47,10 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v3.5.1 — 2026-06-05
+- **Entrega › itens da nota:** removida a coluna "Entregue (HL)" do modal — em
+  nota frustrada o entregue é sempre zero. Fica só o volume marcado.
+
 ### v3.5.0 — 2026-06-05
 - **Tabelas ordenáveis** em todo o Detalhamento — clique no cabeçalho para ordenar
   (números/volume/valor e datas do maior p/ menor; nomes em ordem alfabética).

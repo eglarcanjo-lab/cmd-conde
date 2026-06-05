@@ -223,8 +223,7 @@ function Entrega() {
             ) : (
               <Tabela inicial={{ k: "volume_marcacao_hl", dir: "desc" }} linhas={nota.itens} colunas={[
                 { k: "cod_produto", t: "Cód" }, { k: "nome_produto", t: "Produto" },
-                { k: "volume_marcacao_hl", t: "Marcado (HL)", num: true, fmt: (v) => fmt(v, 2) },
-                { k: "volume_entrega_hl", t: "Entregue (HL)", num: true, fmt: (v) => fmt(v, 2) }]} />
+                { k: "volume_marcacao_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v, 2) }]} />
             )}
           </div>
         </div>
