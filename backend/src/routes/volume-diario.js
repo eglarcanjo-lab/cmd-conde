@@ -119,12 +119,17 @@ router.get("/", async (req, res) => {
     const dataCompStr = toDataStr(dataComp);
 
     // Lê todas as planilhas necessárias em paralelo
-    const [volumeDiario, metas, skuFoco, prodBase] = await Promise.all([
+    const [volumeDiario, metas, skuFoco, prodBase, statusArq] = await Promise.all([
       readSheet("volume_diario").catch(() => []),
       readSheet("metas").catch(() => []),
       readSheet("sku_foco").catch(() => []),
       readSheet("produtos_base").catch(() => []),
+      readSheet("status_arquivos").catch(() => []),
     ]);
+
+    // Horário da última importação de pedidos (atualiza o Volume Diário)
+    const linhaPedidos = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
+    const atualizadoEm = linhaPedidos ? String(linhaPedidos.atualizado_em || "").trim() : "";
 
     // ── Mapa código produto → TODAS as categorias (em caixa alta) ───────────
     const catMap = {};
@@ -283,6 +288,7 @@ router.get("/", async (req, res) => {
       dias_uteis_mes:          totalDiasUteis,
       dias_uteis_passados:     diasPassados,
       mes_referencia:          mesRef,
+      atualizado_em:           atualizadoEm,
       categorias:              categoriasBreakdown,
       top_skus:                topSkus,
       sku_foco:                skuFocoProgress,

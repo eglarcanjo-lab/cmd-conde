@@ -96,6 +96,11 @@ export default function VolumeDiario() {
           <h1 style={S.title}>📈 Volume Diário</h1>
           <p style={S.subtitle}>Acompanhamento de vendas por dia</p>
         </div>
+        {d?.atualizado_em && (
+          <span style={S.atualizado} title="Horário da última importação de pedidos">
+            🔄 Atualizado em {d.atualizado_em}
+          </span>
+        )}
       </div>
 
       {/* Filtros */}
@@ -289,6 +294,7 @@ const S = {
   backBtn:       { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
   title:         { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
   subtitle:      { color: "rgba(255,255,255,0.4)", margin: 0, fontSize: "0.82rem" },
+  atualizado:    { marginLeft: "auto", background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.3)", color: "#7DBA3D", padding: "6px 12px", borderRadius: "20px", fontSize: "0.74rem", fontWeight: "600", whiteSpace: "nowrap", alignSelf: "center" },
   filters:       { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   filterGroup:   { display: "flex", flexDirection: "column", gap: "4px" },
   filterLabel:   { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },

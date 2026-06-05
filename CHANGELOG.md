@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.2** — fix Volume Diário (barras por categoria + cards duplicados)
+Versão atual: **v3.5.3** — hora da última atualização no Volume Diário
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.3 — 2026-06-05
+- **Volume Diário:** mostra a **hora da última atualização** (🔄 Atualizado em
+  DD/MM HH:MM) no cabeçalho — útil pra quem importa os pedidos várias vezes ao
+  dia. Vem do horário da importação dos Pedidos (`status_arquivos`).
+- Processador: carimbo de horário do `status_arquivos` passa a usar o fuso de
+  **Brasília** (antes ficava no horário do servidor, ~3h adiantado).
 
 ### v3.5.2 — 2026-06-05
 - **Fix Volume Diário › Volume por Categoria:**
