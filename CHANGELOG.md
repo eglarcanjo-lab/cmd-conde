@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.3.0** — Detalhamento HOP (Entrega + Ruptura)
+Versão atual: **v3.4.0** — Detalhamento HOP: filtros, clique-no-mês e top clientes
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.4.0 — 2026-06-05
+- **Detalhamento HOP — Ruptura repaginada:** o detalhe agora cobre **todo o
+  quadrimestre** (antes só o mês atual aparecia). Seleção de mês passa a ser
+  **clicando na barra** do gráfico; **sem seleção = consolidado** do quadrimestre.
+  Novo sub-relatório **Top clientes afetados** (top 101) além de Por produto.
+  Processador gera `ruptura_produto` e `ruptura_cliente` (produto/cliente × mês).
+- **Detalhamento HOP — Entrega com filtros:** filtros de **Mês, Setor e Motivo**
+  e sub-abas **Por motivo / Por setor / Por PDV / Detalhe**. As **Devoluções**
+  agora **acumulam por mês** (importe mês a mês e monte o quadrimestre; reimportar
+  um mês o atualiza). `entregas_efetivadas` passa a ser por setor × mês.
+- Backend `/api/detalhamento/entrega` e `/ruptura` aceitam filtros e consolidam.
 
 ### v3.3.0 — 2026-06-05
 - **Detalhamento HOP** 🌿 — nova página de relatórios (admin/director) na Home,
