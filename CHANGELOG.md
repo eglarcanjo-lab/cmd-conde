@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.5** — Hop chat: fallback de modelo + erro com diagnóstico
+Versão atual: **v3.5.6** — Hop chat: troca de modelo na cota (429) + aviso amigável
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.6 — 2026-06-05
+- **Hop chat (cota Gemini):** o erro era **429 "quota exceeded"** no
+  `gemini-2.0-flash`. Como cada modelo tem **cota própria** no tier grátis, agora
+  na cota o backend **passa para o próximo modelo** (inclui os `-lite`, de limite
+  grátis mais alto) em vez de desistir. Se todos estiverem no limite, mostra um
+  **aviso amigável** ("limite grátis da IA renova sozinho, tenta mais tarde").
+- Prompt enxugado (menos tokens por pergunta).
 
 ### v3.5.5 — 2026-06-05
 - **Hop chat (fix/diagnóstico):** o chat caía no erro genérico sem dizer a causa.

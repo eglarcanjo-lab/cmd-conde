@@ -201,7 +201,7 @@ router.post("/chat", async (req, res) => {
 
     const minhasVendas = vendas
       .filter((r) => String(r.setor || "").trim() === setor)
-      .slice(0, 4000);
+      .slice(0, 2500);
 
     let tabela = "PDV (cliente)\tProduto\tVolume(HL)\n";
     minhasVendas.forEach((r) => {
@@ -235,10 +235,16 @@ router.post("/chat", async (req, res) => {
       "RESPOSTA DA HOP:",
     ].join("\n");
 
-    // Tenta a lista de modelos (resiliente a nome de modelo indisponível/renomeado)
-    const modelos = [...new Set([HOP_MODEL, "gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash"].filter(Boolean))];
+    // Tenta vários modelos. Cada modelo tem cota PRÓPRIA no tier grátis — então em
+    // caso de "quota exceeded" (429) seguimos para o próximo (não desistimos).
+    // Os "-lite" têm limites grátis mais altos; deixados como rede de segurança.
+    const modelos = [...new Set([HOP_MODEL,
+      "gemini-2.0-flash", "gemini-2.5-flash",
+      "gemini-2.5-flash-lite", "gemini-2.0-flash-lite",
+      "gemini-flash-latest", "gemini-1.5-flash"].filter(Boolean))];
     let resposta = null;
     let ultimoErro = "";
+    let quota = false;
     for (const modelo of modelos) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${GEMINI_KEY}`;
@@ -252,13 +258,16 @@ router.post("/chat", async (req, res) => {
       } catch (e) {
         const code = e.response?.status;
         ultimoErro = `${modelo}: ${e.response?.data?.error?.message || e.message}`;
-        // Erros de chave/permissão/quota não melhoram trocando de modelo
-        if ([400, 401, 403, 429].includes(code)) break;
+        if (code === 429) { quota = true; continue; }      // cota do modelo: tenta o próximo
+        if ([400, 401, 403].includes(code)) break;          // chave/permissão: não adianta trocar
       }
     }
 
     if (resposta) return res.json({ resposta });
     console.error("hop/chat:", ultimoErro);
+    if (quota) {
+      return res.status(429).json({ error: "A Hop usou todo o limite grátis da IA por agora 😅 O limite renova sozinho — tenta de novo daqui a pouco (ou amanhã)! 💚" });
+    }
     return res.status(500).json({ error: `A Hop teve um problema pra pensar agora 💚 (${String(ultimoErro).slice(0, 150)})` });
   } catch (err) {
     console.error("hop/chat:", err.response?.data || err.message);
