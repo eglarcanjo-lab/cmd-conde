@@ -235,18 +235,34 @@ router.post("/chat", async (req, res) => {
       "RESPOSTA DA HOP:",
     ].join("\n");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${HOP_MODEL}:generateContent?key=${GEMINI_KEY}`;
-    const r = await axios.post(url, {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 600 },
-    }, { timeout: 30000 });
+    // Tenta a lista de modelos (resiliente a nome de modelo indisponível/renomeado)
+    const modelos = [...new Set([HOP_MODEL, "gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash"].filter(Boolean))];
+    let resposta = null;
+    let ultimoErro = "";
+    for (const modelo of modelos) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${GEMINI_KEY}`;
+        const r = await axios.post(url, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+        }, { timeout: 30000 });
+        const txt = r.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (txt) { resposta = txt; break; }
+        ultimoErro = `${modelo}: sem texto (finishReason=${r.data?.candidates?.[0]?.finishReason || "?"})`;
+      } catch (e) {
+        const code = e.response?.status;
+        ultimoErro = `${modelo}: ${e.response?.data?.error?.message || e.message}`;
+        // Erros de chave/permissão/quota não melhoram trocando de modelo
+        if ([400, 401, 403, 429].includes(code)) break;
+      }
+    }
 
-    const resposta = r.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-      || "Não consegui formular uma resposta agora. Tenta reformular a pergunta? 💚";
-    return res.json({ resposta });
+    if (resposta) return res.json({ resposta });
+    console.error("hop/chat:", ultimoErro);
+    return res.status(500).json({ error: `A Hop teve um problema pra pensar agora 💚 (${String(ultimoErro).slice(0, 150)})` });
   } catch (err) {
     console.error("hop/chat:", err.response?.data || err.message);
-    return res.status(500).json({ error: "A Hop teve um problema pra pensar agora. Tenta de novo em instantes! 💚" });
+    return res.status(500).json({ error: `A Hop teve um problema 💚 (${String(err.message).slice(0, 120)})` });
   }
 });
 

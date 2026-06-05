@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.4** — ícone do app Hop (logo do lúpulo)
+Versão atual: **v3.5.5** — Hop chat: fallback de modelo + erro com diagnóstico
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.5 — 2026-06-05
+- **Hop chat (fix/diagnóstico):** o chat caía no erro genérico sem dizer a causa.
+  Agora o backend (a) **tenta vários modelos** do Gemini em sequência
+  (`gemini-2.0-flash` → `2.5-flash` → `flash-latest` → `1.5-flash`), resiliente a
+  modelo renomeado/indisponível; (b) sobe o limite de tokens; e (c) **mostra a
+  causa real** na mensagem de erro (ex: "API key not valid", "model not found",
+  "quota exceeded") para diagnóstico rápido.
 
 ### v3.5.4 — 2026-06-05
 - **Ícone do app trocado pelo logo Hop** 🌿 — gerado a partir da arte do lúpulo
