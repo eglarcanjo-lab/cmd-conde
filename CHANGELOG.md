@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.8 — 2026-06-04
+- **Processador (perf):** importação de pedidos passa a ler só as 9 colunas
+  usadas (o CSV do Promax tem ~71). Pico de memória caiu de ~255MB para
+  ~35MB. Testado com arquivo real de 38,7MB (69k linhas) → pico ~199MB,
+  processa sem estourar a RAM do Render free. Resolve de vez o erro ao
+  importar o arquivo grande de pedidos.
+
 ### v2.9.7 — 2026-06-04
 - **Processador (perf):** otimização de memória no processamento de pedidos
   para não estourar a RAM do Render free (512MB) com arquivos grandes (34MB+).
