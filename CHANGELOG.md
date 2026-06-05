@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.7 — 2026-06-04
+- **Processador (perf):** otimização de memória no processamento de pedidos
+  para não estourar a RAM do Render free (512MB) com arquivos grandes (34MB+).
+  Descarta colunas não usadas, vetoriza a categorização (map em vez de apply)
+  e libera memória entre etapas. Resolve o "processador reiniciando" ao
+  importar o arquivo de pedidos grande.
+
 ### v2.9.6 — 2026-06-04
 - Importação: limite de upload por arquivo subido para **200MB** e erro de
   tamanho/upload com mensagem clara (413) em vez do genérico.
