@@ -131,12 +131,15 @@ router.get("/insights", async (req, res) => {
         const pos = idx + 1;
         const medalha = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "🏆";
         const top = pos <= 3;
+        const premioTop = inc.premio ? `Prêmio: ${inc.premio}. ` : "";
+        const premioSub = inc.premio ? `o prêmio é ${inc.premio}. ` : "";
+        const texto = top
+          ? `Você está em ${pos}º lugar! Tá voando. ${premioTop}Segura essa posição! 🚀`
+          : `Você está em ${pos}º lugar de ${ranking.length}. Dá pra subir — ${premioSub}bora! 💪`;
         insights.push({
           tipo: top ? "destaque" : "info", icone: medalha,
           titulo: `Incentivo: ${inc.titulo}`,
-          texto: top
-            ? `Você está em ${pos}º lugar! Tá voando. ${inc.premio ? `Prêmio: ${inc.premio}. ` : ""}Segura essa posição! 🚀`
-            : `Você está em ${pos}º lugar de ${ranking.length}. Dá pra subir — ${inc.premio ? `o prêmio é ${inc.premio}. ` : ""}bora! 💪`,
+          texto,
         });
       }
     }
