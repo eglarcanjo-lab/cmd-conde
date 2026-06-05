@@ -220,18 +220,51 @@ async function initializeSheets() {
     configuracoes: ["chave", "valor"],
   };
 
-  for (const [tab, headers] of Object.entries(tabs)) {
-    await ensureTab(tab);
-    const existing = await readSheet(tab);
-    if (existing.length === 0) {
-      const sheets = await getSheets();
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SHEET_ID,
-        range: `${tab}!A1`,
+  const sheets = await getSheets();
+
+  // 1) Metadados UMA vez (em vez de 1 spreadsheets.get por aba)
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+  const existentes = new Set((meta.data.sheets || []).map((s) => s.properties.title));
+
+  // 2) Cria as abas faltantes num único batchUpdate + escreve cabeçalhos em batch
+  const faltantes = Object.keys(tabs).filter((t) => !existentes.has(t));
+  if (faltantes.length > 0) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      resource: { requests: faltantes.map((t) => ({ addSheet: { properties: { title: t } } })) },
+    });
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      resource: {
         valueInputOption: "USER_ENTERED",
-        resource: { values: [headers] },
+        data: faltantes.map((t) => ({ range: `${t}!A1`, values: [tabs[t]] })),
+      },
+    });
+    console.log(`Abas criadas: ${faltantes.join(", ")}`);
+  }
+
+  // 3) Abas existentes: lê a 1ª célula de TODAS num único batchGet e escreve
+  //    cabeçalho só nas que estiverem sem header (evita ~50 leituras separadas)
+  const paraChecar = Object.keys(tabs).filter((t) => existentes.has(t));
+  if (paraChecar.length > 0) {
+    const resp = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SHEET_ID,
+      ranges: paraChecar.map((t) => `${t}!A1:A1`),
+    });
+    const vazias = [];
+    (resp.data.valueRanges || []).forEach((vr, i) => {
+      const a1 = vr.values?.[0]?.[0];
+      if (a1 == null || String(a1).trim() === "") vazias.push(paraChecar[i]);
+    });
+    if (vazias.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        resource: {
+          valueInputOption: "USER_ENTERED",
+          data: vazias.map((t) => ({ range: `${t}!A1`, values: [tabs[t]] })),
+        },
       });
-      console.log(`Cabeçalho criado: ${tab}`);
+      console.log(`Cabeçalhos criados: ${vazias.join(", ")}`);
     }
   }
 

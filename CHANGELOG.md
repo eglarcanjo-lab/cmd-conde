@@ -47,6 +47,12 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v2.9.9 — 2026-06-04
+- **Backend (fix):** inicialização das planilhas batia na quota do Google
+  Sheets (60 leituras/min) ao ler as ~50 abas uma a uma no startup,
+  deixando o backend lento pra subir. Agora usa chamadas em lote
+  (metadata 1x + batchGet + batchUpdate) — de ~100 chamadas para ~4.
+
 ### v2.9.8 — 2026-06-04
 - **Processador (perf):** importação de pedidos passa a ler só as 9 colunas
   usadas (o CSV do Promax tem ~71). Pico de memória caiu de ~255MB para
