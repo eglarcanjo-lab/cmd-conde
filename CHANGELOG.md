@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.3** — hora da última atualização no Volume Diário
+Versão atual: **v3.5.4** — ícone do app Hop (logo do lúpulo)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.5.4 — 2026-06-05
+- **Ícone do app trocado pelo logo Hop** 🌿 — gerado a partir da arte do lúpulo
+  (badge verde) nos tamanhos `icon-192`, `icon-512` e `apple-touch-icon`, e
+  adicionado `favicon` (aba do navegador). Antes ainda eram os ícones antigos.
+  *Obs.:* se o app já estiver instalado (PWA), pode ser preciso remover e
+  reinstalar para o sistema atualizar o ícone da tela inicial.
 
 ### v3.5.3 — 2026-06-05
 - **Volume Diário:** mostra a **hora da última atualização** (🔄 Atualizado em
