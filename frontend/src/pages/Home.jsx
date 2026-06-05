@@ -22,7 +22,9 @@ export default function Home() {
     { icon: "💰", label: "Remuneração",   route: "/rv",            ativo: true,  soGestor: false, soRn: true  },
     { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: true,  soRn: false },
     { icon: "🚨", label: "Incidentes",    route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
+    { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
   ].filter((m) => {
+    if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director
     if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO
     if (isAdminOuDirector && m.soRn) return false; // Admin/Director não vê Remuneração
     return true;

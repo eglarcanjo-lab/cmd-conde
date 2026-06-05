@@ -17,6 +17,7 @@ import RVRelatorio from "./pages/RV/Relatorio";
 import SPO from "./pages/SPO";
 import VolumeDiario from "./pages/VolumeDiario";
 import Incentivos from "./pages/Incentivos";
+import Detalhamento from "./pages/Detalhamento";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
@@ -67,6 +68,7 @@ function AppContent() {
       <Route path="/incidentes" element={<PrivateRoute><ErrorBoundary><Incidentes /></ErrorBoundary></PrivateRoute>} />
       <Route path="/volume-diario" element={<PrivateRoute><ErrorBoundary><VolumeDiario /></ErrorBoundary></PrivateRoute>} />
       <Route path="/incentivos" element={<PrivateRoute><ErrorBoundary><Incentivos /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/detalhamento" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><Detalhamento /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
@@ -74,7 +76,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.2.0";
+export const APP_VERSION = "v3.3.0";
 
 export default function App() {
   return (

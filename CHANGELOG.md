@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.0.0** — rebrand **Hop Follow-up**
+Versão atual: **v3.3.0** — Detalhamento HOP (Entrega + Ruptura)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,25 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.3.0 — 2026-06-05
+- **Detalhamento HOP** 🌿 — nova página de relatórios (admin/director) na Home,
+  com sub-abas e seletor de mês:
+  - **Entrega** — efetivadas vs frustradas. Novo import do **relatório de
+    Devoluções** (Admin › Arquivos) → KPIs (volume efetivado, frustrado, taxa de
+    frustração, valor), resumo por **motivo** e detalhe por nota.
+  - **Ruptura de Estoque** — produtos/volume em falta no mês (Motivo contém
+    FALTA, volume via Marcação) + **comparativo do quadrimestre** (gráfico por mês).
+  - Backend `GET /api/detalhamento/entrega|ruptura`; processador gera as abas
+    `entregas_frustradas`, `entregas_resumo_motivo`, `entregas_efetivadas`,
+    `ruptura_mes`, `ruptura_quadrimestre`.
+- **Volume Diário — dia atual via Volume Marcação (col AI):** no dia de hoje
+  ainda não há faturamento (Volume Entrega zerado), então o volume do dia passa
+  a usar o Volume Marcação (o que está sendo marcado/pedido). Dias anteriores
+  seguem com Volume Entrega (faturado). No dia seguinte o faturado entra
+  normalmente e o racional "pula" para o novo dia.
+- *Setup:* exportar o relatório de Devoluções (.csv) e importar em Arquivos;
+  reimportar Pedidos para gerar ruptura/efetivadas.
 
 ### v3.2.0 — 2026-06-04
 - **Hop com chat IA** (Google Gemini, tier grátis) — o RN pergunta em
