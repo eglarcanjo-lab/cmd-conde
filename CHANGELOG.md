@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.5.6** — Hop chat: troca de modelo na cota (429) + aviso amigável
+Versão atual: **v3.6.0** — Hop mais esperta: tasks por categoria/dia e dia de visita dos PDVs
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.6.0 — 2026-06-05
+- **Hop chat — mais contexto:** além das vendas do mês, a Hop agora recebe:
+  - **Tasks em aberto detalhadas** — por **categoria**, por cluster, por tipo e
+    **quantas têm visita hoje** (responde "quantas tasks de NAB", "qual categoria
+    tem mais task", "o que tenho pra hoje").
+  - **Meus PDVs** — com **dia de visita**, segmento e dias sem compra (responde
+    "qual o dia de visita do cliente X", "quais clientes visito hoje").
+  - Sabe o **dia da semana de hoje** para perguntas do tipo "pra hoje".
 
 ### v3.5.6 — 2026-06-05
 - **Hop chat (cota Gemini):** o erro era **429 "quota exceeded"** no

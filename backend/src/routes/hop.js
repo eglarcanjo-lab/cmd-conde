@@ -192,44 +192,73 @@ router.post("/chat", async (req, res) => {
 
   try {
     // ── Monta o contexto de dados do RN ──────────────────────────────────────
-    const [vendas, rvAp, tasks, volumeDiario] = await Promise.all([
+    const [vendas, rvAp, tasks, volumeDiario, pdvBase] = await Promise.all([
       readSheet("vendas_cliente_produto").catch(() => []),
       readSheet("rv_ap").catch(() => []),
       readSheet("tasks").catch(() => []),
       readSheet("volume_diario").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
     ]);
+    const doSetor = (r) => String(r.setor || "").trim() === setor;
 
-    const minhasVendas = vendas
-      .filter((r) => String(r.setor || "").trim() === setor)
-      .slice(0, 2500);
-
-    let tabela = "PDV (cliente)\tProduto\tVolume(HL)\n";
+    // Vendas do mês (cliente x produto)
+    const minhasVendas = vendas.filter(doSetor).slice(0, 1500);
+    let tabela = "PDV(cliente)\tProduto\tVolume(HL)\n";
     minhasVendas.forEach((r) => {
       tabela += `${r.nome_pdv || r.cod_pdv}\t${r.nome_produto || r.cod_produto}\t${r.volume_hl}\n`;
     });
 
-    const ap = rvAp.find((r) => String(r.setor || "").trim() === setor);
+    // AP / volume
+    const ap = rvAp.find(doSetor);
     const apTxt = ap ? (String(ap.ap_ok).toUpperCase() === "OK" ? "OK (RV liberada)" : "NOK (RV bloqueada)") : "sem dado";
-    const tasksAbertas = tasks.filter((t) => String(t.setor || "").trim() === setor && String(t.status || "").toUpperCase() !== "VALID").length;
-
     const hoje = hojeBR();
+    const hojeStr = dataStr(hoje);
     const volHoje = volumeDiario
-      .filter((r) => String(r.setor || "").trim() === setor && r.data === dataStr(hoje))
+      .filter((r) => doSetor(r) && r.data === hojeStr)
       .reduce((s, r) => s + (parseFloat(r.volume_hl) || 0), 0);
-
     const mesNome = hoje.toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" });
+    const diasSemana = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+    const codSemana  = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+    const dow = new Date(hoje.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })).getDay();
+
+    // Tasks em aberto (status != VALID) — agregados por categoria/cluster/tipo
+    const tasksAbertas = tasks.filter((t) => doSetor(t) && String(t.status || "").toUpperCase() !== "VALID");
+    const contarPor = (arr, campo) => {
+      const m = {};
+      arr.forEach((t) => { const k = String(t[campo] || "").trim() || "(sem)"; m[k] = (m[k] || 0) + 1; });
+      return Object.entries(m).sort((a, b) => b[1] - a[1]);
+    };
+    const fmtCont = (pares, max = 25) => pares.slice(0, max).map(([k, v]) => `${k}: ${v}`).join(" · ") || "—";
+    const tasksHoje = tasksAbertas.filter((t) => t.data_visita === hojeStr);
+
+    // PDVs do RN (dia de visita, segmento, dias sem compra)
+    const meusPdvs = pdvBase.filter(doSetor);
+    let tabelaPdv = "Cliente\tDiaVisita\tSegmento\tDiasSemCompra\n";
+    meusPdvs.slice(0, 700).forEach((p) => {
+      tabelaPdv += `${p.nome_fantasia || p.cod_pdv}\t${p.dia_visita || "?"}\t${p.segmento || ""}\t${p.dias_sem_compra ?? ""}\n`;
+    });
+    const visitasHoje = meusPdvs.filter((p) => String(p.visita_hoje) === "1" || String(p.dia_visita || "").toUpperCase() === codSemana[dow]);
 
     const prompt = [
       "Você é a Hop, assistente de resultados do app \"Hop Follow-up\", falando com um RN (vendedor) de cervejaria.",
-      "Responda em português do Brasil, de forma CURTA, amigável e direta. Use no máximo 4 linhas.",
+      "Responda em português do Brasil, de forma CURTA, amigável e direta. No máximo 4 linhas.",
       "Baseie-se SOMENTE nos dados abaixo. Se a informação não estiver nos dados, diga que ainda não tem esse dado (não invente).",
-      "Volumes estão em HL (hectolitros). Pode usar um emoji 💚🍺🏆 quando fizer sentido.",
+      "Volumes estão em HL. 'Tasks' são tarefas de execução no PDV. Pode usar emoji 💚🍺🏆 quando fizer sentido.",
       "",
-      `RN: ${user.nome} — Setor ${setor}. Mês de referência: ${mesNome}.`,
-      `Atendimento Produtivo (AP): ${apTxt}. Tasks em aberto: ${tasksAbertas}. Volume de hoje: ${volHoje.toFixed(1)} HL.`,
+      `RN: ${user.nome} — Setor ${setor}. Hoje é ${diasSemana[dow]}, ${hojeStr}. Mês de referência: ${mesNome}.`,
+      `Atendimento Produtivo (AP): ${apTxt}. Volume de hoje: ${volHoje.toFixed(1)} HL.`,
+      "",
+      `TASKS EM ABERTO: ${tasksAbertas.length} no total · ${tasksHoje.length} com visita hoje.`,
+      `Tasks abertas por categoria: ${fmtCont(contarPor(tasksAbertas, "categoria"))}`,
+      `Tasks abertas por cluster: ${fmtCont(contarPor(tasksAbertas, "cluster_primario"))}`,
+      `Tasks abertas por tipo: ${fmtCont(contarPor(tasksAbertas, "tipo"))}`,
+      `Tasks de HOJE por categoria: ${fmtCont(contarPor(tasksHoje, "categoria"))}`,
+      "",
+      `MEUS PDVs (${meusPdvs.length}; ${visitasHoje.length} com visita hoje) — Cliente, dia de visita, segmento, dias sem compra:`,
+      tabelaPdv.slice(0, 30000),
       "",
       `VENDAS DO MÊS por cliente x produto (${minhasVendas.length} registros):`,
-      tabela.slice(0, 120000), // hard cap de segurança
+      tabela.slice(0, 70000),
       "",
       `PERGUNTA DO RN: ${pergunta}`,
       "RESPOSTA DA HOP:",
