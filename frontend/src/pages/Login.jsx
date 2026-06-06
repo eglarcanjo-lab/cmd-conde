@@ -17,11 +17,17 @@ export default function Login() {
   const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
+  // etapa: "login" | "trocar"  (trocar = forçar criação de senha individual)
+  const [etapa, setEtapa] = useState("login");
+  const [pend, setPend] = useState(null); // { token, usuario } aguardando troca de senha
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confSenha, setConfSenha] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogin() {
-    setErro("");
+    setErro(""); setAviso("");
     const cpfLimpo = cpf.replace(/\D/g, "");
     if (cpfLimpo.length !== 11) {
       setErro("Digite um CPF válido com 11 dígitos.");
@@ -34,10 +40,50 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post("/api/auth/login", { cpf: cpfLimpo, senha });
-      login(res.data.token, res.data.usuario);
-      navigate("/");
+      if (res.data.precisa_trocar_senha) {
+        // Autentica o token só para a troca; só "loga" de fato após criar a nova senha
+        api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+        setPend({ token: res.data.token, usuario: res.data.usuario });
+        setNovaSenha(""); setConfSenha("");
+        setEtapa("trocar");
+      } else {
+        login(res.data.token, res.data.usuario);
+        navigate("/");
+      }
     } catch (err) {
       setErro(err.response?.data?.error || "Erro ao entrar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleTrocarSenha() {
+    setErro("");
+    if (novaSenha.length < 4) { setErro("A nova senha precisa ter pelo menos 4 caracteres."); return; }
+    if (novaSenha === "1234") { setErro("Escolha uma senha diferente da padrão (1234)."); return; }
+    if (novaSenha !== confSenha) { setErro("As senhas não conferem."); return; }
+    setLoading(true);
+    try {
+      await api.post("/api/auth/trocar-senha", { nova_senha: novaSenha });
+      login(pend.token, pend.usuario); // agora sim entra
+      navigate("/");
+    } catch (err) {
+      setErro(err.response?.data?.error || "Erro ao salvar a senha.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRedefinir() {
+    setErro(""); setAviso("");
+    const cpfLimpo = cpf.replace(/\D/g, "");
+    if (cpfLimpo.length !== 11) { setErro("Digite seu CPF acima para solicitar a redefinição."); return; }
+    setLoading(true);
+    try {
+      const res = await api.post("/api/auth/redefinir-senha", { cpf: cpfLimpo });
+      setAviso(res.data?.message || "Solicitação enviada ao admin.");
+    } catch (err) {
+      setErro(err.response?.data?.error || "Erro ao solicitar redefinição.");
     } finally {
       setLoading(false);
     }
@@ -66,6 +112,45 @@ export default function Login() {
 
         <div style={styles.divider} />
 
+        {etapa === "trocar" ? (
+          <div style={styles.form}>
+            <p style={styles.trocarTitulo}>👋 Olá{pend?.usuario?.nome ? `, ${pend.usuario.nome.split(" ")[0]}` : ""}! Crie sua senha individual</p>
+            <p style={styles.trocarSub}>Você entrou com a senha padrão. Por segurança, defina uma senha só sua.</p>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Nova senha</label>
+              <div style={styles.inputWrapper}>
+                <input
+                  style={{ ...styles.input, flex: 1, border: "none", outline: "none" }}
+                  type={showSenha ? "text" : "password"}
+                  placeholder="Mínimo 4 caracteres"
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  autoFocus
+                />
+                <button style={styles.eyeBtn} onClick={() => setShowSenha(!showSenha)} tabIndex={-1}>{showSenha ? "🙈" : "👁️"}</button>
+              </div>
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Confirmar nova senha</label>
+              <input
+                style={styles.input}
+                type={showSenha ? "text" : "password"}
+                placeholder="Repita a senha"
+                value={confSenha}
+                onChange={(e) => setConfSenha(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleTrocarSenha()}
+              />
+            </div>
+
+            {erro && <p style={styles.erro}>{erro}</p>}
+
+            <button style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }} onClick={handleTrocarSenha} disabled={loading}>
+              {loading ? "Salvando..." : "Criar senha e entrar →"}
+            </button>
+          </div>
+        ) : (
         <div style={styles.form}>
           <div style={styles.field}>
             <label style={styles.label}>CPF</label>
@@ -89,7 +174,7 @@ export default function Login() {
               <input
                 style={{ ...styles.input, flex: 1, border: "none", outline: "none" }}
                 type={showSenha ? "text" : "password"}
-                placeholder="Cmd@1234"
+                placeholder="Sua senha"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -105,6 +190,7 @@ export default function Login() {
           </div>
 
           {erro && <p style={styles.erro}>{erro}</p>}
+          {aviso && <p style={styles.sucesso}>{aviso}</p>}
 
           <button
             style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
@@ -114,10 +200,15 @@ export default function Login() {
             {loading ? "Entrando..." : "Entrar →"}
           </button>
 
+          <button style={styles.linkBtn} onClick={handleRedefinir} disabled={loading} type="button">
+            Esqueci minha senha · redefinir
+          </button>
+
           <p style={styles.hint}>
-            Senha padrão: <strong>Cmd@</strong> + 4 primeiros dígitos do CPF
+            Primeiro acesso? Senha padrão <strong>1234</strong> — você cria a sua ao entrar.
           </p>
         </div>
+        )}
 
         <p style={styles.footer}>Hop Follow-up · Análise de dados para cervejarias</p>
       </div>
@@ -229,6 +320,10 @@ const styles = {
     margin: 0,
   },
   erro: { color: "#ff6b6b", fontSize: "0.82rem", margin: "0", textAlign: "center" },
+  sucesso: { color: "#7DBA3D", fontSize: "0.82rem", margin: "0", textAlign: "center", lineHeight: 1.45 },
+  linkBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", padding: "2px" },
+  trocarTitulo: { color: "#fff", fontSize: "1rem", fontWeight: "700", margin: 0, textAlign: "center" },
+  trocarSub: { color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", margin: "0 0 4px", textAlign: "center", lineHeight: 1.5 },
   footer: {
     color: "rgba(255,255,255,0.2)",
     fontSize: "0.75rem",

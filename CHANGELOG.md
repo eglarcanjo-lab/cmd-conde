@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.8.0** — aba Produtos: Grade de Estoque
+Versão atual: **v3.9.0** — senha individual + redefinição com aprovação do admin
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.9.0 — 2026-06-06
+- **Senha individual obrigatória:** ao entrar com a senha **padrão (1234)**, o app
+  agora **força a criação de uma senha pessoal** antes de liberar o acesso
+  (login `precisa_trocar_senha` + `POST /api/auth/trocar-senha`).
+- **Redefinir senha (com aprovação do admin):** botão "Esqueci minha senha" no
+  login → cria uma **solicitação** (aba `reset_solicitacoes`). O admin vê as
+  pendentes em **Admin › Usuários** e, ao **Autorizar**, a senha volta para 1234
+  (o usuário cria uma nova no próximo acesso). Também dá pra **Rejeitar**.
+- O botão 🔑 do admin (reset direto) agora define **1234** (antes era Cmd@xxxx).
+- **Segurança:** removido o endpoint temporário `/api/auth/debug-usuarios` (expunha
+  a lista de usuários e senhas).
 
 ### v3.8.0 — 2026-06-06
 - **Aba Produtos habilitada** 📦 — primeira sub-aba: **Grade de Estoque**.

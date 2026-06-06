@@ -36,8 +36,9 @@ export default function Usuarios() {
   const [sucesso, setSucesso] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [busca, setBusca] = useState("");
+  const [solicitacoes, setSolicitacoes] = useState([]);
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); carregarSolicitacoes(); }, []);
 
   async function carregar() {
     setLoading(true);
@@ -48,6 +49,27 @@ export default function Usuarios() {
       setErro("Erro ao carregar usuários.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function carregarSolicitacoes() {
+    try {
+      const res = await api.get("/api/auth/reset-solicitacoes");
+      setSolicitacoes(res.data || []);
+    } catch {
+      /* silencioso */
+    }
+  }
+
+  async function resolverSolicitacao(id, acao) {
+    if (acao === "autorizar" && !confirm("Autorizar? A senha volta para 1234 e o usuário cria uma nova ao entrar.")) return;
+    if (acao === "rejeitar" && !confirm("Rejeitar esta solicitação?")) return;
+    try {
+      const res = await api.post(`/api/auth/reset-solicitacoes/${id}/resolver`, { acao });
+      alert(res.data?.message || "Feito.");
+      carregarSolicitacoes();
+    } catch (err) {
+      alert(err.response?.data?.error || "Erro ao resolver a solicitação.");
     }
   }
 
@@ -132,10 +154,10 @@ export default function Usuarios() {
   }
 
   async function resetarSenha(u) {
-    if (!confirm(`Resetar senha de ${u.nome} para o padrão?`)) return;
+    if (!confirm(`Resetar senha de ${u.nome} para 1234? Ele vai criar uma nova ao entrar.`)) return;
     try {
-      await api.put(`/api/admin/usuarios/${u.cod}`, { senha: "" });
-      alert(`Senha de ${u.nome} resetada para Cmd@${u.cpf?.slice(0, 4) || "????"}`);
+      await api.put(`/api/admin/usuarios/${u.cod}`, { senha: "1234" });
+      alert(`Senha de ${u.nome} redefinida para 1234.`);
     } catch {
       alert("Erro ao resetar senha.");
     }
@@ -149,6 +171,23 @@ export default function Usuarios() {
 
   return (
     <div>
+      {/* Solicitações de redefinição de senha */}
+      {solicitacoes.length > 0 && (
+        <div style={styles.solBox}>
+          <div style={styles.solTitulo}>🔑 Solicitações de redefinição de senha ({solicitacoes.length})</div>
+          {solicitacoes.map((s) => (
+            <div key={s.id} style={styles.solItem}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={styles.solNome}>{s.nome} <span style={styles.solCod}>· setor {s.cod}</span></div>
+                <div style={styles.solData}>solicitado em {s.solicitado_em}</div>
+              </div>
+              <button style={styles.solBtnOk} onClick={() => resolverSolicitacao(s.id, "autorizar")}>Autorizar (→1234)</button>
+              <button style={styles.solBtnNo} onClick={() => resolverSolicitacao(s.id, "rejeitar")}>Rejeitar</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <input
@@ -287,6 +326,14 @@ export default function Usuarios() {
 }
 
 const styles = {
+  solBox: { background: "rgba(245,196,81,0.08)", border: "1px solid rgba(245,196,81,0.3)", borderRadius: "12px", padding: "14px 16px", marginBottom: "18px" },
+  solTitulo: { color: "#f5c451", fontWeight: "700", fontSize: "0.9rem", marginBottom: "10px" },
+  solItem: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid rgba(255,255,255,0.06)" },
+  solNome: { color: "#fff", fontWeight: "600", fontSize: "0.9rem" },
+  solCod: { color: "rgba(255,255,255,0.45)", fontWeight: "400", fontSize: "0.8rem" },
+  solData: { color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" },
+  solBtnOk: { background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "8px", padding: "8px 14px", fontWeight: "700", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
+  solBtnNo: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: "8px", padding: "8px 14px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
   toolbar: { display: "flex", gap: "12px", marginBottom: "20px", alignItems: "center" },
   busca: {
     flex: 1,

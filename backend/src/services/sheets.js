@@ -180,6 +180,7 @@ async function ensureTab(tabName) {
 async function initializeSheets() {
   const tabs = {
     usuarios: ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"],
+    reset_solicitacoes: ["id", "cod", "nome", "cpf", "telefone", "status", "solicitado_em", "resolvido_em", "resolvido_por"],
     otp_sessions: ["telefone", "codigo", "expira_em", "usado"],
     cobertura: ["setor", "dia_semana", "data", "categoria", "pdvs_visitados", "pdvs_total", "meta"],
     visitas_hoje: ["setor", "data", "cod_pdv", "nome_pdv", "endereco", "rota"],
