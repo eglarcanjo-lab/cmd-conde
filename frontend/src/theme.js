@@ -1,6 +1,10 @@
 // Identidade visual — Hop Follow-up
 // Use estas constantes em componentes novos para manter a marca consistente.
 
+// Liga/desliga a assistente Hop (balão flutuante + boas-vindas na Home).
+// Mude para true quando quiser reativar — o código continua todo aqui.
+export const HOP_ATIVA = false;
+
 export const BRAND = {
   nome: "Hop Follow-up",
   slogan: "Inteligência que gera resultados",

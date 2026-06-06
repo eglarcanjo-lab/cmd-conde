@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.6.0** — Hop mais esperta: tasks por categoria/dia e dia de visita dos PDVs
+Versão atual: **v3.6.1** — Hop desativada temporariamente (flag HOP_ATIVA)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.6.1 — 2026-06-05
+- **Hop desativada temporariamente** — o balão flutuante e a janela de
+  boas-vindas saem do ar via a flag `HOP_ATIVA` (em `frontend/src/theme.js`).
+  **Todo o código continua no projeto** (componentes + rotas `/api/hop`); para
+  reativar é só mudar `HOP_ATIVA` para `true`. Em pausa para repensar melhorias.
 
 ### v3.6.0 — 2026-06-05
 - **Hop chat — mais contexto:** além das vendas do mês, a Hop agora recebe:

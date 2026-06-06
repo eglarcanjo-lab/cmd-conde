@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import HopBoasVindas from "../components/HopBoasVindas";
+import { HOP_ATIVA } from "../theme";
 
 export default function Home() {
   const { usuario, logout } = useAuth();
@@ -32,7 +33,7 @@ export default function Home() {
 
   return (
     <div style={styles.root}>
-      <HopBoasVindas />
+      {HOP_ATIVA && <HopBoasVindas />}
       <div style={styles.header}>
         <div>
           <p style={styles.greeting}>Bem-vindo,</p>
