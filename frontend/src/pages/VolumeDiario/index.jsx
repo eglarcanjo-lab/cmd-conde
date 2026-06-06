@@ -21,6 +21,9 @@ function fromInputDate(s) {
 function fmtHL(v) {
   return Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
+function fmtRS(v) {
+  return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
 
 /* ─── sub-components ───────────────────────────────────────────────────────── */
 function ProgressBar({ pct, thin }) {
@@ -84,6 +87,10 @@ export default function VolumeDiario() {
   useEffect(() => { fetchDados(); }, [fetchDados]);
 
   const d = dados;
+  // Meta Diária + Acumulado só fazem sentido por setor; na visão consolidada
+  // ("Todos", admin/gestor) elas somam tudo e não ajudam — então escondemos.
+  const mostrarMetas = !canFilter || !!setor;
+  const [catSel, setCatSel] = useState(null); // categoria aberta (modal top SKUs)
 
   return (
     <div style={S.root}>
@@ -96,12 +103,12 @@ export default function VolumeDiario() {
           <h1 style={S.title}>📈 Volume Diário</h1>
           <p style={S.subtitle}>Acompanhamento de vendas por dia</p>
         </div>
-        {d?.atualizado_em && (
-          <span style={S.atualizado} title="Horário da última importação de pedidos">
-            🔄 Atualizado em {d.atualizado_em}
-          </span>
-        )}
       </div>
+      {d?.atualizado_em && (
+        <div style={S.atualizado} title="Horário da última importação de pedidos">
+          🔄 atualizado em {d.atualizado_em}
+        </div>
+      )}
 
       {/* Filtros */}
       <div style={S.filters}>
@@ -150,39 +157,58 @@ export default function VolumeDiario() {
               </div>
             </Card>
 
-            {/* Meta Diária */}
-            <Card label="Meta Diária">
-              <div style={S.cardValue}>
-                {fmtHL(d.volume_hoje_hl)}{" "}
-                <span style={S.cardUnit}>/ {fmtHL(d.meta_diaria_hl)} HL</span>
-              </div>
-              <div style={{ margin: "10px 0 4px" }}>
-                <ProgressBar pct={d.pct_meta_diaria} />
-              </div>
-              <div style={S.cardPct}>{d.pct_meta_diaria}% da meta diária</div>
-            </Card>
+            {/* Meta Diária + Acumulado — só por setor (na consolidada somam tudo) */}
+            {mostrarMetas && (
+              <Card label="Meta Diária">
+                <div style={S.cardValue}>
+                  {fmtHL(d.volume_hoje_hl)}{" "}
+                  <span style={S.cardUnit}>/ {fmtHL(d.meta_diaria_hl)} HL</span>
+                </div>
+                <div style={{ margin: "10px 0 4px" }}>
+                  <ProgressBar pct={d.pct_meta_diaria} />
+                </div>
+                <div style={S.cardPct}>{d.pct_meta_diaria}% da meta diária</div>
+              </Card>
+            )}
 
-            {/* Acumulado */}
-            <Card label="Acumulado no Mês">
-              <div style={S.cardValue}>
-                {fmtHL(d.volume_acumulado_mes_hl)}{" "}
-                <span style={S.cardUnit}>/ {fmtHL(d.meta_mensal_hl)} HL</span>
-              </div>
-              <div style={{ margin: "10px 0 4px" }}>
-                <ProgressBar pct={d.meta_mensal_hl > 0 ? Math.round(d.volume_acumulado_mes_hl / d.meta_mensal_hl * 100) : 0} />
-              </div>
-              <div style={S.cardPct}>{d.dias_uteis_passados} de {d.dias_uteis_mes} dias úteis</div>
-            </Card>
+            {mostrarMetas && (
+              <Card label="Acumulado no Mês">
+                <div style={S.cardValue}>
+                  {fmtHL(d.volume_acumulado_mes_hl)}{" "}
+                  <span style={S.cardUnit}>/ {fmtHL(d.meta_mensal_hl)} HL</span>
+                </div>
+                <div style={{ margin: "10px 0 4px" }}>
+                  <ProgressBar pct={d.meta_mensal_hl > 0 ? Math.round(d.volume_acumulado_mes_hl / d.meta_mensal_hl * 100) : 0} />
+                </div>
+                <div style={S.cardPct}>{d.dias_uteis_passados} de {d.dias_uteis_mes} dias úteis</div>
+              </Card>
+            )}
           </div>
 
           {/* ── Volume por Categoria ── */}
           {d.categorias?.length > 0 && (
             <div style={S.section}>
-              <h3 style={S.sectionTitle}>📊 Volume por Categoria</h3>
+              <h3 style={S.sectionTitle}>📊 Volume por Categoria <span style={S.sectionHint}>· toque pra ver os SKUs</span></h3>
               <div style={S.catGrid}>
-                {d.categorias.map((c) => (
+                {d.categorias.map((c) => c.unidade === "R$" ? (
+                  // Marketplace (faturamento R$) — só mês, sem drill de SKU
                   <div key={c.categoria} style={S.catCard}>
                     <div style={S.catNome}>{c.categoria}</div>
+                    <div style={S.catBlock}>
+                      <div style={S.catBlockLabel}>Faturamento do mês</div>
+                      <div style={S.catBlockValue}>{fmtRS(c.realizado_mes_rs)}</div>
+                      <div style={{ margin: "5px 0 2px" }}>
+                        <ProgressBar pct={c.pct_mes} thin />
+                      </div>
+                      <div style={S.catPct}>{c.pct_mes}% da meta mensal</div>
+                    </div>
+                    <div style={S.catMeta}>
+                      Meta mensal: <strong style={{ color: "#fff" }}>{fmtRS(c.meta_mensal_rs)}</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={c.categoria} style={{ ...S.catCard, cursor: "pointer" }} onClick={() => setCatSel(c)}>
+                    <div style={S.catNome}>{c.categoria} <span style={S.catSeta}>›</span></div>
                     <div style={S.catRow}>
                       <div style={S.catBlock}>
                         <div style={S.catBlockLabel}>Hoje</div>
@@ -283,6 +309,37 @@ export default function VolumeDiario() {
           )}
         </>
       )}
+
+      {/* Modal: Top SKUs da categoria selecionada */}
+      {catSel && (
+        <div style={S.modalScrim} onClick={() => setCatSel(null)}>
+          <div style={S.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={S.modalHead}>
+              <div>
+                <div style={S.modalTit}>{catSel.categoria}</div>
+                <div style={S.modalSub}>Top SKUs · Hoje {fmtHL(catSel.volume_hoje_hl)} HL · Mês {fmtHL(catSel.volume_mes_hl)} HL</div>
+              </div>
+              <button style={S.modalX} onClick={() => setCatSel(null)}>✕</button>
+            </div>
+            {(!catSel.top_skus || catSel.top_skus.length === 0) ? (
+              <div style={S.modalVazio}>Sem SKUs com volume nessa categoria no mês.</div>
+            ) : (
+              <div>
+                {catSel.top_skus.map((s, i) => (
+                  <div key={s.cod_produto} style={{ ...S.skuRow, borderBottom: i < catSel.top_skus.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <span style={{ ...S.skuPos, color: i < 3 ? "#7DBA3D" : "rgba(255,255,255,0.3)" }}>{i + 1}</span>
+                    <div style={S.skuInfo}>
+                      <div style={S.skuNome}>{s.nome_produto}</div>
+                      <div style={S.skuCod}>cod: {s.cod_produto} · hoje {fmtHL(s.volume_hoje_hl)} HL</div>
+                    </div>
+                    <span style={S.skuVol}>{fmtHL(s.volume_mes_hl)} HL</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -294,7 +351,7 @@ const S = {
   backBtn:       { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
   title:         { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },
   subtitle:      { color: "rgba(255,255,255,0.4)", margin: 0, fontSize: "0.82rem" },
-  atualizado:    { marginLeft: "auto", background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.3)", color: "#7DBA3D", padding: "6px 12px", borderRadius: "20px", fontSize: "0.74rem", fontWeight: "600", whiteSpace: "nowrap", alignSelf: "center" },
+  atualizado:    { color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", margin: "-8px 0 16px 2px", fontStyle: "italic" },
   filters:       { display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" },
   filterGroup:   { display: "flex", flexDirection: "column", gap: "4px" },
   filterLabel:   { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },
@@ -309,10 +366,12 @@ const S = {
   cardPct:       { color: "rgba(255,255,255,0.35)", fontSize: "0.68rem", marginTop: "4px" },
   section:       { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px 20px", marginBottom: "16px" },
   sectionTitle:  { color: "#fff", margin: "0 0 14px", fontSize: "0.9rem", fontWeight: "700" },
+  sectionHint:   { color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontWeight: "400", fontStyle: "italic" },
   // Categorias
   catGrid:       { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" },
   catCard:       { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 14px" },
-  catNome:       { color: "#7DBA3D", fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" },
+  catNome:       { color: "#7DBA3D", fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  catSeta:       { color: "rgba(125,186,61,0.6)", fontSize: "1.1rem", fontWeight: "700" },
   catRow:        { display: "flex", gap: "12px", alignItems: "flex-start" },
   catBlock:      { flex: 1 },
   catBlockLabel: { color: "rgba(255,255,255,0.35)", fontSize: "0.62rem", fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" },
@@ -339,6 +398,14 @@ const S = {
   focoStats:     { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
   focoDia:       { display: "flex", gap: "16px", fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", marginTop: "4px", flexWrap: "wrap" },
   empty:         { textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "48px 0", fontSize: "0.9rem", lineHeight: 1.6 },
+  // Modal top SKUs
+  modalScrim:    { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)", zIndex: 1600, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" },
+  modal:         { background: "linear-gradient(180deg,#14241a,#0c1410)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "16px", padding: "18px", width: "min(560px,100%)", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 24px 70px rgba(0,0,0,0.6)" },
+  modalHead:     { display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" },
+  modalTit:      { fontSize: "1rem", fontWeight: "800", color: "#7DBA3D" },
+  modalSub:      { color: "rgba(255,255,255,0.5)", fontSize: "0.74rem", marginTop: "2px" },
+  modalX:        { marginLeft: "auto", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", flexShrink: 0 },
+  modalVazio:    { color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", padding: "16px 4px" },
 };
 
 const CSS = `
@@ -353,7 +420,7 @@ const CSS = `
 
 .vd-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }

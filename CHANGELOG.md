@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.6.1** — Hop desativada temporariamente (flag HOP_ATIVA)
+Versão atual: **v3.7.0** — Volume Diário: faturamento MKT, SKUs por categoria e cabeçalho enxuto
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.7.0 — 2026-06-06
+- **Volume Diário — ajustes pedidos:**
+  - **Cabeçalho enxuto:** o "atualizado em…" saiu do topo (estava amassando o
+    título) e virou uma linha **discreta** logo abaixo.
+  - **Cards Meta Diária + Acumulado** somem na visão **consolidada ("Todos")** —
+    lá eles somavam todos os setores e não ajudavam. Continuam aparecendo quando
+    um **setor** é selecionado (e para o RN, que vê o próprio setor).
+  - **Marketplace (FATURAMENTO)** agora aparece em "Volume por Categoria", em
+    **R$** (realizado do mês vs meta), vindo de `rv_mktp`.
+  - **Clicar numa categoria** abre os **Top SKUs** daquela categoria (volume do
+    mês + do dia).
 
 ### Build/APK (Capacitor) — 2026-06-05  *(tooling; não muda o app web)*
 - Projeto preparado para gerar **APK Android** via **Capacitor**: `capacitor.config.ts`

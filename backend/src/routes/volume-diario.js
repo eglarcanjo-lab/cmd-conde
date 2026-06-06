@@ -119,12 +119,13 @@ router.get("/", async (req, res) => {
     const dataCompStr = toDataStr(dataComp);
 
     // Lê todas as planilhas necessárias em paralelo
-    const [volumeDiario, metas, skuFoco, prodBase, statusArq] = await Promise.all([
+    const [volumeDiario, metas, skuFoco, prodBase, statusArq, rvMktp] = await Promise.all([
       readSheet("volume_diario").catch(() => []),
       readSheet("metas").catch(() => []),
       readSheet("sku_foco").catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
+      readSheet("rv_mktp").catch(() => []),
     ]);
 
     // Horário da última importação de pedidos (atualiza o Volume Diário)
@@ -218,6 +219,25 @@ router.get("/", async (req, res) => {
       metaPorCat[cat] = (metaPorCat[cat] || 0) + v;
     });
 
+    // Top SKUs de uma categoria (volume do mês, com o do dia junto)
+    function topSkusDaCategoria(base) {
+      const m = {};
+      dadosMes.forEach((r) => {
+        const cats = catMap[normCod(r.cod_produto)];
+        if (!cats || !cats.includes(base)) return;
+        const cod = String(r.cod_produto || "").trim();
+        if (!cod) return;
+        if (!m[cod]) m[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), volume_mes_hl: 0, volume_hoje_hl: 0 };
+        const v = parseFloat(r.volume_hl) || 0;
+        m[cod].volume_mes_hl += v;
+        if (r.data === dataRefStr) m[cod].volume_hoje_hl += v;
+      });
+      return Object.values(m)
+        .sort((a, b) => b.volume_mes_hl - a.volume_mes_hl)
+        .slice(0, 15)
+        .map((s) => ({ ...s, volume_mes_hl: Math.round(s.volume_mes_hl * 100) / 100, volume_hoje_hl: Math.round(s.volume_hoje_hl * 100) / 100 }));
+    }
+
     const categoriasBreakdown = Object.entries(metaPorCat)
       .map(([cat, metaVol]) => {
         const base    = baseCat(cat);
@@ -226,15 +246,42 @@ router.get("/", async (req, res) => {
         const volMes  = catVolMes[base]  || 0;
         return {
           categoria:      cat,
+          unidade:        "HL",
           meta_mensal_hl: Math.round(metaVol * 100) / 100,
           meta_diaria_hl: Math.round(metaDia * 100) / 100,
           volume_hoje_hl: Math.round(volHoje  * 100) / 100,
           volume_mes_hl:  Math.round(volMes   * 100) / 100,
           pct_dia: metaDia > 0 ? Math.round((volHoje / metaDia) * 100) : 0,
           pct_mes: metaVol > 0 ? Math.round((volMes  / metaVol) * 100) : 0,
+          top_skus: topSkusDaCategoria(base),
         };
       })
       .sort((a, b) => b.meta_mensal_hl - a.meta_mensal_hl);
+
+    // ── Marketplace (FATURAMENTO em R$) — meta das metas + realizado de rv_mktp ─
+    const mktpMeta = metasFiltradas
+      .filter((m) => String(m.categoria || "").toUpperCase().includes("FATURAMENTO"))
+      .reduce((s, m) => s + (parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0), 0);
+    let mktpScope = filtrarPorPerfil(
+      rvMktp.filter((r) => normalizeMesRef(r.mes_referencia) === mesRef),
+      usuario
+    );
+    if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
+      mktpScope = mktpScope.filter((r) => String(r.setor).trim() === String(req.query.setor).trim());
+    }
+    const mktpReal = mktpScope.reduce((s, r) => s + (parseFloat(String(r.gmv_mktp_real || "0").replace(",", ".")) || 0), 0);
+
+    const categorias = [...categoriasBreakdown];
+    if (mktpMeta > 0 || mktpReal > 0) {
+      categorias.push({
+        categoria:     "MARKETPLACE (FATURAMENTO)",
+        unidade:       "R$",
+        meta_mensal_rs: Math.round(mktpMeta * 100) / 100,
+        realizado_mes_rs: Math.round(mktpReal * 100) / 100,
+        pct_mes: mktpMeta > 0 ? Math.round((mktpReal / mktpMeta) * 100) : 0,
+        top_skus: [],
+      });
+    }
 
     // ── Top SKUs do dia ─────────────────────────────────────────────────────
     const skuMap = {};
@@ -289,7 +336,7 @@ router.get("/", async (req, res) => {
       dias_uteis_passados:     diasPassados,
       mes_referencia:          mesRef,
       atualizado_em:           atualizadoEm,
-      categorias:              categoriasBreakdown,
+      categorias:              categorias,
       top_skus:                topSkus,
       sku_foco:                skuFocoProgress,
     });
