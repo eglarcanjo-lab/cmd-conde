@@ -53,6 +53,7 @@ app.use("/api/incentivos", require("./routes/incentivos"));
 app.use("/api/popups", require("./routes/popups"));
 app.use("/api/hop", require("./routes/hop"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));
+app.use("/api/grade", require("./routes/grade"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

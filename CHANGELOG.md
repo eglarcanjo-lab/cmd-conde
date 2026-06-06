@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.7.0** — Volume Diário: faturamento MKT, SKUs por categoria e cabeçalho enxuto
+Versão atual: **v3.8.0** — aba Produtos: Grade de Estoque
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.8.0 — 2026-06-06
+- **Aba Produtos habilitada** 📦 — primeira sub-aba: **Grade de Estoque**.
+  - Importação da **Grade** (saldo na coluna *Disp.*, ~3x/dia) + **Base Produtos**
+    (nomes completos + **HL por caixa** = col. P "Fator Hecto Comercial").
+  - Processador gera `produtos_full` e `grade_estoque` (join 100% no teste:
+    135 itens, 740,5 HL). Backend `GET /api/grade`.
+  - Tela com **KPIs** (itens, caixas, HL em estoque), **busca** e **tabela
+    ordenável**. Mostra a hora da última atualização.
+  - Sub-aba **Shelf** (próximo do vencimento) preparada como "em breve" — a
+    lógica de descontar pelas vendas (HL ÷ HL/caixa) ficou registrada em
+    `PRODUTOS_SHELF.md` para quando o relatório semanal chegar.
 
 ### v3.7.0 — 2026-06-06
 - **Volume Diário — ajustes pedidos:**

@@ -221,6 +221,8 @@ async function initializeSheets() {
     entregas_efetivadas: ["setor","mes_referencia","volume_entregue_hl","linhas"],
     ruptura_detalhe: ["setor","cod_pdv","nome_pdv","cod_produto","nome_produto","categoria","data","mes","qtd_faltas","volume_falta_hl"],
     nota_itens: ["nota","cod_produto","nome_produto","volume_marcacao_hl","volume_entrega_hl"],
+    produtos_full: ["cod","nome","embalagem","hl_caixa"],
+    grade_estoque: ["grade","cod","nome","descricao","un","saldo","saidas","hl_caixa","hl_estoque"],
     rv_resultado: ["setor", "segmento", "ap_ok", "po_total", "pontos_real", "pontos_meta", "pct_pontos", "peso_pontos", "rv_pontos", "meta_cerveja", "peso_cerveja", "real_cerveja", "meta_nab", "peso_nab", "real_nab", "meta_match", "peso_match", "real_match", "meta_marketplace", "peso_marketplace", "real_marketplace", "indicador_variavel", "mes_referencia"],
     rv: ["setor", "mes_referencia", "categoria", "volume_vendido_hl", "meta_hl", "receita_gerada", "atendimento_produtivo", "rv_bloqueada"],
     configuracoes: ["chave", "valor"],

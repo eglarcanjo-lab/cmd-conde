@@ -18,7 +18,7 @@ export default function Home() {
     { icon: "📈", label: "Volume Diário", route: "/volume-diario", ativo: true,  soGestor: false, soRn: false },
     { icon: "📊", label: "Cobertura",     route: "/cobertura",     ativo: true,  soGestor: true,  soRn: false },
     { icon: "🗺️", label: "PDVs",          route: "/pdvs",          ativo: true,  soGestor: false, soRn: false },
-    { icon: "📦", label: "Produtos",      route: "/produtos",      ativo: false, soGestor: false, soRn: false },
+    { icon: "📦", label: "Produtos",      route: "/produtos",      ativo: true,  soGestor: false, soRn: false },
     { icon: "✅", label: "Tasks",         route: "/tasks",         ativo: true,  soGestor: false, soRn: false },
     { icon: "💰", label: "Remuneração",   route: "/rv",            ativo: true,  soGestor: false, soRn: true  },
     { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: true,  soRn: false },
