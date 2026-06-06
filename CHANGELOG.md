@@ -47,6 +47,13 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### Build/APK (Capacitor) — 2026-06-05  *(tooling; não muda o app web)*
+- Projeto preparado para gerar **APK Android** via **Capacitor**: `capacitor.config.ts`
+  (modo `server.url` = abre a Vercel ao vivo, sem recompilar a cada deploy), deps e
+  scripts no `package.json` (`app:assets`, `app:sync`, `app:open`), ícone/splash do
+  Hop em `frontend/assets/` e guia passo a passo em `frontend/CAPACITOR.md`.
+- A compilação final roda no PC (Android Studio). `frontend/android/` fica fora do Git.
+
 ### v3.6.1 — 2026-06-05
 - **Hop desativada temporariamente** — o balão flutuante e a janela de
   boas-vindas saem do ar via a flag `HOP_ATIVA` (em `frontend/src/theme.js`).

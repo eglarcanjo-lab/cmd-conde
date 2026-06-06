@@ -3,3 +3,9 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Capacitor / Android (projeto nativo gerado localmente por `cap add android`)
+frontend/android/
+frontend/.gradle/
+*.keystore
+*.jks
