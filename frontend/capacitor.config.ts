@@ -5,7 +5,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // Com `server.url` o APK abre o SITE AO VIVO — ou seja, cada deploy na Vercel
 // aparece automaticamente, SEM precisar recompilar o APK. (O app é online mesmo,
 // pois depende do backend.) Troque pela sua URL de produção:
-const VERCEL_URL = "https://SUA-URL.vercel.app";
+const VERCEL_URL = "https://cmd-conde.vercel.app";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const config: CapacitorConfig = {
