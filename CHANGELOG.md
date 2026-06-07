@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.9.1** — base de produtos sem duplicata (Grade puxa do 0111)
+Versão atual: **v3.9.2** — Grade mostra o nome completo (join na exibição)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.9.2 — 2026-06-06
+- **Fix Grade de Estoque — nome completo:** o nome estava vindo abreviado (da
+  grade). Agora o **join com a base de produtos é feito na exibição** (backend
+  `/api/grade` cruza o **código** da grade com `produtos_full` e usa o **nome
+  completo + HL/caixa** de lá). Vantagem: basta o **0111** estar importado —
+  não precisa reimportar a grade pra os nomes aparecerem.
 
 ### v3.9.1 — 2026-06-06
 - **Fix Produtos:** havia **duas** "Base de Produtos" na importação. Removido o
