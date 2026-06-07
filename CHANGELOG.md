@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.9.0** — senha individual + redefinição com aprovação do admin
+Versão atual: **v3.9.1** — base de produtos sem duplicata (Grade puxa do 0111)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.9.1 — 2026-06-06
+- **Fix Produtos:** havia **duas** "Base de Produtos" na importação. Removido o
+  slot extra — agora a aba `produtos_full` (nomes + HL/caixa para a Grade/Shelf)
+  é gerada **a partir do próprio 0111** que já é importado (a coluna "Fator Hecto
+  Comercial" vem nele). Um arquivo só, sem duplicidade.
 
 ### v3.9.0 — 2026-06-06
 - **Senha individual obrigatória:** ao entrar com a senha **padrão (1234)**, o app
