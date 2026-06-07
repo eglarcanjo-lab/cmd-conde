@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.9.2** — Grade mostra o nome completo (join na exibição)
+Versão atual: **v3.10.0** — Cobertura, SPO e Detalhamento liberados para o RN
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.10.0 — 2026-06-06
+- **Acesso do RN ampliado:** **Cobertura**, **SPO** e **Detalhamento HOP** agora
+  aparecem na Home do RN.
+  - **Cobertura** e **Detalhamento HOP** mostram os dados **do próprio setor** do
+    RN logado (já filtrado no backend).
+  - **SPO é a exceção:** mostra o **painel completo** (não é filtrado pelo setor
+    do RN). Só os GVs continuam vendo apenas o próprio GV.
 
 ### v3.9.2 — 2026-06-06
 - **Fix Grade de Estoque — nome completo:** o nome estava vindo abreviado (da

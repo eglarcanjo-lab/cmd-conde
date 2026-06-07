@@ -21,10 +21,11 @@ function normalizeMes(v) {
 }
 
 function filtrarGV(dados, usuario) {
-  if (["admin", "director"].includes(usuario.perfil)) return dados;
+  // Só os GVs veem só o seu GV. Admin, Director e RN veem o painel SPO completo
+  // (o SPO é a "exceção" — não é filtrado pelo setor do RN logado).
   if (usuario.perfil === "gv1") return dados.filter((r) => String(r.gv) === "1");
   if (usuario.perfil === "gv3") return dados.filter((r) => String(r.gv) === "2");
-  return dados.filter((r) => String(r.setor) === String(usuario.cod));
+  return dados;
 }
 
 // GET /api/spo/dias-rota/resumo

@@ -16,14 +16,14 @@ export default function Home() {
   const modulos = [
     { icon: "🏆", label: "Incentivos",    route: "/incentivos",    ativo: true,  soGestor: false, soRn: false },
     { icon: "📈", label: "Volume Diário", route: "/volume-diario", ativo: true,  soGestor: false, soRn: false },
-    { icon: "📊", label: "Cobertura",     route: "/cobertura",     ativo: true,  soGestor: true,  soRn: false },
+    { icon: "📊", label: "Cobertura",     route: "/cobertura",     ativo: true,  soGestor: false, soRn: false },
     { icon: "🗺️", label: "PDVs",          route: "/pdvs",          ativo: true,  soGestor: false, soRn: false },
     { icon: "📦", label: "Produtos",      route: "/produtos",      ativo: true,  soGestor: false, soRn: false },
     { icon: "✅", label: "Tasks",         route: "/tasks",         ativo: true,  soGestor: false, soRn: false },
     { icon: "💰", label: "Remuneração",   route: "/rv",            ativo: true,  soGestor: false, soRn: true  },
-    { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: true,  soRn: false },
+    { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: false, soRn: false },
     { icon: "🚨", label: "Incidentes",    route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
-    { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
+    { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
   ].filter((m) => {
     if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director
     if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO
