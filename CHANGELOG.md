@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.11.0** — Cobertura & Distribuição por SKU (gestor)  *(no dev)*
+Versão atual: **v3.11.0** — Cobertura & Distribuição por SKU (gestor)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -47,7 +47,7 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
-### v3.11.0 — 2026-06-08  *(no branch dev — sobe no próximo release)*
+### v3.11.0 — 2026-06-08
 - **Cobertura & Distribuição por SKU** (GV / diretoria / admin) — nova tela:
   busca o SKU (código ou nome) e mostra, no layout do app:
   - **Cobertura** = nº de PDVs que compraram (qualquer quantidade = 1).

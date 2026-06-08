@@ -1,16 +1,14 @@
 # CLAUDE.md — regras do projeto Hop Follow-up
 
-## Fluxo de release (IMPORTANTE)
-- **Todo trabalho vai para o branch `dev`.** NÃO commitar direto no `main`.
-- `main` = **produção** (Vercel + Railway + Render apontam pra ele). Só recebe
-  código nos **dias de release**, via `merge dev → main`.
-- `dev` = **staging** (planilha cópia + backend/processador de teste). É onde o
-  Eduardo testa antes de liberar pra todos.
-- **Cadência:** novas funções/visualizações = ~1x por mês. Correções de
-  lógica/memória de cálculo = quando necessário (hotfix pode ir pro `main`).
-- **Versão/CHANGELOG:** continuo bumpando `APP_VERSION` e logando no CHANGELOG a
-  cada mudança (no `dev`). O número só chega na produção no merge de release, então
-  o banner de "nova versão" para os usuários só dispara nos dias de release.
+## Fluxo de release (ATUAL: direto no main)
+- **No momento, trabalho vai DIRETO no `main`** (deploy automático em produção).
+  O fluxo dev→staging está **PAUSADO** (decisão do Eduardo: "pode subir automático,
+  retomar a ideia depois"). O branch `dev` continua existindo para retomar.
+- `main` = **produção** (Vercel + Railway + Render). Cada push sobe pra todos.
+- **Quando retomar o staging:** ver `RELEASE.md` (fluxo) e `RELEASE_OPCOES.md`
+  (alternativas: flag `beta` por usuário p/ telas, staging no Render free p/ cálculo).
+- **Versão/CHANGELOG:** bumpar `APP_VERSION` e logar no CHANGELOG a cada mudança
+  que sobe pra produção.
 
 ## Dois repositórios (sempre os dois quando a mudança envolve o processador)
 - `cmd-conde` — frontend (Vercel) + backend Node (Railway).
