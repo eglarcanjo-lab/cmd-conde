@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.10.0** — Cobertura, SPO e Detalhamento liberados para o RN
+Versão atual: **v3.11.0** — Cobertura & Distribuição por SKU (gestor)  *(no dev)*
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.11.0 — 2026-06-08  *(no branch dev — sobe no próximo release)*
+- **Cobertura & Distribuição por SKU** (GV / diretoria / admin) — nova tela:
+  busca o SKU (código ou nome) e mostra, no layout do app:
+  - **Cobertura** = nº de PDVs que compraram (qualquer quantidade = 1).
+  - **Distribuição** = total de **caixas** (Volume ÷ HL Comercial do produto).
+  - Consolidado + **por RN (setor)** + **por PDV**, com título em evidência
+    ("Cobertura e Distribuição — [produto]"), data de atualização e **exportar PDF**.
+  - Backend `GET /api/cobertura-sku` (regra do dia: hoje=marcação, demais=entrega).
+  - Processador: `vendas_cliente_produto` passa a usar a regra do dia também.
+- **Cobertura existente:** confirmado que já usa a lógica "1 por PDV
+  independente da quantidade" (no nível de categoria) — segue para todos.
 
 ### v3.10.0 — 2026-06-06
 - **Acesso do RN ampliado:** **Cobertura**, **SPO** e **Detalhamento HOP** agora
