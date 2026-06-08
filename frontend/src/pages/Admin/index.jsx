@@ -16,6 +16,7 @@ import SpoMetas from "./SpoMetas";
 import RvSimulador from "./RvSimulador";
 import IncentivosAdmin from "./Incentivos";
 import PopupsAdmin from "./Popups";
+import AvisosAdmin from "./Avisos";
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
@@ -29,6 +30,7 @@ const TABS = [
   { id: "spo_metas", label: "📊 SPO Metas" },
   { id: "incentivos", label: "🏆 Incentivos" },
   { id: "popups", label: "🖼️ Popups" },
+  { id: "avisos", label: "❔ Avisos" },
   { id: "incidentes", label: "🚨 Solicitações" },
   { id: "configuracoes", label: "⚙️ Configurações" },
 ];
@@ -116,6 +118,7 @@ export default function Admin() {
           {tab === "sku_foco" && <SkuFoco />}
           {tab === "incentivos" && <IncentivosAdmin />}
           {tab === "popups" && <PopupsAdmin />}
+          {tab === "avisos" && <AvisosAdmin />}
           {tab === "incidentes" && <Incidentes />}
           {tab === "configuracoes" && <Configuracoes />}
         </div>

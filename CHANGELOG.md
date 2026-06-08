@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.11.1** — Cobertura & Distribuição: autocomplete + responsividade
+Versão atual: **v3.12.0** — botão "?" de Ajuda & Avisos em todas as telas
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.0 — 2026-06-08
+- **Central de Ajuda & Avisos** ❔ — botão **"?"** sutil no canto de **todas as
+  telas**. Ao abrir, mostra os avisos **gerais** + os **da tela atual**. Aparece
+  um pontinho verde quando há aviso. Tipos: ℹ️ info · 💡 destaque · ⚠️ alerta.
+  - Admin gere em **Admin › ❔ Avisos** (escolhe a tela ou "Geral", título,
+    mensagem, tipo, público, ordem, ativo). Backend `GET /api/avisos` + CRUD admin.
 
 ### v3.11.1 — 2026-06-08
 - **Cobertura & Distribuição por SKU — ajustes:**

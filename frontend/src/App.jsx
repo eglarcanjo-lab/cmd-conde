@@ -23,6 +23,7 @@ import CoberturaSku from "./pages/CoberturaSku";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
+import BotaoAjuda from "./components/BotaoAjuda";
 import { HOP_ATIVA } from "./theme";
 import api from "./services/api";
 
@@ -57,6 +58,7 @@ function AppContent() {
     <>
       {usuario && location.pathname !== "/login" && <PopupDiario />}
       {HOP_ATIVA && usuario && location.pathname !== "/login" && <HopAssistente />}
+      {usuario && location.pathname !== "/login" && <BotaoAjuda />}
       <Routes>
       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
       <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
@@ -81,7 +83,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.11.1";
+export const APP_VERSION = "v3.12.0";
 
 export default function App() {
   return (

@@ -216,6 +216,7 @@ async function initializeSheets() {
     incentivos: ["id","titulo","descricao","tipo","sku_codigo","premio","unidade","data_inicio","data_fim","ativo","publico_alvo","ordem","cor","criado_em"],
     incentivos_resultados: ["id_incentivo","setor","nome","valor","atualizado_em"],
     popups: ["id","titulo","imagem_url","ativo","data_inicio","data_fim","acao_tipo","acao_valor","publico_alvo","ordem","criado_em"],
+    avisos: ["id","tela","titulo","mensagem","tipo","publico_alvo","ativo","ordem","criado_em"],
     vendas_cliente_produto: ["setor","cod_pdv","nome_pdv","cod_produto","nome_produto","volume_hl","mes_referencia"],
     entregas_frustradas: ["setor","data","nota","cod_pdv","nome_pdv","placa","valor","volume_hl","data_devol","cod_motivo","desc_motivo","mes_referencia"],
     entregas_resumo_motivo: ["setor","desc_motivo","mes_referencia","qtd","volume_hl","valor"],
