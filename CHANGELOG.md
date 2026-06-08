@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.3** — nº das rotinas Devoluções (030204) e Grade (020304)
+Versão atual: **v3.12.4** — links do BI nos cards de Arquivos (8 relatórios)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.4 — 2026-06-08
+- **Arquivos:** cadastrados os **links do BI** (Power BI) em 8 cards — Rota
+  Coaching, Aba Promoção, +RGB, Loja Ideal, Scanntech, Portfólio Ideal Score 5,
+  Atendimento Produtivo e Tasks. O 📋 desses copia o link direto.
 
 ### v3.12.3 — 2026-06-08
 - **Arquivos:** números reais das rotinas Promax — **Devoluções = 030204** e

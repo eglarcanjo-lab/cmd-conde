@@ -12,19 +12,19 @@ const ARQUIVOS_CONFIG = [
   { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
   // ── SPO ─────────────────────────────────────────────────
   { id: "spo_visitacao_gv",  campo: "spo_visitacao_gv",  rotulo: "Visitação GV",          item: "1",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🗺️" },
-  { id: "spo_coaching",      campo: "spo_coaching",      rotulo: "Rota Coaching",          item: "2",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
+  { id: "spo_coaching",      campo: "spo_coaching",      rotulo: "Rota Coaching",          item: "2",  link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/9705a9b1-8511-43a8-a6d1-d8e0ee054fbc/843e2cd107068aac08d0?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
   { id: "spo_dto",           campo: "spo_dto",           rotulo: "DTO GC",                 item: "6",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "📝" },
-  { id: "spo_promo",         campo: "spo_promo",         rotulo: "Aba Promoção BEES",      item: "7",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏷️" },
+  { id: "spo_promo",         campo: "spo_promo",         rotulo: "Aba Promoção BEES",      item: "7",  link: "https://app.powerbi.com/groups/me/reports/b819170d-e46d-4521-8804-3c6bf4f32d8a/e90e39c7dbcb358257ff?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏷️" },
   { id: "spo_score5",        campo: "spo_score5",        rotulo: "Score 5 (ON_TRADE)",     item: "12", extensoes: ".xlsx,.xls", grupo: "spo", icon: "⭐" },
   { id: "spo_alone",         campo: "spo_alone",         rotulo: "Pedido Alone",           item: "19", extensoes: ".xlsx,.xls", grupo: "spo", icon: "📱" },
-  { id: "spo_rgb",           campo: "spo_rgb",           rotulo: "+RGB",                   item: "20", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🍺" },
+  { id: "spo_rgb",           campo: "spo_rgb",           rotulo: "+RGB",                   item: "20", link: "https://app.powerbi.com/groups/me/apps/b08603f3-3936-4e6a-b59d-95f490701d9e/reports/4930c72d-0c8f-42d2-a76e-f01294f4d3f1/6feb1d9fa3fa059811bf?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🍺" },
   { id: "spo_cupons",        campo: "spo_cupons",        rotulo: "Cupons Digitais",        item: "21", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎫" },
-  { id: "spo_loja_ideal",    campo: "spo_loja_ideal",    rotulo: "Loja Ideal Vizinhança",  item: "22", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏪" },
-  { id: "spo_scanntech",     campo: "spo_scanntech",     rotulo: "Expansão Scanntech",     item: "23", extensoes: ".xlsx,.xls", grupo: "spo", icon: "📡" },
-  { id: "spo_portfolio_ideal",campo:"spo_portfolio_ideal",rotulo: "Portfólio Ideal Score 5",item:"24", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏆" },
-  { id: "spo_ap",            campo: "spo_ap",            rotulo: "Atendimento Produtivo",  item: "5",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
+  { id: "spo_loja_ideal",    campo: "spo_loja_ideal",    rotulo: "Loja Ideal Vizinhança",  item: "22", link: "https://app.powerbi.com/groups/me/apps/6ba1e94a-5079-44d6-9dcd-31c51987dddd/reports/fa7a162d-6f5a-48f3-b17e-a689b68fd482/7d2afcf3bd61084d26bb?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏪" },
+  { id: "spo_scanntech",     campo: "spo_scanntech",     rotulo: "Expansão Scanntech",     item: "23", link: "https://app.powerbi.com/groups/me/apps/00153bdf-1acc-4037-8215-45ebeee65254/reports/2eb89312-42ee-4770-a74f-00f722ef388e/de124bb293e5a660a6be?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi&clientSideAuth=0", extensoes: ".xlsx,.xls", grupo: "spo", icon: "📡" },
+  { id: "spo_portfolio_ideal",campo:"spo_portfolio_ideal",rotulo: "Portfólio Ideal Score 5",item:"24", link: "https://app.powerbi.com/groups/me/apps/b08603f3-3936-4e6a-b59d-95f490701d9e/reports/f3bfd0b4-937d-4ede-8cf8-9e8d1198b98a/105da1b5d095a08b5c10?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏆" },
+  { id: "spo_ap",            campo: "spo_ap",            rotulo: "Atendimento Produtivo",  item: "5",  link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/4ef274c0-bd4e-4dd6-ae0d-702a89d2e956/8be33b97e5d33e72ea83?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
   // ── OUTROS ──────────────────────────────────────────────
-  { id: "tasks",        campo: "tasks",        rotulo: "Tasks (BI)",          extensoes: ".xlsx,.xls",     grupo: "outros", icon: "✅" },
+  { id: "tasks",        campo: "tasks",        rotulo: "Tasks (BI)",          link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/3bab9612-85bd-4086-9828-6aec4111025b/7e62d4adb22216c40240?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "✅" },
   { id: "pontos_bees",  campo: "pontos_bees",  rotulo: "Pontos Bees",         extensoes: ".xlsx,.xls",     grupo: "outros", icon: "⭐" },
 ];
 
