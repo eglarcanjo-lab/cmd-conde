@@ -8,8 +8,8 @@ const ARQUIVOS_CONFIG = [
   { id: "produtos_base",    campo: "produtos_base",     rotulo: "Base de Produtos",         numero: "0111",       extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗂️" },
   { id: "faturamento_mktp", campo: "faturamento_mktp",  rotulo: "Faturamento Marketplace",  numero: "030509",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🛒" },
   { id: "inadimplencia",    campo: "inadimplencia",     rotulo: "Inadimplência",            numero: "120601",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "⚠️" },
-  { id: "devolucoes",       campo: "devolucoes",        rotulo: "Devoluções (Entregas Frustradas)", numero: "Devol.", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "↩️" },
-  { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "Grade", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
+  { id: "devolucoes",       campo: "devolucoes",        rotulo: "Devoluções (Entregas Frustradas)", numero: "030204", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "↩️" },
+  { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
   // ── SPO ─────────────────────────────────────────────────
   { id: "spo_visitacao_gv",  campo: "spo_visitacao_gv",  rotulo: "Visitação GV",          item: "1",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🗺️" },
   { id: "spo_coaching",      campo: "spo_coaching",      rotulo: "Rota Coaching",          item: "2",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },

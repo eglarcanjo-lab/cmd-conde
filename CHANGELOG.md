@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.2** — botão de copiar referência no card de Arquivos
+Versão atual: **v3.12.3** — nº das rotinas Devoluções (030204) e Grade (020304)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,10 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.3 — 2026-06-08
+- **Arquivos:** números reais das rotinas Promax — **Devoluções = 030204** e
+  **Grade de Estoque = 020304** (o 📋 agora copia o número certo).
 
 ### v3.12.2 — 2026-06-08
 - **Arquivos:** botão minúsculo **📋** em cada card para **copiar a referência**
