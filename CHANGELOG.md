@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.4** — links do BI nos cards de Arquivos (8 relatórios)
+Versão atual: **v3.12.5** — link do BI Pontos Bees
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,9 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.5 — 2026-06-08
+- **Arquivos:** cadastrado o link do BI do **Pontos Bees**.
 
 ### v3.12.4 — 2026-06-08
 - **Arquivos:** cadastrados os **links do BI** (Power BI) em 8 cards — Rota

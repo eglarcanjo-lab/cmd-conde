@@ -25,7 +25,7 @@ const ARQUIVOS_CONFIG = [
   { id: "spo_ap",            campo: "spo_ap",            rotulo: "Atendimento Produtivo",  item: "5",  link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/4ef274c0-bd4e-4dd6-ae0d-702a89d2e956/8be33b97e5d33e72ea83?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
   // ── OUTROS ──────────────────────────────────────────────
   { id: "tasks",        campo: "tasks",        rotulo: "Tasks (BI)",          link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/3bab9612-85bd-4086-9828-6aec4111025b/7e62d4adb22216c40240?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "✅" },
-  { id: "pontos_bees",  campo: "pontos_bees",  rotulo: "Pontos Bees",         extensoes: ".xlsx,.xls",     grupo: "outros", icon: "⭐" },
+  { id: "pontos_bees",  campo: "pontos_bees",  rotulo: "Pontos Bees",         link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/1658246a-7165-41d3-85f4-e2a1e43d23c4/5af1b0fcccee446e0a63?experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "⭐" },
 ];
 
 const GRUPOS = [
