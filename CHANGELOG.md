@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.1** — atualização do app mais rápida (clientsClaim)
+Versão atual: **v3.12.2** — botão de copiar referência no card de Arquivos
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.2 — 2026-06-08
+- **Arquivos:** botão minúsculo **📋** em cada card para **copiar a referência**
+  do relatório — nº da **rotina** (Promax) ou o **link do BI** (quando cadastrado
+  no campo `link` do card). Mostra ✓ ao copiar. (Faltam os links do BI — pendente
+  o Eduardo enviar as URLs pra eu preencher.)
 
 ### v3.12.1 — 2026-06-08
 - **Fix: botão "Atualizar agora" demorava no desktop.** Faltava `clientsClaim`

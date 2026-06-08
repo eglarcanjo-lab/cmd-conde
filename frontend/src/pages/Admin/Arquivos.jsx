@@ -57,7 +57,23 @@ export default function Arquivos() {
   const [erro, setErro] = useState("");
   // Mês de referência: garante que relatórios sem data sejam atribuídos ao mês correto
   const [mesRef, setMesRef] = useState(mesAtualStr());
+  const [copiado, setCopiado] = useState("");
   const inputRefs = useRef({});
+
+  // Referência do relatório: link do BI ou nº da rotina (Promax) / item (SPO)
+  function copiarRef(cfg, e) {
+    e.preventDefault(); e.stopPropagation();
+    const ref = cfg.link || cfg.numero || (cfg.item ? `#${cfg.item}` : "");
+    if (!ref) return;
+    const feedback = () => { setCopiado(cfg.id); setTimeout(() => setCopiado(""), 1500); };
+    try {
+      navigator.clipboard.writeText(ref).then(feedback).catch(() => {
+        // fallback (contextos sem clipboard API)
+        const ta = document.createElement("textarea"); ta.value = ref; document.body.appendChild(ta);
+        ta.select(); try { document.execCommand("copy"); } catch {} document.body.removeChild(ta); feedback();
+      });
+    } catch { /* ignora */ }
+  }
 
   useEffect(() => { carregarStatus(); }, []);
 
@@ -240,6 +256,18 @@ export default function Arquivos() {
                           </p>
                         )}
                       </div>
+                      {(cfg.link || cfg.numero || cfg.item) && (
+                        <button
+                          type="button"
+                          title={cfg.link ? "Copiar link do relatório (BI)" : `Copiar ${cfg.numero ? "nº da rotina" : "item"}`}
+                          onClick={e => copiarRef(cfg, e)}
+                          style={{
+                            flexShrink: 0, background: copiado === cfg.id ? "rgba(125,186,61,0.2)" : "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(255,255,255,0.1)", color: copiado === cfg.id ? "#7DBA3D" : "rgba(255,255,255,0.45)",
+                            borderRadius: "6px", padding: "3px 6px", cursor: "pointer", fontSize: "0.72rem", fontFamily: "inherit",
+                          }}
+                        >{copiado === cfg.id ? "✓" : "📋"}</button>
+                      )}
                       {selecionado && (
                         <span
                           style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", cursor: "pointer", flexShrink: 0, padding: "2px 4px" }}
