@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.13.0** — Volume Diário: caixa "Mês inteiro"
+Versão atual: **v3.13.1** — fix faturamento Marketplace no Volume Diário
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.13.1 — 2026-06-08
+- **Fix: Volume Diário não puxava o faturamento Marketplace.** O realizado vinha
+  só de `rv_mktp` (que podia estar vazia/desatualizada). Agora, se vier 0, usa o
+  `rv_resultado` (mesma fonte do RV). Parsing de número em R$ ficou robusto
+  (aceita "39.597,00" etc).
 
 ### v3.13.0 — 2026-06-08
 - **Volume Diário — caixa "📅 Mês inteiro":** marcando, a tela passa a mostrar o

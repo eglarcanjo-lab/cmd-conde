@@ -119,13 +119,14 @@ router.get("/", async (req, res) => {
     const dataCompStr = toDataStr(dataComp);
 
     // Lê todas as planilhas necessárias em paralelo
-    const [volumeDiario, metas, skuFoco, prodBase, statusArq, rvMktp] = await Promise.all([
+    const [volumeDiario, metas, skuFoco, prodBase, statusArq, rvMktp, rvResultado] = await Promise.all([
       readSheet("volume_diario").catch(() => []),
       readSheet("metas").catch(() => []),
       readSheet("sku_foco").catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
       readSheet("rv_mktp").catch(() => []),
+      readSheet("rv_resultado").catch(() => []),
     ]);
 
     // Horário da última importação de pedidos (atualiza o Volume Diário)
@@ -258,18 +259,34 @@ router.get("/", async (req, res) => {
       })
       .sort((a, b) => b.meta_mensal_hl - a.meta_mensal_hl);
 
-    // ── Marketplace (FATURAMENTO em R$) — meta das metas + realizado de rv_mktp ─
+    // ── Marketplace (FATURAMENTO em R$) — meta das metas + realizado de rv ─────
+    // Parser BR robusto (aceita "39.597,00", "39597", "39597.5")
+    const parseBR = (v) => {
+      let s = String(v ?? "").trim();
+      if (!s) return 0;
+      if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+      else if (s.includes(",")) s = s.replace(",", ".");
+      return parseFloat(s) || 0;
+    };
+    const noEscopo = (lista) => {
+      let l = filtrarPorPerfil(lista, usuario);
+      if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
+        l = l.filter((r) => String(r.setor).trim() === String(req.query.setor).trim());
+      }
+      return l;
+    };
+
     const mktpMeta = metasFiltradas
       .filter((m) => String(m.categoria || "").toUpperCase().includes("FATURAMENTO"))
-      .reduce((s, m) => s + (parseFloat(String(m.meta_volume || "0").replace(",", ".")) || 0), 0);
-    let mktpScope = filtrarPorPerfil(
-      rvMktp.filter((r) => normalizeMesRef(r.mes_referencia) === mesRef),
-      usuario
-    );
-    if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
-      mktpScope = mktpScope.filter((r) => String(r.setor).trim() === String(req.query.setor).trim());
+      .reduce((s, m) => s + parseBR(m.meta_volume), 0);
+
+    // Realizado: tenta rv_mktp; se vier 0, cai no rv_resultado (mesma fonte do RV)
+    let mktpReal = noEscopo(rvMktp.filter((r) => normalizeMesRef(r.mes_referencia) === mesRef))
+      .reduce((s, r) => s + parseBR(r.gmv_mktp_real), 0);
+    if (mktpReal === 0) {
+      mktpReal = noEscopo(rvResultado.filter((r) => normalizeMesRef(r.mes_referencia) === mesRef))
+        .reduce((s, r) => s + parseBR(r.real_marketplace), 0);
     }
-    const mktpReal = mktpScope.reduce((s, r) => s + (parseFloat(String(r.gmv_mktp_real || "0").replace(",", ".")) || 0), 0);
 
     const categorias = [...categoriasBreakdown];
     if (mktpMeta > 0 || mktpReal > 0) {
