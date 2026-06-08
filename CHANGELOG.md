@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.5** — link do BI Pontos Bees
+Versão atual: **v3.13.0** — Volume Diário: caixa "Mês inteiro"
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.13.0 — 2026-06-08
+- **Volume Diário — caixa "📅 Mês inteiro":** marcando, a tela passa a mostrar o
+  **mês atual acumulado** em vez do dia — o card vira "Volume do Mês", os cards
+  de categoria mostram só o mês, e o Top SKUs vira o do mês. Backend passa a
+  enviar `top_skus_mes`. Desmarcando, volta pro dia.
 
 ### v3.12.5 — 2026-06-08
 - **Arquivos:** cadastrado o link do BI do **Pontos Bees**.

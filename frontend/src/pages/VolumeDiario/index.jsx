@@ -58,6 +58,7 @@ export default function VolumeDiario() {
   const [dados,   setDados]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [erro,    setErro]    = useState("");
+  const [verMes,  setVerMes]  = useState(false); // ver o mês inteiro em vez do dia
 
   /* carrega lista de setores disponíveis para filtro */
   useEffect(() => {
@@ -116,9 +117,10 @@ export default function VolumeDiario() {
           <label style={S.filterLabel}>Data</label>
           <input
             type="date"
-            style={S.filterInput}
+            style={{ ...S.filterInput, opacity: verMes ? 0.5 : 1 }}
             value={toInputDate(data)}
             onChange={(e) => setData(fromInputDate(e.target.value))}
+            disabled={verMes}
           />
         </div>
         {canFilter && setores.length > 0 && (
@@ -130,6 +132,13 @@ export default function VolumeDiario() {
             </select>
           </div>
         )}
+        <div style={S.filterGroup}>
+          <label style={S.filterLabel}>Período</label>
+          <label style={{ ...S.mesToggle, ...(verMes ? S.mesToggleOn : {}) }}>
+            <input type="checkbox" checked={verMes} onChange={(e) => { setVerMes(e.target.checked); if (e.target.checked) setData(hojeStr()); }} style={{ accentColor: "#7DBA3D", width: "16px", height: "16px" }} />
+            📅 Mês inteiro
+          </label>
+        </div>
       </div>
 
       {loading && (
@@ -145,20 +154,24 @@ export default function VolumeDiario() {
           {/* ── 3 Cards ── */}
           <div className="vd-cards">
 
-            {/* Volume Hoje */}
-            <Card label="Volume Hoje">
+            {/* Volume Hoje / do Mês */}
+            <Card label={verMes ? "Volume do Mês" : "Volume Hoje"}>
               <div style={S.cardValue}>
-                {fmtHL(d.volume_hoje_hl)} <span style={S.cardUnit}>HL</span>
+                {fmtHL(verMes ? d.volume_acumulado_mes_hl : d.volume_hoje_hl)} <span style={S.cardUnit}>HL</span>
               </div>
-              <div style={{ ...S.cardDelta, color: d.delta_hl >= 0 ? "#4ade80" : "#f87171" }}>
-                {d.delta_hl >= 0 ? "▲" : "▼"} {fmtHL(Math.abs(d.delta_hl))} HL
-                {d.delta_pct !== null && ` (${d.delta_pct >= 0 ? "+" : ""}${d.delta_pct.toFixed(1)}%)`}
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" }}> vs {d.data_comparacao}</span>
-              </div>
+              {verMes ? (
+                <div style={S.cardPct}>{d.dias_uteis_passados} de {d.dias_uteis_mes} dias úteis · mês {d.mes_referencia}</div>
+              ) : (
+                <div style={{ ...S.cardDelta, color: d.delta_hl >= 0 ? "#4ade80" : "#f87171" }}>
+                  {d.delta_hl >= 0 ? "▲" : "▼"} {fmtHL(Math.abs(d.delta_hl))} HL
+                  {d.delta_pct !== null && ` (${d.delta_pct >= 0 ? "+" : ""}${d.delta_pct.toFixed(1)}%)`}
+                  <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" }}> vs {d.data_comparacao}</span>
+                </div>
+              )}
             </Card>
 
             {/* Meta Diária + Acumulado — só por setor (na consolidada somam tudo) */}
-            {mostrarMetas && (
+            {mostrarMetas && !verMes && (
               <Card label="Meta Diária">
                 <div style={S.cardValue}>
                   {fmtHL(d.volume_hoje_hl)}{" "}
@@ -210,15 +223,17 @@ export default function VolumeDiario() {
                   <div key={c.categoria} style={{ ...S.catCard, cursor: "pointer" }} onClick={() => setCatSel(c)}>
                     <div style={S.catNome}>{c.categoria} <span style={S.catSeta}>›</span></div>
                     <div style={S.catRow}>
-                      <div style={S.catBlock}>
-                        <div style={S.catBlockLabel}>Hoje</div>
-                        <div style={S.catBlockValue}>{fmtHL(c.volume_hoje_hl)} <span style={S.catUnit}>HL</span></div>
-                        <div style={{ margin: "5px 0 2px" }}>
-                          <ProgressBar pct={c.pct_dia} thin />
+                      {!verMes && (
+                        <div style={S.catBlock}>
+                          <div style={S.catBlockLabel}>Hoje</div>
+                          <div style={S.catBlockValue}>{fmtHL(c.volume_hoje_hl)} <span style={S.catUnit}>HL</span></div>
+                          <div style={{ margin: "5px 0 2px" }}>
+                            <ProgressBar pct={c.pct_dia} thin />
+                          </div>
+                          <div style={S.catPct}>{c.pct_dia}% da meta dia</div>
                         </div>
-                        <div style={S.catPct}>{c.pct_dia}% da meta dia</div>
-                      </div>
-                      <div style={S.catDivider} />
+                      )}
+                      {!verMes && <div style={S.catDivider} />}
                       <div style={S.catBlock}>
                         <div style={S.catBlockLabel}>Mês</div>
                         <div style={S.catBlockValue}>{fmtHL(c.volume_mes_hl)} <span style={S.catUnit}>HL</span></div>
@@ -238,12 +253,12 @@ export default function VolumeDiario() {
           )}
 
           {/* ── Top SKUs ── */}
-          {d.top_skus?.length > 0 && (
+          {(() => { const lista = verMes ? (d.top_skus_mes || []) : (d.top_skus || []); return lista.length > 0 && (
             <div style={S.section}>
-              <h3 style={S.sectionTitle}>🏆 Top SKUs — {d.data}</h3>
+              <h3 style={S.sectionTitle}>🏆 Top SKUs — {verMes ? `mês ${d.mes_referencia}` : d.data}</h3>
               <div>
-                {d.top_skus.map((s, i) => (
-                  <div key={s.cod_produto} style={{ ...S.skuRow, borderBottom: i < d.top_skus.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                {lista.map((s, i) => (
+                  <div key={s.cod_produto} style={{ ...S.skuRow, borderBottom: i < lista.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                     <span style={{ ...S.skuPos, color: i < 3 ? "#7DBA3D" : "rgba(255,255,255,0.3)" }}>{i + 1}</span>
                     <div style={S.skuInfo}>
                       <div style={S.skuNome}>{s.nome_produto}</div>
@@ -254,7 +269,7 @@ export default function VolumeDiario() {
                 ))}
               </div>
             </div>
-          )}
+          ); })()}
 
           {/* ── SKU Foco ── */}
           {d.sku_foco?.length > 0 && (
@@ -356,6 +371,8 @@ const S = {
   filterGroup:   { display: "flex", flexDirection: "column", gap: "4px" },
   filterLabel:   { color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase" },
   filterInput:   { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", colorScheme: "dark" },
+  mesToggle:     { display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "rgba(255,255,255,0.75)", padding: "8px 14px", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "40px", cursor: "pointer", whiteSpace: "nowrap" },
+  mesToggleOn:   { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.5)", color: "#7DBA3D", fontWeight: "600" },
   loadingWrap:   { display: "flex", justifyContent: "center", padding: "48px 0" },
   erro:          { background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", fontSize: "0.85rem" },
   card:          { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px" },

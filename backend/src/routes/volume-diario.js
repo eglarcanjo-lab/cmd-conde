@@ -297,6 +297,20 @@ router.get("/", async (req, res) => {
       .slice(0, 10)
       .map((s) => ({ ...s, volume_hl: Math.round(s.volume_hl * 100) / 100 }));
 
+    // ── Top SKUs do MÊS (para o modo "mês inteiro") ─────────────────────────
+    const skuMapMes = {};
+    dadosMes.forEach((r) => {
+      const cod  = String(r.cod_produto  || "").trim();
+      const nome = String(r.nome_produto || "").trim();
+      if (!cod) return;
+      if (!skuMapMes[cod]) skuMapMes[cod] = { cod_produto: cod, nome_produto: nome, volume_hl: 0 };
+      skuMapMes[cod].volume_hl += parseFloat(r.volume_hl) || 0;
+    });
+    const topSkusMes = Object.values(skuMapMes)
+      .sort((a, b) => b.volume_hl - a.volume_hl)
+      .slice(0, 15)
+      .map((s) => ({ ...s, volume_hl: Math.round(s.volume_hl * 100) / 100 }));
+
     // ── SKU Foco — filtro EXPLÍCITO por setor ───────────────────────────────
     const skuFocoFiltrado = filtrarSkuFocoPorPerfil(skuFoco, usuario)
       .filter((s) => normalizeMesRef(s.mes_referencia) === mesRef);
@@ -338,6 +352,7 @@ router.get("/", async (req, res) => {
       atualizado_em:           atualizadoEm,
       categorias:              categorias,
       top_skus:                topSkus,
+      top_skus_mes:            topSkusMes,
       sku_foco:                skuFocoProgress,
     });
   } catch (err) {
