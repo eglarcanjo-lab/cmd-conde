@@ -44,8 +44,19 @@ export default function AtualizacaoApp() {
 
   function atualizar() {
     setAtualizando(true);
-    if (updateRef.current) updateRef.current(true); // skipWaiting + reload
-    else window.location.reload();
+    // Segurança: se o service worker demorar a assumir, força o reload (não trava).
+    const forcar = setTimeout(() => window.location.reload(), 1800);
+    try {
+      if (updateRef.current) {
+        Promise.resolve(updateRef.current(true)).catch(() => {}); // skipWaiting + reload
+      } else {
+        clearTimeout(forcar);
+        window.location.reload();
+      }
+    } catch {
+      clearTimeout(forcar);
+      window.location.reload();
+    }
   }
 
   if (!precisaAtualizar) return null;

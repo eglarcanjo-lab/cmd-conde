@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.12.0** — botão "?" de Ajuda & Avisos em todas as telas
+Versão atual: **v3.12.1** — atualização do app mais rápida (clientsClaim)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.12.1 — 2026-06-08
+- **Fix: botão "Atualizar agora" demorava no desktop.** Faltava `clientsClaim`
+  no service worker — o SW novo ativava mas não assumia o controle da página, e
+  o reload ficava esperando. Agora assume na hora (+ `cleanupOutdatedCaches`), e
+  há um **fallback** que força o reload em 1,8s se o SW travar.
+  *Obs.:* a 1ª atualização ainda passa pelo SW antigo; da próxima em diante fica rápido.
 
 ### v3.12.0 — 2026-06-08
 - **Central de Ajuda & Avisos** ❔ — botão **"?"** sutil no canto de **todas as

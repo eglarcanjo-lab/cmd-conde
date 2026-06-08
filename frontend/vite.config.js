@@ -26,6 +26,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        // clientsClaim: o novo SW assume o controle assim que ativa (após o
+        // skipWaiting do botão) → o reload do banner acontece na hora, sem travar.
+        clientsClaim: true,
+        skipWaiting: false,            // o refresh é controlado pelo botão
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\/api\/.*/i,
