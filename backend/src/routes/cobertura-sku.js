@@ -22,6 +22,41 @@ function escopoPerfil(usuario) {
   return { ok: false };
 }
 
+// GET /api/cobertura-sku/buscar?q=stella — sugestões (autocomplete) dos produtos
+// que têm venda no escopo do gestor. Retorna [{cod, nome}].
+router.get("/buscar", async (req, res) => {
+  try {
+    const esc = escopoPerfil(req.user);
+    if (!esc.ok) return res.status(403).json({ error: "Acesso restrito a gestores." });
+    const q = String(req.query.q || "").trim().toLowerCase();
+    if (q.length < 2) return res.json([]);
+
+    const [vendasRaw, produtosFull] = await Promise.all([
+      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheet("produtos_full").catch(() => []),
+    ]);
+    const nomeMap = {};
+    produtosFull.forEach((p) => { nomeMap[normCod(p.cod)] = String(p.nome || "").trim(); });
+
+    const map = {};
+    vendasRaw.filter((r) => esc.filtro(String(r.setor || "").trim())).forEach((r) => {
+      const c = normCod(r.cod_produto);
+      if (!map[c]) map[c] = { cod: c, nome: nomeMap[c] || String(r.nome_produto || "").trim() || c, vol: 0 };
+      map[c].vol += num(r.volume_hl);
+    });
+
+    const lista = Object.values(map)
+      .filter((p) => p.nome.toLowerCase().includes(q) || p.cod.includes(q))
+      .sort((a, b) => b.vol - a.vol)
+      .slice(0, 20)
+      .map((p) => ({ cod: p.cod, nome: p.nome }));
+    return res.json(lista);
+  } catch (err) {
+    console.error("cobertura-sku/buscar:", err);
+    return res.status(500).json({ error: "Erro ao buscar produtos." });
+  }
+});
+
 // GET /api/cobertura-sku?q=33857  (q = código do SKU ou parte do nome)
 router.get("/", async (req, res) => {
   try {

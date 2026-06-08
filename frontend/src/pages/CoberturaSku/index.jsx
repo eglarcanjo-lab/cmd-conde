@@ -1,5 +1,5 @@
 // Cobertura & Distribuição por SKU — visão gestor (GV / diretoria / admin).
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -10,14 +10,29 @@ const fmt = (v, d = 0) => Number(v || 0).toLocaleString("pt-BR", { minimumFracti
 export default function CoberturaSku() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [sug, setSug] = useState([]);
+  const [mostraSug, setMostraSug] = useState(false);
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
-  async function buscar(e) {
-    e?.preventDefault?.();
+  // Autocomplete: sugere produtos enquanto digita (debounce)
+  useEffect(() => {
     const termo = q.trim();
+    if (termo.length < 2) { setSug([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.get("/api/cobertura-sku/buscar", { params: { q: termo } });
+        setSug(r.data || []);
+        setMostraSug(true);
+      } catch { /* silencioso */ }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  async function buscarTermo(termo) {
     if (!termo) return;
+    setMostraSug(false);
     setLoading(true); setErro(""); setD(null);
     try {
       const r = await api.get("/api/cobertura-sku", { params: { q: termo } });
@@ -27,6 +42,18 @@ export default function CoberturaSku() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function buscar(e) {
+    e?.preventDefault?.();
+    buscarTermo(q.trim());
+  }
+
+  function escolher(p) {
+    setQ(p.nome);
+    setSug([]);
+    setMostraSug(false);
+    buscarTermo(p.cod);
   }
 
   return (
@@ -39,10 +66,31 @@ export default function CoberturaSku() {
         </div>
       </div>
 
-      <form className="no-print" style={S.busca} onSubmit={buscar}>
-        <input style={S.input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔎 Código do SKU (ex: 33857) ou nome do produto" />
-        <button type="submit" style={S.btn} disabled={loading}>{loading ? "…" : "Buscar"}</button>
-      </form>
+      <div className="no-print" style={S.buscaWrap}>
+        <form style={S.busca} onSubmit={buscar} autoComplete="off">
+          <div style={S.inputWrap}>
+            <input
+              style={S.input}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onFocus={() => sug.length > 0 && setMostraSug(true)}
+              onBlur={() => setTimeout(() => setMostraSug(false), 150)}
+              placeholder="🔎 Digite o nome ou código do produto"
+            />
+            {mostraSug && sug.length > 0 && (
+              <div style={S.dropdown}>
+                {sug.map((p) => (
+                  <button key={p.cod} type="button" style={S.sugItem} onMouseDown={() => escolher(p)}>
+                    <span style={S.sugNome}>{p.nome}</span>
+                    <span style={S.sugCod}>cód {p.cod}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button type="submit" style={S.btn} disabled={loading}>{loading ? "…" : "Buscar"}</button>
+        </form>
+      </div>
 
       {erro && <div style={S.erro}>{erro}</div>}
       {loading && <div style={S.info}><span className="cs-spin" /> Buscando…</div>}
@@ -132,19 +180,25 @@ const S = {
   voltar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem" },
   titulo: { margin: 0, fontSize: "clamp(1.2rem,4vw,1.5rem)", fontWeight: "800" },
   sub: { margin: "2px 0 0", color: "rgba(255,255,255,0.45)", fontSize: "0.8rem" },
-  busca: { display: "flex", gap: "8px", marginBottom: "18px" },
-  input: { flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "10px", color: "#fff", padding: "11px 14px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none" },
-  btn: { background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "0 20px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "0.9rem" },
+  buscaWrap: { marginBottom: "18px" },
+  busca: { display: "flex", gap: "8px" },
+  inputWrap: { position: "relative", flex: 1, minWidth: 0 },
+  input: { width: "100%", minWidth: 0, boxSizing: "border-box", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "10px", color: "#fff", padding: "11px 14px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none" },
+  btn: { flexShrink: 0, whiteSpace: "nowrap", background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "0 18px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "0.9rem" },
+  dropdown: { position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#14241a", border: "1px solid rgba(125,186,61,0.35)", borderRadius: "10px", zIndex: 50, maxHeight: "300px", overflowY: "auto", boxShadow: "0 16px 50px rgba(0,0,0,0.5)" },
+  sugItem: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)", color: "#fff", padding: "10px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.84rem" },
+  sugNome: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  sugCod: { color: "rgba(125,186,61,0.8)", fontSize: "0.72rem", flexShrink: 0 },
   info: { color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", gap: "10px", padding: "20px 0" },
   erro: { color: "#ef6f6f", padding: "16px", background: "rgba(239,68,68,0.1)", borderRadius: "10px" },
   aviso: { color: "#f5c451", padding: "12px 14px", background: "rgba(245,196,81,0.08)", border: "1px solid rgba(245,196,81,0.25)", borderRadius: "10px", fontSize: "0.84rem", marginBottom: "12px" },
   vazio: { color: "rgba(255,255,255,0.55)", padding: "20px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", lineHeight: 1.6 },
-  evid: { background: "rgba(125,186,61,0.08)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "14px", padding: "16px 18px", marginBottom: "14px", position: "relative" },
+  evid: { background: "rgba(125,186,61,0.08)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "14px", padding: "16px 18px", marginBottom: "14px" },
   evidTit: { color: VERDE, fontWeight: "700", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em" },
-  evidProd: { color: "#fff", fontWeight: "800", fontSize: "1.15rem", marginTop: "4px", lineHeight: 1.2 },
+  evidProd: { color: "#fff", fontWeight: "800", fontSize: "1.15rem", marginTop: "4px", lineHeight: 1.25 },
   evidCod: { color: "rgba(255,255,255,0.45)", fontWeight: "400", fontSize: "0.85rem" },
   evidSub: { color: "rgba(255,255,255,0.45)", fontSize: "0.76rem", marginTop: "4px" },
-  pdfBtn: { position: "absolute", top: "14px", right: "14px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem" },
+  pdfBtn: { marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem" },
   kpis: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: "12px", marginBottom: "8px" },
   kpi: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px" },
   kpiValor: { fontSize: "1.7rem", fontWeight: "800", lineHeight: 1.1 },

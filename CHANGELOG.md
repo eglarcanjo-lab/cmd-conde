@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.11.0** — Cobertura & Distribuição por SKU (gestor)
+Versão atual: **v3.11.1** — Cobertura & Distribuição: autocomplete + responsividade
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.11.1 — 2026-06-08
+- **Cobertura & Distribuição por SKU — ajustes:**
+  - **Menu suspenso (autocomplete):** ao digitar o nome/código, aparece a lista
+    de produtos pra escolher o certo (ninguém decora código/nome exato). Backend
+    `GET /api/cobertura-sku/buscar`. Resolve o caso "Stella" virar produto errado.
+  - **Responsividade mobile:** botão "Buscar" não corta mais (input encolhe) e o
+    "Exportar PDF" saiu de cima do nome do produto (foi pro fluxo normal).
 
 ### v3.11.0 — 2026-06-08
 - **Cobertura & Distribuição por SKU** (GV / diretoria / admin) — nova tela:
