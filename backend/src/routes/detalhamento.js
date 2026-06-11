@@ -26,6 +26,7 @@ router.get("/entrega", async (req, res) => {
     const setor = String(req.query.setor || "").trim();
     const motivo = String(req.query.motivo || "").trim();
     const pdv = String(req.query.pdv || "").trim().toLowerCase();
+    const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
 
     const [frustradasRaw, efetivadasRaw] = await Promise.all([
       readSheet("entregas_frustradas").catch(() => []),
@@ -51,18 +52,20 @@ router.get("/entrega", async (req, res) => {
         (!mes || String(r.mes_referencia) === mes) &&
         (!setor || String(r.setor) === setor) &&
         (!motivo || String(r.desc_motivo) === motivo) &&
+        (!dia || String(r.data).trim() === dia) &&
         matchPdv(r)
     );
-    // Efetivado ignora motivo/pdv (não existem nessa base)
+    // Efetivado ignora motivo/pdv (não existem nessa base); é mensal (sem dia)
     const eFilt = efetivadas.filter(
       (r) => (!mes || String(r.mes_referencia) === mes) && (!setor || String(r.setor) === setor)
     );
 
-    const volEfetivado = r3(eFilt.reduce((s, r) => s + num(r.volume_entregue_hl), 0));
+    // Com filtro de DIA, o efetivado/taxa não se aplicam (a base de efetivadas é mensal)
+    const volEfetivado = dia ? null : r3(eFilt.reduce((s, r) => s + num(r.volume_entregue_hl), 0));
     const volFrustrado = r3(fFilt.reduce((s, r) => s + num(r.volume_hl), 0));
     const valorFrustrado = r2(fFilt.reduce((s, r) => s + num(r.valor), 0));
-    const base = volEfetivado + volFrustrado;
-    const taxa = base > 0 ? Math.round((volFrustrado / base) * 1000) / 10 : null;
+    const base = (volEfetivado || 0) + volFrustrado;
+    const taxa = dia ? null : (base > 0 ? Math.round((volFrustrado / base) * 1000) / 10 : null);
 
     const agrupar = (lista, chave, rotulo) => {
       const m = {};
@@ -103,7 +106,7 @@ router.get("/entrega", async (req, res) => {
       .slice(0, 1500);
 
     return res.json({
-      filtros: { mes, setor, motivo, pdv },
+      filtros: { mes, setor, motivo, pdv, dia },
       opcoes,
       volume_efetivado_hl: volEfetivado,
       volume_frustrado_hl: volFrustrado,
@@ -148,6 +151,7 @@ router.get("/nota", async (req, res) => {
 router.get("/ruptura", async (req, res) => {
   try {
     const mes = String(req.query.mes || "").trim();
+    const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
     const detRaw = await readSheet("ruptura_detalhe").catch(() => []);
     const det = filtrarPorPerfil(detRaw, req.user);
 
@@ -163,8 +167,10 @@ router.get("/ruptura", async (req, res) => {
     const porMes = meses.map((m) => ({ ...mapMes[m], volume_falta_hl: r3(mapMes[m].volume_falta_hl) }));
     const media = porMes.length ? r3(porMes.reduce((s, m) => s + m.volume_falta_hl, 0) / porMes.length) : 0;
 
-    // Escopo (mês ou consolidado)
-    const escopo = det.filter((r) => !mes || String(r.mes) === mes);
+    // Escopo: dia (se houver), senão mês, senão consolidado
+    const escopo = det.filter((r) =>
+      (!dia || String(r.data).trim() === dia) && (!mes || String(r.mes) === mes)
+    );
 
     const mapProd = {};
     escopo.forEach((r) => {
@@ -200,7 +206,7 @@ router.get("/ruptura", async (req, res) => {
     }));
 
     return res.json({
-      filtros: { mes },
+      filtros: { mes, dia },
       total_volume_falta_hl: totalVolume,
       produtos_afetados: porProduto.length,
       clientes_afetados: porCliente.length,

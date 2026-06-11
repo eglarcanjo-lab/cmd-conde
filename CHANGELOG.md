@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.13.1** — fix faturamento Marketplace no Volume Diário
+Versão atual: **v3.14.0** — filtro de Dia no Detalhamento HOP
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.14.0 — 2026-06-10
+- **Detalhamento HOP — filtro de Dia:** nas duas abas (Entrega e Ruptura) dá pra
+  escolher um **dia específico**. Na Entrega filtra as devoluções do dia (o
+  efetivado/taxa ficam "n/d" pois a base de efetivadas é mensal). Na Ruptura
+  mostra as ocorrências daquele dia. Dia e Mês são mutuamente exclusivos.
 
 ### v3.13.1 — 2026-06-08
 - **Fix: Volume Diário não puxava o faturamento Marketplace.** O realizado vinha

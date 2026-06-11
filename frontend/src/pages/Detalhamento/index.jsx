@@ -18,6 +18,8 @@ const fmt = (n, d = 1) =>
   (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtMoeda = (n) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const toBR = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
+const toISO = (br) => { if (!br || !br.includes("/")) return ""; const [d, m, y] = br.split("/"); return `${y}-${m}-${d}`; };
 const dataMs = (s) => {
   if (!s || !String(s).includes("/")) return 0;
   const [dd, mm, yy] = String(s).split("/");
@@ -118,6 +120,7 @@ function Select({ label, value, onChange, opcoes, todos = "Todos", fmtOpt }) {
 // ─────────────────────────────── ENTREGA ───────────────────────────────
 function Entrega() {
   const [mes, setMes] = useState("");
+  const [dia, setDia] = useState(""); // dd/mm/yyyy
   const [setor, setSetor] = useState("");
   const [motivo, setMotivo] = useState("");
   const [pdvInput, setPdvInput] = useState("");
@@ -136,12 +139,12 @@ function Entrega() {
   useEffect(() => {
     let vivo = true;
     setLoading(true); setErro("");
-    api.get("/api/detalhamento/entrega", { params: { mes, setor, motivo, pdv } })
+    api.get("/api/detalhamento/entrega", { params: { mes, dia, setor, motivo, pdv } })
       .then((r) => vivo && setD(r.data))
       .catch(() => vivo && setErro("Não consegui carregar os dados de entrega."))
       .finally(() => vivo && setLoading(false));
     return () => { vivo = false; };
-  }, [mes, setor, motivo, pdv]);
+  }, [mes, dia, setor, motivo, pdv]);
 
   async function abrirNota(linha) {
     if (!linha.nota) return;
@@ -166,16 +169,21 @@ function Entrega() {
     <>
       <div style={S.filtros}>
         <Select label="Mês" value={mes} onChange={setMes} opcoes={op.meses} fmtOpt={rotuloMes} todos="Quadrimestre" />
+        <label style={S.selWrap}>
+          <span style={S.selLabel}>Dia</span>
+          <input type="date" style={S.select} value={toISO(dia)} onChange={(e) => { setDia(toBR(e.target.value)); setMes(""); }} />
+        </label>
         <Select label="Setor" value={setor} onChange={setSetor} opcoes={op.setores} todos="Todos" />
         <Select label="Motivo" value={motivo} onChange={setMotivo} opcoes={op.motivos} todos="Todos" />
         <label style={S.selWrap}>
           <span style={S.selLabel}>PDV (código ou nome)</span>
           <input style={S.select} value={pdvInput} onChange={(e) => setPdvInput(e.target.value)} placeholder="ex: 20296 ou geladão" />
         </label>
+        {dia && <button style={S.limparDia} onClick={() => setDia("")}>limpar dia ✕</button>}
       </div>
 
       <div style={S.kpis}>
-        <Kpi label="Volume efetivado (HL)" valor={fmt(d.volume_efetivado_hl)} cor={VERDE} />
+        <Kpi label="Volume efetivado (HL)" valor={d.volume_efetivado_hl == null ? "—" : fmt(d.volume_efetivado_hl)} cor={VERDE} sub={dia ? "n/d por dia" : null} />
         <Kpi label="Volume frustrado (HL)" valor={fmt(d.volume_frustrado_hl)} cor={VERMELHO} sub={`${d.qtd_frustradas} notas`} />
         <Kpi label="Taxa de frustração" valor={taxa == null ? "—" : `${fmt(taxa)}%`} cor={taxa > 5 ? VERMELHO : AMARELO} />
         <Kpi label="Valor frustrado" valor={fmtMoeda(d.valor_frustrado)} cor={VERMELHO} />
@@ -235,6 +243,7 @@ function Entrega() {
 // ─────────────────────────────── RUPTURA ───────────────────────────────
 function Ruptura() {
   const [mes, setMes] = useState("");
+  const [dia, setDia] = useState(""); // dd/mm/yyyy
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -244,12 +253,12 @@ function Ruptura() {
   useEffect(() => {
     let vivo = true;
     setLoading(true); setErro(""); setDrill(null);
-    api.get("/api/detalhamento/ruptura", { params: { mes } })
+    api.get("/api/detalhamento/ruptura", { params: { mes, dia } })
       .then((r) => vivo && setD(r.data))
       .catch(() => vivo && setErro("Não consegui carregar os dados de ruptura."))
       .finally(() => vivo && setLoading(false));
     return () => { vivo = false; };
-  }, [mes]);
+  }, [mes, dia]);
 
   if (loading && !d) return <div style={S.info}><span className="dh-spin" /> Carregando…</div>;
   if (erro) return <div style={S.erro}>{erro}</div>;
@@ -260,7 +269,7 @@ function Ruptura() {
   const quad = d.quadrimestre || { meses: [], por_mes: [], media: 0 };
   const media = quad.media || 0;
   const escala = Math.max(1, ...quad.por_mes.map((m) => m.volume_falta_hl), media) * 1.12;
-  const escopo = mes ? rotuloMes(mes) : "Quadrimestre (consolidado)";
+  const escopo = dia ? `dia ${dia}` : mes ? rotuloMes(mes) : "Quadrimestre (consolidado)";
   const corBarra = (v) => (v >= media && media > 0 ? VERMELHO : v >= 0.9 * media && media > 0 ? AMARELO : VERDE);
 
   // Drill-down a partir do detalhe do escopo
@@ -292,8 +301,13 @@ function Ruptura() {
     <>
       <div style={S.escopoBar}>
         <span style={S.escopoTxt}>📅 {escopo}</span>
-        {mes && <button style={S.limpar} onClick={() => setMes("")}>ver quadrimestre ✕</button>}
-        <span style={S.dica}>clique numa barra p/ filtrar o mês · 🔴 acima da média · 🟡 90% · 🟢 abaixo</span>
+        <label style={S.diaWrap}>
+          <span style={S.diaLbl}>Dia:</span>
+          <input type="date" style={S.diaInput} value={toISO(dia)} onChange={(e) => { setDia(toBR(e.target.value)); setMes(""); }} />
+        </label>
+        {dia && <button style={S.limpar} onClick={() => setDia("")}>limpar dia ✕</button>}
+        {mes && !dia && <button style={S.limpar} onClick={() => setMes("")}>ver quadrimestre ✕</button>}
+        <span style={S.dica}>clique numa barra p/ o mês · ou escolha um dia · 🔴 acima da média · 🟡 90% · 🟢 abaixo</span>
       </div>
 
       <div style={S.kpis}>
@@ -317,7 +331,7 @@ function Ruptura() {
               const ativa = m.mes === mes;
               const h = (m.volume_falta_hl / escala) * 100;
               return (
-                <div key={m.mes} style={S.col} onClick={() => setMes(ativa ? "" : m.mes)} title="Filtrar este mês">
+                <div key={m.mes} style={S.col} onClick={() => { setMes(ativa ? "" : m.mes); setDia(""); }} title="Filtrar este mês">
                   <div style={{ ...S.barAbs, height: `${h}%`, background: corBarra(m.volume_falta_hl), outline: ativa ? `2px solid #fff` : "none" }} />
                   <div style={{ ...S.barVal, bottom: `calc(${h}% + 4px)` }}>{fmt(m.volume_falta_hl)}</div>
                 </div>
@@ -401,6 +415,10 @@ const S = {
   escopoBar: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "14px" },
   escopoTxt: { color: VERDE, fontWeight: "700", fontSize: "0.9rem" },
   limpar: { background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.4)", color: VERDE, padding: "5px 12px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem" },
+  limparDia: { alignSelf: "flex-end", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", padding: "9px 12px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem" },
+  diaWrap: { display: "flex", alignItems: "center", gap: "6px" },
+  diaLbl: { color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" },
+  diaInput: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(125,186,61,0.3)", color: "#fff", padding: "6px 10px", borderRadius: "8px", fontFamily: "inherit", fontSize: "0.8rem", colorScheme: "dark" },
   dica: { color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontStyle: "italic", marginLeft: "auto" },
   dicaLinha: { color: "rgba(255,255,255,0.4)", fontSize: "0.76rem", fontStyle: "italic", margin: "0 0 8px 2px" },
   h3: { margin: "20px 0 10px", fontSize: "1rem", fontWeight: "700" },
