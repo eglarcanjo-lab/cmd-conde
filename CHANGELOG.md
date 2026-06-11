@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.14.1** — Cobertura & Distribuição unificada (sub-aba Analítico)
+Versão atual: **v3.15.0** — engajamento: aberturas do app por usuário + relatório admin
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.15.0 — 2026-06-10
+- **Engajamento / uso do app:** o app registra cada **abertura** por usuário/dia
+  (agregado na aba `uso_app`, sem inchar). Novo **Admin › 📊 Engajamento** com
+  filtro de mês e perfil (Só RN / Todos): KPIs (acessaram, não acessaram, total
+  de aberturas, média) e tabela por usuário (aberturas, dias ativos, último
+  acesso) — inclui quem **nunca abriu** no mês (em vermelho).
+  Backend `POST /api/uso/registrar` + `GET /api/uso/relatorio`.
 
 ### v3.14.1 — 2026-06-10
 - **Cobertura & Distribuição unificada:** os 2 cards da Home viraram **1 só**

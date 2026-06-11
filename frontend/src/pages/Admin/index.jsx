@@ -17,6 +17,7 @@ import RvSimulador from "./RvSimulador";
 import IncentivosAdmin from "./Incentivos";
 import PopupsAdmin from "./Popups";
 import AvisosAdmin from "./Avisos";
+import Engajamento from "./Engajamento";
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
@@ -31,6 +32,7 @@ const TABS = [
   { id: "incentivos", label: "🏆 Incentivos" },
   { id: "popups", label: "🖼️ Popups" },
   { id: "avisos", label: "❔ Avisos" },
+  { id: "engajamento", label: "📊 Engajamento" },
   { id: "incidentes", label: "🚨 Solicitações" },
   { id: "configuracoes", label: "⚙️ Configurações" },
 ];
@@ -119,6 +121,7 @@ export default function Admin() {
           {tab === "incentivos" && <IncentivosAdmin />}
           {tab === "popups" && <PopupsAdmin />}
           {tab === "avisos" && <AvisosAdmin />}
+          {tab === "engajamento" && <Engajamento />}
           {tab === "incidentes" && <Incidentes />}
           {tab === "configuracoes" && <Configuracoes />}
         </div>

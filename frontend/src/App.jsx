@@ -26,11 +26,22 @@ import BotaoAjuda from "./components/BotaoAjuda";
 import { HOP_ATIVA } from "./theme";
 import api from "./services/api";
 
+// Registra "abertura do app" 1x por carregamento (refresh/abrir o PWA conta de novo;
+// navegação interna no SPA não recarrega, então não duplica).
+let usoRegistrado = false;
+
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
 function AppContent() {
   const { usuario, loading: authLoading } = useAuth();
   const location = useLocation();
   const [manu, setManu] = useState(null); // null = verificando
+
+  useEffect(() => {
+    if (usuario && !usoRegistrado) {
+      usoRegistrado = true;
+      api.post("/api/uso/registrar").catch(() => {});
+    }
+  }, [usuario]);
 
   useEffect(() => {
     api.get("/api/manutencao/status")
@@ -81,7 +92,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.14.1";
+export const APP_VERSION = "v3.15.0";
 
 export default function App() {
   return (
