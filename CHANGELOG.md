@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.15.0** — engajamento: aberturas do app por usuário + relatório admin
+Versão atual: **v3.16.0** — engajamento por tela (quais telas mais usam)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.16.0 — 2026-06-10
+- **Engajamento por tela:** o app passa a contar **quais telas** cada usuário mais
+  acessa (acumula no cliente e envia em lote a cada 30s / ao sair — sem gravar por
+  clique). No **Admin › 📊 Engajamento** entrou o ranking **"Telas mais acessadas"**
+  (com barra e nº de usuários) — pra saber onde focar a visibilidade. Backend
+  `POST /api/uso/telas` + aba `uso_telas` (1 JSON por usuário/mês).
 
 ### v3.15.0 — 2026-06-10
 - **Engajamento / uso do app:** o app registra cada **abertura** por usuário/dia

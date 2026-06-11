@@ -30,6 +30,17 @@ import api from "./services/api";
 // navegação interna no SPA não recarrega, então não duplica).
 let usoRegistrado = false;
 
+// Contagem de visitas por tela — acumula no cliente e envia em lote (flush) a cada
+// 30s / ao sair da tela, em vez de gravar a cada clique (poupa requisições).
+const telaCount = {};
+function flushTelas() {
+  const chaves = Object.keys(telaCount);
+  if (!chaves.length) return;
+  const lote = {};
+  chaves.forEach((k) => { lote[k] = telaCount[k]; delete telaCount[k]; });
+  api.post("/api/uso/telas", { telas: lote }).catch(() => {});
+}
+
 // Componente interno — tem acesso ao BrowserRouter e AuthContext
 function AppContent() {
   const { usuario, loading: authLoading } = useAuth();
@@ -42,6 +53,21 @@ function AppContent() {
       api.post("/api/uso/registrar").catch(() => {});
     }
   }, [usuario]);
+
+  // Conta a tela visitada
+  useEffect(() => {
+    if (usuario && location.pathname !== "/login") {
+      telaCount[location.pathname] = (telaCount[location.pathname] || 0) + 1;
+    }
+  }, [location.pathname, usuario]);
+
+  // Flush periódico + ao minimizar/sair
+  useEffect(() => {
+    const iv = setInterval(flushTelas, 30000);
+    const onHide = () => { if (document.visibilityState === "hidden") flushTelas(); };
+    document.addEventListener("visibilitychange", onHide);
+    return () => { clearInterval(iv); document.removeEventListener("visibilitychange", onHide); flushTelas(); };
+  }, []);
 
   useEffect(() => {
     api.get("/api/manutencao/status")
@@ -92,7 +118,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.15.0";
+export const APP_VERSION = "v3.16.0";
 
 export default function App() {
   return (

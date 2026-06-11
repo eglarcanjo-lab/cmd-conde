@@ -44,6 +44,30 @@ router.post("/registrar", async (req, res) => {
   }
 });
 
+// POST /api/uso/telas — soma visitas por tela no mês (recebe um lote {tela: n})
+// Agrega num único JSON por usuário/mês (1 linha) — não incha a planilha.
+router.post("/telas", async (req, res) => {
+  try {
+    const telas = req.body?.telas;
+    if (!telas || typeof telas !== "object" || !Object.keys(telas).length) return res.json({ ok: true });
+    await ensureTab("uso_telas");
+    const { mes, hora } = agoraBR();
+    const cod = String(req.user.cod || "").trim();
+    const todos = await readSheet("uso_telas").catch(() => []);
+    const idx = todos.findIndex((r) => String(r.cod) === cod && String(r.mes) === mes);
+    let mapa = {};
+    if (idx !== -1) { try { mapa = JSON.parse(todos[idx].telas_json || "{}"); } catch { mapa = {}; } }
+    Object.entries(telas).forEach(([t, n]) => { mapa[t] = (mapa[t] || 0) + (parseInt(n) || 0); });
+    const row = [cod, req.user.nome || "", mes, JSON.stringify(mapa), hora];
+    if (idx === -1) await appendRow("uso_telas", row);
+    else await updateRow("uso_telas", idx + 1, row);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("uso/telas:", err);
+    return res.json({ ok: false });
+  }
+});
+
 // GET /api/uso/relatorio?mes=YYYY-MM&perfil=rn — relatório de engajamento (admin)
 router.get("/relatorio", adminOnly, async (req, res) => {
   try {
@@ -51,12 +75,33 @@ router.get("/relatorio", adminOnly, async (req, res) => {
     const mes = String(req.query.mes || agoraBR().mes).trim();
     const soPerfil = String(req.query.perfil || "rn").trim().toLowerCase(); // rn | todos
 
-    const [usoRaw, usuarios] = await Promise.all([
+    const [usoRaw, usuarios, telasRaw] = await Promise.all([
       readSheet("uso_app").catch(() => []),
       readSheet("usuarios").catch(() => []),
+      readSheet("uso_telas").catch(() => []),
     ]);
 
     const uso = usoRaw.filter((r) => mesDe(r.data) === mes);
+
+    // Perfil por cod (para filtrar as telas por RN)
+    const perfilDe = {};
+    usuarios.forEach((u) => { perfilDe[String(u.cod).trim()] = String(u.perfil || "").toLowerCase(); });
+
+    // Agrega visitas por tela no mês (do uso_telas)
+    const porTelaMap = {};
+    telasRaw.filter((r) => String(r.mes) === mes).forEach((r) => {
+      if (soPerfil !== "todos" && perfilDe[String(r.cod).trim()] !== soPerfil) return;
+      let mapa = {};
+      try { mapa = JSON.parse(r.telas_json || "{}"); } catch { mapa = {}; }
+      Object.entries(mapa).forEach(([t, n]) => {
+        if (!porTelaMap[t]) porTelaMap[t] = { tela: t, visitas: 0, usuarios: new Set() };
+        porTelaMap[t].visitas += parseInt(n) || 0;
+        porTelaMap[t].usuarios.add(String(r.cod));
+      });
+    });
+    const porTela = Object.values(porTelaMap)
+      .map((x) => ({ tela: x.tela, visitas: x.visitas, usuarios: x.usuarios.size }))
+      .sort((a, b) => b.visitas - a.visitas);
 
     // Agrega por cod no mês
     const agg = {};
@@ -101,6 +146,7 @@ router.get("/relatorio", adminOnly, async (req, res) => {
       total_aberturas: totalAberturas,
       media_por_usuario: linhas.length ? Math.round((totalAberturas / linhas.length) * 10) / 10 : 0,
       linhas,
+      por_tela: porTela,
     });
   } catch (err) {
     console.error("uso/relatorio:", err);

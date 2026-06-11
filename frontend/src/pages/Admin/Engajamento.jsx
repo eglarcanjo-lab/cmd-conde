@@ -6,6 +6,15 @@ function mesAtual() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+const TELA_LABEL = {
+  "/": "🏠 Início", "/volume-diario": "📈 Volume Diário", "/cobertura": "📊 Cobertura & Distribuição",
+  "/pdvs": "🗺️ PDVs", "/tasks": "✅ Tasks", "/spo": "📊 SPO", "/rv": "💰 Remuneração",
+  "/incidentes": "🚨 Incidentes", "/incentivos": "🏆 Incentivos", "/produtos": "📦 Produtos",
+  "/detalhamento": "🌿 Detalhamento HOP", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
+  "/rv-admin": "💰 RV Simulador",
+};
+const telaLabel = (t) => TELA_LABEL[t] || t;
+
 export default function Engajamento() {
   const [mes, setMes] = useState(mesAtual());
   const [perfil, setPerfil] = useState("rn");
@@ -48,6 +57,28 @@ export default function Engajamento() {
             <Kpi v={d.media_por_usuario} l="Média por usuário" cor="#f5c451" />
           </div>
 
+          {/* Telas mais usadas */}
+          {d.por_tela && d.por_tela.length > 0 && (() => {
+            const max = Math.max(1, ...d.por_tela.map((t) => t.visitas));
+            return (
+              <div style={{ marginBottom: "22px" }}>
+                <h3 style={S.h3}>📍 Telas mais acessadas <span style={S.h3sub}>(onde focar a visibilidade)</span></h3>
+                <div style={S.telaList}>
+                  {d.por_tela.map((t) => (
+                    <div key={t.tela} style={S.telaRow}>
+                      <div style={S.telaNome}>{telaLabel(t.tela)}</div>
+                      <div style={S.telaBarWrap}>
+                        <div style={{ ...S.telaBar, width: `${(t.visitas / max) * 100}%` }} />
+                      </div>
+                      <div style={S.telaNum}>{t.visitas} <span style={S.telaUsers}>· {t.usuarios} usuários</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          <h3 style={S.h3}>Por usuário</h3>
           <div style={S.tabelaWrap}>
             <table style={S.tabela}>
               <thead>
@@ -98,4 +129,13 @@ const S = {
   td: { padding: "9px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap" },
   trAlt: { background: "rgba(255,255,255,0.02)" },
   trZero: { background: "rgba(239,68,68,0.05)" },
+  h3: { color: "#fff", fontSize: "0.95rem", fontWeight: "700", margin: "0 0 10px" },
+  h3sub: { color: "rgba(255,255,255,0.4)", fontWeight: "400", fontSize: "0.78rem" },
+  telaList: { display: "flex", flexDirection: "column", gap: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px" },
+  telaRow: { display: "flex", alignItems: "center", gap: "10px" },
+  telaNome: { width: "190px", flexShrink: 0, color: "rgba(255,255,255,0.85)", fontSize: "0.84rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  telaBarWrap: { flex: 1, height: "10px", background: "rgba(255,255,255,0.06)", borderRadius: "5px", overflow: "hidden" },
+  telaBar: { height: "100%", background: "linear-gradient(90deg,#7DBA3D,#2E7D32)", borderRadius: "5px", minWidth: "2px" },
+  telaNum: { width: "130px", flexShrink: 0, textAlign: "right", color: "#7DBA3D", fontWeight: "700", fontSize: "0.84rem" },
+  telaUsers: { color: "rgba(255,255,255,0.4)", fontWeight: "400", fontSize: "0.74rem" },
 };
