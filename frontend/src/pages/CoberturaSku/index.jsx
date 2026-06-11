@@ -7,7 +7,7 @@ const VERDE = "#7DBA3D";
 const BG = "#0c1410";
 const fmt = (v, d = 0) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-export default function CoberturaSku() {
+export default function CoberturaSku({ embutido = false }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [sug, setSug] = useState([]);
@@ -57,14 +57,16 @@ export default function CoberturaSku() {
   }
 
   return (
-    <div style={S.root}>
-      <div className="no-print" style={S.header}>
-        <button style={S.voltar} onClick={() => navigate("/")}>← Início</button>
-        <div>
-          <h1 style={S.titulo}>📈 Cobertura & Distribuição</h1>
-          <p style={S.sub}>Por SKU · visão consolidada</p>
+    <div style={embutido ? S.emb : S.root}>
+      {!embutido && (
+        <div className="no-print" style={S.header}>
+          <button style={S.voltar} onClick={() => navigate("/")}>← Início</button>
+          <div>
+            <h1 style={S.titulo}>📈 Cobertura & Distribuição</h1>
+            <p style={S.sub}>Por SKU · visão consolidada</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="no-print" style={S.buscaWrap}>
         <form style={S.busca} onSubmit={buscar} autoComplete="off">
@@ -176,6 +178,7 @@ function Tabela({ colunas, linhas }) {
 
 const S = {
   root: { minHeight: "100vh", background: BG, fontFamily: "'Poppins','Segoe UI',system-ui,sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "1000px", margin: "0 auto", color: "#fff" },
+  emb: { color: "#fff", fontFamily: "'Poppins','Segoe UI',system-ui,sans-serif" },
   header: { display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", marginBottom: "18px" },
   voltar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem" },
   titulo: { margin: 0, fontSize: "clamp(1.2rem,4vw,1.5rem)", fontWeight: "800" },

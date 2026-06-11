@@ -19,7 +19,6 @@ import VolumeDiario from "./pages/VolumeDiario";
 import Incentivos from "./pages/Incentivos";
 import Detalhamento from "./pages/Detalhamento";
 import Produtos from "./pages/Produtos";
-import CoberturaSku from "./pages/CoberturaSku";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
@@ -75,7 +74,6 @@ function AppContent() {
       <Route path="/incentivos" element={<PrivateRoute><ErrorBoundary><Incentivos /></ErrorBoundary></PrivateRoute>} />
       <Route path="/detalhamento" element={<PrivateRoute><ErrorBoundary><Detalhamento /></ErrorBoundary></PrivateRoute>} />
       <Route path="/produtos" element={<PrivateRoute><ErrorBoundary><Produtos /></ErrorBoundary></PrivateRoute>} />
-      <Route path="/cobertura-sku" element={<PrivateRoute perfisPermitidos={["admin","director","gv1","gv3"]}><ErrorBoundary><CoberturaSku /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
@@ -83,7 +81,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.14.0";
+export const APP_VERSION = "v3.14.1";
 
 export default function App() {
   return (

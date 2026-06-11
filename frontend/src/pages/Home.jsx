@@ -16,8 +16,7 @@ export default function Home() {
   const modulos = [
     { icon: "🏆", label: "Incentivos",    route: "/incentivos",    ativo: true,  soGestor: false, soRn: false },
     { icon: "📈", label: "Volume Diário", route: "/volume-diario", ativo: true,  soGestor: false, soRn: false },
-    { icon: "📊", label: "Cobertura",     route: "/cobertura",     ativo: true,  soGestor: false, soRn: false },
-    { icon: "📈", label: "Cobertura & Distribuição", route: "/cobertura-sku", ativo: true, soGestor: true, soRn: false },
+    { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura", ativo: true, soGestor: false, soRn: false },
     { icon: "🗺️", label: "PDVs",          route: "/pdvs",          ativo: true,  soGestor: false, soRn: false },
     { icon: "📦", label: "Produtos",      route: "/produtos",      ativo: true,  soGestor: false, soRn: false },
     { icon: "✅", label: "Tasks",         route: "/tasks",         ativo: true,  soGestor: false, soRn: false },

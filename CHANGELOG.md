@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.14.0** — filtro de Dia no Detalhamento HOP
+Versão atual: **v3.14.1** — Cobertura & Distribuição unificada (sub-aba Analítico)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.14.1 — 2026-06-10
+- **Cobertura & Distribuição unificada:** os 2 cards da Home viraram **1 só**
+  ("Cobertura & Distribuição"). A visão por SKU (antes card separado) virou a
+  sub-aba **🔬 Analítico** dentro dele — agora as sub-abas são **Cobertura ·
+  Distribuição · Analítico**. O Analítico aparece só para gestores. Removidos o
+  card e a rota `/cobertura-sku` separados.
 
 ### v3.14.0 — 2026-06-10
 - **Detalhamento HOP — filtro de Dia:** nas duas abas (Entrega e Ruptura) dá pra
