@@ -114,8 +114,8 @@ export default function RvSimulador() {
     setLoading(true);
     try {
       const [r1, r2, r3] = await Promise.all([
-        api.get("/api/rv"),
-        api.get("/api/rv/pontos"),
+        api.get(`/api/rv?mes=${mesRef}`),
+        api.get(`/api/rv/pontos?mes=${mesRef}`),
         api.get(`/api/rv/ap?mes=${mesRef}`),
       ]);
       setRvData(r1.data || []);

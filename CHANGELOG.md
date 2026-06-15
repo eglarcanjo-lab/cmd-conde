@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.16.0** — engajamento por tela (quais telas mais usam)
+Versão atual: **v3.16.1** — fix RV Simulador (volumes por mês selecionado)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.16.1 — 2026-06-10
+- **Fix RV Simulador — volumes não respeitavam o mês selecionado.** O `/api/rv`
+  e o `/api/rv/pontos` não filtravam por mês (só o AP filtrava), então trocar o
+  mês mudava só o AP e os volumes ficavam no último cálculo. Agora ambos filtram
+  por `mes_referencia`. *Limitação:* o `rv_resultado` guarda só o mês atual
+  (é sobrescrito a cada recálculo) — meses passados aparecem zerados até criarmos
+  snapshots mensais da RV (pendente, se o Eduardo quiser).
 
 ### v3.16.0 — 2026-06-10
 - **Engajamento por tela:** o app passa a contar **quais telas** cada usuário mais

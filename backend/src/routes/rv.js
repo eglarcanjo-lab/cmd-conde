@@ -16,21 +16,25 @@ function filtrarPorPerfil(dados, usuario, campoSetor = "setor") {
   return dados.filter((r) => String(r[campoSetor]) === String(usuario.cod));
 }
 
-// GET /api/rv
+// GET /api/rv?mes=YYYY-MM — volumes/resultado do mês selecionado
 router.get("/", async (req, res) => {
   try {
+    const { mes } = req.query;
     const dados = await readSheet("rv_resultado");
-    return res.json(filtrarPorPerfil(dados, req.user));
+    const filtrado = mes ? dados.filter((r) => String(r.mes_referencia) === mes) : dados;
+    return res.json(filtrarPorPerfil(filtrado, req.user));
   } catch {
     return res.json([]);
   }
 });
 
-// GET /api/rv/pontos
+// GET /api/rv/pontos?mes=YYYY-MM
 router.get("/pontos", async (req, res) => {
   try {
+    const { mes } = req.query;
     const dados = await readSheet("rv_pontos_bees");
-    return res.json(filtrarPorPerfil(dados, req.user));
+    const filtrado = mes ? dados.filter((r) => String(r.mes_referencia) === mes) : dados;
+    return res.json(filtrarPorPerfil(filtrado, req.user));
   } catch {
     return res.json([]);
   }
