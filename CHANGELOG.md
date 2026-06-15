@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.16.1** — fix RV Simulador (volumes por mês selecionado)
+Versão atual: **v3.17.0** — auto-import por e-mail (zip + detecção por nome)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.17.0 — 2026-06-10
+- **Auto-import por e-mail:** novo `POST /api/processar/zip` no processador —
+  recebe 1 zip com vários relatórios e **detecta cada um pelo nome** (Promax pela
+  rotina; BI por `#item`; `task`/`pontos` por palavra-chave), importando na ordem
+  certa + recalc da RV. Guia + código do Apps Script (Gmail → zip → processador)
+  em `AUTO_IMPORT.md`. Caixa de e-mail vira histórico das versões.
 
 ### v3.16.1 — 2026-06-10
 - **Fix RV Simulador — volumes não respeitavam o mês selecionado.** O `/api/rv`
