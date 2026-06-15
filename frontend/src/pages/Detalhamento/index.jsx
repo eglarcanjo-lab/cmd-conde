@@ -1,6 +1,7 @@
 // Detalhamento HOP — relatórios admin. Sub-abas: Entrega + Ruptura de Estoque.
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
 
 const VERDE = "#7DBA3D";
@@ -157,6 +158,51 @@ function Entrega() {
     }
   }
 
+  function rotuloEscopo() {
+    const partes = [];
+    if (dia) partes.push(`dia ${dia}`);
+    else if (mes) partes.push(`mês ${mes}`);
+    else partes.push("quadrimestre");
+    if (setor) partes.push(`setor ${setor}`);
+    if (motivo) partes.push(`motivo ${motivo}`);
+    if (pdv) partes.push(`PDV "${pdv}"`);
+    return partes.join(" · ");
+  }
+
+  function exportarExcel() {
+    const wb = XLSX.utils.book_new();
+    const escopo = rotuloEscopo();
+    const resumo = [
+      ["DEVOLUÇÕES — RELATÓRIO DETALHADO"], [`Escopo: ${escopo}`], [`Gerado em: ${new Date().toLocaleString("pt-BR")}`], [],
+      ["Volume efetivado (HL)", d.volume_efetivado_hl ?? "—"],
+      ["Volume frustrado (HL)", d.volume_frustrado_hl],
+      ["Valor frustrado (R$)", d.valor_frustrado],
+      ["Notas frustradas", d.qtd_frustradas],
+      ["Taxa de frustração (%)", d.taxa_frustracao_pct ?? "—"],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumo), "Resumo");
+    const add = (nome, linhas) => { if (linhas && linhas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas), nome); };
+    add("Por Caminhão", d.por_caminhao);
+    add("Por Dia", d.por_dia);
+    add("Por Dia Semana", (d.por_dia_semana || []).map(({ _wd, ...x }) => x));
+    add("Por PDV", d.por_pdv);
+    add("Por Produto", d.por_produto);
+    add("Por Setor", d.por_setor);
+    add("Por Motivo", d.por_motivo);
+    add("Detalhe", d.detalhe);
+    XLSX.writeFile(wb, `devolucoes_${(dia || mes || "quadrimestre").replace(/\//g, "-")}.xlsx`);
+  }
+
+  function abrirPdf() {
+    const p = new URLSearchParams();
+    if (mes) p.set("mes", mes);
+    if (dia) p.set("dia", dia);
+    if (setor) p.set("setor", setor);
+    if (motivo) p.set("motivo", motivo);
+    if (pdv) p.set("pdv", pdv);
+    window.open(`/detalhamento/entrega-relatorio?${p.toString()}`, "_blank");
+  }
+
   if (loading && !d) return <div style={S.info}><span className="dh-spin" /> Carregando…</div>;
   if (erro) return <div style={S.erro}>{erro}</div>;
   if (!d) return null;
@@ -189,11 +235,27 @@ function Entrega() {
         <Kpi label="Valor frustrado" valor={fmtMoeda(d.valor_frustrado)} cor={VERMELHO} />
       </div>
 
+      <div style={S.exportBar}>
+        <span style={S.exportLbl}>📥 Relatório detalhado ({rotuloEscopo()}):</span>
+        <button style={S.btnExcel} onClick={exportarExcel}>📊 Excel</button>
+        <button style={S.btnPdf} onClick={abrirPdf}>📄 PDF</button>
+      </div>
+
       <div style={S.subAbas}>
-        {[["motivo", "Por motivo"], ["setor", "Por setor"], ["pdv", "Por PDV"], ["detalhe", "Detalhe"]].map(([k, t]) => (
+        {[["motivo", "Por motivo"], ["setor", "Por setor"], ["caminhao", "Por caminhão"], ["dia", "Por dia"], ["produto", "Por produto"], ["pdv", "Por PDV"], ["detalhe", "Detalhe"]].map(([k, t]) => (
           <button key={k} style={{ ...S.subTab, ...(sub === k ? S.subTabAtiva : {}) }} onClick={() => setSub(k)}>{t}</button>
         ))}
       </div>
+
+      {sub === "caminhao" && <Tabela inicial={{ k: "volume_hl", dir: "desc" }} linhas={d.por_caminhao} colunas={[
+        { k: "placa", t: "Caminhão (placa)" }, { k: "qtd", t: "Notas", num: true },
+        { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }, { k: "valor", t: "Valor", num: true, fmt: fmtMoeda }]} />}
+      {sub === "dia" && <Tabela inicial={{ k: "data", dir: "asc" }} linhas={d.por_dia} colunas={[
+        { k: "data", t: "Data", date: true }, { k: "qtd", t: "Notas", num: true },
+        { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }, { k: "valor", t: "Valor", num: true, fmt: fmtMoeda }]} />}
+      {sub === "produto" && <Tabela inicial={{ k: "volume_hl", dir: "desc" }} linhas={d.por_produto} colunas={[
+        { k: "cod_produto", t: "Cód" }, { k: "nome_produto", t: "Produto" }, { k: "notas", t: "Notas", num: true },
+        { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }]} />}
 
       {sub === "motivo" && <Tabela inicial={{ k: "volume_hl", dir: "desc" }} linhas={d.por_motivo} colunas={[
         { k: "desc_motivo", t: "Motivo" }, { k: "qtd", t: "Notas", num: true },
@@ -422,6 +484,10 @@ const S = {
   dica: { color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontStyle: "italic", marginLeft: "auto" },
   dicaLinha: { color: "rgba(255,255,255,0.4)", fontSize: "0.76rem", fontStyle: "italic", margin: "0 0 8px 2px" },
   h3: { margin: "20px 0 10px", fontSize: "1rem", fontWeight: "700" },
+  exportBar: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", margin: "16px 0 4px", padding: "10px 14px", background: "rgba(125,186,61,0.06)", border: "1px solid rgba(125,186,61,0.25)", borderRadius: "10px" },
+  exportLbl: { color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", flex: 1, minWidth: "180px" },
+  btnExcel: { background: "linear-gradient(135deg,#1d8a4e,#0e5c33)", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "0.84rem" },
+  btnPdf: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", padding: "8px 16px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", fontSize: "0.84rem" },
   subAbas: { display: "flex", gap: "6px", margin: "20px 0 12px", flexWrap: "wrap" },
   subTab: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: "600" },
   subTabAtiva: { background: "rgba(125,186,61,0.15)", borderColor: "rgba(125,186,61,0.5)", color: VERDE },

@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.17.0** — auto-import por e-mail (zip + detecção por nome)
+Versão atual: **v3.18.0** — relatório de Devoluções (PDF + Excel) com análises
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.18.0 — 2026-06-10
+- **Detalhamento HOP › Entrega — relatório detalhado (PDF + Excel):** exporta
+  respeitando os filtros da tela. Novas análises: **caminhão (placa)**, **por
+  dia**, **dia da semana** (padrão), **produto** (via itens das notas), além de
+  setor, motivo, PDV — com volume e **R$** em tudo.
+  - **Excel:** planilha multi-abas (Resumo, Caminhão, Dia, PDV, Produto, Setor,
+    Motivo, Detalhe).
+  - **PDF:** página imprimível com KPIs + rankings em **gráfico de barras** + tabelas.
+  - Novas sub-abas na tela: Por caminhão / Por dia / Por produto.
 
 ### v3.17.0 — 2026-06-10
 - **Auto-import por e-mail:** novo `POST /api/processar/zip` no processador —

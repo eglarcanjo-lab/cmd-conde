@@ -28,9 +28,10 @@ router.get("/entrega", async (req, res) => {
     const pdv = String(req.query.pdv || "").trim().toLowerCase();
     const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
 
-    const [frustradasRaw, efetivadasRaw] = await Promise.all([
+    const [frustradasRaw, efetivadasRaw, notaItensRaw] = await Promise.all([
       readSheet("entregas_frustradas").catch(() => []),
       readSheet("entregas_efetivadas").catch(() => []),
+      readSheet("nota_itens").catch(() => []),
     ]);
 
     const frustradas = filtrarPorPerfil(frustradasRaw, req.user);
@@ -83,6 +84,24 @@ router.get("/entrega", async (req, res) => {
 
     const porMotivo = agrupar(fFilt, "desc_motivo", "desc_motivo");
     const porSetor = agrupar(fFilt, "setor", "setor");
+    const porCaminhao = agrupar(fFilt, "placa", "placa");
+    const porDia = agrupar(fFilt, "data", "data").sort((a, b) => {
+      const ms = (s) => { const p = String(s.data || "").split("/"); return p.length === 3 ? new Date(+p[2], +p[1] - 1, +p[0]).getTime() : 0; };
+      return ms(a) - ms(b);
+    });
+
+    // Dia da semana (padrão de quando mais devolve)
+    const SEM = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const mapSem = {};
+    fFilt.forEach((r) => {
+      const p = String(r.data || "").split("/");
+      if (p.length !== 3) return;
+      const wd = new Date(+p[2], +p[1] - 1, +p[0]).getDay();
+      const k = SEM[wd];
+      if (!mapSem[k]) mapSem[k] = { dia_semana: k, _wd: wd, qtd: 0, volume_hl: 0, valor: 0 };
+      mapSem[k].qtd += 1; mapSem[k].volume_hl += num(r.volume_hl); mapSem[k].valor += num(r.valor);
+    });
+    const porDiaSemana = Object.values(mapSem).map((x) => ({ dia_semana: x.dia_semana, _wd: x._wd, qtd: x.qtd, volume_hl: r3(x.volume_hl), valor: r2(x.valor) })).sort((a, b) => a._wd - b._wd);
 
     const mapPdv = {};
     fFilt.forEach((r) => {
@@ -97,13 +116,27 @@ router.get("/entrega", async (req, res) => {
       .sort((a, b) => b.volume_hl - a.volume_hl)
       .slice(0, 101);
 
+    // Por produto — itens das notas frustradas (via nota_itens)
+    const notasFiltradas = new Set(fFilt.map((r) => normNota(r.nota)));
+    const mapProd = {};
+    notaItensRaw.forEach((it) => {
+      if (!notasFiltradas.has(normNota(it.nota))) return;
+      const k = String(it.cod_produto || "").trim();
+      if (!mapProd[k]) mapProd[k] = { cod_produto: k, nome_produto: it.nome_produto, volume_hl: 0, notas: new Set() };
+      mapProd[k].volume_hl += num(it.volume_marcacao_hl);
+      mapProd[k].notas.add(normNota(it.nota));
+    });
+    const porProduto = Object.values(mapProd)
+      .map((p) => ({ cod_produto: p.cod_produto, nome_produto: p.nome_produto, volume_hl: r3(p.volume_hl), notas: p.notas.size }))
+      .sort((a, b) => b.volume_hl - a.volume_hl);
+
     const detalhe = fFilt
       .map((r) => ({
-        setor: r.setor, data: r.data, nota: r.nota, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv,
+        setor: r.setor, data: r.data, nota: r.nota, placa: r.placa, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv,
         desc_motivo: r.desc_motivo, volume_hl: r3(num(r.volume_hl)), valor: r2(num(r.valor)),
       }))
       .sort((a, b) => b.volume_hl - a.volume_hl)
-      .slice(0, 1500);
+      .slice(0, 5000);
 
     return res.json({
       filtros: { mes, setor, motivo, pdv, dia },
@@ -115,6 +148,10 @@ router.get("/entrega", async (req, res) => {
       taxa_frustracao_pct: taxa,
       por_motivo: porMotivo,
       por_setor: porSetor,
+      por_caminhao: porCaminhao,
+      por_dia: porDia,
+      por_dia_semana: porDiaSemana,
+      por_produto: porProduto,
       por_pdv: porPdv,
       detalhe,
       tem_dados: frustradas.length > 0 || efetivadas.length > 0,
