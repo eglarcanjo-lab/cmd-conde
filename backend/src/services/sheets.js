@@ -38,17 +38,42 @@ async function getSheets() {
   return google.sheets({ version: "v4", auth });
 }
 
+// Retry com backoff exponencial para quota 429 / indisponibilidade 503 da Sheets API.
+// Espera: 1s, 2s, 4s, 8s (total ~15s) — curto o bastante p/ não estourar timeouts.
+function _statusDoErro(err) {
+  return err?.code || err?.response?.status || err?.status;
+}
+async function withRetry(fn, tentativas = 4) {
+  let ultimo;
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const st = _statusDoErro(err);
+      if ((st === 429 || st === 503) && i < tentativas - 1) {
+        const espera = 1000 * 2 ** i;
+        console.warn(`⚠️ Sheets ${st} — retry em ${espera}ms (${i + 1}/${tentativas})`);
+        await new Promise((r) => setTimeout(r, espera));
+        ultimo = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw ultimo;
+}
+
 // Lê uma aba inteira e retorna array de objetos usando a primeira linha como cabeçalho
 async function readSheet(tabName) {
   const cached = cacheGet(tabName);
   if (cached) return cached;
 
   const sheets = await getSheets();
-  const res = await sheets.spreadsheets.values.get({
+  const res = await withRetry(() => sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: tabName,
     valueRenderOption: "UNFORMATTED_VALUE",
-  });
+  }));
 
   const rows = res.data.values || [];
   if (rows.length === 0) { cacheSet(tabName, []); return []; }
@@ -74,12 +99,12 @@ async function readSheet(tabName) {
 async function appendRow(tabName, values) {
   cacheInvalidate(tabName);
   const sheets = await getSheets();
-  await sheets.spreadsheets.values.append({
+  await withRetry(() => sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
     range: tabName,
     valueInputOption: "RAW",
     resource: { values: [values] },
-  });
+  }));
 }
 
 // Escreve várias linhas em uma única chamada à API (batch)
@@ -87,12 +112,12 @@ async function appendRows(tabName, rowsArray) {
   if (!rowsArray || rowsArray.length === 0) return;
   cacheInvalidate(tabName);
   const sheets = await getSheets();
-  await sheets.spreadsheets.values.append({
+  await withRetry(() => sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
     range: tabName,
     valueInputOption: "RAW",
     resource: { values: rowsArray },
-  });
+  }));
 }
 
 // Atualiza uma linha específica pelo índice (1-based, considerando cabeçalho na linha 1)
@@ -100,12 +125,12 @@ async function updateRow(tabName, rowIndex, values) {
   cacheInvalidate(tabName);
   const sheets = await getSheets();
   const range = `${tabName}!A${rowIndex + 1}`;
-  await sheets.spreadsheets.values.update({
+  await withRetry(() => sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range,
     valueInputOption: "RAW",
     resource: { values: [values] },
-  });
+  }));
 }
 
 // Sobrescreve toda uma aba (limpa e reescreve com cabeçalho + linhas)
@@ -114,14 +139,14 @@ async function sobrescreverAba(tabName, rows) {
   cacheInvalidate(tabName);
   await ensureTab(tabName);
   const sheets = await getSheets();
-  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName });
+  await withRetry(() => sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName }));
   if (rows.length > 0) {
-    await sheets.spreadsheets.values.update({
+    await withRetry(() => sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
       range: `${tabName}!A1`,
       valueInputOption: "RAW",
       resource: { values: rows },
-    });
+    }));
   }
 }
 
@@ -130,11 +155,11 @@ async function deleteRow(tabName, dataRowIdx) {
   cacheInvalidate(tabName);
   const sheets = await getSheets();
 
-  const resp = await sheets.spreadsheets.values.get({
+  const resp = await withRetry(() => sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: tabName,
     valueRenderOption: "UNFORMATTED_VALUE",
-  });
+  }));
 
   const allRows = resp.data.values || [];
   if (allRows.length <= 1) return; // só cabeçalho ou vazia
@@ -144,34 +169,34 @@ async function deleteRow(tabName, dataRowIdx) {
   if (spliceIdx >= allRows.length) return;
   allRows.splice(spliceIdx, 1);
 
-  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName });
+  await withRetry(() => sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: tabName }));
   if (allRows.length > 0) {
-    await sheets.spreadsheets.values.update({
+    await withRetry(() => sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
       range: `${tabName}!A1`,
       valueInputOption: "USER_ENTERED",
       resource: { values: allRows },
-    });
+    }));
   }
 }
 
 // Garante que uma aba existe, cria se não existir
 async function ensureTab(tabName) {
   const sheets = await getSheets();
-  const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+  const meta = await withRetry(() => sheets.spreadsheets.get({ spreadsheetId: SHEET_ID }));
   const exists = meta.data.sheets.some(
     (s) => s.properties.title === tabName
   );
 
   if (!exists) {
-    await sheets.spreadsheets.batchUpdate({
+    await withRetry(() => sheets.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
       resource: {
         requests: [
           { addSheet: { properties: { title: tabName } } },
         ],
       },
-    });
+    }));
     console.log(`Aba criada: ${tabName}`);
   }
 }

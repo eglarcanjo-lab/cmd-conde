@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.0** — SPO Score 5 (Item 12) por Task FAT + detalhe por PDV
+Versão atual: **v3.19.1** — resiliência a quota 429 do Google Sheets nos imports
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.1 — 2026-06-26
+- **Erro "[500]: Request failed with status code 429" ao importar — corrigido:**
+  era a **quota da API do Google Sheets** estourando quando vários relatórios
+  são importados em sequência.
+  - **Processador:** `errorhandler` global transforma o 429 do Sheets numa
+    mensagem clara ("Quota do Google Sheets excedida. Aguarde ~1 minuto e
+    importe menos relatórios por vez.") em vez de derrubar o import; leitura de
+    `pdv_base` no `/ambos` agora é tolerante a falha (não aborta tudo).
+  - **Backend (Node):** novo `withRetry` com backoff (1s→8s) nas leituras/escritas
+    do Sheets — antes só o processador Python tinha retry; o app não.
+  - **Operação:** importe **menos relatórios por vez** e aguarde ~1 min entre
+    lotes grandes (limite ~60 chamadas/min por minuto).
 
 ### v3.19.0 — 2026-06-26
 - **SPO › Item 12 (Score 5 / Task de Faturamento) — corrigido e detalhado:**
