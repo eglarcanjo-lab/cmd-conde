@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.18.0** — relatório de Devoluções (PDF + Excel) com análises
+Versão atual: **v3.19.0** — SPO Score 5 (Item 12) por Task FAT + detalhe por PDV
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,20 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.0 — 2026-06-26
+- **SPO › Item 12 (Score 5 / Task de Faturamento) — corrigido e detalhado:**
+  - **Realizado por RN** agora vem da coluna **TASK FAT** (`= 1` → bateu a task),
+    em vez da antiga `BATEU META` (que não existe mais na base "task fat" — por
+    isso o item ficava zerado/no erro).
+  - **Universo (denominador)** = PDVs que **possuem** task de fat (`POSSUI TASK`);
+    cai para o total do relatório se a coluna não existir.
+  - **Nova aba `spo_score5_detalhe`** (1 linha por PDV com task): setor, cód/nome
+    do PDV, **bateu (Sim/Não)**, meta e realizado da task — ordenada com os que
+    **não bateram primeiro**.
+  - **Tela SPO:** painel "Detalhe por PDV" no Item 12, com filtro por RN e toggle
+    **"Só não bateram"** (lista acionável dos PDVs que faltaram).
+  - Leitura de colunas robusta (por nome, com fallback posicional).
 
 ### v3.18.0 — 2026-06-10
 - **Detalhamento HOP › Entrega — relatório detalhado (PDF + Excel):** exporta

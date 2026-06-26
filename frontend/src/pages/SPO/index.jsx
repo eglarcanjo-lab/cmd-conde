@@ -80,6 +80,9 @@ export default function SPO() {
   const [kpi11FiltroRN, setKpi11FiltroRN] = useState("TODOS");
   const [kpi11FiltroDia, setKpi11FiltroDia] = useState("TODOS");
   const [score5, setScore5] = useState([]);
+  const [score5Det, setScore5Det] = useState([]);
+  const [kpi12FiltroRN, setKpi12FiltroRN] = useState("TODOS");
+  const [kpi12SoFalha, setKpi12SoFalha] = useState(false);
   const [tasksNab, setTasksNab] = useState([]);
   const [tasksVolume, setTasksVolume] = useState([]);
   const [tasksMktp, setTasksMktp] = useState([]);
@@ -180,7 +183,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resTasksCervejaDetalhe, resScore5, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resTasksCervejaDetalhe, resScore5, resScore5Det, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -195,6 +198,7 @@ export default function SPO() {
         api.get("/api/spo/tasks-cerveja/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-cerveja/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/score5/resumo").catch(() => ({ data: [] })),
+        api.get("/api/spo/score5/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-nab/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-volume/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/tasks-marketplace/resumo").catch(() => ({ data: [] })),
@@ -236,6 +240,7 @@ export default function SPO() {
       setTasksCerveja(resTasksCerveja?.data || []);
       setTasksCervejaDetalhe(resTasksCervejaDetalhe?.data || []);
       setScore5(resScore5?.data || []);
+      setScore5Det(resScore5Det?.data || []);
       setTasksNab(resTasksNab?.data || []);
       setTasksVolume(resTasksVolume?.data || []);
       setTasksMktp(resTasksMktp?.data || []);
@@ -1007,9 +1012,9 @@ export default function SPO() {
             {/* TASKS FATURAMENTO SCORE 5 */}
             {(kpiAtivo === null || kpiAtivo === 12) && (
             <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Item 12 — Tasks Faturamento Score 5</h3>
+              <h3 style={styles.sectionTitle}>Item 12 — Task de Faturamento Score 5</h3>
               {score5.length === 0 ? (
-                <p style={styles.msg}>Importe o relatório ON_TRADE para calcular automaticamente.</p>
+                <p style={styles.msg}>Importe o relatório de Task de Faturamento (task fat) para calcular automaticamente.</p>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
                   {score5.map((r) => {
@@ -1041,6 +1046,64 @@ export default function SPO() {
                   })}
                 </div>
               )}
+
+              {/* Detalhe por PDV — quem possui task de fat e se bateu */}
+              {score5Det.length > 0 && (() => {
+                const rns = [...new Set(score5Det.map((d) => d.setor))].sort();
+                let linhas = score5Det;
+                if (kpi12FiltroRN !== "TODOS") linhas = linhas.filter((d) => d.setor === kpi12FiltroRN);
+                if (kpi12SoFalha) linhas = linhas.filter((d) => d.bateu === "Não");
+                const totFalha = (kpi12FiltroRN === "TODOS" ? score5Det : score5Det.filter((d) => d.setor === kpi12FiltroRN)).filter((d) => d.bateu === "Não").length;
+                const cab = { textAlign: "left", padding: "6px 8px", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", borderBottom: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" };
+                const cel = { padding: "5px 8px", fontSize: "0.78rem", borderBottom: "1px solid rgba(255,255,255,0.05)" };
+                return (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>📋 Detalhe por PDV</span>
+                      <select value={kpi12FiltroRN} onChange={(e) => setKpi12FiltroRN(e.target.value)}
+                        style={{ background: "#13231a", color: "#fff", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 6, padding: "4px 8px", fontSize: "0.78rem" }}>
+                        <option value="TODOS">Todos os RNs</option>
+                        {rns.map((s) => <option key={s} value={s}>Setor {s}</option>)}
+                      </select>
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+                        <input type="checkbox" checked={kpi12SoFalha} onChange={(e) => setKpi12SoFalha(e.target.checked)} />
+                        Só não bateram ({totFalha})
+                      </label>
+                      <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>{linhas.length} PDVs</span>
+                    </div>
+                    <div style={{ overflowX: "auto", maxHeight: 420, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+                          <tr>
+                            <th style={cab}>Setor</th><th style={cab}>Cód PDV</th><th style={cab}>PDV</th>
+                            <th style={{ ...cab, textAlign: "center" }}>Bateu</th>
+                            <th style={{ ...cab, textAlign: "right" }}>Meta</th>
+                            <th style={{ ...cab, textAlign: "right" }}>Realizado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {linhas.slice(0, 400).map((d, i) => {
+                            const ok = d.bateu === "Sim";
+                            return (
+                              <tr key={i}>
+                                <td style={cel}>{d.setor}</td>
+                                <td style={{ ...cel, color: "rgba(255,255,255,0.5)" }}>{d.cod_pdv}</td>
+                                <td style={cel}>{d.nome_pdv || "—"}</td>
+                                <td style={{ ...cel, textAlign: "center" }}>
+                                  <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{d.bateu}</span>
+                                </td>
+                                <td style={{ ...cel, textAlign: "right", color: "rgba(255,255,255,0.5)" }}>{d.meta_task || "—"}</td>
+                                <td style={{ ...cel, textAlign: "right", color: "rgba(255,255,255,0.5)" }}>{d.real_task || "—"}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {linhas.length > 400 && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginTop: 6 }}>Mostrando 400 de {linhas.length}. Use os filtros para refinar.</p>}
+                  </div>
+                );
+              })()}
             </div>
             )}
 
