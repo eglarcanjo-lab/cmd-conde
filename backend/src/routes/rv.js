@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const { readSheet, appendRow } = require("../services/sheets");
+const { readSheet, appendRow, sobrescreverAba } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 
 const PROCESSOR_URL = process.env.PROCESSOR_URL;
@@ -61,24 +61,10 @@ router.post("/ap", adminOnly, async (req, res) => {
     const outros = todos.filter((r) => r.mes_referencia !== mesRef);
     const novos = [...outros, ...linhas];
 
-    // Reconstrói aba via clear + append
-    const { google } = require("googleapis");
-    const auth = new google.auth.JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
-    const sheetId = process.env.GOOGLE_SHEET_ID;
-
-    await sheets.spreadsheets.values.clear({ spreadsheetId: sheetId, range: "rv_ap" });
+    // Reconstrói a aba pelo encaixe único (services/sheets) — antes ia direto no
+    // googleapis. sobrescreverAba usa RAW, então não converte "2026-04" em serial.
     const rows = [headers, ...novos.map((l) => headers.map((h) => l[h] ?? ""))];
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: "rv_ap!A1",
-      valueInputOption: "USER_ENTERED",
-      resource: { values: rows },
-    });
+    await sobrescreverAba("rv_ap", rows);
 
     return res.json({ success: true });
   } catch (err) {

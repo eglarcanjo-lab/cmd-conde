@@ -155,30 +155,16 @@ router.post("/desafios", async (req, res) => {
     const { linhas } = req.body;
     if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie array de linhas." });
 
-    const { google } = require("googleapis");
-    const auth = new google.auth.JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
-    const sheetId = process.env.GOOGLE_SHEET_ID;
     const headers = ["gv", "dia", "mes_referencia", "status"];
 
-    // Remove mês atual e regrava
+    // Remove mês atual e regrava — via encaixe único (services/sheets, usa RAW)
     const todos = await readSheet("spo_desafios");
     const mesRef = linhas[0]?.mes_referencia;
     const outros = todos.filter((r) => r.mes_referencia !== mesRef);
     const novos = [...outros, ...linhas.filter((l) => l.status)];
 
-    await sheets.spreadsheets.values.clear({ spreadsheetId: sheetId, range: "spo_desafios" });
     const rows = [headers, ...novos.map((l) => headers.map((h) => l[h] ?? ""))];
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: "spo_desafios!A1",
-      valueInputOption: "RAW",  // RAW evita que "2026-04" seja convertido para serial 46113
-      resource: { values: rows },
-    });
+    await sobrescreverAba("spo_desafios", rows);
 
     return res.json({ success: true });
   } catch (err) {
@@ -433,17 +419,7 @@ router.post("/painel/metas", async (req, res) => {
     const { linhas } = req.body;
     if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
 
-    const { google } = require("googleapis");
-    const auth = new google.auth.JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
-    const sheetId = process.env.GOOGLE_SHEET_ID;
     const headers = ["item", "mes", "meta", "real"];
-
-    await sheets.spreadsheets.values.clear({ spreadsheetId: sheetId, range: "spo_metas" });
     const rows = [
       headers,
       ...linhas.map((l) => [
@@ -453,16 +429,9 @@ router.post("/painel/metas", async (req, res) => {
         l.real !== "" && l.real !== null && l.real !== undefined ? String(l.real) : "",
       ]),
     ];
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: "spo_metas!A1",
-      valueInputOption: "RAW",  // RAW evita que "2026-04" ou números sejam interpretados como datas
-      resource: { values: rows },
-    });
-
-    // Invalida cache
-    const { cacheClearAll } = require("../services/sheets");
-    cacheClearAll();
+    // Substitui a aba pelo encaixe único (services/sheets, usa RAW). sobrescreverAba
+    // já invalida o cache da aba.
+    await sobrescreverAba("spo_metas", rows);
 
     return res.json({ success: true, total: linhas.length });
   } catch (err) {

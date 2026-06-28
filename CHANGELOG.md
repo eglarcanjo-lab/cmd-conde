@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.13** — reduz escrita de fundo (tracking de uso) que saturava a cota
+Versão atual: **v3.19.14** — Fase 0 da migração SQL: 100% do acesso a dados no encaixe único
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.14 — 2026-06-28
+- **Fase 0 da migração SQL — acesso a dados 100% no encaixe único.** Três rotas
+  falavam com o Google Sheets **direto** pelo `googleapis` (rv.js → `rv_ap`; spo.js →
+  `spo_desafios` e `spo_metas`), furando a camada `services/sheets.js`. Agora usam
+  `sobrescreverAba`. Benefício imediato: passam a gravar com **RAW** (não convertem
+  `2026-04` em serial de data) e, principalmente, sobra **um único ponto** para trocar
+  Sheets→SQL. Comportamento preservado.
 
 ### v3.19.13 — 2026-06-28
 - **Reduz escrita de fundo no Sheets (alivia 429 na importação).** O rastreio de uso
