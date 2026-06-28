@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { SPO_KPIS, SPO_KPIS_BASICO } from "../../config/spoKpis";
 
 const META_GV = 36;
 
@@ -10,33 +11,9 @@ const META_GV = 36;
 const MESES_TRI = ["2026-04","2026-05","2026-06"];
 const INICIO_AVAL_KPI = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
 
-const SPO_ITEMS = [
-  { n: 1,  label: "Visitação GV na Base Foco",         pts: 14, peso: 7.8,  ativo: true },
-  { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
-  { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
-  { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
-  { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: true  },
-  // BUILD_20260517_004902
-  { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
-  { n: 7,  label: "% PDVs abrindo Promoção no BEES",   pts: 10, peso: 5.6,  ativo: true },
-  { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: true },
-  { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: true },
-  { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: false },
-  { n: 11, label: "Tasks Cerveja TT (Portfolio)",       pts: 10, peso: 5.6,  ativo: true  },
-  { n: 12, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 13, label: "Tasks NAB TT (Portfolio)",           pts: 10, peso: 5.6,  ativo: true  },
-  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: true },
-  { n: 15, label: "Tasks de Marketplace",               pts: 8,  peso: 4.4,  ativo: true  },
-  { n: 16, label: "Tasks de Match (Portfolio)",         pts: 8,  peso: 4.4,  ativo: true  },
-  { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true  },
-  { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true  },
-  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true  },
-  { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true  },
-  { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: true  },
-  { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: true  },
-];
+// Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
+// compartilhada com o Painel SPO e o admin de Metas.
+const SPO_ITEMS = SPO_KPIS;
 
 const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
 
@@ -2203,32 +2180,7 @@ export default function SPO() {
                             const MESES_LABEL = {"2026-04":"Abril","2026-05":"Maio","2026-06":"Junho"};
                             const INICIO_AVAL = {1:"2026-04",2:"2026-04",3:"2026-04",4:"2026-04",5:"2026-04",6:"2026-04",7:"2026-05",8:"2026-04",9:"2026-04",10:"2026-04",11:"2026-04",12:"2026-04",13:"2026-04",14:"2026-04",15:"2026-04",16:"2026-04",17:"2026-04",18:"2026-04",19:"2026-05",20:"2026-04",21:"2026-04",22:"2026-04",23:"2026-04",24:"2026-04"};
               
-                            const ITENS_SPO = [
-                              {n:1,  label:"Visitação GV na Base Foco"},
-                              {n:2,  label:"Rota Coaching"},
-                              {n:3,  label:"TT Dias com Rotas"},
-                              {n:4,  label:"Abertura de Desafios Diários"},
-                              {n:5,  label:"Atendimento Produtivo"},
-                              {n:6,  label:"DTO GC"},
-                              {n:7,  label:"% Visitas RN abrindo Promoção"},
-                              {n:8,  label:"Aderência de Política Comercial"},
-                              {n:9,  label:"Execução Menu de Cerveja"},
-                              {n:10, label:"Academia Bees RN"},
-                              {n:11, label:"Tasks Cerveja TT (Portfolio)"},
-                              {n:12, label:"Tasks Faturamento Score 5"},
-                              {n:13, label:"Tasks NAB TT (Portfolio)"},
-                              {n:14, label:"Tasks de Volume"},
-                              {n:15, label:"Tasks de Marketplace"},
-                              {n:16, label:"Tasks de Match (Portfolio)"},
-                              {n:17, label:"Tasks Cerveja Zero (Portfolio)"},
-                              {n:18, label:"Tarefa de Digitalização"},
-                              {n:19, label:"PDVs com Compra Independente"},
-                              {n:20, label:"+RGB"},
-                              {n:21, label:"Cupons Digitais - Score 5"},
-                              {n:22, label:"% Lojas Ideais"},
-                              {n:23, label:"Expansão Scanntech"},
-                              {n:24, label:"Portfólio Ideal Score 5"},
-                            ];
+                            const ITENS_SPO = SPO_KPIS_BASICO; // registro único (config/spoKpis.js)
               
                             const getMeta = (n, mes) => {
                               const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);

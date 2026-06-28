@@ -1,6 +1,7 @@
 // v1.1 - botão Snapshot (fechar mês) + import/edit spo_metas
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
+import { SPO_KPIS_BASICO } from "../../config/spoKpis";
 
 const MESES = ["2026-04","2026-05","2026-06"];
 const MESES_LABEL = { "2026-04":"Abril","2026-05":"Maio","2026-06":"Junho" };
@@ -13,32 +14,8 @@ function mesAnterior() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-const ITENS = [
-  {n:1,  label:"Visitação GV na Base Foco"},
-  {n:2,  label:"Rota Coaching"},
-  {n:3,  label:"TT Dias com Rotas"},
-  {n:4,  label:"Abertura de Desafios Diários"},
-  {n:5,  label:"Atendimento Produtivo"},
-  {n:6,  label:"DTO GC"},
-  {n:7,  label:"% Visitas RN abrindo Promoção"},
-  {n:8,  label:"Aderência de Política Comercial"},
-  {n:9,  label:"Execução Menu de Cerveja"},
-  {n:10, label:"Academia Bees RN"},
-  {n:11, label:"Tasks Cerveja TT (Portfolio)"},
-  {n:12, label:"Tasks Faturamento Score 5"},
-  {n:13, label:"Tasks NAB TT (Portfolio)"},
-  {n:14, label:"Tasks de Volume"},
-  {n:15, label:"Tasks de Marketplace"},
-  {n:16, label:"Tasks de Match (Portfolio)"},
-  {n:17, label:"Tasks Cerveja Zero (Portfolio)"},
-  {n:18, label:"Tarefa de Digitalização"},
-  {n:19, label:"PDVs com Compra Independente"},
-  {n:20, label:"+RGB"},
-  {n:21, label:"Cupons Digitais - Score 5"},
-  {n:22, label:"% Lojas Ideais"},
-  {n:23, label:"Expansão Scanntech"},
-  {n:24, label:"Portfólio Ideal Score 5"},
-];
+// Lista de KPIs vem do registro único (config/spoKpis.js).
+const ITENS = SPO_KPIS_BASICO;
 
 export default function SpoMetas() {
   const fileRef = useRef(null);

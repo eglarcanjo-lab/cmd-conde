@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.1** — resiliência a quota 429 do Google Sheets nos imports
+Versão atual: **v3.19.2** — registro único de KPIs do SPO (Fase 1)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.2 — 2026-06-27
+- **Registro único de KPIs do SPO (Fase 1 da refatoração — ver
+  `Auditoria_Final_SPO_KPIs.pdf`):** a lista de KPIs estava duplicada em 3 lugares
+  (tela SPO, Painel SPO e admin de Metas), com rótulos divergentes.
+  - Nova fonte de verdade: **`frontend/src/config/spoKpis.js`** (`SPO_KPIS`).
+  - `SPO_ITEMS` (tela), `ITENS_SPO` (painel) e `ITENS` (SpoMetas) agora **leem do
+    registro** — para incluir/excluir um KPI do trimestre, edita-se **só esse
+    arquivo** (use `ativo:false` para tirar da tela e do total sem perder histórico).
+  - Unifica o rótulo do Item 7 ("% PDVs abrindo Promoção no BEES") no painel e nas
+    metas (antes divergia de "% Visitas RN abrindo Promoção").
+  - Sem mudança de cálculo. Próximas fases: realizado unificado, rotas genéricas,
+    import/schema dirigidos pelo registro.
 
 ### v3.19.1 — 2026-06-26
 - **Erro "[500]: Request failed with status code 429" ao importar — corrigido:**
