@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.4** — limpeza de abas órfãs do Sheets (Auditoria 2: B1/B2)
+Versão atual: **v3.19.5** — remoção de funções duplicadas no processador (Auditoria 2: A1)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.5 — 2026-06-27
+- **Remoção de funções duplicadas no processador (Auditoria 2 — A1):**
+  `processar_faturamento_mktp` e `processar_pontos_bees` estavam definidas **3× cada**;
+  em Python só a última valia, as outras eram código morto (199 linhas).
+  - Mantida a versão ativa (a 3ª) de cada; removidas as 2 primeiras.
+  - Elimina também a última aba órfã **`rv_pontos`** (só era escrita pelas cópias
+    mortas; a ativa escreve `rv_pontos_bees`). Comportamento idêntico.
+  - Preservadas `processar_volume_rv` e `calcular_rv_volume` (intercaladas entre as cópias).
 
 ### v3.19.4 — 2026-06-27
 - **Limpeza de abas órfãs do Google Sheets (Auditoria 2 — quick wins B1/B2):**
