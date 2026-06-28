@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.9** — rotas genéricas de KPI no SPO (registro Fase 3)
+Versão atual: **v3.19.10** — fim do espelho do realizado: backend é fonte única (Fase 3b)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.10 — 2026-06-28
+- **Fim do arquivo-espelho do "realizado" (Fase 3b):** o mapa `SPO_REAL` (qual coluna
+  do resumo é o realizado de cada KPI) estava duplicado em front e back. Agora é
+  **fonte única no backend** (`backend/src/config/spoKpis.js`), exposto por
+  **`GET /api/spo/config`** (payload estático, não lê Sheets). O front consome e não
+  tem mais cópia.
+  - Incluir/ajustar um KPI simples passa a ser num lugar só (backend) + a entrada de
+    exibição no registro do front (label/pts).
+  - Fallback seguro: se o config falhar, os KPIs simples do mês atual ficam sem número
+    (meses anteriores via snapshot seguem ok) — sem quebrar a tela.
 
 ### v3.19.9 — 2026-06-28
 - **Rotas genéricas de KPI no SPO (Fase 3 do registro — aditivo):** novos endpoints

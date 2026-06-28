@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { SPO_KPIS, SPO_KPIS_BASICO, SPO_REAL, realDaLinha } from "../../config/spoKpis";
+import { SPO_KPIS, SPO_KPIS_BASICO, realDaLinha } from "../../config/spoKpis";
 
 const META_GV = 36;
 
@@ -58,6 +58,7 @@ export default function SPO() {
   const [kpi11FiltroDia, setKpi11FiltroDia] = useState("TODOS");
   const [score5, setScore5] = useState([]);
   const [score5Det, setScore5Det] = useState([]);
+  const [spoReal, setSpoReal] = useState({}); // mapa do "realizado" por KPI (vem de /api/spo/config)
   const [kpi12FiltroRN, setKpi12FiltroRN] = useState("TODOS");
   const [kpi12SoFalha, setKpi12SoFalha] = useState(false);
   const [tasksNab, setTasksNab] = useState([]);
@@ -160,7 +161,7 @@ export default function SPO() {
   async function carregar() {
     setLoading(true);
     try {
-      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resTasksCervejaDetalhe, resScore5, resScore5Det, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas] = await Promise.all([
+      const [resResumo, resDetalhe, resCoaching, resSemCoaching, resDiasRota, resDesafios, resDto, resPromo, resPromoDetalhe, resPolitica, resMenu, resTasksCerveja, resTasksCervejaDetalhe, resScore5, resScore5Det, resTasksNab, resTasksVolume, resTasksMktp, resTasksMatch, resTasksCervZero, resTasksDigit, resAlone, resAloneDetalhe, resRgb, resRgbLit, resRgbInt, resRgbDet, resCupons, resCuponsDet, resLojaIdeal, resLojaIdealDet, resScanntech, resScanntechDet, resPortIdeal, resPortIdealDet, resAp, resApDet, resSpoMetas, resConfig] = await Promise.all([
         api.get("/api/spo/visitacao-gv/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/visitacao-gv/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/coaching/resumo").catch(() => ({ data: [] })),
@@ -199,6 +200,7 @@ export default function SPO() {
         api.get("/api/spo/ap/resumo").catch(() => ({ data: [] })),
         api.get("/api/spo/ap/detalhe").catch(() => ({ data: [] })),
         api.get("/api/spo/painel/metas").catch(() => ({ data: [] })),
+        api.get("/api/spo/config").catch(() => ({ data: { real: {} } })),
       ]);
       setResumo(resResumo.data || []);
       setDetalhe(resDetalhe.data || []);
@@ -241,6 +243,7 @@ export default function SPO() {
       setAp(resAp?.data || []);
       setApDet(resApDet?.data || []);
       setSpoMetas(resSpoMetas?.data || []);
+      setSpoReal(resConfig?.data?.real || {});
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -2242,11 +2245,12 @@ export default function SPO() {
                                 // Todos os casos abaixo usam opMes (sem || op fallback) para garantir que
                                 // apenas dados do mês exato apareçam — evita que dados de maio "vazem" para junho
                                 case 7:  { const d = opMes(promo); if (!d) return null; const _vis = parseFloat(d.visitas||0); const _ac = parseFloat(d.acesso_promo||0); return _vis > 0 ? parseFloat((_ac / _vis * 100).toFixed(1)) : null; }
-                                // KPIs simples (5,8,9,11-24): realizado vem do registro SPO_REAL
+                                // KPIs simples (5,8,9,11-24): realizado vem do registro
+                                // SPO_REAL servido pelo backend em /api/spo/config (spoReal).
                                 default: {
-                                  const rc = SPO_REAL[n];
+                                  const rc = spoReal[n];
                                   if (!rc) return null;
-                                  return realDaLinha(n, opMes(ABAS_REAL[rc.aba]));
+                                  return realDaLinha(rc, opMes(ABAS_REAL[rc.aba]));
                                 }
                               }
                             };

@@ -688,6 +688,10 @@ router.get("/ap/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/config — registro do "realizado" por KPI (SPO_REAL). Fonte ÚNICA:
+// o front consome isto em vez de manter uma cópia. Payload estático (não lê Sheets).
+router.get("/config", (req, res) => res.json({ real: SPO_REAL }));
+
 // ─── Rotas genéricas (Fase 3 do registro de KPIs) ────────────────────────────
 // KPIs novos cuja aba siga a convenção spo_<id>_resumo / spo_<id>_detalhe não
 // precisam mais de endpoint próprio. Definidas POR ÚLTIMO de propósito: o Express
