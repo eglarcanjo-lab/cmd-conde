@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.16** — camada SQL do backend (sqlRepo) atrás da flag DATA_BACKEND
+Versão atual: **v3.19.17** — camada SQL do processador (sql_service) — virada SQL completa por flag
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.17 — 2026-06-28
+- **Camada SQL do processador (sql_service) — agora a virada SQL é completa.**
+  `sql_service.py` espelha `ler_aba`/`sobrescrever_aba`/`atualizar_status_arquivo`
+  contra o Postgres; `sheets_service` faz rebind quando `DATA_BACKEND=sql`. Com a
+  flag ligada nos **dois** serviços (backend + processador) + `DATABASE_URL` nos dois,
+  o sistema inteiro roda no PostgreSQL — **sem o limite de cota (fim do 429)**. Padrão
+  segue `sheets`; reversível pela env. (commit do processador no repo cmd-conde-processor)
 
 ### v3.19.16 — 2026-06-28
 - **Camada SQL do backend (sqlRepo) — virada reversível por flag.** Novo
