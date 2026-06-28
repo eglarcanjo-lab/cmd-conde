@@ -12,6 +12,8 @@ function getPool() {
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      // Supabase exige SSL; o node-pg não liga sozinho (ao contrário do psycopg2).
+      ssl: { rejectUnauthorized: false },
     });
   }
   return _pool;
