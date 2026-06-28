@@ -314,7 +314,7 @@ const _sheetsImpl = {
   sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
 };
 
-if (String(process.env.DATA_BACKEND || "sheets").toLowerCase() === "sql") {
+if (String(process.env.DATA_BACKEND || "sheets").trim().toLowerCase() === "sql") {
   console.log("📦 DATA_BACKEND=sql → usando PostgreSQL (sqlRepo).");
   module.exports = require("./sqlRepo");
 } else {
