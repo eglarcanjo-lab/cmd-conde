@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.3** — realizado do SPO unificado em registro (Fase 2)
+Versão atual: **v3.19.4** — limpeza de abas órfãs do Sheets (Auditoria 2: B1/B2)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,22 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.4 — 2026-06-27
+- **Limpeza de abas órfãs do Google Sheets (Auditoria 2 — quick wins B1/B2):**
+  removidas escritas/declarações de abas que **ninguém lê** (verificado por busca
+  global nos 2 repos). Menos chamadas à API por import (ajuda no 429) e planilha
+  mais limpa.
+  - **Processador (deixa de escrever):** `visitas_hoje` (todo import de clientes),
+    `faltas` e `devolucoes` (todo import de pedidos — funções `_processar_faltas` e
+    `_processar_devolucoes` removidas), `entregas_resumo_motivo` (import de devoluções;
+    o resumo por motivo já é calculado on-the-fly na tela).
+  - **Backend (initializeSheets):** removidas as declarações de `pdv_compras` e
+    `otp_sessions` (login OTP fora de uso) — paravam de ser recriadas vazias.
+  - As abas físicas remanescentes na planilha podem ser apagadas à mão (inofensivo).
+  - **C1 descartado:** reanálise mostrou que `spo_rgb_total/litrinho/inteira` e
+    `spo_tasks_digit_resumo` SÃO escritas (via helper) e alimentam os KPIs 18/20 —
+    não eram leituras mortas. `rv_pontos` fica para a limpeza do código duplicado (A1).
 
 ### v3.19.3 — 2026-06-27
 - **Realizado do SPO unificado (Fase 2 da refatoração):** a regra de "qual coluna do

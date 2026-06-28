@@ -206,11 +206,9 @@ async function initializeSheets() {
   const tabs = {
     usuarios: ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"],
     reset_solicitacoes: ["id", "cod", "nome", "cpf", "telefone", "status", "solicitado_em", "resolvido_em", "resolvido_por"],
-    otp_sessions: ["telefone", "codigo", "expira_em", "usado"],
     cobertura: ["setor", "dia_semana", "data", "categoria", "pdvs_visitados", "pdvs_total", "meta"],
     visitas_hoje: ["setor", "data", "cod_pdv", "nome_pdv", "endereco", "rota"],
     pdv_mix: ["cod_pdv", "nome_pdv", "setor", "produto", "qtd_media_4m"],
-    pdv_compras: ["cod_pdv", "nome_pdv", "setor", "data", "valor", "mix"],
     sem_compra: ["setor", "cod_pdv", "nome_pdv", "dias_sem_compra", "ultimo_produto"],
     inadimplentes: ["setor", "cod_pdv", "nome_pdv", "valor_aberto", "dias_atraso"],
     rank_clientes: ["setor", "cod_pdv", "nome_pdv", "volume_4m_hl", "devolucoes"],
