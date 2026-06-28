@@ -11,7 +11,7 @@ const MAX_FILE_MB = 200;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_FILE_MB * 1024 * 1024 } });
 
 const PROCESSOR_URL = process.env.PROCESSOR_URL || "http://localhost:5000";
-const PROCESSOR_TOKEN = process.env.PROCESSOR_TOKEN || "cmd_processor_secret";
+const PROCESSOR_TOKEN = process.env.PROCESSOR_TOKEN; // sem default fixo (D2 da Auditoria 2)
 
 router.use(authMiddleware, adminOnly);
 

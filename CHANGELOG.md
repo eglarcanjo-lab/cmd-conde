@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.7** — senhas com hash bcrypt + migração suave (Auditoria 2: D1)
+Versão atual: **v3.19.8** — remove token padrão fixo do processador (Auditoria 2: D2)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.8 — 2026-06-28
+- **Remove o token padrão fixo do processador (Auditoria 2 — D2):** `PROCESSOR_TOKEN`
+  tinha o valor `"cmd_processor_secret"` hardcoded no código (processador e backend) —
+  um segredo público no repositório.
+  - Agora o token vem **só da env var** (sem default). O processador, se a env não
+    estiver setada, **rejeita tudo com 401 e loga aviso** (fail-safe — não derruba o
+    serviço). O backend (`arquivos.js`) também perde o default, alinhando ao `rv.js`.
+  - **Ação necessária:** garantir que `PROCESSOR_TOKEN` esteja definido (mesmo valor)
+    no Render do processador, no Render do backend e no Apps Script de auto-import.
 
 ### v3.19.7 — 2026-06-28
 - **Senhas com hash bcrypt (Auditoria 2 — D1, severidade ALTA):** as senhas eram
