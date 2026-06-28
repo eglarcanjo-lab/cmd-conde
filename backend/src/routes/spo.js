@@ -688,5 +688,28 @@ router.get("/ap/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// ─── Rotas genéricas (Fase 3 do registro de KPIs) ────────────────────────────
+// KPIs novos cuja aba siga a convenção spo_<id>_resumo / spo_<id>_detalhe não
+// precisam mais de endpoint próprio. Definidas POR ÚLTIMO de propósito: o Express
+// casa na ordem, então toda rota específica acima tem prioridade — estas só
+// atendem ids ainda sem rota dedicada (zero impacto no que já existe).
+const _abaSpo = (id, sufixo) => `spo_${String(id).replace(/-/g, "_")}_${sufixo}`;
+const _idValido = (id) => /^[a-z0-9_-]+$/i.test(String(id || ""));
+
+router.get("/:id/resumo", async (req, res) => {
+  if (!_idValido(req.params.id)) return res.json([]);
+  try {
+    return res.json(await readSheet(_abaSpo(req.params.id, "resumo")));
+  } catch { return res.json([]); }
+});
+
+router.get("/:id/detalhe", async (req, res) => {
+  if (!_idValido(req.params.id)) return res.json([]);
+  try {
+    const dados = await readSheet(_abaSpo(req.params.id, "detalhe"));
+    return res.json(filtrarGV(dados, req.user));
+  } catch { return res.json([]); }
+});
+
 module.exports = router;
 

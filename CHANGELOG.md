@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.8** — remove token padrão fixo do processador (Auditoria 2: D2)
+Versão atual: **v3.19.9** — rotas genéricas de KPI no SPO (registro Fase 3)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.9 — 2026-06-28
+- **Rotas genéricas de KPI no SPO (Fase 3 do registro — aditivo):** novos endpoints
+  `GET /api/spo/:id/resumo` e `/:id/detalhe` que leem `spo_<id>_resumo` /
+  `spo_<id>_detalhe`. Definidos por último — as rotas específicas existentes continuam
+  com prioridade (zero impacto no que já funciona).
+  - Efeito: um KPI novo cuja aba siga a convenção `spo_<id>_resumo/_detalhe` **não
+    precisa mais de endpoint próprio** no backend.
+  - `:id` validado (a-z, 0-9, `-`, `_`); detalhe aplica o filtro por GV como as demais.
 
 ### v3.19.8 — 2026-06-28
 - **Remove o token padrão fixo do processador (Auditoria 2 — D2):** `PROCESSOR_TOKEN`
