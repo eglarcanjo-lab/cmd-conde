@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.11** — dispatch de import SPO via helper (registro Fase 4)
+Versão atual: **v3.19.12** — corrige cascata de 429 no import (reenvio em timeout)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.12 — 2026-06-28
+- **Corrige a cascata de erro 429 na importação.** Causa-raiz: import grande →
+  processador bate na quota do Sheets → backoff longo fazia o request passar de 300s
+  → o frontend dava **timeout e reenviava o import inteiro** → dois imports pesados
+  concorrentes → 429 (quota/Render).
+  - **Frontend:** timeout (ECONNABORTED) **não** é mais tratado como cold start —
+    não reenvia o import (evita duplicar). Mensagem orienta conferir o status antes
+    de reenviar.
+  - **Processador:** backoff de retry encurtado (4s/8s/16s, ~28s máx) para o import
+    não estourar o timeout do frontend.
+  - **Backend:** no 429 do processador, devolve mensagem clara e propaga status 429.
 
 ### v3.19.11 — 2026-06-28
 - **Dispatch de importação SPO simplificado (Fase 4 — processador):** os ~12 blocos

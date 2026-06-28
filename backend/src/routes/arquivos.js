@@ -142,8 +142,13 @@ router.post(
       return res.json(response.data);
     } catch (err) {
       console.error("Erro ao chamar processador:", err.message);
-      const msg = err.response?.data?.error || err.message || "Erro ao processar arquivos.";
-      return res.status(500).json({ error: msg });
+      const status = err.response?.status;
+      let msg = err.response?.data?.error;
+      if (!msg && status === 429) {
+        msg = "Quota do Google Sheets excedida. Importe menos relatórios por vez e aguarde ~1 min.";
+      }
+      msg = msg || err.message || "Erro ao processar arquivos.";
+      return res.status(status === 429 ? 429 : 500).json({ error: msg });
     }
   }
 );

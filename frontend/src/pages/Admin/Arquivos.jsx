@@ -107,8 +107,11 @@ export default function Arquivos() {
   }
 
   // erro de cold start / conexão (processador acordando) — vale a pena re-tentar
+  // Cold start REAL = falha rápida (sem resposta / 502-504). NÃO inclui timeout
+  // (ECONNABORTED): um timeout de 5 min significa que o import provavelmente AINDA
+  // está rodando — reenviar duplicaria a carga e estoura a quota (429).
   function ehColdStart(err) {
-    return err.code === "ECONNABORTED" || (err.message || "").includes("Network") || (err.response?.status >= 502 && err.response?.status <= 504);
+    return (err.message || "").includes("Network") || (err.response?.status >= 502 && err.response?.status <= 504);
   }
 
   async function processar() {
@@ -147,7 +150,7 @@ export default function Arquivos() {
       const status = err.response?.status;
       let detalhe = err.response?.data?.error;
       if (!detalhe) {
-        if (err.code === "ECONNABORTED") detalhe = "tempo esgotado. Tente de novo em ~30s.";
+        if (err.code === "ECONNABORTED") detalhe = "demorou demais, mas o import pode ter concluído. Aguarde ~1 min e confira o status ANTES de reenviar (evita duplicar e estourar a quota).";
         else if ((err.message || "").includes("Network")) detalhe = "sem resposta do processador mesmo após tentativas. Pode estar fora do ar — tente novamente em 1-2 min.";
         else detalhe = err.message || "erro desconhecido";
       }
