@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const { readSheet, sobrescreverAba } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
+const { SPO_REAL, realDaLinha } = require("../config/spoKpis");
 
 router.use(authMiddleware);
 
@@ -561,6 +562,18 @@ router.patch("/painel/fechar-mes", async (req, res) => {
     // Helper: filtra array por mês normalizando mes_referencia
     const filtraMes = (arr) => arr.filter((r) => normalizeMes(r.mes_referencia || "").startsWith(mes));
 
+    // Mapa aba->array carregado, p/ o realizado genérico (KPIs simples via SPO_REAL)
+    const ABAS_REAL = {
+      spo_ap_resumo: apResumo, spo_politica_resumo: politicaResumo, spo_menu_resumo: menuResumo,
+      spo_tasks_cerveja_resumo: tasksCerveja, spo_score5_resumo: score5,
+      spo_tasks_nab_resumo: tasksNab, spo_tasks_volume_resumo: tasksVolume,
+      spo_tasks_marketplace_resumo: tasksMktp, spo_tasks_match_resumo: tasksMatch,
+      spo_tasks_cerv_zero_resumo: tasksCervZero, spo_tasks_digit_resumo: tasksDigit,
+      spo_pedido_alone_resumo: alone, spo_rgb_total: rgb, spo_cupons_resumo: cupons,
+      spo_loja_ideal_resumo: lojaIdeal, spo_scanntech_resumo: scanntech,
+      spo_portfolio_ideal_resumo: portIdeal,
+    };
+
     // ── Computa real por KPI (mesma lógica do getRealDados no frontend) ────
     const computeReal = (n) => {
       switch (n) {
@@ -594,10 +607,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
           );
           return parseFloat((somaOk / gvsU.length).toFixed(1));
         }
-        case 5: {
-          const d = opMes(apResumo);
-          return d ? parseFloat(d.rns_ap_ok || 0) : null;
-        }
+        // case 5 (AP) agora é genérico via SPO_REAL (ver default)
         case 6: {
           const d = dtoResumo.find((r) => normalizeMes(r.mes_referencia || "").startsWith(mes));
           return d
@@ -611,23 +621,12 @@ router.patch("/painel/fechar-mes", async (req, res) => {
           const ac  = parseFloat(d.acesso_promo || 0);
           return vis > 0 ? parseFloat((ac / vis * 100).toFixed(1)) : null;
         }
-        case 8:  { const d = opMes(politicaResumo); return d ? parseFloat(d.pdvs_execucao || 0)             : null; }
-        case 9:  { const d = opMes(menuResumo);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 11: { const d = opMes(tasksCerveja);   return d ? parseFloat(d.tasks_validas || d.pdvs_ok || 0): null; }
-        case 12: { const d = opMes(score5);         return d ? parseFloat(d.pdvs_ok || 0)                  : null; }
-        case 13: { const d = opMes(tasksNab);       return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 14: { const d = opMes(tasksVolume);    return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 15: { const d = opMes(tasksMktp);      return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 16: { const d = opMes(tasksMatch);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 17: { const d = opMes(tasksCervZero);  return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 18: { const d = opMes(tasksDigit);     return d ? parseFloat(d.tasks_validas || 0)             : null; }
-        case 19: { const d = opMes(alone);          return d ? parseFloat(d.pdvs_alone || 0)                : null; }
-        case 20: { const d = opMes(rgb);            return d ? parseFloat(d.pdvs_bateu_meta || 0)           : null; }
-        case 21: { const d = opMes(cupons);         return d ? parseFloat(d.cupons_mes || 0)                : null; }
-        case 22: { const d = opMes(lojaIdeal);      return d ? parseFloat(d.pdvs_ideais || 0)              : null; }
-        case 23: { const d = opMes(scanntech);      return d ? parseFloat(d.pdvs_ativos || d.ativos || 0)  : null; }
-        case 24: { const d = opMes(portIdeal);      return d ? parseFloat(d.pdvs_ideais || 0)              : null; }
-        default: return null;
+        // KPIs simples (5,8,9,11-24): realizado vem do registro SPO_REAL
+        default: {
+          const rc = SPO_REAL[n];
+          if (!rc) return null;
+          return realDaLinha(n, opMes(ABAS_REAL[rc.aba]));
+        }
       }
     };
 

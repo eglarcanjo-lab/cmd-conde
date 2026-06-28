@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.2** — registro único de KPIs do SPO (Fase 1)
+Versão atual: **v3.19.3** — realizado do SPO unificado em registro (Fase 2)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.3 — 2026-06-27
+- **Realizado do SPO unificado (Fase 2 da refatoração):** a regra de "qual coluna do
+  resumo é o realizado" estava duplicada em dois switches gigantes — `computeReal`
+  (backend `spo.js`) e `getRealDados` (front `SPO/index.jsx`) — origem do tipo de
+  divergência que causou o bug do Item 12.
+  - Agora vem do mapa **`SPO_REAL`** (registro), co-locado ao KPI: front em
+    `config/spoKpis.js`, backend em `backend/src/config/spoKpis.js` (espelho).
+  - Vale para os 17 KPIs de padrão simples (5, 8, 9, 11–24); os 6 com cálculo próprio
+    (1–4, 6, 7) seguem caso a caso. Comportamento idêntico (validado campo a campo).
+  - Incluir um KPI simples = 1 linha em `SPO_REAL` (não mais 2 `case` em 2 arquivos).
 
 ### v3.19.2 — 2026-06-27
 - **Registro único de KPIs do SPO (Fase 1 da refatoração — ver
