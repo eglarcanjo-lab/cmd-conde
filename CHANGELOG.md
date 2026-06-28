@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.10** — fim do espelho do realizado: backend é fonte única (Fase 3b)
+Versão atual: **v3.19.11** — dispatch de import SPO via helper (registro Fase 4)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.11 — 2026-06-28
+- **Dispatch de importação SPO simplificado (Fase 4 — processador):** os ~12 blocos
+  `if "spo_X" in arquivos: try/except` repetidos no `/api/processar/ambos` viraram
+  chamadas de **uma linha** a um helper `_rodar_spo(...)`, na **mesma ordem** de antes.
+  - Importar um KPI novo passa a ser **1 linha** no dispatch (uniforme).
+  - Comportamento idêntico (ordem de execução preservada; validado por py_compile +
+    conferência das 12 chamadas). Sem mudança no app.
 
 ### v3.19.10 — 2026-06-28
 - **Fim do arquivo-espelho do "realizado" (Fase 3b):** o mapa `SPO_REAL` (qual coluna
