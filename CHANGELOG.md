@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.14** — Fase 0 da migração SQL: 100% do acesso a dados no encaixe único
+Versão atual: **v3.19.15** — ETL Sheets→Postgres (endpoint de migração)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.15 — 2026-06-28
+- **ETL Sheets → Postgres (migração SQL).** Novo endpoint no processador
+  `POST /api/migrar/sheets-para-sql` (protegido por token) que lê todas as abas e
+  popula o Supabase: cadastro nas tabelas tipadas (TRUNCATE+INSERT), computadas
+  criadas como TEXT (DROP+CREATE+INSERT), órfãs ignoradas. Idempotente. Requer a env
+  `DATABASE_URL` no processador. Não altera o app (ainda lê/grava do Sheets).
 
 ### v3.19.14 — 2026-06-28
 - **Fase 0 da migração SQL — acesso a dados 100% no encaixe único.** Três rotas
