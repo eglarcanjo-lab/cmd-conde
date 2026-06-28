@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.12** — corrige cascata de 429 no import (reenvio em timeout)
+Versão atual: **v3.19.13** — reduz escrita de fundo (tracking de uso) que saturava a cota
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.13 — 2026-06-28
+- **Reduz escrita de fundo no Sheets (alivia 429 na importação).** O rastreio de uso
+  por tela (`uso_telas`) gravava a cada **30s por RN online** — com vários RNs, ~20-30
+  escritas/min só disso, que somadas às ~20 de um import estouravam a cota (60/min).
+  - Flush do tracking passou de **30s → 5 min** (ainda flush ao sair da tela/minimizar,
+    então não perde dado). Cai ~10× a escrita de fundo, liberando cota para o import.
+  - Causa de fundo (volume de escritas no Sheets) só some de vez com redução no
+    `sobrescrever_aba` ou a migração para SQL.
 
 ### v3.19.12 — 2026-06-28
 - **Corrige a cascata de erro 429 na importação.** Causa-raiz: import grande →

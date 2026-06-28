@@ -32,7 +32,10 @@ import api from "./services/api";
 let usoRegistrado = false;
 
 // Contagem de visitas por tela — acumula no cliente e envia em lote (flush) a cada
-// 30s / ao sair da tela, em vez de gravar a cada clique (poupa requisições).
+// 5 min / ao sair da tela (visibilitychange/unmount), em vez de gravar a cada clique.
+// Intervalo longo de propósito: cada flush é uma ESCRITA no Sheets; com vários RNs
+// online, 30s saturava a cota de escrita (60/min) e atrapalhava a importação (429).
+const FLUSH_TELAS_MS = 5 * 60 * 1000;
 const telaCount = {};
 function flushTelas() {
   const chaves = Object.keys(telaCount);
@@ -64,7 +67,7 @@ function AppContent() {
 
   // Flush periódico + ao minimizar/sair
   useEffect(() => {
-    const iv = setInterval(flushTelas, 30000);
+    const iv = setInterval(flushTelas, FLUSH_TELAS_MS);
     const onHide = () => { if (document.visibilityState === "hidden") flushTelas(); };
     document.addEventListener("visibilitychange", onHide);
     return () => { clearInterval(iv); document.removeEventListener("visibilitychange", onHide); flushTelas(); };
@@ -120,7 +123,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.19.12";
+export const APP_VERSION = "v3.19.13";
 
 export default function App() {
   return (
