@@ -8,21 +8,12 @@ const { authMiddleware, adminOnly } = require("../middleware/auth");
 router.use(authMiddleware);
 
 const HEADERS = ["id", "tela", "titulo", "mensagem", "tipo", "publico_alvo", "ativo", "ordem", "criado_em"];
-const SET_OFF = new Set(["101", "102", "103"]);
+const { SET_OFF, podeVer } = require("../utils/visibilidade");
 
 const gerarId = () => "A" + Date.now().toString(36).toUpperCase();
 const isTrue = (v) => { const s = String(v).trim().toLowerCase(); return s === "true" || s === "1" || s === "sim"; };
 
-function podeVer(user, alvo) {
-  const perfil = String(user.perfil || "").toLowerCase();
-  if (["admin", "director", "gv1", "gv3"].includes(perfil)) return true;
-  const cod = String(user.cod || "").trim();
-  const a = String(alvo || "todos").trim().toLowerCase();
-  if (a === "" || a === "todos") return true;
-  if (a === "off") return SET_OFF.has(cod);
-  if (a === "on") return !SET_OFF.has(cod);
-  return a.split(",").map((s) => s.trim()).includes(cod);
-}
+// podeVer agora vem de utils/visibilidade
 
 async function gravar(lista) {
   await sobrescreverAba("avisos", [HEADERS, ...lista.map((r) => HEADERS.map((h) => r[h] ?? ""))]);

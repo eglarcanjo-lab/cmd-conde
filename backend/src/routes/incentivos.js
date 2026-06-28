@@ -9,23 +9,14 @@ router.use(authMiddleware);
 const INC_HEADERS = ["id","titulo","descricao","tipo","sku_codigo","premio","unidade","data_inicio","data_fim","ativo","publico_alvo","ordem","cor","criado_em"];
 const RES_HEADERS = ["id_incentivo","setor","nome","valor","atualizado_em"];
 
-const SET_OFF = new Set(["101","102","103"]);
+const { SET_OFF, podeVer } = require("../utils/visibilidade");
 
 function gerarId() { return "I" + Date.now().toString(36).toUpperCase(); }
 function normCod(v) { const s = String(v || "").trim(); return s.replace(/^0+/, "") || s; }
 function isTrue(v) { return String(v).trim().toLowerCase() === "true" || String(v).trim() === "1" || String(v).trim().toLowerCase() === "sim"; }
 
 // Público-alvo: gestores veem tudo; RN vê conforme alvo (todos / off / on / lista de setores)
-function podeVer(user, alvo) {
-  const perfil = String(user.perfil || "").toLowerCase();
-  if (["admin", "director", "gv1", "gv3"].includes(perfil)) return true;
-  const cod = String(user.cod || "").trim();
-  const a = String(alvo || "todos").trim().toLowerCase();
-  if (a === "" || a === "todos") return true;
-  if (a === "off") return SET_OFF.has(cod);
-  if (a === "on")  return !SET_OFF.has(cod);
-  return a.split(",").map((s) => s.trim()).includes(cod);
-}
+// podeVer agora vem de utils/visibilidade
 
 // "dd/mm/yyyy" → Date (ou null)
 function parseDataBR(s) {

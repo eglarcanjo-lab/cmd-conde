@@ -6,12 +6,7 @@ const { authMiddleware } = require("../middleware/auth");
 
 router.use(authMiddleware);
 
-function filtrarPorPerfil(dados, usuario, campoSetor = "setor") {
-  if (["admin", "director"].includes(usuario.perfil)) return dados;
-  if (usuario.perfil === "gv1") return dados.filter((r) => String(r[campoSetor]).startsWith("1"));
-  if (usuario.perfil === "gv3") return dados.filter((r) => String(r[campoSetor]).startsWith("3"));
-  return dados.filter((r) => String(r[campoSetor]) === String(usuario.cod));
-}
+const { filtrarPorPerfil } = require("../utils/perfil");
 
 // Filtro explícito de setor para sku_foco (não reusa filtrarPorPerfil para evitar edge cases)
 function filtrarSkuFocoPorPerfil(lista, usuario) {

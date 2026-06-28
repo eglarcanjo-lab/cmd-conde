@@ -6,12 +6,7 @@ const { authMiddleware } = require("../middleware/auth");
 router.use(authMiddleware);
 
 // Filtra dados pelo perfil do usuário
-function filtrarPorPerfil(dados, usuario, campoSetor = "setor") {
-  if (["admin", "director"].includes(usuario.perfil)) return dados;
-  if (usuario.perfil === "gv1") return dados.filter((r) => String(r[campoSetor]).startsWith("1"));
-  if (usuario.perfil === "gv3") return dados.filter((r) => String(r[campoSetor]).startsWith("3"));
-  return dados.filter((r) => String(r[campoSetor]) === String(usuario.cod));
-}
+const { filtrarPorPerfil } = require("../utils/perfil");
 
 // GET /api/cobertura — status OK/Pendente/NOK por PDV x Categoria
 router.get("/", async (req, res) => {

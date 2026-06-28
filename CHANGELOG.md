@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.5** — remoção de funções duplicadas no processador (Auditoria 2: A1)
+Versão atual: **v3.19.6** — helpers centralizados no backend (Auditoria 2: A2/A3)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.6 — 2026-06-28
+- **Helpers centralizados no backend (Auditoria 2 — A2/A3):** funções que estavam
+  copiadas em várias rotas viraram módulos únicos (qualquer ajuste de regra agora é
+  num lugar só, sem risco de divergência).
+  - `filtrarPorPerfil` (estava em 6 rotas: cobertura, detalhamento, pdvs, rv, tasks,
+    volume-diario) → `backend/src/utils/perfil.js`.
+  - `podeVer` + `SET_OFF` (estava em 4 rotas: avisos, hop, incentivos, popups) →
+    `backend/src/utils/visibilidade.js`.
+  - Cópias eram idênticas; comportamento preservado (validado).
 
 ### v3.19.5 — 2026-06-27
 - **Remoção de funções duplicadas no processador (Auditoria 2 — A1):**

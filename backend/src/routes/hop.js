@@ -11,7 +11,7 @@ const HOP_MODEL = process.env.HOP_MODEL || "gemini-2.0-flash";
 
 router.use(authMiddleware);
 
-const SET_OFF = new Set(["101", "102", "103"]);
+const { SET_OFF, podeVer } = require("../utils/visibilidade");
 
 function normCod(v) { const s = String(v || "").trim(); return s.replace(/^0+/, "") || s; }
 function isTrue(v) { const s = String(v).trim().toLowerCase(); return s === "true" || s === "1" || s === "sim"; }
@@ -35,16 +35,7 @@ function hojeBR() {
 function dataStr(d) {
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
-function podeVer(user, alvo) {
-  const perfil = String(user.perfil || "").toLowerCase();
-  if (["admin", "director", "gv1", "gv3"].includes(perfil)) return true;
-  const cod = String(user.cod || "").trim();
-  const a = String(alvo || "todos").trim().toLowerCase();
-  if (a === "" || a === "todos") return true;
-  if (a === "off") return SET_OFF.has(cod);
-  if (a === "on") return !SET_OFF.has(cod);
-  return a.split(",").map((s) => s.trim()).includes(cod);
-}
+// podeVer agora vem de utils/visibilidade
 
 // GET /api/hop/insights — destaques personalizados para o usuário logado
 router.get("/insights", async (req, res) => {
