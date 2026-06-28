@@ -3,16 +3,10 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { readSheet, appendRow, updateRow } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { SENHA_PADRAO, ehHash, ehSenhaPadrao, hashSenha, conferirSenha } = require("../utils/senha");
 
-const SENHA_PADRAO = "1234";
 const USUARIO_COLS = ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"];
 const rowUsuario = (u) => USUARIO_COLS.map((c) => u[c] ?? "");
-
-// É senha "padrão" (precisa trocar): vazia, 1234, ou o antigo Cmd@xxxx
-function ehSenhaPadrao(usuario, cpfLimpo) {
-  const s = String(usuario.senha || "");
-  return s === "" || s === SENHA_PADRAO || s === `Cmd@${cpfLimpo.slice(0, 4)}`;
-}
 
 function gerarToken(usuario) {
   return jwt.sign(
@@ -32,19 +26,28 @@ router.post("/login", async (req, res) => {
     if (cpfLimpo.length !== 11) return res.status(400).json({ error: "CPF inválido." });
 
     const usuarios = await readSheet("usuarios");
-    const usuario = usuarios.find(
+    const idx = usuarios.findIndex(
       (u) => u.cpf?.replace(/\D/g, "") === cpfLimpo && u.ativo?.toLowerCase() === "true"
     );
-    if (!usuario) return res.status(404).json({ error: "CPF não cadastrado ou inativo." });
+    if (idx === -1) return res.status(404).json({ error: "CPF não cadastrado ou inativo." });
+    const usuario = usuarios[idx];
 
-    const senhaCorreta = usuario.senha || `Cmd@${cpfLimpo.slice(0, 4)}`;
-    if (senha !== senhaCorreta) return res.status(401).json({ error: "Senha incorreta." });
+    const ok = await conferirSenha(senha, usuario.senha, cpfLimpo);
+    if (!ok) return res.status(401).json({ error: "Senha incorreta." });
+
+    // Migração suave: senha real ainda em texto puro → re-hasheia no 1º login certo.
+    // (Senhas-padrão ficam como sentinela em texto para o app pedir a troca.)
+    if (!ehHash(usuario.senha) && !ehSenhaPadrao(usuario.senha, cpfLimpo)) {
+      try {
+        await updateRow("usuarios", idx + 1, rowUsuario({ ...usuario, senha: await hashSenha(senha) }));
+      } catch (e) { console.error("rehash login:", e.message); }
+    }
 
     const token = gerarToken(usuario);
     return res.json({
       success: true,
       token,
-      precisa_trocar_senha: ehSenhaPadrao(usuario, cpfLimpo),
+      precisa_trocar_senha: ehSenhaPadrao(usuario.senha, cpfLimpo),
       usuario: { cod: usuario.cod, nome: usuario.nome, perfil: usuario.perfil, gv: usuario.gv },
     });
   } catch (err) {
@@ -64,7 +67,7 @@ router.post("/trocar-senha", authMiddleware, async (req, res) => {
     const idx = usuarios.findIndex((u) => String(u.cod) === String(req.user.cod));
     if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado." });
 
-    const atualizado = { ...usuarios[idx], senha: nova };
+    const atualizado = { ...usuarios[idx], senha: await hashSenha(nova) };
     await updateRow("usuarios", idx + 1, rowUsuario(atualizado));
     return res.json({ success: true, message: "Senha atualizada com sucesso." });
   } catch (err) {

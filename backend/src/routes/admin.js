@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { SENHA_PADRAO, hashSenha } = require("../utils/senha");
 
 const SKU_FOCO_HEADERS = ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia","motivo"];
 
@@ -57,6 +58,12 @@ router.put("/usuarios/:cod", async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado." });
 
     const u = usuarios[idx];
+    // Senha definida pelo admin: se for real, guarda como hash; "1234" fica como
+    // sentinela em texto (força troca no 1º login); vazio mantém a atual.
+    let senhaFinal = u.senha;
+    if (senha !== undefined && senha !== "") {
+      senhaFinal = senha === SENHA_PADRAO ? SENHA_PADRAO : await hashSenha(senha);
+    }
     const updated = [
       cod,
       nome ?? u.nome,
@@ -65,7 +72,7 @@ router.put("/usuarios/:cod", async (req, res) => {
       perfil ?? u.perfil,
       gv ?? u.gv,
       ativo !== undefined ? String(ativo) : u.ativo,
-      senha !== undefined && senha !== "" ? senha : u.senha,
+      senhaFinal,
       u.criado_em,
     ];
 

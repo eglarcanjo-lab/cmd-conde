@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.6** — helpers centralizados no backend (Auditoria 2: A2/A3)
+Versão atual: **v3.19.7** — senhas com hash bcrypt + migração suave (Auditoria 2: D1)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.7 — 2026-06-28
+- **Senhas com hash bcrypt (Auditoria 2 — D1, severidade ALTA):** as senhas eram
+  guardadas e comparadas em **texto puro** na aba `usuarios`. Agora usam **bcrypt**
+  (`bcryptjs`), com módulo único `backend/src/utils/senha.js`.
+  - **Migração suave, sem deslogar ninguém:** senha real ainda em texto é
+    **re-hasheada no próximo login** bem-sucedido; as senhas-padrão (`1234`/vazio/
+    `Cmd@xxxx`) continuam como sentinela em texto (para o app pedir a troca).
+  - Troca de senha (usuário) e definição de senha pelo admin passam a gravar hash;
+    reset volta para `1234` (sentinela). Login aceita hash e texto legado.
+  - Nova dependência `bcryptjs` (JS puro; o Render instala no deploy via `npm install`).
 
 ### v3.19.6 — 2026-06-28
 - **Helpers centralizados no backend (Auditoria 2 — A2/A3):** funções que estavam
