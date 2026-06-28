@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.15** — ETL Sheets→Postgres (endpoint de migração)
+Versão atual: **v3.19.16** — camada SQL do backend (sqlRepo) atrás da flag DATA_BACKEND
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.19.16 — 2026-06-28
+- **Camada SQL do backend (sqlRepo) — virada reversível por flag.** Novo
+  `services/sqlRepo.js` (+ `services/db.js`, dependência `pg`) implementa a mesma
+  interface de `services/sheets.js` contra o PostgreSQL. `sheets.js` agora escolhe o
+  backend por `DATA_BACKEND` (`sql` → Postgres; qualquer outro / ausente → Sheets).
+  **Padrão = sheets, então nada muda** até setar a env. Leitura devolve strings (igual
+  ao Sheets); escrita manda strings e o Postgres converte os tipos; índice de linha
+  mapeado por `ctid`. Falta a camada equivalente no processador (Python) antes da
+  virada completa.
 
 ### v3.19.15 — 2026-06-28
 - **ETL Sheets → Postgres (migração SQL).** Novo endpoint no processador

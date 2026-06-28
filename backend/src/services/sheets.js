@@ -306,4 +306,17 @@ async function initializeSheets() {
   console.log("✅ Planilhas inicializadas com sucesso.");
 }
 
-module.exports = { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, initializeSheets, cacheClearAll };
+// ── Seleção de backend de dados (flag reversível) ─────────────────────────────
+// DATA_BACKEND=sql → usa o PostgreSQL (sqlRepo); qualquer outro valor → Google Sheets.
+// Padrão = sheets (zero impacto até virar a chave). Reversível: basta mudar a env.
+const _sheetsImpl = {
+  readSheet, appendRow, appendRows, updateRow, deleteRow,
+  sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
+};
+
+if (String(process.env.DATA_BACKEND || "sheets").toLowerCase() === "sql") {
+  console.log("📦 DATA_BACKEND=sql → usando PostgreSQL (sqlRepo).");
+  module.exports = require("./sqlRepo");
+} else {
+  module.exports = _sheetsImpl;
+}
