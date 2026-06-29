@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.20.0** — resumo de Volumes (meta × realizado) na tela inicial
+Versão atual: **v3.20.1** — card de Volumes espera o cold-start do backend (retry)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.20.1 — 2026-06-29
+- **Card de Volumes tolera o cold-start do backend.** O backend (Render free) "dorme"
+  com inatividade e demora ~50s pra acordar, devolvendo 503 nesse meio-tempo. O card
+  agora **tenta de novo** (até 6×, 8s) em 503/502/timeout e mostra "Acordando o
+  servidor…" — em vez de "indisponível". Quando o backend acorda, popula sozinho.
 
 ### v3.20.0 — 2026-06-28
 - **Resumo de Volumes na tela inicial (1º bloco do dashboard de operação).** Card no

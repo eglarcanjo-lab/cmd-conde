@@ -14,16 +14,37 @@ const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDig
 export default function ResumoVolumes() {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
+  const [esperando, setEsperando] = useState(false);
 
   useEffect(() => {
-    api.get("/api/resumo/volumes")
-      .then((r) => setData(r.data))
-      .catch((e) => setErro(e?.response?.status ? `HTTP ${e.response.status}` : (e?.message || "falha")));
+    let cancel = false;
+    let tentativas = 0;
+    const buscar = () => {
+      api.get("/api/resumo/volumes", { timeout: 60000 })
+        .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
+        .catch((e) => {
+          if (cancel) return;
+          const st = e?.response?.status;
+          // Cold start do Render free (backend dormindo): 503/502/timeout/network → tenta de novo.
+          const coldStart = st === 503 || st === 502 || e?.code === "ECONNABORTED" || !st;
+          if (coldStart && tentativas < 6) {
+            tentativas += 1;
+            setEsperando(true);
+            setTimeout(buscar, 8000);
+          } else {
+            setErro(st ? `HTTP ${st}` : (e?.message || "falha"));
+          }
+        });
+    };
+    buscar();
+    return () => { cancel = true; };
   }, []);
 
-  // Não some mais: se falhar ou vier vazio, mostra um aviso discreto (com o motivo).
   if (erro) {
-    return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Resumo indisponível ({erro}). Se o backend acabou de subir, recarregue em ~1 min.</div></div>;
+    return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Resumo indisponível ({erro}). Recarregue em ~1 min.</div></div>;
+  }
+  if (!data && esperando) {
+    return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Acordando o servidor (plano grátis pode levar ~50s)…</div></div>;
   }
   if (data && (!data.bars || data.bars.length === 0)) {
     return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Sem dados de volume ainda — importe pedidos.</div></div>;
