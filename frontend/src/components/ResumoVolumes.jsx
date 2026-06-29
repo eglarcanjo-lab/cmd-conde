@@ -13,13 +13,21 @@ const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDig
 
 export default function ResumoVolumes() {
   const [data, setData] = useState(null);
-  const [erro, setErro] = useState(false);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    api.get("/api/resumo/volumes").then((r) => setData(r.data)).catch(() => setErro(true));
+    api.get("/api/resumo/volumes")
+      .then((r) => setData(r.data))
+      .catch((e) => setErro(e?.response?.status ? `HTTP ${e.response.status}` : (e?.message || "falha")));
   }, []);
 
-  if (erro || (data && (!data.bars || data.bars.length === 0))) return null;
+  // Não some mais: se falhar ou vier vazio, mostra um aviso discreto (com o motivo).
+  if (erro) {
+    return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Resumo indisponível ({erro}). Se o backend acabou de subir, recarregue em ~1 min.</div></div>;
+  }
+  if (data && (!data.bars || data.bars.length === 0)) {
+    return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Sem dados de volume ainda — importe pedidos.</div></div>;
+  }
 
   return (
     <div style={S.card}>
