@@ -20,7 +20,7 @@ export default function ResumoVolumes() {
     let cancel = false;
     let tentativas = 0;
     const buscar = () => {
-      api.get("/api/resumo/volumes", { timeout: 60000 })
+      api.get("/api/resumo/volumes", { timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
