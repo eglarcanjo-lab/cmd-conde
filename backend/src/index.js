@@ -57,6 +57,7 @@ app.use("/api/grade", require("./routes/grade"));
 app.use("/api/cobertura-sku", require("./routes/cobertura-sku"));
 app.use("/api/avisos", require("./routes/avisos"));
 app.use("/api/uso", require("./routes/uso"));
+app.use("/api/resumo", require("./routes/resumo"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

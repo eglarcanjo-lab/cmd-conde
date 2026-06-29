@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import HopBoasVindas from "../components/HopBoasVindas";
+import ResumoVolumes from "../components/ResumoVolumes";
 import { HOP_ATIVA } from "../theme";
 
 export default function Home() {
@@ -51,6 +52,8 @@ export default function Home() {
           <button style={styles.logout} onClick={logout}>Sair</button>
         </div>
       </div>
+
+      <ResumoVolumes />
 
       <div style={styles.grid}>
         {modulos.map((item) => (

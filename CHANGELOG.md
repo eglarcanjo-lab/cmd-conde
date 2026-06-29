@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.19.17** — camada SQL do processador (sql_service) — virada SQL completa por flag
+Versão atual: **v3.20.0** — resumo de Volumes (meta × realizado) na tela inicial
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.20.0 — 2026-06-28
+- **Resumo de Volumes na tela inicial (1º bloco do dashboard de operação).** Card no
+  topo da home com **meta × realizado por categoria** (% da meta, cor por faixa):
+  Cerveja, NAB, Match, Mktp + **Cerveja Zero** e **NAB Zero** como monitoramento
+  (sem meta oficial → meta derivada = **15% do realizado da categoria regular**).
+  - Novo endpoint `GET /api/resumo/volumes` (escopo automático: admin/director = operação,
+    GV = região, RN = seu setor). Lê `rv_resultado` + `rv_volume` do SQL.
+  - Aditivo: o card fica acima do menu atual (não muda a navegação). Próximos blocos:
+    Foco NE (Score 5/RGB com lógica de tri) e Verdes (linha cob/dist).
 
 ### v3.19.17 — 2026-06-28
 - **Camada SQL do processador (sql_service) — agora a virada SQL é completa.**
