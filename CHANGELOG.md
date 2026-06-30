@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.22.0** — bloco Verdes (Stella+Spaten) na tela inicial, linha cob/dist
+Versão atual: **v3.23.0** — barra lateral recolhível na tela inicial (menu vira sidebar)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.23.0 — 2026-06-29
+- **Barra lateral recolhível na tela inicial.** O menu de módulos (que eram cards) virou
+  uma **sidebar à esquerda**: rail de ícones por padrão, com botão ☰ que expande para
+  mostrar os rótulos (e ✕ para recolher). A área principal mostra o header + os 3 blocos
+  do dashboard (Volumes, Foco NE, Verdes). Mesma regra de visibilidade por perfil
+  (admin/director não veem Remuneração). Mudança contida na Home; demais telas inalteradas.
 
 ### v3.22.0 — 2026-06-29
 - **Bloco "Verdes" na tela inicial (3º bloco do dashboard).** Trimarca Stella + Spaten,
