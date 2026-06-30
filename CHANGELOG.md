@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.20.1** — card de Volumes espera o cold-start do backend (retry)
+Versão atual: **v3.20.2** — admin tem acesso total durante a manutenção (fix)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.20.2 — 2026-06-29
+- **Admin tem acesso total durante a manutenção (correção).** O `maintenanceMiddleware`
+  bloqueava TODAS as rotas de dados com 503 quando a manutenção estava ligada, isentando
+  só alguns caminhos — mas **não** o usuário admin. Resultado: com manutenção ativa, o
+  admin via a tela do app mas **todos os dados sumiam** (503 nas rotas). Agora o middleware
+  lê o JWT e **libera o admin** (manual e janela por horário). Era a causa do "503" no card
+  e do "sumiram os dados".
 
 ### v3.20.1 — 2026-06-29
 - **Card de Volumes tolera o cold-start do backend.** O backend (Render free) "dorme"
