@@ -52,8 +52,7 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("Erro no login:", err);
-    // TEMPORÁRIO (debug migração SQL): expõe o erro real. REVERTER depois.
-    return res.status(500).json({ error: "DBG: " + (err && err.message ? err.message : String(err)) });
+    return res.status(500).json({ error: "Erro interno." });
   }
 });
 

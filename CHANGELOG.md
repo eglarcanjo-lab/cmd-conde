@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.20.2** — admin tem acesso total durante a manutenção (fix)
+Versão atual: **v3.20.3** — remove mensagem de debug do login
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,10 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.20.3 — 2026-06-29
+- **Remove a mensagem de debug do login** (o `DBG:` que expunha o erro técnico, usado
+  no diagnóstico da migração SQL). Volta a mensagem genérica "Erro interno."
 
 ### v3.20.2 — 2026-06-29
 - **Admin tem acesso total durante a manutenção (correção).** O `maintenanceMiddleware`
