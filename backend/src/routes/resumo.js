@@ -113,4 +113,54 @@ router.get("/foco-ne", async (req, res) => {
   }
 });
 
+// GET /api/resumo/verdes?mes=YYYY-MM — bloco "Verdes" (Trimarca Stella + Spaten), mês a mês.
+// Cobertura = nº de pares distintos (PDV × trimarca) que compraram (PDV que comprou as
+// duas conta 2). Distribuição = total de CAIXAS (= volume_hl ÷ hl_por_caixa).
+// Fonte: vendas_cliente_produto (acumula por mês) + produtos_base (categoria) + produtos_full (hl_caixa).
+router.get("/verdes", async (req, res) => {
+  try {
+    const [vendas, prodBase, prodFull] = await Promise.all([
+      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheet("produtos_base").catch(() => []),
+      readSheet("produtos_full").catch(() => []),
+    ]);
+    const v = filtrarPorPerfil(vendas, req.user, "setor");
+
+    const trimDe = {}; // cod -> "Stella" | "Spaten"
+    prodBase.forEach((p) => {
+      const cod = String(p.cod || "").trim();
+      if (!cod) return;
+      const cats = String(p.categorias || p.categoria || "").toUpperCase();
+      if (cats.includes("STELLA")) trimDe[cod] = "Stella";
+      else if (cats.includes("SPATEN")) trimDe[cod] = "Spaten";
+    });
+    const hlCaixa = {};
+    prodFull.forEach((p) => { const cod = String(p.cod || "").trim(); if (cod) hlCaixa[cod] = num(p.hl_caixa); });
+
+    const cob = {};     // mes -> Set("pdv|trimarca")
+    const distrib = {}; // mes -> caixas
+    v.forEach((r) => {
+      const cod = String(r.cod_produto || "").trim();
+      const trim = trimDe[cod];
+      if (!trim) return;
+      const m = String(r.mes_referencia || "").slice(0, 7);
+      if (!m) return;
+      const pdv = String(r.cod_pdv || "").trim();
+      (cob[m] = cob[m] || new Set()).add(pdv + "|" + trim);
+      const hlc = hlCaixa[cod];
+      if (hlc > 0) distrib[m] = (distrib[m] || 0) + num(r.volume_hl) / hlc;
+    });
+
+    const meses = [...new Set([...Object.keys(cob), ...Object.keys(distrib)])].sort();
+    return res.json({
+      meses,
+      cobertura: meses.map((m) => (cob[m] ? cob[m].size : 0)),
+      distribuicao: meses.map((m) => Math.round(distrib[m] || 0)),
+    });
+  } catch (e) {
+    console.error("resumo/verdes:", e);
+    return res.status(500).json({ error: "Erro ao montar Verdes." });
+  }
+});
+
 module.exports = router;

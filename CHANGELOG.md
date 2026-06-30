@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.21.0** — bloco Foco NE na tela inicial (Score 5 / +RGB, com trimestre)
+Versão atual: **v3.22.0** — bloco Verdes (Stella+Spaten) na tela inicial, linha cob/dist
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.22.0 — 2026-06-29
+- **Bloco "Verdes" na tela inicial (3º bloco do dashboard).** Trimarca Stella + Spaten,
+  mês a mês, **gráfico de linha com toggle cobertura ↔ distribuição**.
+  - **Cobertura** = nº de pares distintos (PDV × trimarca) que compraram (PDV que comprou
+    Stella e Spaten conta 2). **Distribuição** = total de **caixas** (= volume_hl ÷ hl/caixa).
+  - `GET /api/resumo/verdes` — de `vendas_cliente_produto` (acumulada por mês) +
+    `produtos_base` (categoria) + `produtos_full` (hl/caixa). Mostra só os meses já importados.
 
 ### v3.21.0 — 2026-06-29
 - **Bloco "Foco NE" na tela inicial (2º bloco do dashboard).** +RGB (SPO 20),

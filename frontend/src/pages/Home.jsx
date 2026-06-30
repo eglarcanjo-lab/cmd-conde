@@ -5,6 +5,7 @@ import Sininho from "../components/Sininho";
 import HopBoasVindas from "../components/HopBoasVindas";
 import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoFocoNE from "../components/ResumoFocoNE";
+import ResumoVerdes from "../components/ResumoVerdes";
 import { HOP_ATIVA } from "../theme";
 
 export default function Home() {
@@ -56,6 +57,7 @@ export default function Home() {
 
       <ResumoVolumes />
       <ResumoFocoNE />
+      <ResumoVerdes />
 
       <div style={styles.grid}>
         {modulos.map((item) => (
