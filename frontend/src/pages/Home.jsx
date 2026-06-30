@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import HopBoasVindas from "../components/HopBoasVindas";
 import ResumoVolumes from "../components/ResumoVolumes";
+import ResumoFocoNE from "../components/ResumoFocoNE";
 import { HOP_ATIVA } from "../theme";
 
 export default function Home() {
@@ -54,6 +55,7 @@ export default function Home() {
       </div>
 
       <ResumoVolumes />
+      <ResumoFocoNE />
 
       <div style={styles.grid}>
         {modulos.map((item) => (

@@ -12,6 +12,14 @@ const num = (v) => {
   return isNaN(n) ? 0 : n;
 };
 
+// Trimestre civil (jan-mar, abr-jun, …) do mês informado + se é o 3º mês (acumula).
+function trimestre(mesStr) {
+  const [y, mo] = String(mesStr).split("-").map(Number);
+  const ini = Math.floor((mo - 1) / 3) * 3; // mês 0-based do início do trimestre
+  const meses = [0, 1, 2].map((i) => `${y}-${String(ini + i + 1).padStart(2, "0")}`);
+  return { meses, ehTerceiro: mo - 1 === ini + 2 };
+}
+
 // GET /api/resumo/volumes?mes=YYYY-MM — bloco "Volumes" da home (meta × realizado).
 // Escopo: admin/director = operação (soma dos setores); GV = sua região; RN = seu setor.
 // Cerveja/NAB/Match/Mktp vêm de rv_resultado (a RV já soma "cerveja = tudo exceto
@@ -56,6 +64,52 @@ router.get("/volumes", async (req, res) => {
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });
+  }
+});
+
+// GET /api/resumo/foco-ne?mes=YYYY-MM — bloco "Foco NE" (nível operação).
+// +RGB (SPO 20), Faturamento Score 5 (12), Portfólio Score 5 (24).
+// Realizado: mês corrente = ao vivo (linha OPERACAO do resumo SPO); meses anteriores =
+// snapshot em spo_metas.real. Meta = spo_metas.meta (operação). No 3º mês do trimestre,
+// soma os 3 meses (acumulado); nos demais, mostra só o mês.
+router.get("/foco-ne", async (req, res) => {
+  try {
+    const mes = req.query.mes || new Date().toISOString().slice(0, 7);
+    const { meses, ehTerceiro } = trimestre(mes);
+    const [metas, rgb, score5, portf] = await Promise.all([
+      readSheet("spo_metas").catch(() => []),
+      readSheet("spo_rgb_total").catch(() => []),
+      readSheet("spo_score5_resumo").catch(() => []),
+      readSheet("spo_portfolio_ideal_resumo").catch(() => []),
+    ]);
+    const ITENS = {
+      20: { label: "+RGB", aba: rgb, campo: "pdvs_bateu_meta" },
+      12: { label: "Fat. Score 5", aba: score5, campo: "pdvs_ok" },
+      24: { label: "Portfólio Score 5", aba: portf, campo: "pdvs_ideais" },
+    };
+    const opRow = (aba, m) =>
+      aba.find((r) => String(r.setor || "").toUpperCase() === "OPERACAO" && String(r.mes_referencia || "").startsWith(m));
+    const metaRow = (item, m) => metas.find((x) => String(x.item) === String(item) && String(x.mes) === m);
+    const realMes = (item, m) => {
+      if (m === mes) { const r = opRow(ITENS[item].aba, m); return r ? num(r[ITENS[item].campo]) : 0; }
+      const r = metaRow(item, m); return r ? num(r.real) : 0; // snapshot do mês fechado
+    };
+    const metaMes = (item, m) => { const r = metaRow(item, m); return r ? num(r.meta) : 0; };
+
+    const items = [20, 12, 24].map((item) => {
+      const real = ehTerceiro ? meses.reduce((s, m) => s + realMes(item, m), 0) : realMes(item, mes);
+      const meta = ehTerceiro ? meses.reduce((s, m) => s + metaMes(item, m), 0) : metaMes(item, mes);
+      return {
+        item, label: ITENS[item].label,
+        real: Math.round(real * 10) / 10, meta: Math.round(meta * 10) / 10,
+        pct: meta > 0 ? Math.round((real / meta) * 100) : null,
+        escopo: ehTerceiro ? "tri" : "mês",
+      };
+    });
+    return res.json({ mes, escopo: ehTerceiro ? "acumulado do trimestre" : "mês", items });
+  } catch (e) {
+    console.error("resumo/foco-ne:", e);
+    return res.status(500).json({ error: "Erro ao montar Foco NE." });
   }
 });
 

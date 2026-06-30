@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.20.3** — remove mensagem de debug do login
+Versão atual: **v3.21.0** — bloco Foco NE na tela inicial (Score 5 / +RGB, com trimestre)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.21.0 — 2026-06-29
+- **Bloco "Foco NE" na tela inicial (2º bloco do dashboard).** +RGB (SPO 20),
+  Faturamento Score 5 (SPO 12) e Portfólio Score 5 (SPO 24) — realizado × meta.
+  - **Meta** do `spo_metas`; **realizado** ao vivo no mês corrente (linha OPERACAO dos
+    resumos SPO) e por snapshot (`spo_metas.real`) nos meses fechados.
+  - **Lógica de trimestre:** nos 2 primeiros meses mostra o **mês**; no 3º mês mostra o
+    **acumulado** do trimestre (soma os 3). Nível operação.
+  - Novo `GET /api/resumo/foco-ne`. Card abaixo do Volumes na Home.
 
 ### v3.20.3 — 2026-06-29
 - **Remove a mensagem de debug do login** (o `DBG:` que expunha o erro técnico, usado
