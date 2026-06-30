@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.23.0** — barra lateral recolhível na tela inicial (menu vira sidebar)
+Versão atual: **v3.23.1** — dashboard da home só no desktop p/ admin/director (RN e mobile = clássica)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.23.1 — 2026-06-29
+- **Dashboard da home restrito a desktop + admin/director.** Os blocos (Volumes, Foco NE,
+  Verdes) e a barra lateral só aparecem no **desktop** (≥1024px) para perfis **admin** e
+  **director**. **RN** — e **qualquer perfil no mobile** — volta a ver a **home clássica**
+  (menu de cards), exatamente como era antes. `Home.jsx` virou dispatcher
+  (`HomeDashboard` × `HomeClassic`) decidindo por media query + perfil.
 
 ### v3.23.0 — 2026-06-29
 - **Barra lateral recolhível na tela inicial.** O menu de módulos (que eram cards) virou
