@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.25.1** — alertas: erro do Brevo mais claro (401/400) + trim da API key
+Versão atual: **v3.25.2** — alertas: grade só reenvia após 7 dias (evita spam diário)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.25.2 — 2026-07-01
+- **Alertas de grade: no máximo 1 e-mail por produto a cada 7 dias.** Antes o dedupe da
+  grade era por dia — importar a grade todo dia com o produto ainda esgotado gerava e-mail
+  diário (virava spam). Agora usa janela **rolling de 7 dias** por produto (`grade|cod`,
+  compara `enviado_em`). Ruptura em pedido segue por ocorrência/dia (cada falta é um evento).
 
 ### v3.25.1 — 2026-07-01
 - **Alertas: mensagem de erro do Brevo mais clara.** O envio agora captura a resposta do

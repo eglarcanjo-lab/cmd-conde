@@ -121,18 +121,26 @@ async function rodar({ forcar = false } = {}) {
   if (!cfg.ativo && !forcar) return { enviado: false, motivo: "alertas desativados" };
 
   const { gradeFalta, rupturas } = await computar();
-  const dia = hojeStr();
+  // Grade: no máximo 1 alerta por produto a cada 7 dias (evita spam quando o produto
+  // fica dias sem chegar e a grade é importada todo dia). Ruptura: 1x por ocorrência/dia.
+  const GRADE_COOLDOWN_DIAS = 7;
   const itens = [
-    ...gradeFalta.map((g) => ({ chave: `grade|${g.cod}|${dia}`, tipo: "grade", g })),
-    ...rupturas.map((r) => ({ chave: `ruptura|${r.setor}|${r.cod_pdv}|${r.cod}|${r.data}`, tipo: "ruptura", r })),
+    ...gradeFalta.map((g) => ({ chave: `grade|${g.cod}`, tipo: "grade", cooldown: GRADE_COOLDOWN_DIAS, g })),
+    ...rupturas.map((r) => ({ chave: `ruptura|${r.setor}|${r.cod_pdv}|${r.cod}|${r.data}`, tipo: "ruptura", cooldown: null, r })),
   ];
   if (!itens.length) return { enviado: false, motivo: "nada a alertar" };
 
   let novos = itens;
   if (!forcar) {
-    const jaEnviados = await query(`SELECT chave FROM alertas_enviados WHERE chave = ANY($1)`, [itens.map((i) => i.chave)]);
-    const set = new Set(jaEnviados.rows.map((r) => r.chave));
-    novos = itens.filter((i) => !set.has(i.chave));
+    const r = await query(`SELECT chave, enviado_em FROM alertas_enviados WHERE chave = ANY($1)`, [itens.map((i) => i.chave)]);
+    const ultimo = new Map(r.rows.map((x) => [x.chave, new Date(x.enviado_em).getTime()]));
+    const agora = Date.now();
+    novos = itens.filter((i) => {
+      const last = ultimo.get(i.chave);
+      if (last == null) return true;                // nunca enviado
+      if (i.cooldown == null) return false;         // ruptura: já alertado essa ocorrência
+      return agora - last > i.cooldown * 86400000;  // grade: só depois do cooldown (7 dias)
+    });
   }
   if (!novos.length) return { enviado: false, motivo: "nada novo (já alertado hoje)" };
 
@@ -141,12 +149,14 @@ async function rodar({ forcar = false } = {}) {
 
   const nGrade = novos.filter((i) => i.tipo === "grade").map((i) => i.g);
   const nRup = novos.filter((i) => i.tipo === "ruptura").map((i) => i.r);
-  const { assunto, html } = montarDigest(nGrade, nRup, dia);
+  const { assunto, html } = montarDigest(nGrade, nRup, hojeStr());
   await enviarBrevo(dest, assunto, html);
 
   if (!forcar) {
     for (const i of novos) {
-      await query(`INSERT INTO alertas_enviados (chave, tipo) VALUES ($1,$2) ON CONFLICT (chave) DO NOTHING`, [i.chave, i.tipo]);
+      // Grade usa a mesma chave sempre (grade|cod) → atualiza a data p/ reiniciar o cooldown.
+      await query(`INSERT INTO alertas_enviados (chave, tipo) VALUES ($1,$2)
+                   ON CONFLICT (chave) DO UPDATE SET enviado_em=now()`, [i.chave, i.tipo]);
     }
   }
   const resumo = `${nGrade.length} grade + ${nRup.length} ruptura → ${dest.length} destinatário(s)`;
