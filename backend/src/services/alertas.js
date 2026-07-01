@@ -90,16 +90,28 @@ function montarDigest(grade, rup, dia) {
 }
 
 async function enviarBrevo(destinatarios, assunto, html) {
-  const key = process.env.BREVO_API_KEY;
-  const from = process.env.ALERTA_FROM;
+  const key = (process.env.BREVO_API_KEY || "").trim();
+  const from = (process.env.ALERTA_FROM || "").trim();
   if (!key) throw new Error("BREVO_API_KEY não configurada no ambiente.");
   if (!from) throw new Error("ALERTA_FROM (remetente) não configurado no ambiente.");
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { email: from, name: process.env.ALERTA_FROM_NAME || "Hop Follow-up" },
-    to: destinatarios.map((e) => ({ email: e })),
-    subject: assunto,
-    htmlContent: html,
-  }, { headers: { "api-key": key, "Content-Type": "application/json" }, timeout: 20000 });
+  try {
+    await axios.post("https://api.brevo.com/v3/smtp/email", {
+      sender: { email: from, name: process.env.ALERTA_FROM_NAME || "Hop Follow-up" },
+      to: destinatarios.map((e) => ({ email: e })),
+      subject: assunto,
+      htmlContent: html,
+    }, { headers: { "api-key": key, "Content-Type": "application/json", accept: "application/json" }, timeout: 20000 });
+  } catch (e) {
+    const st = e?.response?.status;
+    const det = e?.response?.data?.message || e?.response?.data?.code || e.message;
+    if (st === 401) {
+      throw new Error(`Brevo recusou a chave (401): ${det}. Confira se a BREVO_API_KEY é a API key v3 (começa com 'xkeysib-'), não a senha/chave SMTP, e sem espaços.`);
+    }
+    if (st === 400) {
+      throw new Error(`Brevo recusou o envio (400): ${det}. Geralmente é o remetente não verificado (${from}) — verifique-o em Senders no Brevo.`);
+    }
+    throw new Error(`Brevo (${st || "?"}): ${det}`);
+  }
 }
 
 // Roda o ciclo. forcar=true (teste) ignora o dedupe e NÃO grava o histórico (permite reenviar).

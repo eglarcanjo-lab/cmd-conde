@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.25.0** — alertas de ruptura por e-mail (grade zerada top-10 + falta em pedido)
+Versão atual: **v3.25.1** — alertas: erro do Brevo mais claro (401/400) + trim da API key
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.25.1 — 2026-07-01
+- **Alertas: mensagem de erro do Brevo mais clara.** O envio agora captura a resposta do
+  Brevo e explica: 401 → chave errada (dica: usar a API key v3 `xkeysib-`, não a SMTP);
+  400 → remetente não verificado. Também dá `.trim()` na `BREVO_API_KEY`/`ALERTA_FROM`
+  (espaço/quebra de linha no env quebrava a autenticação).
 
 ### v3.25.0 — 2026-07-01
 - **Alertas de ruptura por e-mail (Fase 1).** Dispara um e-mail digest quando: (1) um
