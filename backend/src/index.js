@@ -59,6 +59,7 @@ app.use("/api/avisos", require("./routes/avisos"));
 app.use("/api/uso", require("./routes/uso"));
 app.use("/api/resumo", require("./routes/resumo"));
 app.use("/api/faturados-buffer", require("./routes/faturadosBuffer"));
+app.use("/api/alertas", require("./routes/alertas"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

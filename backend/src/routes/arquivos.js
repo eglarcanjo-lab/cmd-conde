@@ -147,6 +147,15 @@ router.post(
 
       // Limpa cache do servidor para que os dados novos sejam lidos imediatamente
       cacheClearAll();
+
+      // Alertas de ruptura: roda em background após o import (não bloqueia a resposta).
+      // Só em modo SQL (usa o Postgres). Erros não afetam o import.
+      if (String(process.env.DATA_BACKEND || "").trim().toLowerCase() === "sql") {
+        require("../services/alertas").rodar()
+          .then((r) => r?.enviado && console.log("📧 Alertas enviados:", r.resumo))
+          .catch((e) => console.error("Alertas (pós-import):", e.message));
+      }
+
       return res.json(response.data);
     } catch (err) {
       console.error("Erro ao chamar processador:", err.message);

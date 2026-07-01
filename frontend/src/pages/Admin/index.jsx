@@ -18,6 +18,7 @@ import IncentivosAdmin from "./Incentivos";
 import PopupsAdmin from "./Popups";
 import AvisosAdmin from "./Avisos";
 import Engajamento from "./Engajamento";
+import Alertas from "./Alertas";
 
 const TABS = [
   { id: "usuarios", label: "👥 Usuários" },
@@ -34,6 +35,7 @@ const TABS = [
   { id: "avisos", label: "❔ Avisos" },
   { id: "engajamento", label: "📊 Engajamento" },
   { id: "incidentes", label: "🚨 Solicitações" },
+  { id: "alertas", label: "📧 Alertas" },
   { id: "configuracoes", label: "⚙️ Configurações" },
 ];
 
@@ -123,6 +125,7 @@ export default function Admin() {
           {tab === "avisos" && <AvisosAdmin />}
           {tab === "engajamento" && <Engajamento />}
           {tab === "incidentes" && <Incidentes />}
+          {tab === "alertas" && <Alertas />}
           {tab === "configuracoes" && <Configuracoes />}
         </div>
       </div>

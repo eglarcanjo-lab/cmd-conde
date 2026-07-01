@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.24.2** — diagnóstico do backend de dados no processador (/health + log)
+Versão atual: **v3.25.0** — alertas de ruptura por e-mail (grade zerada top-10 + falta em pedido)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.25.0 — 2026-07-01
+- **Alertas de ruptura por e-mail (Fase 1).** Dispara um e-mail digest quando: (1) um
+  produto do **top-10 mais vendido** do mês **não está na grade** (esgotado); ou (2) há
+  **falta em pedido** (`ruptura_detalhe`) no dia mais recente. Roda **automático após cada
+  import** (background, só em modo SQL) + botão "enviar teste" no admin. **Dedupe** (1 por
+  chave/dia) evita spam; **1 e-mail** consolidado. Devolutiva = responder o e-mail.
+  - Envio via **Brevo** (API HTTP, axios — sem dep nova). Env no backend: `BREVO_API_KEY`,
+    `ALERTA_FROM` (remetente verificado), `ALERTA_FROM_NAME` (opcional).
+  - Nova aba **📧 Alertas** no admin: liga/desliga, lista central de e-mails, prévia e teste.
+  - Tabelas SQL criadas sozinhas (`alertas_destinatarios`, `alertas_enviados`,
+    `alertas_config`). Não precisou mexer no processador (grade zerada = top-10 fora de
+    `grade_estoque`). Backend: `services/alertas.js` + `routes/alertas.js`.
 
 ### v3.24.2 — 2026-07-01
 - **Diagnóstico do backend de dados no processador.** O `/health` do processador agora
