@@ -27,6 +27,7 @@ export default function HomeDashboard() {
     { icon: "💰", label: "Remuneração",   route: "/rv", soRn: true },
     { icon: "📊", label: "SPO",           route: "/spo" },
     { icon: "🚨", label: "Incidentes",    route: "/incidentes" },
+    { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer" },
     { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento" },
   ].filter((m) => !(isAdminOuDirector && m.soRn));
 

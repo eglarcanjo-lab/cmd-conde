@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.23.1** — dashboard da home só no desktop p/ admin/director (RN e mobile = clássica)
+Versão atual: **v3.24.0** — aba Faturados × Buffer (NF faturadas vs pedidos parados no buffer)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,21 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.24.0 — 2026-07-01
+- **Nova aba "Faturados × Buffer".** Duas sub-abas: **Faturados** (clientes com NF —
+  pedidos que saíram p/ entrega, rotina 030237) e **Buffer** (pedidos ainda não faturados,
+  rotina 030111). Escopo por perfil (RN vê só o seu; admin/diretor/GV têm "Todos" + seletor
+  "ver por RN"). Por PDV, expansível nos pedidos, com **volume marcação (HL) separado por
+  tipo de operação** (venda/bonificação/…) + total, e um **resumo comparativo** no topo
+  (Faturado × Buffer + % convertido).
+  - **Cruzamento:** o nº do pedido (Faturados col AC / Buffer col G) cruza com o relatório
+    de **pedidos** para trazer tipo de operação (col S) + volume marcação (col AI).
+  - **Processador:** `processar_pedidos` agora também gera `pedido_chave` (nº pedido × tipo
+    → volume, com detecção automática da coluna do nº do pedido); novos `processar_faturados`
+    e `processar_buffer` geram `faturados_detalhe` / `buffer_detalhe` (snapshot, substituem
+    a cada import). Import via admin (2 slots novos no grupo Promax).
+  - Backend `GET /api/faturados-buffer`; página nova no app + item no menu.
 
 ### v3.23.1 — 2026-06-29
 - **Dashboard da home restrito a desktop + admin/director.** Os blocos (Volumes, Foco NE,

@@ -15,7 +15,7 @@ const PROCESSOR_TOKEN = process.env.PROCESSOR_TOKEN; // sem default fixo (D2 da 
 
 router.use(authMiddleware, adminOnly);
 
-const uploadFields = upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "devolucoes" }, { name: "grade" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }]);
+const uploadFields = upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "devolucoes" }, { name: "grade" }, { name: "faturados" }, { name: "buffer" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }]);
 
 // Wrapper que captura erros do multer (ex: arquivo grande demais) com mensagem clara
 function uploadHandler(req, res, next) {
@@ -125,6 +125,14 @@ router.post(
       if (req.files?.grade?.[0]) {
         const f = req.files.grade[0];
         form.append("grade", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.faturados?.[0]) {
+        const f = req.files.faturados[0];
+        form.append("faturados", f.buffer, { filename: f.originalname, contentType: f.mimetype });
+      }
+      if (req.files?.buffer?.[0]) {
+        const f = req.files.buffer[0];
+        form.append("buffer", f.buffer, { filename: f.originalname, contentType: f.mimetype });
       }
 
       const response = await axios.post(`${PROCESSOR_URL}/api/processar/ambos`, form, {
