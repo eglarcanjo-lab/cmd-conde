@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.24.1** — RV volta a recalcular automaticamente após o import (/ambos)
+Versão atual: **v3.24.2** — diagnóstico do backend de dados no processador (/health + log)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.24.2 — 2026-07-01
+- **Diagnóstico do backend de dados no processador.** O `/health` do processador agora
+  retorna `data_backend` ("sql" ou "sheets"), e o boot loga em MAIÚSCULO quando está em
+  modo Sheets (alerta pra definir `DATA_BACKEND=sql`). Motivo: um import ainda batia no
+  Google Sheets (429) porque o `DATA_BACKEND` do **processador** não estava em `sql`
+  (mesmo com o backend/Node já em SQL). Sem mudança de comportamento — só visibilidade.
 
 ### v3.24.1 — 2026-07-01
 - **RV recalcula automaticamente de novo após o import via `/ambos`.** Estava adiada
