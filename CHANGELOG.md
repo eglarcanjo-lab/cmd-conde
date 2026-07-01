@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.24.0** — aba Faturados × Buffer (NF faturadas vs pedidos parados no buffer)
+Versão atual: **v3.24.1** — RV volta a recalcular automaticamente após o import (/ambos)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.24.1 — 2026-07-01
+- **RV recalcula automaticamente de novo após o import via `/ambos`.** Estava adiada
+  (mensagem "⏳ Recalcule a RV à parte") desde o problema de OOM no Render free (cobertura
+  ~20k somada ao import estourava 512MB). Com a importação **mês a mês** os arquivos são
+  menores e a memória cabe, então o `/ambos` volta a chamar `calcular_rv_completa()` ao
+  final quando importa um relatório que alimenta a RV (pedidos/faturamento_mktp/pontos_bees/
+  spo_ap). O endpoint individual de pedidos já fazia isso. (Processador.)
 
 ### v3.24.0 — 2026-07-01
 - **Nova aba "Faturados × Buffer".** Duas sub-abas: **Faturados** (clientes com NF —
