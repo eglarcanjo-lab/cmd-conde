@@ -113,49 +113,75 @@ router.get("/foco-ne", async (req, res) => {
   }
 });
 
-// GET /api/resumo/rankings — Top 20 PDVs e Top 10 produtos por volume no trimestre,
-// com variação vs o mês anterior. Escopo por perfil (RN vê só o seu).
+// GET /api/resumo/rankings — Top 20 PDVs e Top 20 produtos por volume no trimestre,
+// com comparação D-1 ACUMULADA (dia 01..ontem deste mês vs mesmo período do mês anterior)
+// + GAP em HL. Escopo por perfil. Diário vem de vd_pdv/vd_produto; rank do trimestre (vendas).
 router.get("/rankings", async (req, res) => {
   try {
-    const vendas = filtrarPorPerfil(await readSheet("vendas_cliente_produto").catch(() => []), req.user, "setor");
-    const meses = [...new Set(vendas.map((v) => String(v.mes_referencia || "").slice(0, 7)).filter(Boolean))].sort();
-    const trimestre = meses.slice(-3);
-    const triSet = new Set(trimestre);
-    const mAtual = meses[meses.length - 1] || null;
-    const mAnterior = meses[meses.length - 2] || null;
+    const [vendas, vdPdv, vdProd] = await Promise.all([
+      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheet("vd_pdv").catch(() => []),
+      readSheet("vd_produto").catch(() => []),
+    ]);
+    const vendasF = filtrarPorPerfil(vendas, req.user, "setor");
+    const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
+    const vdProdF = filtrarPorPerfil(vdProd, req.user, "setor");
 
-    const aggPdv = {}, aggProd = {};
-    const acc = (bag, key, base) => {
-      if (!bag[key]) bag[key] = { ...base, tri: 0, atual: 0, ant: 0 };
-      return bag[key];
+    // Trimestre p/ ranking: 3 meses mais recentes das vendas mensais.
+    const meses = [...new Set(vendasF.map((v) => String(v.mes_referencia || "").slice(0, 7)).filter(Boolean))].sort();
+    const triSet = new Set(meses.slice(-3));
+
+    // Janela D-1 (fuso BR): dia 01..(hoje-1); mês atual vs mês anterior.
+    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const cutoffDia = brNow.getDate() - 1;
+    const y = brNow.getFullYear(), m0 = brNow.getMonth();
+    const mesAtual = `${y}-${String(m0 + 1).padStart(2, "0")}`;
+    const prev = new Date(y, m0 - 1, 1);
+    const mesAnterior = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+
+    const triDe = (rows, codF, nomeF) => {
+      const t = {};
+      for (const v of rows) {
+        if (!triSet.has(String(v.mes_referencia || "").slice(0, 7))) continue;
+        const cod = String(v[codF] || "").trim(); if (!cod) continue;
+        (t[cod] = t[cod] || { cod, nome: String(v[nomeF] || "").trim(), tri: 0 }).tri += num(v.volume_hl);
+      }
+      return t;
     };
-    for (const v of vendas) {
-      const m = String(v.mes_referencia || "").slice(0, 7);
-      const vol = num(v.volume_hl);
-      const pk = String(v.cod_pdv || "").trim();
-      if (pk) {
-        const a = acc(aggPdv, pk, { cod: pk, nome: String(v.nome_pdv || "").trim(), setor: String(v.setor || "").trim() });
-        if (triSet.has(m)) a.tri += vol;
-        if (m === mAtual) a.atual += vol; else if (m === mAnterior) a.ant += vol;
+    const d1De = (rows, codF) => {
+      const d = {};
+      for (const r of rows) {
+        const data = String(r.data || "");
+        const dia = Number(data.slice(8, 10));
+        if (!(cutoffDia >= 1 && dia >= 1 && dia <= cutoffDia)) continue;
+        const mes = data.slice(0, 7);
+        const cod = String(r[codF] || "").trim(); if (!cod) continue;
+        const e = d[cod] || (d[cod] = { atual: 0, anterior: 0 });
+        const vol = num(r.volume_hl);
+        if (mes === mesAtual) e.atual += vol; else if (mes === mesAnterior) e.anterior += vol;
       }
-      const ck = String(v.cod_produto || "").trim();
-      if (ck) {
-        const a = acc(aggProd, ck, { cod: ck, nome: String(v.nome_produto || "").trim() });
-        if (triSet.has(m)) a.tri += vol;
-        if (m === mAtual) a.atual += vol; else if (m === mAnterior) a.ant += vol;
-      }
-    }
-    const fin = (o) => ({
-      ...o,
-      tri: Math.round(o.tri * 10) / 10,
-      atual: Math.round(o.atual * 10) / 10,
-      ant: Math.round(o.ant * 10) / 10,
-      // delta % vs mês anterior; null = sem base no mês anterior (produto/PDV novo)
-      delta: o.ant > 0 ? Math.round(((o.atual - o.ant) / o.ant) * 1000) / 10 : (o.atual > 0 ? null : 0),
+      return d;
+    };
+    const montar = (triMap, d1Map, n) => Object.values(triMap)
+      .sort((a, b) => b.tri - a.tri).slice(0, n).map((t) => {
+        const d = d1Map[t.cod] || { atual: 0, anterior: 0 };
+        return {
+          cod: t.cod, nome: t.nome, tri: Math.round(t.tri * 10) / 10,
+          atual: Math.round(d.atual * 10) / 10, anterior: Math.round(d.anterior * 10) / 10,
+          gap: Math.round((d.atual - d.anterior) * 10) / 10,
+          delta: d.anterior > 0 ? Math.round(((d.atual - d.anterior) / d.anterior) * 1000) / 10 : (d.atual > 0 ? null : 0),
+        };
+      });
+
+    const pdvs = montar(triDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 20);
+    const produtos = montar(triDe(vendasF, "cod_produto", "nome_produto"), d1De(vdProdF, "cod_produto"), 20);
+
+    return res.json({
+      mesAtual, mesAnterior, cutoffDia,
+      periodo: cutoffDia >= 1 ? `01–${String(cutoffDia).padStart(2, "0")}` : "—",
+      temDiario: vdPdvF.length > 0,
+      pdvs, produtos,
     });
-    const pdvs = Object.values(aggPdv).sort((a, b) => b.tri - a.tri).slice(0, 20).map(fin);
-    const produtos = Object.values(aggProd).sort((a, b) => b.tri - a.tri).slice(0, 20).map(fin);
-    return res.json({ mesAtual: mAtual, mesAnterior: mAnterior, trimestre, pdvs, produtos });
   } catch (e) {
     console.error("resumo/rankings:", e);
     return res.status(500).json({ error: "Erro ao montar rankings." });

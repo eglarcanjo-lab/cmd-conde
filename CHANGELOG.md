@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.26.1** — home (desktop): tela cheia, Top 20 PDVs e produtos, fontes maiores
+Versão atual: **v3.27.0** — rankings: comparação D-1 acumulada (mesmo período mês anterior) + GAP em HL
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.27.0 — 2026-07-02
+- **Rankings da home: comparação D-1 acumulada + GAP em HL.** A variação dos Top PDVs/
+  produtos deixou de ser mês-cheio (sempre negativa no início do mês) e passou a comparar o
+  **mesmo período acumulado**: dia 01 até **ontem (D-1)** deste mês × dia 01 até D-1 do mês
+  anterior. Mostra o **GAP em HL** (+/−) e o Δ%. Cabeçalho indica o período (ex.: "dia 01–09
+  · jul vs jun"). Rank continua pelo trimestre.
+  - **Processador:** `processar_pedidos` agora gera `vd_pdv` e `vd_produto` (volume **diário**
+    por PDV e por produto, acumula por mês). É preciso **reimportar os Pedidos** uma vez pra
+    popular (a home avisa enquanto estiver vazio).
 
 ### v3.26.1 — 2026-07-02
 - **Home (desktop) ocupa a tela inteira + fontes maiores.** A área do dashboard perdeu o

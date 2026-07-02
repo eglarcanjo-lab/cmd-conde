@@ -14,12 +14,18 @@ function Delta({ d }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.9rem" }}>{up ? "▲" : "▼"} {fmt(Math.abs(d))}%</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, mAtual, mAnt }) {
+function Gap({ g }) {
+  if (!g) return <span style={{ color: "rgba(255,255,255,0.3)" }}>–</span>;
+  const up = g > 0;
+  return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
+}
+
+function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
         <span style={S.titulo}>{titulo}</span>
-        <span style={S.sub}>Δ {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
+        <span style={S.sub}>dia {periodo} · {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
       </div>
       <table style={S.table}>
         <thead>
@@ -27,7 +33,8 @@ function Tabela({ titulo, colNome, linhas, mAtual, mAnt }) {
             <th style={{ ...S.th, width: 24 }}>#</th>
             <th style={S.th}>{colNome}</th>
             <th style={{ ...S.th, textAlign: "right" }}>Vol tri (HL)</th>
-            <th style={{ ...S.th, textAlign: "right", width: 78 }}>Δ mês</th>
+            <th style={{ ...S.th, textAlign: "right", width: 92 }}>GAP (HL)</th>
+            <th style={{ ...S.th, textAlign: "right", width: 78 }}>Δ</th>
           </tr>
         </thead>
         <tbody>
@@ -36,10 +43,11 @@ function Tabela({ titulo, colNome, linhas, mAtual, mAnt }) {
               <td style={S.tdNum}>{i + 1}</td>
               <td style={S.tdNome} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
               <td style={S.tdVol}>{fmt(r.tri)}</td>
+              <td style={{ ...S.td, textAlign: "right" }}><Gap g={r.gap} /></td>
               <td style={{ ...S.td, textAlign: "right" }}><Delta d={r.delta} /></td>
             </tr>
           ))}
-          {!linhas.length && <tr><td colSpan={4} style={S.vazio}>Sem dados.</td></tr>}
+          {!linhas.length && <tr><td colSpan={5} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -72,9 +80,12 @@ export default function ResumoRankings() {
   if (!data) return <div style={S.skel}>{esperando ? "Acordando o servidor…" : "Carregando rankings…"}</div>;
 
   return (
-    <div style={S.grid}>
-      <Tabela titulo="🏪 Top 20 PDVs — volume (tri)" colNome="PDV" linhas={data.pdvs} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
-      <Tabela titulo="📦 Top 20 produtos — volume (tri)" colNome="Produto" linhas={data.produtos} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
+    <div>
+      {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
+      <div style={S.grid}>
+        <Tabela titulo="🏪 Top 20 PDVs — volume (tri)" colNome="PDV" linhas={data.pdvs} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
+        <Tabela titulo="📦 Top 20 produtos — volume (tri)" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
+      </div>
     </div>
   );
 }
@@ -94,4 +105,5 @@ const S = {
   trOdd: { background: "rgba(255,255,255,0.02)" },
   vazio: { padding: "12px", textAlign: "center", color: "rgba(255,255,255,0.35)" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "10px 2px", marginBottom: "16px" },
+  aviso: { background: "rgba(240,153,123,0.1)", border: "1px solid rgba(240,153,123,0.3)", color: "#f0b37e", borderRadius: "10px", padding: "8px 12px", fontSize: "0.82rem", marginBottom: "12px" },
 };
