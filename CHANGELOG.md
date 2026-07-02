@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.26.0** — home (desktop): Top 20 PDVs e Top 10 produtos com variação mês a mês
+Versão atual: **v3.26.1** — home (desktop): tela cheia, Top 20 PDVs e produtos, fontes maiores
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.26.1 — 2026-07-02
+- **Home (desktop) ocupa a tela inteira + fontes maiores.** A área do dashboard perdeu o
+  limite de largura (usa a tela toda); os dois rankings ficam **lado a lado fixos** (2
+  colunas) e ambos passam a **Top 20** (PDVs e produtos). Fontes de Volumes, Foco NE, Verdes
+  e das tabelas aumentadas um pouco pra leitura rápida.
 
 ### v3.26.0 — 2026-07-01
 - **Home (desktop): rankings Top PDVs e Top produtos.** Duas tabelas lado a lado —

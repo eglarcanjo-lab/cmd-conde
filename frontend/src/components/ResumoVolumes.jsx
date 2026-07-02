@@ -78,13 +78,13 @@ export default function ResumoVolumes() {
 
 const S = {
   card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px 16px", marginBottom: "16px" },
-  title: { color: "#fff", fontWeight: "600", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "8px" },
-  sub: { color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", margin: "2px 0 12px" },
-  row: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" },
-  lbl: { width: "92px", flexShrink: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.55)", textAlign: "right" },
+  title: { color: "#fff", fontWeight: "600", fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "8px" },
+  sub: { color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", margin: "2px 0 12px" },
+  row: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" },
+  lbl: { width: "108px", flexShrink: 0, fontSize: "0.92rem", color: "rgba(255,255,255,0.55)", textAlign: "right" },
   monit: { color: "#f0b37e", marginLeft: "3px", fontWeight: "700" },
-  track: { flex: 1, height: "13px", background: "rgba(255,255,255,0.06)", borderRadius: "7px", overflow: "hidden" },
+  track: { flex: 1, height: "15px", background: "rgba(255,255,255,0.06)", borderRadius: "7px", overflow: "hidden" },
   fill: { height: "100%", borderRadius: "7px", transition: "width 0.4s" },
-  pc: { width: "44px", flexShrink: 0, fontSize: "0.8rem", fontWeight: "600", textAlign: "right" },
-  skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.8rem", padding: "8px 0" },
+  pc: { width: "50px", flexShrink: 0, fontSize: "0.92rem", fontWeight: "600", textAlign: "right" },
+  skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "8px 0" },
 };

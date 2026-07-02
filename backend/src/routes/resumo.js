@@ -154,7 +154,7 @@ router.get("/rankings", async (req, res) => {
       delta: o.ant > 0 ? Math.round(((o.atual - o.ant) / o.ant) * 1000) / 10 : (o.atual > 0 ? null : 0),
     });
     const pdvs = Object.values(aggPdv).sort((a, b) => b.tri - a.tri).slice(0, 20).map(fin);
-    const produtos = Object.values(aggProd).sort((a, b) => b.tri - a.tri).slice(0, 10).map(fin);
+    const produtos = Object.values(aggProd).sort((a, b) => b.tri - a.tri).slice(0, 20).map(fin);
     return res.json({ mesAtual: mAtual, mesAnterior: mAnterior, trimestre, pdvs, produtos });
   } catch (e) {
     console.error("resumo/rankings:", e);

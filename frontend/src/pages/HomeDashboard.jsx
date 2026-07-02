@@ -96,7 +96,7 @@ const styles = {
   itemAtivo: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D" },
   itemIcon: { fontSize: "1.25rem", flexShrink: 0, width: "24px", textAlign: "center" },
   itemLabel: { overflow: "hidden", textOverflow: "ellipsis" },
-  main: { flex: 1, minWidth: 0, padding: "clamp(16px,4vw,28px) clamp(14px,4vw,24px)", maxWidth: "1320px" },
+  main: { flex: 1, minWidth: 0, padding: "clamp(16px,3vw,26px) clamp(14px,3vw,28px)", maxWidth: "none" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "clamp(16px,4vw,24px)", flexWrap: "wrap", gap: "12px" },
   headerRight: { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" },
   greeting: { color: "rgba(255,255,255,0.4)", margin: "0 0 2px", fontSize: "0.85rem" },
