@@ -113,6 +113,55 @@ router.get("/foco-ne", async (req, res) => {
   }
 });
 
+// GET /api/resumo/rankings — Top 20 PDVs e Top 10 produtos por volume no trimestre,
+// com variação vs o mês anterior. Escopo por perfil (RN vê só o seu).
+router.get("/rankings", async (req, res) => {
+  try {
+    const vendas = filtrarPorPerfil(await readSheet("vendas_cliente_produto").catch(() => []), req.user, "setor");
+    const meses = [...new Set(vendas.map((v) => String(v.mes_referencia || "").slice(0, 7)).filter(Boolean))].sort();
+    const trimestre = meses.slice(-3);
+    const triSet = new Set(trimestre);
+    const mAtual = meses[meses.length - 1] || null;
+    const mAnterior = meses[meses.length - 2] || null;
+
+    const aggPdv = {}, aggProd = {};
+    const acc = (bag, key, base) => {
+      if (!bag[key]) bag[key] = { ...base, tri: 0, atual: 0, ant: 0 };
+      return bag[key];
+    };
+    for (const v of vendas) {
+      const m = String(v.mes_referencia || "").slice(0, 7);
+      const vol = num(v.volume_hl);
+      const pk = String(v.cod_pdv || "").trim();
+      if (pk) {
+        const a = acc(aggPdv, pk, { cod: pk, nome: String(v.nome_pdv || "").trim(), setor: String(v.setor || "").trim() });
+        if (triSet.has(m)) a.tri += vol;
+        if (m === mAtual) a.atual += vol; else if (m === mAnterior) a.ant += vol;
+      }
+      const ck = String(v.cod_produto || "").trim();
+      if (ck) {
+        const a = acc(aggProd, ck, { cod: ck, nome: String(v.nome_produto || "").trim() });
+        if (triSet.has(m)) a.tri += vol;
+        if (m === mAtual) a.atual += vol; else if (m === mAnterior) a.ant += vol;
+      }
+    }
+    const fin = (o) => ({
+      ...o,
+      tri: Math.round(o.tri * 10) / 10,
+      atual: Math.round(o.atual * 10) / 10,
+      ant: Math.round(o.ant * 10) / 10,
+      // delta % vs mês anterior; null = sem base no mês anterior (produto/PDV novo)
+      delta: o.ant > 0 ? Math.round(((o.atual - o.ant) / o.ant) * 1000) / 10 : (o.atual > 0 ? null : 0),
+    });
+    const pdvs = Object.values(aggPdv).sort((a, b) => b.tri - a.tri).slice(0, 20).map(fin);
+    const produtos = Object.values(aggProd).sort((a, b) => b.tri - a.tri).slice(0, 10).map(fin);
+    return res.json({ mesAtual: mAtual, mesAnterior: mAnterior, trimestre, pdvs, produtos });
+  } catch (e) {
+    console.error("resumo/rankings:", e);
+    return res.status(500).json({ error: "Erro ao montar rankings." });
+  }
+});
+
 // GET /api/resumo/verdes?mes=YYYY-MM — bloco "Verdes" (Trimarca Stella + Spaten), mês a mês.
 // Cobertura = nº de pares distintos (PDV × trimarca) que compraram (PDV que comprou as
 // duas conta 2). Distribuição = total de CAIXAS (= volume_hl ÷ hl_por_caixa).

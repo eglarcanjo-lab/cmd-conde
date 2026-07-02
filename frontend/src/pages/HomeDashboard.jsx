@@ -6,6 +6,7 @@ import HopBoasVindas from "../components/HopBoasVindas";
 import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
+import ResumoRankings from "../components/ResumoRankings";
 import { HOP_ATIVA } from "../theme";
 
 // Home "dashboard" — só desktop + admin/director (ver Home.jsx). RN e mobile usam HomeClassic.
@@ -67,6 +68,7 @@ export default function HomeDashboard() {
         <ResumoVolumes />
         <ResumoFocoNE />
         <ResumoVerdes />
+        <ResumoRankings />
       </main>
     </div>
   );
@@ -94,7 +96,7 @@ const styles = {
   itemAtivo: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D" },
   itemIcon: { fontSize: "1.25rem", flexShrink: 0, width: "24px", textAlign: "center" },
   itemLabel: { overflow: "hidden", textOverflow: "ellipsis" },
-  main: { flex: 1, minWidth: 0, padding: "clamp(16px,4vw,28px) clamp(14px,4vw,24px)", maxWidth: "880px" },
+  main: { flex: 1, minWidth: 0, padding: "clamp(16px,4vw,28px) clamp(14px,4vw,24px)", maxWidth: "1320px" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "clamp(16px,4vw,24px)", flexWrap: "wrap", gap: "12px" },
   headerRight: { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" },
   greeting: { color: "rgba(255,255,255,0.4)", margin: "0 0 2px", fontSize: "0.85rem" },

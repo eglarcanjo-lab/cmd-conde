@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.25.3** — alertas: e-mail de grade com frequência/semana e % do volume do trimestre
+Versão atual: **v3.26.0** — home (desktop): Top 20 PDVs e Top 10 produtos com variação mês a mês
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.26.0 — 2026-07-01
+- **Home (desktop): rankings Top PDVs e Top produtos.** Duas tabelas lado a lado —
+  **Top 20 PDVs** e **Top 10 produtos** por volume no **trimestre**, cada linha com a
+  **variação vs o mês anterior** (▲/▼ %, "novo" quando não há base). Meses rotulados no
+  cabeçalho (ex.: "Δ jul vs jun"). Escopo por perfil. Área da home alargada (880→1320px)
+  pra caber as tabelas. `GET /api/resumo/rankings` + `components/ResumoRankings.jsx`.
+  - Obs.: comparação é **mês vs mês** (as vendas são consolidadas por mês); "mesmo período
+    mid-mês" exigiria dado diário por PDV/produto (mudança no processador — futuro).
 
 ### v3.25.3 — 2026-07-01
 - **E-mail de ruptura mais acionável.** Na seção de grade, cada produto agora vem com
