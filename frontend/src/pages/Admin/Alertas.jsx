@@ -100,7 +100,7 @@ export default function Alertas() {
         <div style={S.box}>
           <b>Prévia (não enviado):</b>
           <div style={{ marginTop: 6 }}>🔴 Grade zerada (top-10): {preview.gradeFalta?.length || 0}</div>
-          <ul style={S.small}>{(preview.gradeFalta || []).map((g) => <li key={g.cod}>#{g.rank} {g.nome} (cod {g.cod})</li>)}</ul>
+          <ul style={S.small}>{(preview.gradeFalta || []).map((g) => <li key={g.cod}>#{g.rank} {g.nome} — {g.pct}% do volume · ~{g.freqSemana} ped/sem</li>)}</ul>
           <div>📉 Falta em pedido ({preview.ultimaData || "—"}): {preview.rupturas?.length || 0}</div>
           <ul style={S.small}>{(preview.rupturas || []).slice(0, 15).map((r, i) => <li key={i}>Setor {r.setor} · {r.nome_pdv} · {r.nome} — {r.volume} HL</li>)}</ul>
         </div>

@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.25.2** — alertas: grade só reenvia após 7 dias (evita spam diário)
+Versão atual: **v3.25.3** — alertas: e-mail de grade com frequência/semana e % do volume do trimestre
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.25.3 — 2026-07-01
+- **E-mail de ruptura mais acionável.** Na seção de grade, cada produto agora vem com
+  **~pedidos/semana** e **% do volume do trimestre**, e o texto pergunta *"Qual a previsão
+  de chegada?"*. Abaixo, os **pedidos cortados por falta de estoque**. O top-10 passou a
+  ser medido pelo **trimestre** (3 meses mais recentes das vendas), não só pelo mês. Prévia
+  no admin mostra os mesmos números.
 
 ### v3.25.2 — 2026-07-01
 - **Alertas de grade: no máximo 1 e-mail por produto a cada 7 dias.** Antes o dedupe da

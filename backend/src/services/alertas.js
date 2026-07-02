@@ -12,7 +12,6 @@ const num = (v) => {
   return isNaN(n) ? 0 : n;
 };
 const hojeStr = () => new Date().toISOString().slice(0, 10);
-const mesAtualStr = () => new Date().toISOString().slice(0, 7);
 const fmtHL = (v) => (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 async function ensureTabelas() {
@@ -43,18 +42,32 @@ async function computar() {
     readSheet("ruptura_detalhe").catch(() => []),
   ]);
 
-  // Top-10 do mês corrente (por volume HL)
-  const mes = mesAtualStr();
+  // Janela do trimestre: os 3 meses mais recentes presentes nas vendas.
+  const mesesTodos = [...new Set(vendas.map((v) => String(v.mes_referencia || "").slice(0, 7)).filter(Boolean))].sort();
+  const trimestre = mesesTodos.slice(-3);
+  const triSet = new Set(trimestre);
+  const semanas = Math.max(1, trimestre.length * 4.345); // ~4,345 semanas/mês
+
+  // Agrega por produto no trimestre: volume, nº de compras (linhas pdv×mês) e PDVs.
   const porProd = {};
+  let totalVol = 0;
   for (const v of vendas) {
-    if (String(v.mes_referencia || "").slice(0, 7) !== mes) continue;
+    if (!triSet.has(String(v.mes_referencia || "").slice(0, 7))) continue;
     const cod = String(v.cod_produto || "").trim();
     if (!cod) continue;
-    if (!porProd[cod]) porProd[cod] = { cod, nome: String(v.nome_produto || "").trim(), vol: 0 };
-    porProd[cod].vol += num(v.volume_hl);
+    const vol = num(v.volume_hl);
+    if (!porProd[cod]) porProd[cod] = { cod, nome: String(v.nome_produto || "").trim(), vol: 0, compras: 0, pdvs: new Set() };
+    const p = porProd[cod];
+    p.vol += vol; p.compras += 1; p.pdvs.add(String(v.cod_pdv || "").trim());
+    totalVol += vol;
   }
-  const top10 = Object.values(porProd).sort((a, b) => b.vol - a.vol).slice(0, 10)
-    .map((p, i) => ({ ...p, rank: i + 1, vol: Math.round(p.vol * 10) / 10 }));
+  const top10 = Object.values(porProd).sort((a, b) => b.vol - a.vol).slice(0, 10).map((p, i) => ({
+    cod: p.cod, nome: p.nome, rank: i + 1,
+    vol: Math.round(p.vol * 10) / 10,
+    pct: totalVol > 0 ? Math.round((p.vol / totalVol) * 1000) / 10 : 0,
+    freqSemana: Math.round((p.compras / semanas) * 10) / 10, // ~pedidos/semana
+    pdvs: p.pdvs.size,
+  }));
 
   const gradeCods = new Set(grade.map((g) => String(g.cod || "").trim()));
   const gradeFalta = top10.filter((p) => !gradeCods.has(p.cod)); // top-10 sem estoque na grade
@@ -71,21 +84,35 @@ async function computar() {
       volume: Math.round(num(r.volume_falta_hl) * 10) / 10,
     }));
 
-  return { top10, gradeFalta, rupturas, ultimaData };
+  return { top10, gradeFalta, rupturas, ultimaData, trimestre };
 }
 
 function montarDigest(grade, rup, dia) {
-  const lg = grade.map((g) => `<li><b>${g.nome}</b> (cod ${g.cod}) — #${g.rank} mais vendido do mês, <b>esgotado na grade</b></li>`).join("");
-  const lr = rup.map((r) => `<li>Setor ${r.setor} · ${r.nome_pdv} (cod ${r.cod_pdv}) — <b>${r.nome}</b>: ${fmtHL(r.volume)} HL em falta</li>`).join("");
+  let secGrade = "";
+  if (grade.length) {
+    const lg = grade.map((g) =>
+      `<li><b>${g.nome}</b> (cod ${g.cod}) — #${g.rank} mais vendido · ~${fmtHL(g.freqSemana)} pedidos/semana · representa <b>${fmtHL(g.pct)}%</b> do volume do trimestre</li>`
+    ).join("");
+    secGrade = `
+      <h3 style="color:#c0392b">🔴 Sem grade de estoque (top-10 mais vendidos)</h3>
+      <p>Os produtos abaixo estão entre os mais vendidos e estão <b>sem grade de estoque</b>.
+      <b>Qual a previsão de chegada?</b></p>
+      <ul>${lg}</ul>`;
+  }
+  let secRup = "";
+  if (rup.length) {
+    const lr = rup.map((r) =>
+      `<li>Setor ${r.setor} · ${r.nome_pdv} (cod ${r.cod_pdv}) — <b>${r.nome}</b>: ${fmtHL(r.volume)} HL</li>`
+    ).join("");
+    secRup = `<h3>📉 Pedidos cortados por falta de estoque${rup[0]?.data ? ` (${rup[0].data})` : ""}</h3><ul>${lr}</ul>`;
+  }
   const html = `
-    <div style="font-family:Arial,sans-serif;color:#222">
+    <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5">
       <h2 style="color:#7DBA3D">Alertas de ruptura — ${dia}</h2>
-      ${grade.length ? `<h3>🔴 Grade zerada (top-10 mais vendidos)</h3><ul>${lg}</ul>` : ""}
-      ${rup.length ? `<h3>📉 Falta em pedido</h3><ul>${lr}</ul>` : ""}
-      <p><b>Por favor, responda este e-mail com a devolutiva.</b></p>
-      <hr><small>Hop Follow-up · alerta automático</small>
+      ${secGrade}${secRup}
+      <hr><small>Hop Follow-up · alerta automático · responda este e-mail com a previsão/devolutiva.</small>
     </div>`;
-  const assunto = `[Hop] Alertas de ruptura — ${dia} (${grade.length} grade, ${rup.length} pedido)`;
+  const assunto = `[Hop] Ruptura — ${grade.length} produto(s) sem grade, ${rup.length} pedido(s) cortado(s) — ${dia}`;
   return { assunto, html };
 }
 
