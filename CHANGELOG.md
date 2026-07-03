@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.27.0** — rankings: comparação D-1 acumulada (mesmo período mês anterior) + GAP em HL
+Versão atual: **v3.27.1** — relatórios ocupam a tela no desktop (containers 1600px)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.27.1 — 2026-07-02
+- **Relatórios ocupam a tela no desktop.** Os containers das páginas de relatório (que
+  ficavam num corredor estreito de 760–1200px no meio, deixando o desktop vazio) passaram
+  a **1600px**: Volume Diário, Cobertura, Cobertura SKU, Detalhamento, Faturados×Buffer,
+  Incentivos, PDVs, Produtos, RV, Tasks, Incidentes. Modais, a home clássica (RN/mobile) e
+  o relatório de impressão continuam com a largura própria. (No mobile nada muda — a tela é
+  menor que o limite.)
 
 ### v3.27.0 — 2026-07-02
 - **Rankings da home: comparação D-1 acumulada + GAP em HL.** A variação dos Top PDVs/

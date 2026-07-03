@@ -156,7 +156,7 @@ export default function Incentivos() {
 }
 
 const S = {
-  root:        { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "760px", margin: "0 auto", color: "#fff" },
+  root:        { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "1600px", margin: "0 auto", color: "#fff" },
   header:      { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "22px" },
   backBtn:     { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },
   title:       { color: "#fff", margin: "0 0 4px", fontSize: "clamp(1.1rem,5vw,1.4rem)", fontWeight: "700" },

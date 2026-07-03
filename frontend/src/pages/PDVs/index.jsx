@@ -569,7 +569,7 @@ const styles = {
   title: { margin: 0, fontSize: "1.3rem", fontWeight: "700" },
   subtitle: { margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" },
   logoutBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
-  content: { padding: "24px 32px", maxWidth: "1200px", margin: "0 auto" },
+  content: { padding: "24px 32px", maxWidth: "1600px", margin: "0 auto" },
   diasRow: { display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" },
   diaBtn: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 16px", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" },
   diaBtnAtivo: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.4)", color: "#7DBA3D", fontWeight: "600" },

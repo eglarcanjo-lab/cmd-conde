@@ -157,7 +157,7 @@ export default function FaturadosBuffer() {
 }
 
 const S = {
-  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins','Segoe UI',system-ui,sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "760px", margin: "0 auto" },
+  root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins','Segoe UI',system-ui,sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "1600px", margin: "0 auto" },
   header: { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "18px" },
   backBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "9px 14px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", flexShrink: 0 },
   title: { color: "#fff", margin: 0, fontSize: "1.3rem", fontWeight: "700" },
