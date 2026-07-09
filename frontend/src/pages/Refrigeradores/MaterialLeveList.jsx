@@ -55,7 +55,7 @@ export default function MaterialLeveList({ podeExcluir, refreshKey }) {
       ) : filtrados.length === 0 ? (
         <p style={styles.msg}>Nenhum material leve encontrado.</p>
       ) : (
-        <div style={styles.lista}>
+        <div style={styles.lista} className="eq-lista">
           {filtrados.map((m) => (
             <div key={m.id} style={styles.card} className="eq-card">
               <div style={styles.cardHeader}>

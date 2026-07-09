@@ -39,11 +39,21 @@ export default function Refrigeradores() {
         }
         @media print {
           .eq-no-print { display: none !important; }
-          html, body { background: #fff !important; }
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            background: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
           .eq-page { background: #fff !important; color: #111 !important; }
           .eq-card, .eq-card * { background: #fff !important; color: #111 !important; }
-          .eq-card { border: 1px solid #ccc !important; break-inside: avoid; }
+          .eq-card { border: 1px solid #ccc !important; break-inside: avoid; page-break-inside: avoid; }
           .eq-thumb { width: 220px !important; height: 220px !important; }
+          /* Flex/Grid não pagina no Chrome — o que passa da 1ª página some em vez de
+             continuar. Vira bloco simples com margem no lugar do gap pra fluir entre páginas. */
+          .eq-lista { display: block !important; }
+          .eq-lista > div { margin: 0 0 12px !important; }
           @page { size: A4; margin: 12mm 14mm; }
         }
       `}</style>

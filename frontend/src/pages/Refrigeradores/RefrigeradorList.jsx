@@ -71,7 +71,7 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
       ) : filtrados.length === 0 ? (
         <p style={styles.msg}>Nenhum refrigerador encontrado.</p>
       ) : (
-        <div style={styles.lista}>
+        <div style={styles.lista} className="eq-lista">
           {filtrados.map((r) => {
             const stConf = STATUS_CONFIG[r.status] || STATUS_CONFIG["Estoque"];
             const catConf = CATEGORIA_CONFIG[r.categoria];

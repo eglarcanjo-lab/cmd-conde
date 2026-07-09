@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.29.0** — Equipamentos: exportar Excel (dados) e PDF (fotos individuais)
+Versão atual: **v3.29.1** — fix: PDF de Equipamentos só saía em 1 página
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.29.1 — 2026-07-09
+- **Fix: PDF de Equipamentos só saía em 1 página.** O container da lista (`.eq-lista`) usava
+  `display: flex`, e o Chrome não pagina flex/grid na impressão — o que passava da primeira
+  página simplesmente sumia em vez de continuar. Mesmo bug que o RV/Relatório já tinha
+  corrigido antes: no `@media print`, o container vira `display: block` (com margem no lugar
+  do gap) pra fluir normalmente entre páginas. Também forcei `height: auto` / `overflow:
+  visible` no `html, body` durante a impressão (o app trava em `height: 100%` pra evitar
+  bounce no iOS, o que também cortava o conteúdo em 1 página).
 
 ### v3.29.0 — 2026-07-09
 - **Equipamentos: exportar Excel e PDF.** Nas listas de Refrigeradores e Material Leve, novos
