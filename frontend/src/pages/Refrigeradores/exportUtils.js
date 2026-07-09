@@ -20,6 +20,9 @@ export function exportarExcelRefrigeradores(itens) {
     PDV: r.nome_fantasia || "",
     "Cód. PDV": r.cod_pdv || "",
     "Data de Chegada": r.data_chegada || "",
+    "Data de Entrega": r.data_entrega || "",
+    "Número da Nota": r.numero_nota || "",
+    "Data de Emissão": r.data_emissao || "",
   }));
   baixar(linhas, "Refrigeradores", "refrigeradores");
 }

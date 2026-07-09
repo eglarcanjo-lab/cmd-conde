@@ -11,7 +11,8 @@ const STATUS_OPCOES = ["Estoque", "Comodatado", "Quebrado"];
 function vazio() {
   return {
     item: "", modelo: "", serial: "", rg: "", categoria: "", status: "Estoque",
-    numeroControleInterno: "", dataChegada: new Date().toISOString().split("T")[0], dataEntrega: "",
+    numeroControleInterno: "", dataChegada: new Date().toISOString().split("T")[0],
+    dataEntrega: "", numeroNota: "", dataEmissao: "",
   };
 }
 
@@ -42,7 +43,7 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
       categoria: r.categoria || "", status: r.status || "Estoque",
       numeroControleInterno: r.numero_controle_interno || "",
       dataChegada: r.data_chegada || new Date().toISOString().split("T")[0],
-      dataEntrega: r.data_entrega || "",
+      dataEntrega: r.data_entrega || "", numeroNota: r.numero_nota || "", dataEmissao: r.data_emissao || "",
     });
     setPdv(r.cod_pdv ? { cod_pdv: r.cod_pdv, nome_fantasia: r.nome_fantasia } : null);
     setFotoEtiqueta(null); setPreviewEtiqueta(r.foto_etiqueta_url || null);
@@ -69,6 +70,8 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
     if (!editando && !fotoEquipamento) return setErro("Anexe a foto do refrigerador.");
     if (comodatado && !pdv) return setErro("Comodatado precisa de um PDV — informe pra quem foi entregue.");
     if (comodatado && !campos.dataEntrega) return setErro("Comodatado precisa da data de entrega.");
+    if (comodatado && !campos.numeroNota.trim()) return setErro("Comodatado precisa do número da nota.");
+    if (comodatado && !campos.dataEmissao) return setErro("Comodatado precisa da data de emissão da nota.");
 
     setEnviando(true);
     try {
@@ -82,6 +85,8 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
       form.append("numero_controle_interno", campos.numeroControleInterno);
       form.append("data_chegada", campos.dataChegada);
       form.append("data_entrega", campos.dataEntrega);
+      form.append("numero_nota", campos.numeroNota);
+      form.append("data_emissao", campos.dataEmissao);
       if (pdv) {
         form.append("cod_pdv", pdv.cod_pdv);
         form.append("nome_fantasia", pdv.nome_fantasia);
@@ -174,11 +179,23 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
       </div>
 
       {comodatado && (
-        <div style={styles.field}>
-          <label style={styles.label}>Data de entrega *</label>
-          <input style={styles.input} type="date" value={campos.dataEntrega} onChange={(e) => setCampo("dataEntrega", e.target.value)} />
-          <span style={styles.hint}>Comodatado precisa do PDV e da data em que o equipamento foi entregue.</span>
-        </div>
+        <>
+          <div style={styles.linha}>
+            <div style={styles.fieldLinha}>
+              <label style={styles.label}>Data de entrega *</label>
+              <input style={styles.input} type="date" value={campos.dataEntrega} onChange={(e) => setCampo("dataEntrega", e.target.value)} />
+            </div>
+            <div style={styles.fieldLinha}>
+              <label style={styles.label}>Número da nota *</label>
+              <input style={styles.input} value={campos.numeroNota} onChange={(e) => setCampo("numeroNota", e.target.value)} />
+            </div>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Data de emissão *</label>
+            <input style={styles.input} type="date" value={campos.dataEmissao} onChange={(e) => setCampo("dataEmissao", e.target.value)} />
+            <span style={styles.hint}>Comodatado precisa do PDV, data de entrega, número da nota e data de emissão.</span>
+          </div>
+        </>
       )}
 
       <div style={styles.linha}>

@@ -33,11 +33,13 @@ function uploadFoto(file) {
 const CATEGORIAS = ["SOPI", "VISA"];
 const STATUS = ["Estoque", "Quebrado", "Comodatado"];
 
-// Comodatado = equipamento entregue a um PDV — exige saber pra quem e quando.
-function validarComodato(status, cod_pdv, data_entrega) {
+// Comodatado = equipamento entregue a um PDV — exige saber pra quem, quando e com qual nota.
+function validarComodato(status, cod_pdv, data_entrega, numero_nota, data_emissao) {
   if (status !== "Comodatado") return null;
   if (!cod_pdv) return "PDV obrigatório quando o status é Comodatado.";
   if (!data_entrega) return "Data de entrega obrigatória quando o status é Comodatado.";
+  if (!numero_nota) return "Número da nota obrigatório quando o status é Comodatado.";
+  if (!data_emissao) return "Data de emissão obrigatória quando o status é Comodatado.";
   return null;
 }
 
@@ -50,12 +52,13 @@ router.post(
       const {
         item, modelo, serial, rg, categoria, status,
         numero_controle_interno, cod_pdv, nome_fantasia, data_chegada, data_entrega,
+        numero_nota, data_emissao,
       } = req.body;
 
       if (!item?.trim()) return res.status(400).json({ error: "Item obrigatório." });
       if (categoria && !CATEGORIAS.includes(categoria)) return res.status(400).json({ error: "Categoria inválida." });
       if (status && !STATUS.includes(status)) return res.status(400).json({ error: "Status inválido." });
-      const erroComodato = validarComodato(status, cod_pdv, data_entrega);
+      const erroComodato = validarComodato(status, cod_pdv, data_entrega, numero_nota, data_emissao);
       if (erroComodato) return res.status(400).json({ error: erroComodato });
 
       const fotoEtiqueta = req.files?.foto_etiqueta?.[0];
@@ -75,15 +78,15 @@ router.post(
         `INSERT INTO refrigeradores
           (id, item, modelo, serial, rg, categoria, status, numero_controle_interno,
            cod_pdv, nome_fantasia, foto_etiqueta_url, foto_equipamento_url, data_chegada,
-           data_entrega, criado_por, criado_em)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+           data_entrega, numero_nota, data_emissao, criado_por, criado_em)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
         [
           id, item.trim(), modelo?.trim() || null, serial?.trim() || null, rg?.trim() || null,
           categoria || null, status || null, numero_controle_interno?.trim() || null,
           cod_pdv || null, nome_fantasia || null,
           resEtiqueta.secure_url, resEquipamento.secure_url,
           data_chegada || new Date().toISOString().split("T")[0],
-          data_entrega || null,
+          data_entrega || null, numero_nota?.trim() || null, data_emissao || null,
           req.user.nome, criado_em,
         ]
       );
@@ -145,6 +148,7 @@ router.put(
       const {
         item, modelo, serial, rg, categoria, status,
         numero_controle_interno, cod_pdv, nome_fantasia, data_chegada, data_entrega,
+        numero_nota, data_emissao,
       } = req.body;
 
       if (categoria && !CATEGORIAS.includes(categoria)) return res.status(400).json({ error: "Categoria inválida." });
@@ -152,7 +156,9 @@ router.put(
       const statusFinal = status || atual.status;
       const codPdvFinal = cod_pdv ?? atual.cod_pdv;
       const dataEntregaFinal = data_entrega ?? atual.data_entrega;
-      const erroComodato = validarComodato(statusFinal, codPdvFinal, dataEntregaFinal);
+      const numeroNotaFinal = numero_nota?.trim() || atual.numero_nota;
+      const dataEmissaoFinal = data_emissao ?? atual.data_emissao;
+      const erroComodato = validarComodato(statusFinal, codPdvFinal, dataEntregaFinal, numeroNotaFinal, dataEmissaoFinal);
       if (erroComodato) return res.status(400).json({ error: erroComodato });
 
       const fotoEtiquetaFile = req.files?.foto_etiqueta?.[0];
@@ -167,8 +173,8 @@ router.put(
            item = $1, modelo = $2, serial = $3, rg = $4, categoria = $5, status = $6,
            numero_controle_interno = $7, cod_pdv = $8, nome_fantasia = $9,
            foto_etiqueta_url = $10, foto_equipamento_url = $11, data_chegada = $12,
-           data_entrega = $13
-         WHERE id = $14`,
+           data_entrega = $13, numero_nota = $14, data_emissao = $15
+         WHERE id = $16`,
         [
           item?.trim() || atual.item, modelo?.trim() ?? atual.modelo, serial?.trim() ?? atual.serial,
           rg?.trim() ?? atual.rg, categoria || atual.categoria, statusFinal,
@@ -177,7 +183,7 @@ router.put(
           novaEtiqueta?.secure_url || atual.foto_etiqueta_url,
           novoEquipamento?.secure_url || atual.foto_equipamento_url,
           data_chegada || atual.data_chegada,
-          dataEntregaFinal || null,
+          dataEntregaFinal || null, numeroNotaFinal || null, dataEmissaoFinal || null,
           req.params.id,
         ]
       );

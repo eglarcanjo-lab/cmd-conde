@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.30.2** — fix: PDF de Refrigeradores, fotos do mesmo tamanho cabendo numa página
+Versão atual: **v3.31.0** — Comodatado: número da nota e data de emissão
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.0 — 2026-07-09
+- **Comodatado: número da nota e data de emissão.** Além de PDV e data de entrega, marcar um
+  refrigerador como Comodatado agora também exige **Número da Nota** e **Data de Emissão**
+  (validado no front e no backend) — aparecem na lista, no PDF e no Excel exportados. Novas
+  colunas `numero_nota` e `data_emissao` na tabela `refrigeradores` (precisa rodar
+  `ALTER TABLE refrigeradores ADD COLUMN IF NOT EXISTS numero_nota TEXT, ADD COLUMN IF NOT
+  EXISTS data_emissao DATE;` no Supabase).
 
 ### v3.30.2 — 2026-07-09
 - **Fix: PDF de Refrigeradores — em algumas páginas a segunda foto ia sozinha pra próxima

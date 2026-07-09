@@ -203,6 +203,8 @@ CREATE TABLE IF NOT EXISTS refrigeradores (
   foto_equipamento_url    TEXT,
   data_chegada            DATE,
   data_entrega            DATE,        -- preenchida quando status = Comodatado (entregue ao PDV)
+  numero_nota             TEXT,        -- nota fiscal do comodato
+  data_emissao            DATE,        -- data de emissão da nota do comodato
   criado_por              TEXT,
   criado_em               TEXT
 );

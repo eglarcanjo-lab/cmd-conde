@@ -95,7 +95,11 @@ export default function RefrigeradorList({ podeExcluir, refreshKey, onEditar }) 
                   <div><span style={styles.cardGridLabel}>Controle interno: </span><span style={styles.cardGridValor}>{r.numero_controle_interno || "—"}</span></div>
                   <div><span style={styles.cardGridLabel}>Chegada: </span><span style={styles.cardGridValor}>{r.data_chegada || "—"}</span></div>
                   {r.status === "Comodatado" && (
-                    <div><span style={styles.cardGridLabel}>Entrega: </span><span style={styles.cardGridValor}>{r.data_entrega || "—"}</span></div>
+                    <>
+                      <div><span style={styles.cardGridLabel}>Entrega: </span><span style={styles.cardGridValor}>{r.data_entrega || "—"}</span></div>
+                      <div><span style={styles.cardGridLabel}>Nota: </span><span style={styles.cardGridValor}>{r.numero_nota || "—"}</span></div>
+                      <div><span style={styles.cardGridLabel}>Emissão: </span><span style={styles.cardGridValor}>{r.data_emissao || "—"}</span></div>
+                    </>
                   )}
                 </div>
 
