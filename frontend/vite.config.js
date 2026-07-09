@@ -26,6 +26,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // bundle passou de 2MB com @capacitor/camera
         // clientsClaim: o novo SW assume o controle assim que ativa (após o
         // skipWaiting do botão) → o reload do banner acontece na hora, sem travar.
         clientsClaim: true,

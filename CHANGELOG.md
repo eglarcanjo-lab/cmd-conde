@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.28.0** — módulo Refrigeradores + Material Leve (cadastro por foto, mobile)
+Versão atual: **v3.28.1** — Refrigeradores: câmera nativa direta no app Android
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.28.1 — 2026-07-09
+- **Refrigeradores: câmera nativa direta no app Android.** No app instalado (Capacitor),
+  tocar em "Tirar foto" agora abre a câmera do celular direto, sem passar pelo seletor
+  Câmera/Arquivos do Android — usa o plugin `@capacitor/camera`. No navegador (PWA) continua
+  usando `<input capture>`, que é o máximo que um site consegue. Aumentei o limite de
+  precache do PWA (`vite.config.js`) porque o plugin novo empurrou o bundle pra cima de 2MB.
 
 ### v3.28.0 — 2026-07-09
 - **Módulo Refrigeradores + Material Leve.** Nova tela `/refrigeradores` (card na home,

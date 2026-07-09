@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "../../services/api";
 import styles from "./styles";
 import PdvPicker from "./PdvPicker";
+import FotoPicker from "./FotoPicker";
 import { comprimirFoto } from "./imageUtils";
 
 const SUGESTOES_TIPO = ["Cartaz", "Adesivo", "Hack Expositor", "Banner", "Faixa", "Móbile"];
@@ -93,15 +94,13 @@ export default function MaterialLeveForm({ pdvBase, onSalvo }) {
 
       <div style={styles.field}>
         <label style={styles.label}>Foto do material *</label>
-        <label style={styles.uploadLabel}>
-          <input type="file" accept="image/*" capture="environment" style={{ display: "none" }}
-            onChange={(e) => selecionarFoto(e.target.files[0])} />
-          <div style={{ ...styles.uploadArea, ...(foto ? styles.uploadAreaAtivo : {}) }}>
-            <span style={{ fontSize: "1.5rem" }}>{foto ? "🎯" : "📷"}</span>
-            <span style={styles.uploadNome}>{foto ? "Foto anexada — toque para trocar" : "Tirar foto do material"}</span>
-          </div>
-        </label>
-        {preview && <img src={preview} alt="preview material" style={styles.previewImg} />}
+        <FotoPicker
+          label="Tirar foto do material"
+          iconeAtivo="🎯"
+          foto={foto}
+          preview={preview}
+          onFile={selecionarFoto}
+        />
       </div>
 
       {erro && <p style={styles.erro}>{erro}</p>}

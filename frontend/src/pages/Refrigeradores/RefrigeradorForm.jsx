@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "../../services/api";
 import styles from "./styles";
 import PdvPicker from "./PdvPicker";
+import FotoPicker from "./FotoPicker";
 import { comprimirFoto } from "./imageUtils";
 
 const CATEGORIAS = ["SOPI", "VISA"];
@@ -138,28 +139,24 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
       <div style={styles.linha}>
         <div style={styles.field}>
           <label style={styles.label}>Foto da etiqueta *</label>
-          <label style={styles.uploadLabel}>
-            <input type="file" accept="image/*" capture="environment" style={{ display: "none" }}
-              onChange={(e) => selecionarFoto(e.target.files[0], setFotoEtiqueta, setPreviewEtiqueta)} />
-            <div style={{ ...styles.uploadArea, ...(fotoEtiqueta ? styles.uploadAreaAtivo : {}) }}>
-              <span style={{ fontSize: "1.5rem" }}>{fotoEtiqueta ? "🏷️" : "📷"}</span>
-              <span style={styles.uploadNome}>{fotoEtiqueta ? "Foto anexada — toque para trocar" : "Tirar foto da etiqueta"}</span>
-            </div>
-          </label>
-          {previewEtiqueta && <img src={previewEtiqueta} alt="preview etiqueta" style={styles.previewImg} />}
+          <FotoPicker
+            label="Tirar foto da etiqueta"
+            iconeAtivo="🏷️"
+            foto={fotoEtiqueta}
+            preview={previewEtiqueta}
+            onFile={(file) => selecionarFoto(file, setFotoEtiqueta, setPreviewEtiqueta)}
+          />
         </div>
 
         <div style={styles.field}>
           <label style={styles.label}>Foto do refrigerador *</label>
-          <label style={styles.uploadLabel}>
-            <input type="file" accept="image/*" capture="environment" style={{ display: "none" }}
-              onChange={(e) => selecionarFoto(e.target.files[0], setFotoEquipamento, setPreviewEquipamento)} />
-            <div style={{ ...styles.uploadArea, ...(fotoEquipamento ? styles.uploadAreaAtivo : {}) }}>
-              <span style={{ fontSize: "1.5rem" }}>{fotoEquipamento ? "🧊" : "📷"}</span>
-              <span style={styles.uploadNome}>{fotoEquipamento ? "Foto anexada — toque para trocar" : "Tirar foto do refrigerador"}</span>
-            </div>
-          </label>
-          {previewEquipamento && <img src={previewEquipamento} alt="preview equipamento" style={styles.previewImg} />}
+          <FotoPicker
+            label="Tirar foto do refrigerador"
+            iconeAtivo="🧊"
+            foto={fotoEquipamento}
+            preview={previewEquipamento}
+            onFile={(file) => selecionarFoto(file, setFotoEquipamento, setPreviewEquipamento)}
+          />
         </div>
       </div>
 
