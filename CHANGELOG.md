@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.1** — Controle interno define a ordem de exibição + auto-numeração
+Versão atual: **v3.31.2** — fix: PDF Refrigeradores comodatado estourava a página
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.2 — 2026-07-09
+- **Fix: PDF de Refrigeradores — item Comodatado estourava a página, jogando uma foto sozinha
+  pra próxima.** Os campos extras do Comodatado (PDV, Entrega, Nota, Emissão) deixam o card mais
+  alto. Etiqueta continua em 380px (é a que importa pra ler os dados); a foto do equipamento
+  (só referência visual) diminuiu pra 250px — sobra espaço suficiente pras duas caberem juntas
+  numa página A4 mesmo com os campos extras.
 
 ### v3.31.1 — 2026-07-09
 - **Controle interno define a ordem de exibição.** A lista de Refrigeradores (e por tabela,

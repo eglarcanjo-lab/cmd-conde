@@ -83,13 +83,21 @@ export default function Refrigeradores() {
           }
           .eq-lista > .eq-card-refrigerador:last-child { page-break-after: auto; break-after: auto; }
           .eq-thumbs-refrigerador { flex-direction: column !important; align-items: center !important; gap: 16px !important; margin-top: 12px; }
-          /* Mesmo tamanho pras duas fotos — grande o bastante pra ler a etiqueta, mas
-             cabendo as duas empilhadas numa única página A4 junto com os dados do card. */
-          .eq-thumb-etiqueta, .eq-thumb-equipamento {
+          /* Etiqueta é a que importa (dados pra ler) — mantém grande. Equipamento é só
+             referência visual — menor, pra sobrar espaço quando o card cresce (campos
+             extras do Comodatado) e as duas caibam juntas numa página A4. */
+          .eq-thumb-etiqueta {
             width: auto !important;
             height: auto !important;
             max-width: 100% !important;
             max-height: 380px !important;
+            object-fit: contain !important;
+          }
+          .eq-thumb-equipamento {
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: 250px !important;
             object-fit: contain !important;
           }
 
