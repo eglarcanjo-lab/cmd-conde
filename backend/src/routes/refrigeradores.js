@@ -115,12 +115,30 @@ router.get("/", async (req, res) => {
       where.push(`(item ILIKE $${i} OR modelo ILIKE $${i} OR serial ILIKE $${i} OR rg ILIKE $${i} OR numero_controle_interno ILIKE $${i})`);
     }
 
-    const sql = `SELECT * FROM refrigeradores ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY criado_em DESC`;
+    // Número de controle interno define a ordem de exibição (lista, PDF, Excel — todos
+    // herdam essa ordem, já que só reordenam client-side por filtro, não por posição).
+    // Numéricos primeiro em ordem crescente; texto livre/vazio vai pro final por criado_em.
+    const sql = `SELECT * FROM refrigeradores ${where.length ? "WHERE " + where.join(" AND ") : ""}
+      ORDER BY CASE WHEN numero_controle_interno ~ '^[0-9]+$' THEN numero_controle_interno::int END NULLS LAST, criado_em DESC`;
     const { rows } = await db.query(sql, params);
     return res.json(rows);
   } catch (err) {
     console.error("Erro ao listar refrigeradores:", err);
     return res.status(500).json({ error: "Erro ao listar refrigeradores." });
+  }
+});
+
+// GET /api/refrigeradores/proximo-controle — próximo número de controle interno sequencial
+router.get("/proximo-controle", async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT COALESCE(MAX(numero_controle_interno::int), 0) + 1 AS proximo
+       FROM refrigeradores WHERE numero_controle_interno ~ '^[0-9]+$'`
+    );
+    return res.json({ proximo: String(rows[0].proximo) });
+  } catch (err) {
+    console.error("Erro ao calcular próximo controle interno:", err);
+    return res.status(500).json({ error: "Erro ao calcular próximo controle interno." });
   }
 });
 

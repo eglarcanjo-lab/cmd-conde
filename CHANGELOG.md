@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.0** — Comodatado: número da nota e data de emissão
+Versão atual: **v3.31.1** — Controle interno define a ordem de exibição + auto-numeração
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.1 — 2026-07-09
+- **Controle interno define a ordem de exibição.** A lista de Refrigeradores (e por tabela,
+  PDF e Excel exportados, que herdam a mesma ordem) agora ordena por número de controle interno
+  crescente, em vez de data de cadastro. Cadastros novos já vêm com o campo pré-preenchido com o
+  próximo número da sequência (calculado a partir do maior número já usado) — continua editável,
+  mas não precisa mais digitar manualmente. Novo endpoint
+  `GET /api/refrigeradores/proximo-controle`.
 
 ### v3.31.0 — 2026-07-09
 - **Comodatado: número da nota e data de emissão.** Além de PDV e data de entrega, marcar um

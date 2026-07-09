@@ -35,6 +35,11 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
       setPdv(null);
       setFotoEtiqueta(null); setPreviewEtiqueta(null);
       setFotoEquipamento(null); setPreviewEquipamento(null);
+      // Número de controle interno define a ordem de exibição em tudo — pré-preenche
+      // com o próximo da sequência pra não depender de digitar certo.
+      api.get("/api/refrigeradores/proximo-controle")
+        .then((res) => setCampos((c) => ({ ...c, numeroControleInterno: res.data?.proximo || "" })))
+        .catch(() => {});
       return;
     }
     const r = itemEditando;
@@ -148,6 +153,7 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
         <div style={styles.fieldLinha}>
           <label style={styles.label}>Número de controle interno</label>
           <input style={styles.input} value={campos.numeroControleInterno} onChange={(e) => setCampo("numeroControleInterno", e.target.value)} />
+          {!editando && <span style={styles.hint}>Preenchido com o próximo da sequência — é o que define a ordem de exibição em tudo (lista, PDF, Excel).</span>}
         </div>
       </div>
 
