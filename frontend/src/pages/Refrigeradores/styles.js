@@ -52,6 +52,9 @@ const styles = {
   sucesso: { color: "#4ade80", fontSize: "0.85rem", margin: 0, textAlign: "center" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },
 
+  toolbarExport: { display: "flex", gap: "8px", marginBottom: "12px" },
+  btnExport: { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "44px", minWidth: "44px" },
+
   filtros: { display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" },
   filtroInput: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "10px 12px", fontSize: "0.88rem", fontFamily: "inherit", outline: "none", flex: "1 1 180px" },
   filtroSelect: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "10px 12px", fontSize: "0.88rem", fontFamily: "inherit", outline: "none" },

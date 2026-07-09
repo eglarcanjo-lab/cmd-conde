@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.28.2** — Equipamentos: ajustes de layout, nome e acesso restrito a admin/diretor
+Versão atual: **v3.29.0** — Equipamentos: exportar Excel (dados) e PDF (fotos individuais)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.29.0 — 2026-07-09
+- **Equipamentos: exportar Excel e PDF.** Nas listas de Refrigeradores e Material Leve, novos
+  botões de exportação (respeitam os filtros aplicados na tela): "Excel" baixa uma planilha só
+  com os dados tabulares (sem fotos — usa `xlsx-js-style`, mesmo padrão do resto do app), "PDF"
+  aciona a impressão do navegador (`window.print`, padrão já usado em RV/Relatório e Cobertura
+  SKU) numa versão da própria lista com fundo branco e fotos ampliadas — cada item com a(s)
+  foto(s) individual(is). No desktop os botões mostram o texto ("📊 Excel" / "📄 PDF"); abaixo de
+  600px de largura (celular) só o ícone aparece, pra economizar espaço.
 
 ### v3.28.2 — 2026-07-09
 - **Equipamentos (ex-Refrigeradores): ajustes.** Renomeado o módulo de "Refrigeradores" para

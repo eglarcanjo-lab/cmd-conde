@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import styles, { STATUS_CONFIG, CATEGORIA_CONFIG } from "./styles";
+import { exportarExcelRefrigeradores } from "./exportUtils";
 
 export default function RefrigeradorList({ podeExcluir, refreshKey }) {
   const [itens, setItens] = useState([]);
@@ -44,7 +45,16 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
 
   return (
     <div>
-      <div style={styles.filtros}>
+      <div style={styles.toolbarExport} className="eq-no-print">
+        <button style={styles.btnExport} onClick={() => exportarExcelRefrigeradores(filtrados)} title="Exportar Excel">
+          📊 <span className="eq-export-label">Excel</span>
+        </button>
+        <button style={styles.btnExport} onClick={() => window.print()} title="Exportar PDF">
+          📄 <span className="eq-export-label">PDF</span>
+        </button>
+      </div>
+
+      <div style={styles.filtros} className="eq-no-print">
         <input style={styles.filtroInput} placeholder="Buscar por item, modelo, serial, RG, controle..." value={busca} onChange={(e) => setBusca(e.target.value)} />
         <select style={styles.filtroSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Todos status</option>
@@ -66,7 +76,7 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
             const stConf = STATUS_CONFIG[r.status] || STATUS_CONFIG["Estoque"];
             const catConf = CATEGORIA_CONFIG[r.categoria];
             return (
-              <div key={r.id} style={styles.card}>
+              <div key={r.id} style={styles.card} className="eq-card">
                 <div style={styles.cardHeader}>
                   <div style={styles.cardHeaderLeft}>
                     <span style={{ ...styles.tag, background: stConf.bg, color: stConf.color }}>{r.status || "—"}</span>
@@ -89,18 +99,18 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
                 <div style={styles.thumbs}>
                   {r.foto_etiqueta_url && (
                     <a href={r.foto_etiqueta_url} target="_blank" rel="noreferrer">
-                      <img src={r.foto_etiqueta_url} alt="etiqueta" style={styles.thumb} />
+                      <img src={r.foto_etiqueta_url} alt="etiqueta" style={styles.thumb} className="eq-thumb" />
                     </a>
                   )}
                   {r.foto_equipamento_url && (
                     <a href={r.foto_equipamento_url} target="_blank" rel="noreferrer">
-                      <img src={r.foto_equipamento_url} alt="equipamento" style={styles.thumb} />
+                      <img src={r.foto_equipamento_url} alt="equipamento" style={styles.thumb} className="eq-thumb" />
                     </a>
                   )}
                 </div>
 
                 {podeExcluir && (
-                  <div style={styles.cardAcoes}>
+                  <div style={styles.cardAcoes} className="eq-no-print">
                     <button style={styles.btnExcluir} onClick={() => excluir(r.id)}>🗑️ Excluir</button>
                   </div>
                 )}

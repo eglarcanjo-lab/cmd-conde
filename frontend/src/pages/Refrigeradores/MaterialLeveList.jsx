@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import styles from "./styles";
+import { exportarExcelMaterialLeve } from "./exportUtils";
 
 export default function MaterialLeveList({ podeExcluir, refreshKey }) {
   const [itens, setItens] = useState([]);
@@ -36,7 +37,16 @@ export default function MaterialLeveList({ podeExcluir, refreshKey }) {
 
   return (
     <div>
-      <div style={styles.filtros}>
+      <div style={styles.toolbarExport} className="eq-no-print">
+        <button style={styles.btnExport} onClick={() => exportarExcelMaterialLeve(filtrados)} title="Exportar Excel">
+          📊 <span className="eq-export-label">Excel</span>
+        </button>
+        <button style={styles.btnExport} onClick={() => window.print()} title="Exportar PDF">
+          📄 <span className="eq-export-label">PDF</span>
+        </button>
+      </div>
+
+      <div style={styles.filtros} className="eq-no-print">
         <input style={styles.filtroInput} placeholder="Buscar por tipo ou PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
       </div>
 
@@ -47,7 +57,7 @@ export default function MaterialLeveList({ podeExcluir, refreshKey }) {
       ) : (
         <div style={styles.lista}>
           {filtrados.map((m) => (
-            <div key={m.id} style={styles.card}>
+            <div key={m.id} style={styles.card} className="eq-card">
               <div style={styles.cardHeader}>
                 <h4 style={styles.cardTitulo}>{m.tipo}</h4>
                 <span style={styles.cardId}>#{m.id}</span>
@@ -62,13 +72,13 @@ export default function MaterialLeveList({ podeExcluir, refreshKey }) {
               {m.foto_url && (
                 <div style={styles.thumbs}>
                   <a href={m.foto_url} target="_blank" rel="noreferrer">
-                    <img src={m.foto_url} alt="material" style={styles.thumb} />
+                    <img src={m.foto_url} alt="material" style={styles.thumb} className="eq-thumb" />
                   </a>
                 </div>
               )}
 
               {podeExcluir && (
-                <div style={styles.cardAcoes}>
+                <div style={styles.cardAcoes} className="eq-no-print">
                   <button style={styles.btnExcluir} onClick={() => excluir(m.id)}>🗑️ Excluir</button>
                 </div>
               )}

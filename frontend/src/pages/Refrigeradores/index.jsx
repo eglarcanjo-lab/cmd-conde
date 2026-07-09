@@ -32,8 +32,23 @@ export default function Refrigeradores() {
   }
 
   return (
-    <div style={styles.root}>
-      <div style={styles.header}>
+    <div style={styles.root} className="eq-page">
+      <style>{`
+        @media (max-width: 600px) {
+          .eq-export-label { display: none; }
+        }
+        @media print {
+          .eq-no-print { display: none !important; }
+          html, body { background: #fff !important; }
+          .eq-page { background: #fff !important; color: #111 !important; }
+          .eq-card, .eq-card * { background: #fff !important; color: #111 !important; }
+          .eq-card { border: 1px solid #ccc !important; break-inside: avoid; }
+          .eq-thumb { width: 220px !important; height: 220px !important; }
+          @page { size: A4; margin: 12mm 14mm; }
+        }
+      `}</style>
+
+      <div style={styles.header} className="eq-no-print">
         <div style={styles.headerLeft}>
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
@@ -45,7 +60,7 @@ export default function Refrigeradores() {
       </div>
 
       <div style={styles.content}>
-        <div style={styles.abasTopo}>
+        <div style={styles.abasTopo} className="eq-no-print">
           <button
             style={{ ...styles.abaTopoBtn, ...(abaTopo === "refrigeradores" ? styles.abaTopoBtnAtivo : {}) }}
             onClick={() => { setAbaTopo("refrigeradores"); setSubAba("novo"); }}
@@ -60,7 +75,7 @@ export default function Refrigeradores() {
           </button>
         </div>
 
-        <div style={styles.abas}>
+        <div style={styles.abas} className="eq-no-print">
           <button style={{ ...styles.abaBtn, ...(subAba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => setSubAba("novo")}>
             📝 Novo Cadastro
           </button>
