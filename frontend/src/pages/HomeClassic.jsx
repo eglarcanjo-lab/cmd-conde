@@ -25,6 +25,7 @@ export default function HomeClassic() {
     { icon: "🚨", label: "Incidentes",    route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer", ativo: true, soGestor: false, soRn: false },
     { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
+    { icon: "🧊", label: "Refrigeradores", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false },
   ].filter((m) => {
     if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director
     if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO

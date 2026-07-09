@@ -187,6 +187,41 @@ CREATE TABLE IF NOT EXISTS inadimplencia_real (
 );
 CREATE INDEX IF NOT EXISTS idx_inad_setor ON inadimplencia_real (setor);
 
+-- Cadastro de refrigeradores (chopeiras/geladeiras) instalados em PDV, feito via foto pelo celular
+CREATE TABLE IF NOT EXISTS refrigeradores (
+  id                      TEXT PRIMARY KEY,
+  item                    TEXT,        -- texto livre, ex: "Refrigerador Spaten"
+  modelo                  TEXT,
+  serial                  TEXT,
+  rg                      TEXT,
+  categoria               TEXT,        -- SOPI | VISA
+  status                  TEXT,        -- Estoque | Quebrado | Comodatado
+  numero_controle_interno TEXT,
+  cod_pdv                 TEXT,        -- opcional, referência solta ao pdv_base
+  nome_fantasia           TEXT,        -- denormalizado p/ exibição
+  foto_etiqueta_url       TEXT,
+  foto_equipamento_url    TEXT,
+  data_chegada            DATE,
+  criado_por              TEXT,
+  criado_em               TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_refrigeradores_pdv    ON refrigeradores (cod_pdv);
+CREATE INDEX IF NOT EXISTS idx_refrigeradores_status ON refrigeradores (status);
+
+-- Cadastro de material leve (cartaz, adesivo, hack expositor etc.) por PDV
+CREATE TABLE IF NOT EXISTS material_leve (
+  id            TEXT PRIMARY KEY,
+  tipo          TEXT,        -- texto livre: Cartaz, Adesivo, Hack Expositor...
+  quantidade    NUMERIC,
+  cod_pdv       TEXT,
+  nome_fantasia TEXT,
+  foto_url      TEXT,
+  data_registro DATE,
+  criado_por    TEXT,
+  criado_em     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_material_leve_pdv ON material_leve (cod_pdv);
+
 
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
 -- ║ 2. COMPUTADAS / IMPORTADAS — criadas pelo ETL a partir do cabeçalho da aba  ║

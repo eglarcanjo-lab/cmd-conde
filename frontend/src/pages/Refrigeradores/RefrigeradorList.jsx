@@ -1,0 +1,114 @@
+import { useEffect, useMemo, useState } from "react";
+import api from "../../services/api";
+import styles, { STATUS_CONFIG, CATEGORIA_CONFIG } from "./styles";
+
+export default function RefrigeradorList({ podeExcluir, refreshKey }) {
+  const [itens, setItens] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [status, setStatus] = useState("");
+  const [categoria, setCategoria] = useState("");
+
+  useEffect(() => { carregar(); }, [refreshKey]);
+
+  async function carregar() {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/refrigeradores");
+      setItens(res.data || []);
+    } catch { }
+    finally { setLoading(false); }
+  }
+
+  async function excluir(id) {
+    if (!window.confirm("Excluir este refrigerador cadastrado?")) return;
+    try {
+      await api.delete(`/api/refrigeradores/${id}`);
+      setItens((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.error || "Erro ao excluir.");
+    }
+  }
+
+  const filtrados = useMemo(() => {
+    return itens.filter((i) => {
+      if (status && i.status !== status) return false;
+      if (categoria && i.categoria !== categoria) return false;
+      if (busca.trim()) {
+        const alvo = `${i.item} ${i.modelo} ${i.serial} ${i.rg} ${i.numero_controle_interno} ${i.nome_fantasia}`.toLowerCase();
+        if (!alvo.includes(busca.trim().toLowerCase())) return false;
+      }
+      return true;
+    });
+  }, [itens, busca, status, categoria]);
+
+  return (
+    <div>
+      <div style={styles.filtros}>
+        <input style={styles.filtroInput} placeholder="Buscar por item, modelo, serial, RG, controle..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <select style={styles.filtroSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Todos status</option>
+          {Object.keys(STATUS_CONFIG).map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select style={styles.filtroSelect} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+          <option value="">Todas categorias</option>
+          {Object.keys(CATEGORIA_CONFIG).map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      {loading ? (
+        <p style={styles.msg}>Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p style={styles.msg}>Nenhum refrigerador encontrado.</p>
+      ) : (
+        <div style={styles.lista}>
+          {filtrados.map((r) => {
+            const stConf = STATUS_CONFIG[r.status] || STATUS_CONFIG["Estoque"];
+            const catConf = CATEGORIA_CONFIG[r.categoria];
+            return (
+              <div key={r.id} style={styles.card}>
+                <div style={styles.cardHeader}>
+                  <div style={styles.cardHeaderLeft}>
+                    <span style={{ ...styles.tag, background: stConf.bg, color: stConf.color }}>{r.status || "—"}</span>
+                    {catConf && <span style={{ ...styles.tag, background: catConf.bg, color: catConf.color }}>{r.categoria}</span>}
+                  </div>
+                  <span style={styles.cardId}>#{r.id}</span>
+                </div>
+
+                <h4 style={styles.cardTitulo}>{r.item}</h4>
+                {r.nome_fantasia && <p style={styles.cardSub}>🏪 {r.nome_fantasia}</p>}
+
+                <div style={styles.cardGrid}>
+                  <div><span style={styles.cardGridLabel}>Modelo: </span><span style={styles.cardGridValor}>{r.modelo || "—"}</span></div>
+                  <div><span style={styles.cardGridLabel}>Serial: </span><span style={styles.cardGridValor}>{r.serial || "—"}</span></div>
+                  <div><span style={styles.cardGridLabel}>R.G.: </span><span style={styles.cardGridValor}>{r.rg || "—"}</span></div>
+                  <div><span style={styles.cardGridLabel}>Controle interno: </span><span style={styles.cardGridValor}>{r.numero_controle_interno || "—"}</span></div>
+                  <div><span style={styles.cardGridLabel}>Chegada: </span><span style={styles.cardGridValor}>{r.data_chegada || "—"}</span></div>
+                </div>
+
+                <div style={styles.thumbs}>
+                  {r.foto_etiqueta_url && (
+                    <a href={r.foto_etiqueta_url} target="_blank" rel="noreferrer">
+                      <img src={r.foto_etiqueta_url} alt="etiqueta" style={styles.thumb} />
+                    </a>
+                  )}
+                  {r.foto_equipamento_url && (
+                    <a href={r.foto_equipamento_url} target="_blank" rel="noreferrer">
+                      <img src={r.foto_equipamento_url} alt="equipamento" style={styles.thumb} />
+                    </a>
+                  )}
+                </div>
+
+                {podeExcluir && (
+                  <div style={styles.cardAcoes}>
+                    <button style={styles.btnExcluir} onClick={() => excluir(r.id)}>🗑️ Excluir</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -60,6 +60,8 @@ app.use("/api/uso", require("./routes/uso"));
 app.use("/api/resumo", require("./routes/resumo"));
 app.use("/api/faturados-buffer", require("./routes/faturadosBuffer"));
 app.use("/api/alertas", require("./routes/alertas"));
+app.use("/api/refrigeradores", require("./routes/refrigeradores"));
+app.use("/api/material-leve", require("./routes/materialLeve"));
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

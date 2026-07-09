@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.27.1** — relatórios ocupam a tela no desktop (containers 1600px)
+Versão atual: **v3.28.0** — módulo Refrigeradores + Material Leve (cadastro por foto, mobile)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.28.0 — 2026-07-09
+- **Módulo Refrigeradores + Material Leve.** Nova tela `/refrigeradores` (card na home,
+  mobile-first) para cadastrar pelo celular: refrigeradores instalados em PDV (item, modelo,
+  serial, R.G., categoria SOPI/VISA, status Estoque/Quebrado/Comodatado, número de controle
+  interno, foto da etiqueta + foto do equipamento, PDV opcional) e, em aba separada, material
+  leve (cartaz, adesivo, hack expositor etc. — tipo, quantidade, foto, PDV opcional). Cadastro
+  manual (sem OCR — decisão consciente, mais confiável que ler a etiqueta automaticamente).
+  Fotos sobem comprimidas (novo: `browser-image-compression`) pro Cloudinary, como no módulo
+  Incidentes. Duas tabelas novas no Postgres (`refrigeradores`, `material_leve`), consultadas
+  direto via `db.query` (não passam pelo shim de Sheets). Exclusão restrita a gestores.
 
 ### v3.27.1 — 2026-07-02
 - **Relatórios ocupam a tela no desktop.** Os containers das páginas de relatório (que
