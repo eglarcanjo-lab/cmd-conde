@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.29.1** — fix: PDF de Equipamentos só saía em 1 página
+Versão atual: **v3.30.0** — Equipamentos: editar cadastro + regra de Comodatado (PDV/data entrega)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.30.0 — 2026-07-09
+- **Equipamentos: editar cadastro.** Refrigeradores e Material Leve agora têm botão "✏️ Editar"
+  no card (além do "🗑️ Excluir"), abre o mesmo formulário pré-preenchido e salva via PUT em vez
+  de POST — na edição não é obrigatório reenviar as fotos (só troca se quiser). Novo campo
+  **Data de entrega** no refrigerador: quando o status vira **Comodatado** (equipamento
+  entregue a um cliente/PDV), o PDV passa a ser obrigatório e a data de entrega também —
+  validado no front e no backend. Nova coluna `data_entrega` na tabela `refrigeradores`
+  (precisa rodar `ALTER TABLE refrigeradores ADD COLUMN IF NOT EXISTS data_entrega DATE;` no
+  Supabase).
 
 ### v3.29.1 — 2026-07-09
 - **Fix: PDF de Equipamentos só saía em 1 página.** O container da lista (`.eq-lista`) usava

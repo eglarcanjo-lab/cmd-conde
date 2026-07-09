@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../services/api";
 import styles from "./styles";
 import PdvPicker from "./PdvPicker";
@@ -8,13 +8,17 @@ import { comprimirFoto } from "./imageUtils";
 const CATEGORIAS = ["SOPI", "VISA"];
 const STATUS_OPCOES = ["Estoque", "Comodatado", "Quebrado"];
 
-const VAZIO = {
-  item: "", modelo: "", serial: "", rg: "", categoria: "", status: "Estoque",
-  numeroControleInterno: "", dataChegada: new Date().toISOString().split("T")[0],
-};
+function vazio() {
+  return {
+    item: "", modelo: "", serial: "", rg: "", categoria: "", status: "Estoque",
+    numeroControleInterno: "", dataChegada: new Date().toISOString().split("T")[0], dataEntrega: "",
+  };
+}
 
-export default function RefrigeradorForm({ pdvBase, onSalvo }) {
-  const [campos, setCampos] = useState(VAZIO);
+// itemEditando: null = cadastro novo. Objeto vindo da lista = edição (PUT em vez de POST).
+export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCancelar }) {
+  const editando = !!itemEditando;
+  const [campos, setCampos] = useState(vazio());
   const [pdv, setPdv] = useState(null);
   const [fotoEtiqueta, setFotoEtiqueta] = useState(null);
   const [previewEtiqueta, setPreviewEtiqueta] = useState(null);
@@ -23,6 +27,29 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+
+  useEffect(() => {
+    if (!itemEditando) {
+      setCampos(vazio());
+      setPdv(null);
+      setFotoEtiqueta(null); setPreviewEtiqueta(null);
+      setFotoEquipamento(null); setPreviewEquipamento(null);
+      return;
+    }
+    const r = itemEditando;
+    setCampos({
+      item: r.item || "", modelo: r.modelo || "", serial: r.serial || "", rg: r.rg || "",
+      categoria: r.categoria || "", status: r.status || "Estoque",
+      numeroControleInterno: r.numero_controle_interno || "",
+      dataChegada: r.data_chegada || new Date().toISOString().split("T")[0],
+      dataEntrega: r.data_entrega || "",
+    });
+    setPdv(r.cod_pdv ? { cod_pdv: r.cod_pdv, nome_fantasia: r.nome_fantasia } : null);
+    setFotoEtiqueta(null); setPreviewEtiqueta(r.foto_etiqueta_url || null);
+    setFotoEquipamento(null); setPreviewEquipamento(r.foto_equipamento_url || null);
+  }, [itemEditando]);
+
+  const comodatado = campos.status === "Comodatado";
 
   function setCampo(nome, valor) {
     setCampos((c) => ({ ...c, [nome]: valor }));
@@ -38,8 +65,10 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
   async function enviar() {
     setErro("");
     if (!campos.item.trim()) return setErro("Informe o item (ex: Refrigerador Spaten).");
-    if (!fotoEtiqueta) return setErro("Anexe a foto da etiqueta.");
-    if (!fotoEquipamento) return setErro("Anexe a foto do refrigerador.");
+    if (!editando && !fotoEtiqueta) return setErro("Anexe a foto da etiqueta.");
+    if (!editando && !fotoEquipamento) return setErro("Anexe a foto do refrigerador.");
+    if (comodatado && !pdv) return setErro("Comodatado precisa de um PDV — informe pra quem foi entregue.");
+    if (comodatado && !campos.dataEntrega) return setErro("Comodatado precisa da data de entrega.");
 
     setEnviando(true);
     try {
@@ -52,27 +81,35 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
       form.append("status", campos.status);
       form.append("numero_controle_interno", campos.numeroControleInterno);
       form.append("data_chegada", campos.dataChegada);
+      form.append("data_entrega", campos.dataEntrega);
       if (pdv) {
         form.append("cod_pdv", pdv.cod_pdv);
         form.append("nome_fantasia", pdv.nome_fantasia);
       }
-      form.append("foto_etiqueta", fotoEtiqueta);
-      form.append("foto_equipamento", fotoEquipamento);
+      if (fotoEtiqueta) form.append("foto_etiqueta", fotoEtiqueta);
+      if (fotoEquipamento) form.append("foto_equipamento", fotoEquipamento);
 
-      await api.post("/api/refrigeradores", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 60000,
-      });
-
-      setSucesso("Refrigerador cadastrado com sucesso!");
-      setCampos(VAZIO);
-      setPdv(null);
-      setFotoEtiqueta(null); setPreviewEtiqueta(null);
-      setFotoEquipamento(null); setPreviewEquipamento(null);
+      if (editando) {
+        await api.put(`/api/refrigeradores/${itemEditando.id}`, form, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 60000,
+        });
+        setSucesso("Refrigerador atualizado com sucesso!");
+      } else {
+        await api.post("/api/refrigeradores", form, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 60000,
+        });
+        setSucesso("Refrigerador cadastrado com sucesso!");
+        setCampos(vazio());
+        setPdv(null);
+        setFotoEtiqueta(null); setPreviewEtiqueta(null);
+        setFotoEquipamento(null); setPreviewEquipamento(null);
+      }
       setTimeout(() => setSucesso(""), 4000);
       onSalvo?.();
     } catch (err) {
-      setErro(err.response?.data?.error || "Erro ao cadastrar. Tente novamente.");
+      setErro(err.response?.data?.error || "Erro ao salvar. Tente novamente.");
     } finally {
       setEnviando(false);
     }
@@ -80,7 +117,7 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
 
   return (
     <div style={styles.formCard}>
-      <h3 style={styles.formTitle}>🧊 Novo Refrigerador</h3>
+      <h3 style={styles.formTitle}>{editando ? "✏️ Editar Refrigerador" : "🧊 Novo Refrigerador"}</h3>
 
       <div style={styles.field}>
         <label style={styles.label}>Item *</label>
@@ -131,29 +168,37 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
           <input style={styles.input} type="date" value={campos.dataChegada} onChange={(e) => setCampo("dataChegada", e.target.value)} />
         </div>
         <div style={styles.fieldLinha}>
-          <label style={styles.label}>PDV (opcional)</label>
-          <PdvPicker pdvBase={pdvBase} value={pdv} onChange={setPdv} />
+          <label style={styles.label}>PDV {comodatado ? "*" : "(opcional)"}</label>
+          <PdvPicker pdvBase={pdvBase} value={pdv} onChange={setPdv} obrigatorio={comodatado} />
         </div>
       </div>
 
+      {comodatado && (
+        <div style={styles.field}>
+          <label style={styles.label}>Data de entrega *</label>
+          <input style={styles.input} type="date" value={campos.dataEntrega} onChange={(e) => setCampo("dataEntrega", e.target.value)} />
+          <span style={styles.hint}>Comodatado precisa do PDV e da data em que o equipamento foi entregue.</span>
+        </div>
+      )}
+
       <div style={styles.linha}>
         <div style={styles.fieldLinha}>
-          <label style={styles.label}>Foto da etiqueta *</label>
+          <label style={styles.label}>Foto da etiqueta {editando ? "" : "*"}</label>
           <FotoPicker
             label="Tirar foto da etiqueta"
             iconeAtivo="🏷️"
-            foto={fotoEtiqueta}
+            foto={!!previewEtiqueta}
             preview={previewEtiqueta}
             onFile={(file) => selecionarFoto(file, setFotoEtiqueta, setPreviewEtiqueta)}
           />
         </div>
 
         <div style={styles.fieldLinha}>
-          <label style={styles.label}>Foto do refrigerador *</label>
+          <label style={styles.label}>Foto do refrigerador {editando ? "" : "*"}</label>
           <FotoPicker
             label="Tirar foto do refrigerador"
             iconeAtivo="🧊"
-            foto={fotoEquipamento}
+            foto={!!previewEquipamento}
             preview={previewEquipamento}
             onFile={(file) => selecionarFoto(file, setFotoEquipamento, setPreviewEquipamento)}
           />
@@ -163,9 +208,16 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
       {erro && <p style={styles.erro}>{erro}</p>}
       {sucesso && <p style={styles.sucesso}>{sucesso}</p>}
 
-      <button style={{ ...styles.btnEnviar, opacity: enviando ? 0.7 : 1 }} onClick={enviar} disabled={enviando}>
-        {enviando ? "Enviando..." : "💾 Cadastrar Refrigerador"}
-      </button>
+      <div style={styles.linha}>
+        <button style={{ ...styles.btnEnviar, opacity: enviando ? 0.7 : 1, flex: "1 1 auto" }} onClick={enviar} disabled={enviando}>
+          {enviando ? "Salvando..." : editando ? "💾 Salvar Alterações" : "💾 Cadastrar Refrigerador"}
+        </button>
+        {editando && (
+          <button style={styles.btnCancelar} onClick={onCancelar} disabled={enviando}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

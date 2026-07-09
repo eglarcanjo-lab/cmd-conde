@@ -19,6 +19,7 @@ export default function Refrigeradores() {
   const [subAba, setSubAba] = useState("novo"); // novo | lista
   const [pdvBase, setPdvBase] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [itemEditando, setItemEditando] = useState(null);
 
   const podeExcluir = PERFIS_GESTOR.includes(usuario?.perfil);
 
@@ -26,8 +27,25 @@ export default function Refrigeradores() {
     api.get("/api/cobertura/pdv-base").then((res) => setPdvBase(res.data || [])).catch(() => {});
   }, []);
 
+  function trocarAbaTopo(aba) {
+    setAbaTopo(aba);
+    setSubAba("novo");
+    setItemEditando(null);
+  }
+
+  function trocarSubAba(aba) {
+    setSubAba(aba);
+    setItemEditando(null);
+  }
+
+  function editar(item) {
+    setItemEditando(item);
+    setSubAba("novo");
+  }
+
   function aoSalvar() {
     setRefreshKey((k) => k + 1);
+    setItemEditando(null);
     setSubAba("lista");
   }
 
@@ -73,38 +91,38 @@ export default function Refrigeradores() {
         <div style={styles.abasTopo} className="eq-no-print">
           <button
             style={{ ...styles.abaTopoBtn, ...(abaTopo === "refrigeradores" ? styles.abaTopoBtnAtivo : {}) }}
-            onClick={() => { setAbaTopo("refrigeradores"); setSubAba("novo"); }}
+            onClick={() => trocarAbaTopo("refrigeradores")}
           >
             🧊 Refrigeradores
           </button>
           <button
             style={{ ...styles.abaTopoBtn, ...(abaTopo === "material-leve" ? styles.abaTopoBtnAtivo : {}) }}
-            onClick={() => { setAbaTopo("material-leve"); setSubAba("novo"); }}
+            onClick={() => trocarAbaTopo("material-leve")}
           >
             📦 Material Leve
           </button>
         </div>
 
         <div style={styles.abas} className="eq-no-print">
-          <button style={{ ...styles.abaBtn, ...(subAba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => setSubAba("novo")}>
-            📝 Novo Cadastro
+          <button style={{ ...styles.abaBtn, ...(subAba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => trocarSubAba("novo")}>
+            {itemEditando ? "✏️ Editando" : "📝 Novo Cadastro"}
           </button>
-          <button style={{ ...styles.abaBtn, ...(subAba === "lista" ? styles.abaBtnAtivo : {}) }} onClick={() => setSubAba("lista")}>
+          <button style={{ ...styles.abaBtn, ...(subAba === "lista" ? styles.abaBtnAtivo : {}) }} onClick={() => trocarSubAba("lista")}>
             📋 Consultar
           </button>
         </div>
 
         {abaTopo === "refrigeradores" ? (
           subAba === "novo" ? (
-            <RefrigeradorForm pdvBase={pdvBase} onSalvo={aoSalvar} />
+            <RefrigeradorForm pdvBase={pdvBase} itemEditando={itemEditando} onSalvo={aoSalvar} onCancelar={() => trocarSubAba("lista")} />
           ) : (
-            <RefrigeradorList podeExcluir={podeExcluir} refreshKey={refreshKey} />
+            <RefrigeradorList podeExcluir={podeExcluir} refreshKey={refreshKey} onEditar={editar} />
           )
         ) : (
           subAba === "novo" ? (
-            <MaterialLeveForm pdvBase={pdvBase} onSalvo={aoSalvar} />
+            <MaterialLeveForm pdvBase={pdvBase} itemEditando={itemEditando} onSalvo={aoSalvar} onCancelar={() => trocarSubAba("lista")} />
           ) : (
-            <MaterialLeveList podeExcluir={podeExcluir} refreshKey={refreshKey} />
+            <MaterialLeveList podeExcluir={podeExcluir} refreshKey={refreshKey} onEditar={editar} />
           )
         )}
       </div>

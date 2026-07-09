@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS refrigeradores (
   foto_etiqueta_url       TEXT,
   foto_equipamento_url    TEXT,
   data_chegada            DATE,
+  data_entrega            DATE,        -- preenchida quando status = Comodatado (entregue ao PDV)
   criado_por              TEXT,
   criado_em               TEXT
 );

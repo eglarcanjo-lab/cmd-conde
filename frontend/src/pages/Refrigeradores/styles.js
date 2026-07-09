@@ -48,6 +48,8 @@ const styles = {
   previewImg: { maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", objectFit: "contain", marginTop: "8px" },
 
   btnEnviar: { background: "linear-gradient(135deg, #7DBA3D, #2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "14px", fontSize: "0.95rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" },
+  btnCancelar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", borderRadius: "10px", padding: "14px 20px", fontSize: "0.95rem", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" },
+  btnEditar: { background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.3)", color: "#60a5fa", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit", minHeight: "40px" },
   erro: { color: "#f87171", fontSize: "0.85rem", margin: 0, textAlign: "center" },
   sucesso: { color: "#4ade80", fontSize: "0.85rem", margin: 0, textAlign: "center" },
   msg: { color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "40px" },

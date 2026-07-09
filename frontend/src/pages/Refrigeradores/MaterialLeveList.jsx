@@ -3,7 +3,7 @@ import api from "../../services/api";
 import styles from "./styles";
 import { exportarExcelMaterialLeve } from "./exportUtils";
 
-export default function MaterialLeveList({ podeExcluir, refreshKey }) {
+export default function MaterialLeveList({ podeExcluir, refreshKey, onEditar }) {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busca, setBusca] = useState("");
@@ -77,11 +77,12 @@ export default function MaterialLeveList({ podeExcluir, refreshKey }) {
                 </div>
               )}
 
-              {podeExcluir && (
-                <div style={styles.cardAcoes} className="eq-no-print">
+              <div style={styles.cardAcoes} className="eq-no-print">
+                <button style={styles.btnEditar} onClick={() => onEditar?.(m)}>✏️ Editar</button>
+                {podeExcluir && (
                   <button style={styles.btnExcluir} onClick={() => excluir(m.id)}>🗑️ Excluir</button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>

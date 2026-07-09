@@ -1,8 +1,8 @@
 import { useState } from "react";
 import styles from "./styles";
 
-// Busca opcional de PDV por código ou nome fantasia. `value` é { cod_pdv, nome_fantasia } | null.
-export default function PdvPicker({ pdvBase, value, onChange }) {
+// Busca de PDV por código ou nome fantasia. `value` é { cod_pdv, nome_fantasia } | null.
+export default function PdvPicker({ pdvBase, value, onChange, obrigatorio }) {
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(false);
 
@@ -29,7 +29,7 @@ export default function PdvPicker({ pdvBase, value, onChange }) {
       <input
         style={styles.input}
         type="text"
-        placeholder="Buscar PDV por nome ou código (opcional)"
+        placeholder={obrigatorio ? "Buscar PDV por nome ou código" : "Buscar PDV por nome ou código (opcional)"}
         value={busca}
         onChange={(e) => { setBusca(e.target.value); setAberto(true); }}
         onFocus={() => setAberto(true)}

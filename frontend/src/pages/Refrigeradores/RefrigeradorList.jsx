@@ -3,7 +3,7 @@ import api from "../../services/api";
 import styles, { STATUS_CONFIG, CATEGORIA_CONFIG } from "./styles";
 import { exportarExcelRefrigeradores } from "./exportUtils";
 
-export default function RefrigeradorList({ podeExcluir, refreshKey }) {
+export default function RefrigeradorList({ podeExcluir, refreshKey, onEditar }) {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busca, setBusca] = useState("");
@@ -94,6 +94,9 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
                   <div><span style={styles.cardGridLabel}>R.G.: </span><span style={styles.cardGridValor}>{r.rg || "—"}</span></div>
                   <div><span style={styles.cardGridLabel}>Controle interno: </span><span style={styles.cardGridValor}>{r.numero_controle_interno || "—"}</span></div>
                   <div><span style={styles.cardGridLabel}>Chegada: </span><span style={styles.cardGridValor}>{r.data_chegada || "—"}</span></div>
+                  {r.status === "Comodatado" && (
+                    <div><span style={styles.cardGridLabel}>Entrega: </span><span style={styles.cardGridValor}>{r.data_entrega || "—"}</span></div>
+                  )}
                 </div>
 
                 <div style={styles.thumbs}>
@@ -109,11 +112,12 @@ export default function RefrigeradorList({ podeExcluir, refreshKey }) {
                   )}
                 </div>
 
-                {podeExcluir && (
-                  <div style={styles.cardAcoes} className="eq-no-print">
+                <div style={styles.cardAcoes} className="eq-no-print">
+                  <button style={styles.btnEditar} onClick={() => onEditar?.(r)}>✏️ Editar</button>
+                  {podeExcluir && (
                     <button style={styles.btnExcluir} onClick={() => excluir(r.id)}>🗑️ Excluir</button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
