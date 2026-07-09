@@ -76,7 +76,7 @@ export default function RefrigeradorList({ podeExcluir, refreshKey, onEditar }) 
             const stConf = STATUS_CONFIG[r.status] || STATUS_CONFIG["Estoque"];
             const catConf = CATEGORIA_CONFIG[r.categoria];
             return (
-              <div key={r.id} style={styles.card} className="eq-card">
+              <div key={r.id} style={styles.card} className="eq-card eq-card-refrigerador">
                 <div style={styles.cardHeader}>
                   <div style={styles.cardHeaderLeft}>
                     <span style={{ ...styles.tag, background: stConf.bg, color: stConf.color }}>{r.status || "—"}</span>
@@ -99,15 +99,15 @@ export default function RefrigeradorList({ podeExcluir, refreshKey, onEditar }) 
                   )}
                 </div>
 
-                <div style={styles.thumbs}>
+                <div style={styles.thumbs} className="eq-thumbs-refrigerador">
                   {r.foto_etiqueta_url && (
                     <a href={r.foto_etiqueta_url} target="_blank" rel="noreferrer">
-                      <img src={r.foto_etiqueta_url} alt="etiqueta" style={styles.thumb} className="eq-thumb" />
+                      <img src={r.foto_etiqueta_url} alt="etiqueta" style={styles.thumb} className="eq-thumb eq-thumb-etiqueta" />
                     </a>
                   )}
                   {r.foto_equipamento_url && (
                     <a href={r.foto_equipamento_url} target="_blank" rel="noreferrer">
-                      <img src={r.foto_equipamento_url} alt="equipamento" style={styles.thumb} className="eq-thumb" />
+                      <img src={r.foto_equipamento_url} alt="equipamento" style={styles.thumb} className="eq-thumb eq-thumb-equipamento" />
                     </a>
                   )}
                 </div>

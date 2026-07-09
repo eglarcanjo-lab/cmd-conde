@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.30.0** — Equipamentos: editar cadastro + regra de Comodatado (PDV/data entrega)
+Versão atual: **v3.30.1** — PDF de Refrigeradores: 1 item por página, fotos maiores
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.30.1 — 2026-07-09
+- **PDF de Refrigeradores: 1 item por página, fotos maiores.** Só na lista de Refrigeradores
+  (Material Leve não muda): no PDF/impressão, cada refrigerador agora força quebra de página
+  (`page-break-after`), e as fotos ficam bem maiores — principalmente a da etiqueta (até 480px,
+  `object-fit: contain` pra não cortar nada), pra dar pra ler os dados dela impressa.
 
 ### v3.30.0 — 2026-07-09
 - **Equipamentos: editar cadastro.** Refrigeradores e Material Leve agora têm botão "✏️ Editar"

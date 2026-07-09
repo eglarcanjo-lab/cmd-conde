@@ -72,6 +72,20 @@ export default function Refrigeradores() {
              continuar. Vira bloco simples com margem no lugar do gap pra fluir entre páginas. */
           .eq-lista { display: block !important; }
           .eq-lista > div { margin: 0 0 12px !important; }
+
+          /* Refrigeradores: 1 item por página, foto da etiqueta bem maior pra dar
+             pra ler os dados dela impressa (Material Leve não entra nessa regra). */
+          .eq-card-refrigerador {
+            page-break-after: always;
+            break-after: page;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .eq-lista > .eq-card-refrigerador:last-child { page-break-after: auto; break-after: auto; }
+          .eq-thumbs-refrigerador { flex-direction: column !important; align-items: center !important; gap: 20px !important; margin-top: 12px; }
+          .eq-thumb-etiqueta { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 480px !important; object-fit: contain !important; }
+          .eq-thumb-equipamento { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 320px !important; object-fit: contain !important; }
+
           @page { size: A4; margin: 12mm 14mm; }
         }
       `}</style>
