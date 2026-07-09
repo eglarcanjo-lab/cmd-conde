@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const db = require("../services/db");
-const { authMiddleware, gestorOnly } = require("../middleware/auth");
+const { authMiddleware, adminDiretorOnly } = require("../middleware/auth");
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,6 +14,7 @@ cloudinary.config({
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } }); // 20MB
 
 router.use(authMiddleware);
+router.use(adminDiretorOnly);
 
 function gerarId() {
   return Date.now().toString(36).toUpperCase();
@@ -171,8 +172,8 @@ router.put(
   }
 );
 
-// DELETE /api/refrigeradores/:id — só gestor
-router.delete("/:id", gestorOnly, async (req, res) => {
+// DELETE /api/refrigeradores/:id
+router.delete("/:id", async (req, res) => {
   try {
     await db.query("DELETE FROM refrigeradores WHERE id = $1", [req.params.id]);
     return res.json({ success: true });

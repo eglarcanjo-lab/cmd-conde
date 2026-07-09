@@ -30,7 +30,7 @@ export default function HomeDashboard() {
     { icon: "🚨", label: "Incidentes",    route: "/incidentes" },
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer" },
     { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento" },
-    { icon: "🧊", label: "Refrigeradores", route: "/refrigeradores" },
+    { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
   ].filter((m) => !(isAdminOuDirector && m.soRn));
 
   const W = aberto ? 198 : 56;

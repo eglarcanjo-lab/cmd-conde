@@ -66,7 +66,7 @@ export default function MaterialLeveForm({ pdvBase, onSalvo }) {
 
   return (
     <div style={styles.formCard}>
-      <h3 style={styles.formTitle}>🎯 Novo Material Leve</h3>
+      <h3 style={styles.formTitle}>📦 Novo Material Leve</h3>
 
       <div style={styles.field}>
         <label style={styles.label}>Tipo *</label>
@@ -77,11 +77,11 @@ export default function MaterialLeveForm({ pdvBase, onSalvo }) {
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Quantidade</label>
           <input style={styles.input} type="number" min="0" value={campos.quantidade} onChange={(e) => setCampo("quantidade", e.target.value)} />
         </div>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Data</label>
           <input style={styles.input} type="date" value={campos.dataRegistro} onChange={(e) => setCampo("dataRegistro", e.target.value)} />
         </div>
@@ -96,7 +96,7 @@ export default function MaterialLeveForm({ pdvBase, onSalvo }) {
         <label style={styles.label}>Foto do material *</label>
         <FotoPicker
           label="Tirar foto do material"
-          iconeAtivo="🎯"
+          iconeAtivo="📦"
           foto={foto}
           preview={preview}
           onFile={selecionarFoto}

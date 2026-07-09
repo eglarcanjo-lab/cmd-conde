@@ -119,7 +119,7 @@ function AppContent() {
       <Route path="/detalhamento/entrega-relatorio" element={<PrivateRoute><ErrorBoundary><EntregaRelatorio /></ErrorBoundary></PrivateRoute>} />
       <Route path="/produtos" element={<PrivateRoute><ErrorBoundary><Produtos /></ErrorBoundary></PrivateRoute>} />
       <Route path="/faturados-buffer" element={<PrivateRoute><ErrorBoundary><FaturadosBuffer /></ErrorBoundary></PrivateRoute>} />
-      <Route path="/refrigeradores" element={<PrivateRoute><ErrorBoundary><Refrigeradores /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/refrigeradores" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><Refrigeradores /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
@@ -127,7 +127,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.28.1";
+export const APP_VERSION = "v3.28.2";
 
 export default function App() {
   return (

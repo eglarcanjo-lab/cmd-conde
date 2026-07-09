@@ -29,7 +29,11 @@ const styles = {
   formCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "clamp(16px,4vw,28px)", display: "flex", flexDirection: "column", gap: "18px" },
   formTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", color: "rgba(255,255,255,0.8)" },
   linha: { display: "flex", gap: "14px", flexWrap: "wrap" },
-  field: { display: "flex", flexDirection: "column", gap: "8px", flex: "1 1 220px" },
+  // field: uso avulso (largura total, fora de .linha). Dentro de .linha, use fieldLinha —
+  // o "flex: 1 1 220px" aqui viraria base de ALTURA (220px) se aplicado direto num filho
+  // do formCard (coluna), criando aquele espaço vazio enorme entre os campos.
+  field: { display: "flex", flexDirection: "column", gap: "8px" },
+  fieldLinha: { display: "flex", flexDirection: "column", gap: "8px", flex: "1 1 220px" },
   label: { color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em" },
   hint: { color: "rgba(255,255,255,0.25)", fontSize: "0.75rem" },
   input: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", padding: "12px", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", width: "100%" },

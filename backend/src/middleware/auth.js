@@ -35,4 +35,12 @@ function gestorOnly(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, adminOnly, gestorOnly };
+// Middleware para rotas exclusivas de admin + director (ex: Equipamentos)
+function adminDiretorOnly(req, res, next) {
+  if (!["admin", "director"].includes(req.user?.perfil)) {
+    return res.status(403).json({ error: "Acesso restrito a admin/diretor." });
+  }
+  next();
+}
+
+module.exports = { authMiddleware, adminOnly, gestorOnly, adminDiretorOnly };

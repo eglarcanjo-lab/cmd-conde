@@ -8,7 +8,9 @@ import RefrigeradorList from "./RefrigeradorList";
 import MaterialLeveForm from "./MaterialLeveForm";
 import MaterialLeveList from "./MaterialLeveList";
 
-const PERFIS_GESTOR = ["admin", "director", "gv1", "gv3"];
+// Módulo inteiro já é restrito a admin/director (ver App.jsx e HomeClassic.jsx) —
+// aqui só decide se mostra o botão de excluir dentro do módulo.
+const PERFIS_GESTOR = ["admin", "director"];
 
 export default function Refrigeradores() {
   const { usuario, logout } = useAuth();
@@ -35,7 +37,7 @@ export default function Refrigeradores() {
         <div style={styles.headerLeft}>
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
-            <h1 style={styles.title}>🧊 Refrigeradores</h1>
+            <h1 style={styles.title}>🧊 Equipamentos</h1>
             <p style={styles.subtitle}>{usuario?.nome}</p>
           </div>
         </div>
@@ -54,7 +56,7 @@ export default function Refrigeradores() {
             style={{ ...styles.abaTopoBtn, ...(abaTopo === "material-leve" ? styles.abaTopoBtnAtivo : {}) }}
             onClick={() => { setAbaTopo("material-leve"); setSubAba("novo"); }}
           >
-            🎯 Material Leve
+            📦 Material Leve
           </button>
         </div>
 

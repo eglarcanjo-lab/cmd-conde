@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.28.1** — Refrigeradores: câmera nativa direta no app Android
+Versão atual: **v3.28.2** — Equipamentos: ajustes de layout, nome e acesso restrito a admin/diretor
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.28.2 — 2026-07-09
+- **Equipamentos (ex-Refrigeradores): ajustes.** Renomeado o módulo de "Refrigeradores" para
+  "Equipamentos" (as sub-abas internas "Refrigeradores" e "Material Leve" continuam iguais);
+  emoji do Material Leve trocado de 🎯 para 📦. Corrigido bug de layout onde os campos "Item"
+  e "Tipo" (fora de uma linha de campos lado a lado) herdavam `flex: 1 1 220px` como altura
+  mínima em vez de largura, criando um espaço vazio enorme antes do próximo campo — separado
+  em `styles.field` (avulso) vs `styles.fieldLinha` (dentro de uma linha). Módulo restrito a
+  Admin e Diretor: some do menu pra outros perfis, bloqueia acesso direto pela URL
+  (`perfisPermitidos` no front) e agora também retorna 403 no backend pra quem não for
+  admin/director (antes só o DELETE era restrito a gestor; GET/POST/PUT estavam abertos a
+  qualquer usuário logado).
 
 ### v3.28.1 — 2026-07-09
 - **Refrigeradores: câmera nativa direta no app Android.** No app instalado (Capacitor),

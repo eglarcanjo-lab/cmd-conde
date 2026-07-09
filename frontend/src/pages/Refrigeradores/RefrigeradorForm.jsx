@@ -88,36 +88,36 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Modelo</label>
           <input style={styles.input} placeholder="Ex: VN50A FDI42" value={campos.modelo} onChange={(e) => setCampo("modelo", e.target.value)} />
         </div>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Serial</label>
           <input style={styles.input} value={campos.serial} onChange={(e) => setCampo("serial", e.target.value)} />
         </div>
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>R.G.</label>
           <input style={styles.input} value={campos.rg} onChange={(e) => setCampo("rg", e.target.value)} />
         </div>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Número de controle interno</label>
           <input style={styles.input} value={campos.numeroControleInterno} onChange={(e) => setCampo("numeroControleInterno", e.target.value)} />
         </div>
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Categoria</label>
           <select style={styles.select} value={campos.categoria} onChange={(e) => setCampo("categoria", e.target.value)}>
             <option value="">Selecione...</option>
             {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Status</label>
           <select style={styles.select} value={campos.status} onChange={(e) => setCampo("status", e.target.value)}>
             {STATUS_OPCOES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -126,18 +126,18 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Data de chegada</label>
           <input style={styles.input} type="date" value={campos.dataChegada} onChange={(e) => setCampo("dataChegada", e.target.value)} />
         </div>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>PDV (opcional)</label>
           <PdvPicker pdvBase={pdvBase} value={pdv} onChange={setPdv} />
         </div>
       </div>
 
       <div style={styles.linha}>
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Foto da etiqueta *</label>
           <FotoPicker
             label="Tirar foto da etiqueta"
@@ -148,7 +148,7 @@ export default function RefrigeradorForm({ pdvBase, onSalvo }) {
           />
         </div>
 
-        <div style={styles.field}>
+        <div style={styles.fieldLinha}>
           <label style={styles.label}>Foto do refrigerador *</label>
           <FotoPicker
             label="Tirar foto do refrigerador"
