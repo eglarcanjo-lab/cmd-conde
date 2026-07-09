@@ -82,9 +82,16 @@ export default function Refrigeradores() {
             flex-direction: column !important;
           }
           .eq-lista > .eq-card-refrigerador:last-child { page-break-after: auto; break-after: auto; }
-          .eq-thumbs-refrigerador { flex-direction: column !important; align-items: center !important; gap: 20px !important; margin-top: 12px; }
-          .eq-thumb-etiqueta { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 480px !important; object-fit: contain !important; }
-          .eq-thumb-equipamento { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 320px !important; object-fit: contain !important; }
+          .eq-thumbs-refrigerador { flex-direction: column !important; align-items: center !important; gap: 16px !important; margin-top: 12px; }
+          /* Mesmo tamanho pras duas fotos — grande o bastante pra ler a etiqueta, mas
+             cabendo as duas empilhadas numa única página A4 junto com os dados do card. */
+          .eq-thumb-etiqueta, .eq-thumb-equipamento {
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: 380px !important;
+            object-fit: contain !important;
+          }
 
           @page { size: A4; margin: 12mm 14mm; }
         }

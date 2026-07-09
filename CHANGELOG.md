@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.30.1** — PDF de Refrigeradores: 1 item por página, fotos maiores
+Versão atual: **v3.30.2** — fix: PDF de Refrigeradores, fotos do mesmo tamanho cabendo numa página
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.30.2 — 2026-07-09
+- **Fix: PDF de Refrigeradores — em algumas páginas a segunda foto ia sozinha pra próxima
+  página.** As fotos de etiqueta (480px) e equipamento (320px) empilhadas, juntas com o texto
+  do card, passavam da altura de uma página A4 em alguns casos. Igualei as duas em 380px — cabem
+  as duas empilhadas numa página só, com folga.
 
 ### v3.30.1 — 2026-07-09
 - **PDF de Refrigeradores: 1 item por página, fotos maiores.** Só na lista de Refrigeradores
