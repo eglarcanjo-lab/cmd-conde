@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx-js-style";
+import { formatarDataBR } from "./dateUtils";
 
 function baixar(linhas, aba, prefixoArquivo) {
   const ws = XLSX.utils.json_to_sheet(linhas);
@@ -19,10 +20,10 @@ export function exportarExcelRefrigeradores(itens) {
     "Controle Interno": r.numero_controle_interno || "",
     PDV: r.nome_fantasia || "",
     "Cód. PDV": r.cod_pdv || "",
-    "Data de Chegada": r.data_chegada || "",
-    "Data de Entrega": r.data_entrega || "",
+    "Data de Chegada": formatarDataBR(r.data_chegada),
+    "Data de Entrega": formatarDataBR(r.data_entrega),
     "Número da Nota": r.numero_nota || "",
-    "Data de Emissão": r.data_emissao || "",
+    "Data de Emissão": formatarDataBR(r.data_emissao),
   }));
   baixar(linhas, "Refrigeradores", "refrigeradores");
 }
@@ -33,7 +34,7 @@ export function exportarExcelMaterialLeve(itens) {
     Quantidade: m.quantidade ?? "",
     PDV: m.nome_fantasia || "",
     "Cód. PDV": m.cod_pdv || "",
-    Data: m.data_registro || "",
+    Data: formatarDataBR(m.data_registro),
   }));
   baixar(linhas, "Material Leve", "material_leve");
 }

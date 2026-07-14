@@ -4,6 +4,7 @@ import styles from "./styles";
 import PdvPicker from "./PdvPicker";
 import FotoPicker from "./FotoPicker";
 import { comprimirFoto } from "./imageUtils";
+import { paraInputDate } from "./dateUtils";
 
 const CATEGORIAS = ["SOPI", "VISA"];
 const STATUS_OPCOES = ["Estoque", "Comodatado", "Quebrado"];
@@ -47,8 +48,8 @@ export default function RefrigeradorForm({ pdvBase, itemEditando, onSalvo, onCan
       item: r.item || "", modelo: r.modelo || "", serial: r.serial || "", rg: r.rg || "",
       categoria: r.categoria || "", status: r.status || "Estoque",
       numeroControleInterno: r.numero_controle_interno || "",
-      dataChegada: r.data_chegada || new Date().toISOString().split("T")[0],
-      dataEntrega: r.data_entrega || "", numeroNota: r.numero_nota || "", dataEmissao: r.data_emissao || "",
+      dataChegada: paraInputDate(r.data_chegada) || new Date().toISOString().split("T")[0],
+      dataEntrega: paraInputDate(r.data_entrega), numeroNota: r.numero_nota || "", dataEmissao: paraInputDate(r.data_emissao),
     });
     setPdv(r.cod_pdv ? { cod_pdv: r.cod_pdv, nome_fantasia: r.nome_fantasia } : null);
     setFotoEtiqueta(null); setPreviewEtiqueta(r.foto_etiqueta_url || null);

@@ -4,6 +4,7 @@ import styles from "./styles";
 import PdvPicker from "./PdvPicker";
 import FotoPicker from "./FotoPicker";
 import { comprimirFoto } from "./imageUtils";
+import { paraInputDate } from "./dateUtils";
 
 const SUGESTOES_TIPO = ["Cartaz", "Adesivo", "Hack Expositor", "Banner", "Faixa", "Móbile"];
 
@@ -32,7 +33,7 @@ export default function MaterialLeveForm({ pdvBase, itemEditando, onSalvo, onCan
     const m = itemEditando;
     setCampos({
       tipo: m.tipo || "", quantidade: String(m.quantidade ?? "1"),
-      dataRegistro: m.data_registro || new Date().toISOString().split("T")[0],
+      dataRegistro: paraInputDate(m.data_registro) || new Date().toISOString().split("T")[0],
     });
     setPdv(m.cod_pdv ? { cod_pdv: m.cod_pdv, nome_fantasia: m.nome_fantasia } : null);
     setFoto(null); setPreview(m.foto_url || null);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import styles from "./styles";
 import { exportarExcelMaterialLeve } from "./exportUtils";
+import { formatarDataBR } from "./dateUtils";
 
 export default function MaterialLeveList({ podeExcluir, refreshKey, onEditar }) {
   const [itens, setItens] = useState([]);
@@ -66,7 +67,7 @@ export default function MaterialLeveList({ podeExcluir, refreshKey, onEditar }) 
 
               <div style={styles.cardGrid}>
                 <div><span style={styles.cardGridLabel}>Quantidade: </span><span style={styles.cardGridValor}>{m.quantidade ?? "—"}</span></div>
-                <div><span style={styles.cardGridLabel}>Data: </span><span style={styles.cardGridValor}>{m.data_registro || "—"}</span></div>
+                <div><span style={styles.cardGridLabel}>Data: </span><span style={styles.cardGridValor}>{formatarDataBR(m.data_registro) || "—"}</span></div>
               </div>
 
               {m.foto_url && (

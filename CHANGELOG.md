@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.2** — fix: PDF Refrigeradores comodatado estourava a página
+Versão atual: **v3.31.3** — fix: datas exibindo ISO cru em vez de DD/MM/AAAA
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.3 — 2026-07-09
+- **Fix: datas de Equipamentos exibindo ISO cru** (`2026-07-09T00:00:00.000Z`) em vez de
+  `09/07/2026`. O Postgres devolve colunas `DATE` em ISO completo depois do `JSON.stringify`;
+  faltava formatar antes de mostrar. Corrigido na lista (Chegada, Entrega, Emissão, Data do
+  Material Leve), no Excel exportado e no pré-preenchimento do formulário de edição — esse
+  último também tinha o bug de deixar os campos de data em branco ao editar um item existente,
+  porque `<input type="date">` só aceita `AAAA-MM-DD`, não o ISO completo.
 
 ### v3.31.2 — 2026-07-09
 - **Fix: PDF de Refrigeradores — item Comodatado estourava a página, jogando uma foto sozinha
