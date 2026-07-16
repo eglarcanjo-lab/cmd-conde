@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.4** — fix: 429 de infraestrutura não é mais rotulado de "Google Sheets"
+Versão atual: **v3.31.5** — fix: importar mês anterior grava o mês certo (pedidos + fat. mktp)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,20 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.5 — 2026-07-16
+- **Importar mês anterior agora grava o mês certo (pedidos + faturamento mktp).**
+  - **Pedidos:** as vendas por cliente×produto eram calculadas só das linhas do **mês
+    corrente** — importar o arquivo de junho em julho gravava **nada**. Agora a função
+    recebe o arquivo inteiro (ela já agrupa pelo mês real de cada linha e substitui só os
+    meses presentes). AP e Pontos já funcionavam.
+  - **Faturamento Mktp:** carimbava sempre o mês de "hoje" e substituía a tabela inteira.
+    Agora respeita o **mês de referência da UI** e **acumula por mês** (substitui só o mês
+    importado). O cálculo da RV passou a filtrar **só o mês corrente** do mktp.
+  - **Proteção:** arquivo de pedidos **sem linhas do mês corrente** não recalcula mais os
+    snapshots de cobertura/volume RV (antes zerava o que estava valendo). Obs.: rank/mix
+    ainda são recalculados do arquivo importado — ao importar meses antigos, **reimporte o
+    mês atual por último**. (Processador.)
 
 ### v3.31.4 — 2026-07-16
 - **429 de infraestrutura não é mais rotulado de "Google Sheets".** O proxy de import
