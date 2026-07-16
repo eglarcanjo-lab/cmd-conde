@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const DIAS = [
+  { key: "TODOS", label: "Todos" },
   { key: "SEG", label: "Segunda" },
   { key: "TER", label: "Terça" },
   { key: "QUA", label: "Quarta" },
@@ -34,7 +35,11 @@ const parseHl = (v) => {
 export default function PDVs() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [diaFiltro, setDiaFiltro] = useState(getDiaHoje());
+  // Domingo não tem rota → começa em "Todos" (senão a lista abria vazia)
+  const [diaFiltro, setDiaFiltro] = useState(() => {
+    const hoje = getDiaHoje();
+    return hoje === "DOM" ? "TODOS" : hoje;
+  });
   const [aba, setAba] = useState("dia");
   const [busca, setBusca] = useState("");
   const [pdvBase, setPdvBase] = useState([]);
@@ -94,8 +99,8 @@ export default function PDVs() {
   const mapaInad = {};
   inadimplentes.forEach((i) => { mapaInad[i.cod_pdv] = i; });
 
-  // PDVs do dia selecionado
-  const pdvsDia = pdvBase.filter((p) => {
+  // PDVs do dia selecionado ("TODOS" = sem filtro de dia — mostra a base inteira)
+  const pdvsDia = diaFiltro === "TODOS" ? pdvBase : pdvBase.filter((p) => {
     const dia = String(p.dia_visita || "").trim().toUpperCase().split("/")[0].trim();
     return dia === diaFiltro;
   });
@@ -199,7 +204,7 @@ export default function PDVs() {
               key={d.key}
               className="pdv-dia-btn"
               style={{ ...styles.diaBtn, ...(diaFiltro === d.key ? styles.diaBtnAtivo : {}) }}
-              onClick={() => setDiaFiltro(d.key)}
+              onClick={() => setDiaFiltro(diaFiltro === d.key && d.key !== "TODOS" ? "TODOS" : d.key)}
             >
               {d.label}
             </button>
@@ -209,7 +214,7 @@ export default function PDVs() {
         {/* Dashboard */}
         <div style={styles.dashRow} className="pdv-dash">
           <div style={styles.dashCard}>
-            <p style={styles.dashLabel} className="pdv-dash-label">📅 Visitas hoje</p>
+            <p style={styles.dashLabel} className="pdv-dash-label">{diaFiltro === "TODOS" ? "🏪 PDVs (todos os dias)" : "📅 Visitas do dia"}</p>
             <p style={styles.dashVal} className="pdv-dash-val">{totalDia}</p>
           </div>
           <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }}>

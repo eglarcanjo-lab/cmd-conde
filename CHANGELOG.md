@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.0** — sidebar estilo Vercel na home desktop (grupos com sub-abas)
+Versão atual: **v3.33.1** — PDVs: opção "Todos" no filtro de dia (ver a base inteira)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.1 — 2026-07-16
+- **PDVs: opção "Todos" no filtro de dia.** Novo chip "Todos" no seletor (mostra a base
+  inteira, sem filtro de dia); clicar de novo no dia ativo também desmarca (cai em Todos).
+  Domingo passa a abrir em "Todos" (antes a lista abria vazia — não há rota DOM). O card
+  do topo indica "PDVs (todos os dias)" quando sem filtro.
 
 ### v3.33.0 — 2026-07-16
 - **Sidebar estilo Vercel na home desktop (admin/diretor).** A barra lateral agora começa
