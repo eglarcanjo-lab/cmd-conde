@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.32.0** — RV histórica por mês (simulador recalcula/exibe qualquer mês)
+Versão atual: **v3.33.0** — sidebar estilo Vercel na home desktop (grupos com sub-abas)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.0 — 2026-07-16
+- **Sidebar estilo Vercel na home desktop (admin/diretor).** A barra lateral agora começa
+  **expandida** (rótulos visíveis), com hover, itens compactos e **seções separadas**.
+  Itens com sub-abas **expandem no lugar** (chevron ▸/▾): o grupo **Admin** abre as 16
+  sub-abas com **link direto** (`/admin?tab=...` — Usuários, Metas, Arquivos, Alertas…).
+  Diretor vê o atalho RV Simulador. Botão ◀ recolhe pra trilho de ícones (clicar num grupo
+  recolhido reexpande). Só desktop + admin/diretor (RN/mobile seguem na home clássica).
 
 ### v3.32.0 — 2026-07-16
 - **RV histórica por mês.** A cadeia inteira da RV virou mensal (era "só o mês corrente,
