@@ -129,8 +129,9 @@ export default function RvSimulador() {
     setRecalc(true);
     setMsg("");
     try {
-      await api.post("/api/rv/calcular");
-      setMsg("✅ RV recalculada!");
+      // Recalcula a RV do MÊS selecionado no simulador (não só o corrente)
+      await api.post("/api/rv/calcular", { mes: mesRef });
+      setMsg(`✅ RV recalculada (${mesRef})!`);
       await carregar();
     } catch { setMsg("❌ Erro ao recalcular."); }
     finally {

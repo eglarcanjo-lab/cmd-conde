@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.5** — fix: importar mês anterior grava o mês certo (pedidos + fat. mktp)
+Versão atual: **v3.32.0** — RV histórica por mês (simulador recalcula/exibe qualquer mês)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.32.0 — 2026-07-16
+- **RV histórica por mês.** A cadeia inteira da RV virou mensal (era "só o mês corrente,
+  substituindo tudo" — por isso o simulador de junho mostrava volumes 0/0):
+  - `rv_volume` agora é gerado do **mês real de cada linha** dos pedidos e **acumula por
+    mês**; `rv_pontos_bees` e `rv_ap` também passam a acumular (o mês já vinha do arquivo).
+  - `calcular_rv_completa(mes)` aceita o **mês-alvo**: filtra metas/volume/pontos/mktp/AP
+    daquele mês e grava `rv_resultado` **acumulando por mês** (histórico preservado).
+  - **Simulador RV: "Recalcular RV" agora recalcula o mês selecionado** (não só o corrente).
+  - Backend: `/api/rv`, `/pontos`, `/ap`, `/relatorio` e o resumo de Volumes filtram por
+    mês (default: corrente) — necessário agora que as tabelas guardam vários meses.
+  - Fluxo p/ preencher um mês antigo: importar pedidos + mktp (com mês de referência) +
+    ter metas do mês no admin → selecionar o mês no simulador → Recalcular RV.
 
 ### v3.31.5 — 2026-07-16
 - **Importar mês anterior agora grava o mês certo (pedidos + faturamento mktp).**

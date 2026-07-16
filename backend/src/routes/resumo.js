@@ -32,7 +32,9 @@ router.get("/volumes", async (req, res) => {
       readSheet("rv_resultado").catch(() => []),
       readSheet("rv_volume").catch(() => []),
     ]);
-    const rv = filtrarPorPerfil(rvResultAll, req.user, "setor");
+    // rv_resultado acumula meses — usa só o mês pedido (linhas antigas sem mês contam).
+    const rv = filtrarPorPerfil(rvResultAll, req.user, "setor")
+      .filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
     const vol = filtrarPorPerfil(rvVolAll, req.user, "setor");
 
     const soma = (campo) => rv.reduce((s, r) => s + num(r[campo]), 0);

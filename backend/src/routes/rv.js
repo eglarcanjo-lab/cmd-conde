@@ -11,36 +11,37 @@ router.use(authMiddleware);
 
 const { filtrarPorPerfil } = require("../utils/perfil");
 
-// GET /api/rv?mes=YYYY-MM — volumes/resultado do mês selecionado
+// GET /api/rv?mes=YYYY-MM — volumes/resultado do mês selecionado.
+// rv_resultado agora ACUMULA meses; sem ?mes, usa o mês corrente (comportamento antigo).
 router.get("/", async (req, res) => {
   try {
-    const { mes } = req.query;
+    const mes = req.query.mes || new Date().toISOString().slice(0, 7);
     const dados = await readSheet("rv_resultado");
-    const filtrado = mes ? dados.filter((r) => String(r.mes_referencia) === mes) : dados;
+    const filtrado = dados.filter((r) => String(r.mes_referencia) === mes);
     return res.json(filtrarPorPerfil(filtrado, req.user));
   } catch {
     return res.json([]);
   }
 });
 
-// GET /api/rv/pontos?mes=YYYY-MM
+// GET /api/rv/pontos?mes=YYYY-MM (tabela acumula meses; sem ?mes = mês corrente)
 router.get("/pontos", async (req, res) => {
   try {
-    const { mes } = req.query;
+    const mes = req.query.mes || new Date().toISOString().slice(0, 7);
     const dados = await readSheet("rv_pontos_bees");
-    const filtrado = mes ? dados.filter((r) => String(r.mes_referencia) === mes) : dados;
+    const filtrado = dados.filter((r) => !r.mes_referencia || String(r.mes_referencia) === mes);
     return res.json(filtrarPorPerfil(filtrado, req.user));
   } catch {
     return res.json([]);
   }
 });
 
-// GET /api/rv/ap
+// GET /api/rv/ap (tabela acumula meses; sem ?mes = mês corrente)
 router.get("/ap", async (req, res) => {
   try {
-    const { mes } = req.query;
+    const mes = req.query.mes || new Date().toISOString().slice(0, 7);
     const dados = await readSheet("rv_ap");
-    const filtrado = mes ? dados.filter((r) => r.mes_referencia === mes) : dados;
+    const filtrado = dados.filter((r) => !r.mes_referencia || String(r.mes_referencia) === mes);
     return res.json(filtrarPorPerfil(filtrado, req.user));
   } catch {
     return res.json([]);
@@ -79,11 +80,16 @@ router.get("/relatorio", async (req, res) => {
     return res.status(403).json({ error: "Acesso negado." });
   }
   try {
-    const [rvData, apData, usuarios] = await Promise.all([
+    // rv_resultado/rv_ap acumulam meses — filtra pelo mês pedido (default: corrente).
+    const mes = req.query.mes || new Date().toISOString().slice(0, 7);
+    const [rvAll, apAll, usuarios] = await Promise.all([
       readSheet("rv_resultado"),
       readSheet("rv_ap"),
       readSheet("usuarios").catch(() => []),
     ]);
+    const doMes = (r) => !r.mes_referencia || String(r.mes_referencia) === mes;
+    const rvData = rvAll.filter(doMes);
+    const apData = apAll.filter(doMes);
 
     const nomeMap = {};
     usuarios.forEach(u => { if (u.cod) nomeMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
@@ -107,12 +113,13 @@ router.get("/relatorio", async (req, res) => {
   }
 });
 
-// POST /api/rv/calcular
+// POST /api/rv/calcular { mes? } — recalcula a RV do mês informado (default: corrente)
 router.post("/calcular", adminOnly, async (req, res) => {
   try {
+    const mes = String(req.body?.mes || "").trim();
     const response = await axios.post(
       `${PROCESSOR_URL}/api/rv/calcular`,
-      {},
+      mes ? { mes } : {},
       { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 60000 }
     );
     return res.json(response.data);
