@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.2** — PDVs: coluna "Setor" nas tabelas (só admin)
+Versão atual: **v3.33.3** — import retenta sozinho quando a infra responde 429
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.3 — 2026-07-16
+- **Import retenta sozinho quando a infra responde 429.** A borda Render/Cloudflare às
+  vezes recusa a requisição (429 sem corpo) enquanto o processador redeploya/acorda — o
+  proxy de import agora **retenta até 3x** (esperas de 15s/30s) antes de desistir. Como
+  429 significa que a requisição nem chegou a ser processada, a retentativa é segura.
+  Detalhe técnico: o FormData é reconstruído a cada tentativa (o stream é consumido no
+  envio); os ~100 linhas de appends viraram um loop sobre a lista de campos.
 
 ### v3.33.2 — 2026-07-16
 - **PDVs: coluna "Setor responsável" — só para o admin.** Nas tabelas Visitas do Dia,

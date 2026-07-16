@@ -36,114 +36,58 @@ router.post(
   async (req, res) => {
     try {
       console.log("Arquivos recebidos:", Object.keys(req.files || {}));
-      const form = new FormData();
 
-      // Passa o mês de referência explícito para o processador
-      // O processador usará esse valor em relatórios sem coluna de data (visitação, score5, etc.)
+      // Mês de referência explícito — o processador usa em relatórios sem coluna de data
       const mesRef = req.body?.mes_ref || "";
-      if (mesRef) {
-        form.append("mes_ref", mesRef);
-        console.log("Mês de referência:", mesRef);
-      }
+      if (mesRef) console.log("Mês de referência:", mesRef);
 
-      if (req.files?.clientes?.[0]) {
-        const f = req.files.clientes[0];
-        form.append("clientes", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.pedidos?.[0]) {
-        const f = req.files.pedidos[0];
-        form.append("pedidos", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_promo?.[0]) {
-        const f = req.files.spo_promo[0];
-        form.append("spo_promo", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_dto?.[0]) {
-        const f = req.files.spo_dto[0];
-        form.append("spo_dto", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_coaching?.[0]) {
-        const f = req.files.spo_coaching[0];
-        form.append("spo_coaching", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_visitacao_gv?.[0]) {
-        const f = req.files.spo_visitacao_gv[0];
-        form.append("spo_visitacao_gv", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.faturamento_mktp?.[0]) {
-        const f = req.files.faturamento_mktp[0];
-        form.append("faturamento_mktp", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.pontos_bees?.[0]) {
-        const f = req.files.pontos_bees[0];
-        form.append("pontos_bees", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.produtos_base?.[0]) {
-        const f = req.files.produtos_base[0];
-        form.append("produtos_base", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.tasks?.[0]) {
-        const f = req.files.tasks[0];
-        form.append("tasks", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_alone?.[0]) {
-        const f = req.files.spo_alone[0];
-        form.append("spo_alone", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_ap?.[0]) {
-        const f = req.files.spo_ap[0];
-        form.append("spo_ap", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_portfolio_ideal?.[0]) {
-        const f = req.files.spo_portfolio_ideal[0];
-        form.append("spo_portfolio_ideal", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_scanntech?.[0]) {
-        const f = req.files.spo_scanntech[0];
-        form.append("spo_scanntech", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_loja_ideal?.[0]) {
-        const f = req.files.spo_loja_ideal[0];
-        form.append("spo_loja_ideal", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_cupons?.[0]) {
-        const f = req.files.spo_cupons[0];
-        form.append("spo_cupons", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.spo_rgb?.[0]) {
-        const f = req.files.spo_rgb[0];
-        form.append("spo_rgb", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.inadimplencia?.[0]) {
-        const f = req.files.inadimplencia[0];
-        form.append("inadimplencia", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.devolucoes?.[0]) {
-        const f = req.files.devolucoes[0];
-        form.append("devolucoes", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.grade?.[0]) {
-        const f = req.files.grade[0];
-        form.append("grade", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.faturados?.[0]) {
-        const f = req.files.faturados[0];
-        form.append("faturados", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
-      if (req.files?.buffer?.[0]) {
-        const f = req.files.buffer[0];
-        form.append("buffer", f.buffer, { filename: f.originalname, contentType: f.mimetype });
-      }
+      // Campos repassados ao processador (mesmos nomes do uploadFields acima)
+      const CAMPOS = [
+        "clientes", "pedidos", "spo_promo", "spo_dto", "spo_coaching", "spo_visitacao_gv",
+        "faturamento_mktp", "pontos_bees", "produtos_base", "tasks", "spo_alone", "spo_ap",
+        "spo_portfolio_ideal", "spo_scanntech", "spo_loja_ideal", "spo_cupons", "spo_rgb",
+        "inadimplencia", "devolucoes", "grade", "faturados", "buffer",
+      ];
+      // FormData é um STREAM: é consumido no envio. Cada tentativa monta um form NOVO
+      // (os buffers dos arquivos continuam em memória — reutilizáveis).
+      const montarForm = () => {
+        const form = new FormData();
+        if (mesRef) form.append("mes_ref", mesRef);
+        for (const campo of CAMPOS) {
+          const f = req.files?.[campo]?.[0];
+          if (f) form.append(campo, f.buffer, { filename: f.originalname, contentType: f.mimetype });
+        }
+        return form;
+      };
 
-      const response = await axios.post(`${PROCESSOR_URL}/api/processar/ambos`, form, {
-        headers: {
-          ...form.getHeaders(),
-          "X-Processor-Token": PROCESSOR_TOKEN,
-        },
-        timeout: 290000, // 290s
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      });
+      // A borda do Render/Cloudflare às vezes responde 429 (sem corpo JSON) quando o
+      // processador está redeployando/acordando. 429 = a requisição NEM foi processada,
+      // então é SEGURO retentar. Até 3 tentativas, esperando 15s/30s entre elas.
+      let response;
+      for (let tentativa = 1; ; tentativa++) {
+        try {
+          const form = montarForm();
+          response = await axios.post(`${PROCESSOR_URL}/api/processar/ambos`, form, {
+            headers: {
+              ...form.getHeaders(),
+              "X-Processor-Token": PROCESSOR_TOKEN,
+            },
+            timeout: 290000, // 290s
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+          });
+          break;
+        } catch (errTent) {
+          const st = errTent.response?.status;
+          if (st === 429 && tentativa < 3) {
+            const esperaMs = tentativa * 15000;
+            console.warn(`Processador respondeu 429 (infra) — tentativa ${tentativa}/3; aguardando ${esperaMs / 1000}s...`);
+            await new Promise((r) => setTimeout(r, esperaMs));
+            continue;
+          }
+          throw errTent;
+        }
+      }
 
       // Limpa cache do servidor para que os dados novos sejam lidos imediatamente
       cacheClearAll();
