@@ -278,13 +278,14 @@ export default function PDVs() {
                 mapaInad={mapaInad}
                 coberturaOk={coberturaOk}
                 onSelect={setPdvSelecionado}
+                mostrarSetor={usuario?.perfil === "admin"}
               />
             )}
             {aba === "sem_compra" && (
-              <TabelaSemCompra pdvs={filtrar(semCompra)} mapaInad={mapaInad} onSelect={(p) => { setPdvSelecionado(pdvBase.find(b => b.cod_pdv === p.cod_pdv) || p); }} />
+              <TabelaSemCompra pdvs={filtrar(semCompra)} mapaInad={mapaInad} mostrarSetor={usuario?.perfil === "admin"} onSelect={(p) => { setPdvSelecionado(pdvBase.find(b => b.cod_pdv === p.cod_pdv) || p); }} />
             )}
             {aba === "inadimplentes" && (
-              <TabelaInadimplentes pdvs={filtrar(inadimplentes)} />
+              <TabelaInadimplentes pdvs={filtrar(inadimplentes)} mostrarSetor={usuario?.perfil === "admin"} />
             )}
             {aba === "rank" && (
               <TabelaRank
@@ -407,7 +408,7 @@ export default function PDVs() {
   );
 }
 
-function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
+function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect, mostrarSetor }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
@@ -416,6 +417,7 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
           <tr>
             <th style={styles.th}>Cód</th>
             <th style={styles.th}>Nome</th>
+            {mostrarSetor && <th style={styles.th}>Setor</th>}
             <th style={styles.th} className="pdv-col-hide">Cidade</th>
             <th style={styles.th}>Dias s/ Compra</th>
             <th style={styles.th}>Inad.</th>
@@ -428,6 +430,7 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
               <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
                 <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
+                {mostrarSetor && <td style={{ ...styles.td, color: "#7DBA3D", fontWeight: "600" }}>{p.setor || "—"}</td>}
                 <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
                 <td style={{ ...styles.td, color: Number(p.dias_sem_compra) > 30 ? "#f87171" : "#4ade80" }}>
                   {p.dias_sem_compra || "—"} dias
@@ -444,7 +447,7 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect }) {
   );
 }
 
-function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
+function TabelaSemCompra({ pdvs, mapaInad, onSelect, mostrarSetor }) {
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
@@ -454,6 +457,7 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
             <th style={styles.th}>#</th>
             <th style={styles.th}>Cód</th>
             <th style={styles.th}>Nome</th>
+            {mostrarSetor && <th style={styles.th}>Setor</th>}
             <th style={styles.th} className="pdv-col-hide">Cidade</th>
             <th style={styles.th}>Dias</th>
             <th style={styles.th} className="pdv-col-hide">Última Compra</th>
@@ -466,6 +470,7 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.3)" }}>{i + 1}</td>
               <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
               <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
+              {mostrarSetor && <td style={{ ...styles.td, color: "#7DBA3D", fontWeight: "600" }}>{p.setor || "—"}</td>}
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
               <td style={{ ...styles.td, color: "#f87171", fontWeight: "700" }}>{p.dias_sem_compra} dias</td>
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.ultima_compra}</td>
@@ -478,7 +483,7 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect }) {
   );
 }
 
-function TabelaInadimplentes({ pdvs }) {
+function TabelaInadimplentes({ pdvs, mostrarSetor }) {
   // Ordena por valor_total decrescente; empata pela qtd_titulos
   const lista = [...pdvs].sort((a, b) => {
     const vA = Number(a.valor_total) || 0;
@@ -495,6 +500,7 @@ function TabelaInadimplentes({ pdvs }) {
           <tr>
             <th style={styles.th}>Cód</th>
             <th style={styles.th}>Nome</th>
+            {mostrarSetor && <th style={styles.th}>Setor</th>}
             <th style={styles.th}>Títulos</th>
             <th style={styles.th}>Valor Total</th>
             <th style={styles.th}>Atraso</th>
@@ -509,6 +515,7 @@ function TabelaInadimplentes({ pdvs }) {
               <tr key={p.cod_pdv} style={styles.tr}>
                 <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>
                 <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
+                {mostrarSetor && <td style={{ ...styles.td, color: "#7DBA3D", fontWeight: "600" }}>{p.setor || "—"}</td>}
                 <td style={styles.td}>{p.qtd_titulos || "—"}</td>
                 <td style={{ ...styles.td, color: valor > 0 ? "#f87171" : "rgba(255,255,255,0.3)", fontWeight: valor > 0 ? "600" : "400" }}>
                   {valor > 0 ? `R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}

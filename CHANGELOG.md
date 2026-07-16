@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.1** — PDVs: opção "Todos" no filtro de dia (ver a base inteira)
+Versão atual: **v3.33.2** — PDVs: coluna "Setor" nas tabelas (só admin)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.2 — 2026-07-16
+- **PDVs: coluna "Setor responsável" — só para o admin.** Nas tabelas Visitas do Dia,
+  Sem Compra e Inadimplentes, o admin vê o setor de cada PDV (verde, ao lado do nome).
+  RNs/GVs/diretor não veem a coluna (nada muda pra eles).
 
 ### v3.33.1 — 2026-07-16
 - **PDVs: opção "Todos" no filtro de dia.** Novo chip "Todos" no seletor (mostra a base
