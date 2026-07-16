@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.3** — import retenta sozinho quando a infra responde 429
+Versão atual: **v3.33.4** — dieta de memória no import de pedidos (fix 502/OOM)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.4 — 2026-07-16
+- **Dieta de memória no import de pedidos (fix do 502).** As melhorias recentes (vendas de
+  todos os meses do arquivo, volume RV mensal) passaram a copiar o arquivo **inteiro** em
+  memória no Render free (512MB) e o worker morria (502 = OOM). Ajustes no processador:
+  - `_processar_vendas_cliente` copia **só as 8 colunas usadas** (antes copiava o df
+    completo 2×, incluindo `_categorias` com listas Python — o maior peso).
+  - `processar_volume_rv` **vetorizado** com `explode` (antes iterava linha a linha o
+    arquivo inteiro montando lista de dicts). Mesmo resultado, muito mais leve e rápido.
 
 ### v3.33.3 — 2026-07-16
 - **Import retenta sozinho quando a infra responde 429.** A borda Render/Cloudflare às
