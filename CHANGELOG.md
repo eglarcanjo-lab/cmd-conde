@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.31.3** — fix: datas exibindo ISO cru em vez de DD/MM/AAAA
+Versão atual: **v3.31.4** — fix: 429 de infraestrutura não é mais rotulado de "Google Sheets"
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.31.4 — 2026-07-16
+- **429 de infraestrutura não é mais rotulado de "Google Sheets".** O proxy de import
+  (`arquivos.js`) tinha um fallback antigo que, ao receber **qualquer 429 sem corpo JSON**
+  do processador (ex.: Render reiniciando/limitando durante deploy), mostrava "Quota do
+  Google Sheets excedida" — mesmo com o app 100% em SQL. Agora a mensagem diz a verdade
+  ("infraestrutura limitou a requisição — aguarde 1-2 min") e o backend loga status +
+  corpo cru da resposta pra diagnóstico. O processador em si já respondia certo (só marca
+  429 se for gspread real, e o /health prova `impls: sql_service`).
 
 ### v3.31.3 — 2026-07-09
 - **Fix: datas de Equipamentos exibindo ISO cru** (`2026-07-09T00:00:00.000Z`) em vez de

@@ -158,11 +158,16 @@ router.post(
 
       return res.json(response.data);
     } catch (err) {
-      console.error("Erro ao chamar processador:", err.message);
+      console.error("Erro ao chamar processador:", err.message,
+        "| status:", err.response?.status,
+        "| body:", String(typeof err.response?.data === "string" ? err.response.data : JSON.stringify(err.response?.data || "")).slice(0, 300));
       const status = err.response?.status;
       let msg = err.response?.data?.error;
       if (!msg && status === 429) {
-        msg = "Quota do Google Sheets excedida. Importe menos relatórios por vez e aguarde ~1 min.";
+        // 429 SEM corpo JSON não vem do processador (que sempre manda {error}) — vem da
+        // infraestrutura (proxy/Render reiniciando ou limitando). Não é o Google Sheets.
+        msg = "O servidor do processador limitou/recusou a requisição (429 da infraestrutura — " +
+              "provavelmente reiniciando após deploy ou sob carga). Aguarde ~1-2 min e tente de novo.";
       }
       msg = msg || err.message || "Erro ao processar arquivos.";
       return res.status(status === 429 ? 429 : 500).json({ error: msg });
