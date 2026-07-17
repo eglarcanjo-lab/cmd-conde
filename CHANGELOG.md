@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.5** — Recalcular RV: timeout 180s (cold start) + erro real na tela
+Versão atual: **v3.34.0** — fix: Atendimento Produtivo lia colunas erradas (13400% etc.)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.34.0 — 2026-07-16
+- **Atendimento Produtivo (AP) — correção do parse (o "13400%").** O layout do relatório do
+  BI mudou e o código lia pelas colunas antigas, embaralhando tudo (ex.: lia o "134" de
+  Compradores como Tasks → 134×100 = 13400%). Remapeado para o layout atual, com os **3
+  formatos** certos por KPI: Positivação/Tasks em **% de texto** (Meta / Visitas
+  Positivadas), Compradores em **contagem** (Meta.1 / Real), GPS e Rota Efetiva em **fração
+  0-1** (×100). Valida no setor 101: Tasks 56,6/52,6 · Compradores 134/100 · GPS 124,4/88,2
+  · Rota 99,5/80 — os 4 verdes. Frontend: card de Compradores mostra **número** (não "%").
+  Reimportar o AP e recalcular a RV do mês pra aplicar. (Processador + frontend.)
 
 ### v3.33.5 — 2026-07-16
 - **"Recalcular RV" não falha mais no cold start.** O proxy tinha timeout de 60s — se o

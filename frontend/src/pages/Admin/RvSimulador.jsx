@@ -27,10 +27,10 @@ const SETORES = [
 ];
 
 const KPIS_AP = [
-  { key: "tasks_compra",   label: "Tasks de Compra" },
-  { key: "compradores",    label: "Compradores"     },
-  { key: "rota_efetiva",   label: "Rota Efetiva"    },
-  { key: "gps",            label: "GPS"             },
+  { key: "tasks_compra",   label: "Tasks de Compra", pct: true  },
+  { key: "compradores",    label: "Compradores",     pct: false }, // contagem (134 / 100)
+  { key: "rota_efetiva",   label: "Rota Efetiva",    pct: true  },
+  { key: "gps",            label: "GPS",             pct: true  },
 ];
 
 function pct(real, meta) {
@@ -444,13 +444,14 @@ export default function RvSimulador() {
                 const real = parseFloat(apSel?.[`${kpi.key}_real`] || 0);
                 const meta = parseFloat(apSel?.[`${kpi.key}_meta`] || 0);
                 const ok   = meta > 0 && real >= meta;
+                const fmt  = (n) => kpi.pct ? `${n.toFixed(1)}%` : `${Math.round(n)}`;
                 return (
                   <div key={kpi.key} style={{ ...s.apKpi, borderColor: ok ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)" }}>
                     <span style={s.apKpiLabel}>{kpi.label}</span>
                     <span style={{ fontSize: "1.2rem", fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>
-                      {real.toFixed(1)}%
+                      {fmt(real)}
                     </span>
-                    <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" }}>meta: {meta.toFixed(1)}%</span>
+                    <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem" }}>meta: {fmt(meta)}</span>
                     <span>{ok ? "✅" : "❌"}</span>
                   </div>
                 );
