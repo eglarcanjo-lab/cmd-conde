@@ -117,14 +117,17 @@ router.get("/relatorio", async (req, res) => {
 router.post("/calcular", adminOnly, async (req, res) => {
   try {
     const mes = String(req.body?.mes || "").trim();
+    // 180s: o processador no plano grátis pode levar ~50s só pra acordar (cold start).
     const response = await axios.post(
       `${PROCESSOR_URL}/api/rv/calcular`,
       mes ? { mes } : {},
-      { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 60000 }
+      { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 180000 }
     );
     return res.json(response.data);
   } catch (err) {
-    return res.status(500).json({ error: "Erro ao calcular RV." });
+    console.error("rv/calcular:", err.message, "| body:", JSON.stringify(err.response?.data || "").slice(0, 200));
+    const detalhe = err.response?.data?.error || (err.code === "ECONNABORTED" ? "tempo esgotado (processador acordando?) — tente de novo" : err.message);
+    return res.status(500).json({ error: `Erro ao calcular RV: ${detalhe}` });
   }
 });
 

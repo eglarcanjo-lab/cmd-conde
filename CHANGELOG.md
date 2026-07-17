@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.33.4** — dieta de memória no import de pedidos (fix 502/OOM)
+Versão atual: **v3.33.5** — Recalcular RV: timeout 180s (cold start) + erro real na tela
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.33.5 — 2026-07-16
+- **"Recalcular RV" não falha mais no cold start.** O proxy tinha timeout de 60s — se o
+  processador estivesse dormindo (plano grátis acorda em ~50s), estourava e mostrava
+  "Erro ao recalcular" genérico. Agora: timeout de **180s** e a mensagem de erro traz o
+  **motivo real** (inclusive "processador acordando — tente de novo").
 
 ### v3.33.4 — 2026-07-16
 - **Dieta de memória no import de pedidos (fix do 502).** As melhorias recentes (vendas de
