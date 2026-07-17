@@ -217,14 +217,14 @@ export default function RvSimulador() {
   // (a sala mistura OFF e ON). Piso 70% e teto 150% no atingimento AGREGADO.
   // Sem trava de AP (é a foto consolidada da sala).
   function computeGV() {
-    let poGV = 0, pontosReal = 0;
+    let poSum = 0, pontosReal = 0;
     let rC = 0, mC = 0, rN = 0, mN = 0, rM = 0, mM = 0, rMa = 0, mMa = 0;
     const wPO = { pontos: 0, cerveja: 0, nab: 0, mktp: 0, match: 0 };
     SETORES.forEach(s2 => {
       const rv = getRv(s2.cod); const pontos = getPontos(s2.cod);
       const w = PESOS[s2.tipo] || PESOS.ON;
       const po = parseFloat(rv?.po_total || 1000);
-      poGV += po;
+      poSum += po;
       pontosReal += parseFloat(pontos?.pontos_real || 0);
       rC += parseFloat(rv?.real_cerveja || 0);     mC += parseFloat(rv?.meta_cerveja || 0);
       rN += parseFloat(rv?.real_nab || 0);         mN += parseFloat(rv?.meta_nab || 0);
@@ -233,19 +233,23 @@ export default function RvSimulador() {
       wPO.pontos += w.pontos * po; wPO.cerveja += w.cerveja * po; wPO.nab += w.nab * po;
       wPO.mktp += w.marketplace * po; wPO.match += w.match * po;
     });
-    const metaPontos = META_PONTOS * SETORES.length;
-    const pesoPontos = poGV > 0 ? wPO.pontos / poGV : 50;
-    const pesoCerv = poGV > 0 ? wPO.cerveja / poGV : 25;
-    const pesoNab  = poGV > 0 ? wPO.nab / poGV : 0;
-    const pesoMktp = poGV > 0 ? wPO.mktp / poGV : 0;
-    const pesoMatch = poGV > 0 ? wPO.match / poGV : 0;
+    // O GV é avaliado como UM RN: PO = R$ 1.000 (média dos POs), teto R$ 1.500 (150%).
+    // O que soma é o ATINGIMENTO (metas e realizados de toda a sala); o PO NÃO soma.
+    // Peso de cada indicador = média ponderada pelo PO (a sala mistura OFF/ON).
+    const po = SETORES.length > 0 ? poSum / SETORES.length : 1000;
+    const metaPontos = META_PONTOS * SETORES.length; // meta de pontos da sala (agregada)
+    const pesoPontos = poSum > 0 ? wPO.pontos / poSum : 50;
+    const pesoCerv = poSum > 0 ? wPO.cerveja / poSum : 25;
+    const pesoNab  = poSum > 0 ? wPO.nab / poSum : 0;
+    const pesoMktp = poSum > 0 ? wPO.mktp / poSum : 0;
+    const pesoMatch = poSum > 0 ? wPO.match / poSum : 0;
 
     const pctPts = Math.min(metaPontos > 0 ? (pontosReal / metaPontos) * 100 : 0, 150);
-    const rvPontos = pctPts >= 70 ? (poGV * pesoPontos / 100) * (pctPts / 100) : 0;
-    const rvCerv  = calcRvPot(rC,  mC,  pesoCerv,  poGV);
-    const rvNab   = calcRvPot(rN,  mN,  pesoNab,   poGV);
-    const rvMktp  = pesoMktp  > 0.001 ? calcRvPot(rM,  mM,  pesoMktp,  poGV) : 0;
-    const rvMatch = pesoMatch > 0.001 ? calcRvPot(rMa, mMa, pesoMatch, poGV) : 0;
+    const rvPontos = pctPts >= 70 ? (po * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvCerv  = calcRvPot(rC,  mC,  pesoCerv,  po);
+    const rvNab   = calcRvPot(rN,  mN,  pesoNab,   po);
+    const rvMktp  = pesoMktp  > 0.001 ? calcRvPot(rM,  mM,  pesoMktp,  po) : 0;
+    const rvMatch = pesoMatch > 0.001 ? calcRvPot(rMa, mMa, pesoMatch, po) : 0;
     const total = rvPontos + rvCerv + rvNab + rvMktp + rvMatch;
 
     const linhas = [
@@ -255,7 +259,7 @@ export default function RvSimulador() {
       { label: "🛒 Marketplace (GMV R$)",  real: rM,  meta: mM,  peso: pesoMktp,  rv: rvMktp  },
       { label: "🤝 Match (Vol HL)",        real: rMa, meta: mMa, peso: pesoMatch, rv: rvMatch },
     ].filter(l => l.peso > 0.001);
-    return { poGV, total, linhas, nRns: SETORES.length };
+    return { poGV: po, total, linhas, nRns: SETORES.length };
   }
 
   const gv = computeGV();

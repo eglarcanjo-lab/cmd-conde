@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.35.0** — Simulador RV: quadro consolidado do GV (soma da sala)
+Versão atual: **v3.35.1** — fix GV: PO = R$ 1.000 (teto R$ 1.500), o PO não soma
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.35.1 — 2026-07-16
+- **Fix do quadro do GV:** o GV é avaliado como **um RN** — PO = **R$ 1.000** (teto
+  **R$ 1.500**, Pontos Force R$ 500 até 150% = 750). O que **soma** é o **atingimento**
+  (metas e realizados de toda a sala); o **PO não soma** (na v3.35.0 eu somava os POs →
+  dava R$ 11.000, errado). Peso de cada indicador segue a média ponderada pelo PO.
 
 ### v3.35.0 — 2026-07-16
 - **Simulador RV: quadro consolidado do GV.** Novo card no topo que **soma metas e
