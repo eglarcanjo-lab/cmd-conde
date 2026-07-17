@@ -212,6 +212,54 @@ export default function RvSimulador() {
     };
   }
 
+  // ── GV consolidado — soma metas/realizados de TODA a sala e aplica a MESMA
+  // memória de cálculo dos RNs. Peso de cada indicador = média ponderada pelo PO
+  // (a sala mistura OFF e ON). Piso 70% e teto 150% no atingimento AGREGADO.
+  // Sem trava de AP (é a foto consolidada da sala).
+  function computeGV() {
+    let poGV = 0, pontosReal = 0;
+    let rC = 0, mC = 0, rN = 0, mN = 0, rM = 0, mM = 0, rMa = 0, mMa = 0;
+    const wPO = { pontos: 0, cerveja: 0, nab: 0, mktp: 0, match: 0 };
+    SETORES.forEach(s2 => {
+      const rv = getRv(s2.cod); const pontos = getPontos(s2.cod);
+      const w = PESOS[s2.tipo] || PESOS.ON;
+      const po = parseFloat(rv?.po_total || 1000);
+      poGV += po;
+      pontosReal += parseFloat(pontos?.pontos_real || 0);
+      rC += parseFloat(rv?.real_cerveja || 0);     mC += parseFloat(rv?.meta_cerveja || 0);
+      rN += parseFloat(rv?.real_nab || 0);         mN += parseFloat(rv?.meta_nab || 0);
+      rM += parseFloat(rv?.real_marketplace || 0); mM += parseFloat(rv?.meta_marketplace || 0);
+      rMa += parseFloat(rv?.real_match || 0);      mMa += parseFloat(rv?.meta_match || 0);
+      wPO.pontos += w.pontos * po; wPO.cerveja += w.cerveja * po; wPO.nab += w.nab * po;
+      wPO.mktp += w.marketplace * po; wPO.match += w.match * po;
+    });
+    const metaPontos = META_PONTOS * SETORES.length;
+    const pesoPontos = poGV > 0 ? wPO.pontos / poGV : 50;
+    const pesoCerv = poGV > 0 ? wPO.cerveja / poGV : 25;
+    const pesoNab  = poGV > 0 ? wPO.nab / poGV : 0;
+    const pesoMktp = poGV > 0 ? wPO.mktp / poGV : 0;
+    const pesoMatch = poGV > 0 ? wPO.match / poGV : 0;
+
+    const pctPts = Math.min(metaPontos > 0 ? (pontosReal / metaPontos) * 100 : 0, 150);
+    const rvPontos = pctPts >= 70 ? (poGV * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvCerv  = calcRvPot(rC,  mC,  pesoCerv,  poGV);
+    const rvNab   = calcRvPot(rN,  mN,  pesoNab,   poGV);
+    const rvMktp  = pesoMktp  > 0.001 ? calcRvPot(rM,  mM,  pesoMktp,  poGV) : 0;
+    const rvMatch = pesoMatch > 0.001 ? calcRvPot(rMa, mMa, pesoMatch, poGV) : 0;
+    const total = rvPontos + rvCerv + rvNab + rvMktp + rvMatch;
+
+    const linhas = [
+      { label: "⭐ Pontos Force",          real: pontosReal, meta: metaPontos, peso: pesoPontos, rv: rvPontos },
+      { label: "🍺 Cerveja (Volume HL)",   real: rC,  meta: mC,  peso: pesoCerv,  rv: rvCerv  },
+      { label: "🥤 NAB (Volume HL)",       real: rN,  meta: mN,  peso: pesoNab,   rv: rvNab   },
+      { label: "🛒 Marketplace (GMV R$)",  real: rM,  meta: mM,  peso: pesoMktp,  rv: rvMktp  },
+      { label: "🤝 Match (Vol HL)",        real: rMa, meta: mMa, peso: pesoMatch, rv: rvMatch },
+    ].filter(l => l.peso > 0.001);
+    return { poGV, total, linhas, nRns: SETORES.length };
+  }
+
+  const gv = computeGV();
+
   const sel  = SETORES.find(s => s.cod === setorSel);
   const tot  = computeTotals(setorSel);
   const apSel = getAp(setorSel);
@@ -395,6 +443,54 @@ export default function RvSimulador() {
 
       {loading ? <p style={s.msgLoad}>Carregando...</p> : (
         <>
+          {/* ── GV — Consolidado da sala ──────────────────────────────── */}
+          <div style={sGV.card}>
+            <div style={sGV.head}>
+              <div>
+                <span style={sGV.title}>👨‍💼 GV — Consolidado da Sala</span>
+                <span style={sGV.sub}>soma de metas e realizados dos {gv.nRns} RNs · mesma memória de cálculo</span>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={sGV.total}>R$ {fmtBrl(gv.total)}</div>
+                <div style={sGV.totalSub}>
+                  {gv.poGV > 0 ? ((gv.total / gv.poGV) * 100).toFixed(1) : "0"}% do PO · de R$ {fmtBrl(gv.poGV)}
+                </div>
+              </div>
+            </div>
+            <table style={sGV.table}>
+              <thead>
+                <tr>
+                  <th style={{ ...sGV.th, textAlign: "left" }}>Indicador</th>
+                  <th style={sGV.th}>Realizado</th>
+                  <th style={sGV.th}>Meta</th>
+                  <th style={sGV.th}>Atingimento</th>
+                  <th style={sGV.th}>Peso</th>
+                  <th style={{ ...sGV.th, textAlign: "right" }}>Parcela (R$)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gv.linhas.map((l, i) => {
+                  const p = pct(l.real, l.meta);
+                  const cor = p >= 100 ? "#4ade80" : p >= 70 ? "#7DBA3D" : "#f87171";
+                  return (
+                    <tr key={i}>
+                      <td style={{ ...sGV.td, textAlign: "left", color: "#fff" }}>{l.label}</td>
+                      <td style={sGV.td}>{fmtNum(l.real, 0)}</td>
+                      <td style={sGV.td}>{fmtNum(l.meta, 0)}</td>
+                      <td style={{ ...sGV.td, color: cor, fontWeight: "700" }}>{p.toFixed(1)}%</td>
+                      <td style={{ ...sGV.td, color: "rgba(255,255,255,0.5)" }}>{l.peso.toFixed(1)}%</td>
+                      <td style={{ ...sGV.td, textAlign: "right", color: l.rv > 0 ? "#4ade80" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>R$ {fmtBrl(l.rv)}</td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td style={{ ...sGV.tdTot, textAlign: "left" }} colSpan={5}>TOTAL RV DO GV</td>
+                  <td style={{ ...sGV.tdTot, textAlign: "right", color: "#4ade80" }}>R$ {fmtBrl(gv.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           {/* ── Seletor de RN ─────────────────────────────────────────── */}
           <div style={s.seletorWrap}>
             {SETORES.map(s2 => {
@@ -578,6 +674,19 @@ export default function RvSimulador() {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
+const sGV = {
+  card: { background: "linear-gradient(135deg, rgba(125,186,61,0.10), rgba(255,255,255,0.03))", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "14px", padding: "16px 18px", marginBottom: "20px" },
+  head: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "12px" },
+  title: { color: "#fff", fontSize: "1.05rem", fontWeight: "700", display: "block" },
+  sub: { color: "rgba(255,255,255,0.45)", fontSize: "0.76rem" },
+  total: { color: "#4ade80", fontSize: "1.7rem", fontWeight: "800", lineHeight: 1 },
+  totalSub: { color: "rgba(255,255,255,0.5)", fontSize: "0.74rem", marginTop: "2px" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" },
+  th: { textAlign: "center", color: "rgba(255,255,255,0.45)", fontWeight: "500", fontSize: "0.72rem", padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.1)" },
+  td: { textAlign: "center", color: "rgba(255,255,255,0.8)", padding: "7px 8px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontVariantNumeric: "tabular-nums" },
+  tdTot: { color: "#fff", fontWeight: "800", padding: "9px 8px", borderTop: "2px solid rgba(125,186,61,0.4)", fontSize: "0.95rem" },
+};
+
 const s = {
   toolbar: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" },
   toolbarRight: { display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" },
