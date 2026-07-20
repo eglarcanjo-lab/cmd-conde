@@ -129,14 +129,19 @@ export default function RvSimulador() {
     setRecalc(true);
     setMsg("");
     try {
-      // Recalcula a RV do MÊS selecionado no simulador (não só o corrente)
-      await api.post("/api/rv/calcular", { mes: mesRef });
-      setMsg(`✅ RV recalculada (${mesRef})!`);
+      // Recalcula a RV do MÊS selecionado. timeout alto: o processador (plano grátis)
+      // pode levar ~50s só pra acordar (cold start) antes de calcular.
+      const r = await api.post("/api/rv/calcular", { mes: mesRef }, { timeout: 180000 });
+      setMsg(`✅ ${r.data?.message || `RV recalculada (${mesRef})!`}`);
       await carregar();
-    } catch { setMsg("❌ Erro ao recalcular."); }
-    finally {
+      setTimeout(() => setMsg(""), 4000);
+    } catch (e) {
+      const det = e?.response?.data?.error
+        || (e?.code === "ECONNABORTED" ? "tempo esgotado (servidor acordando) — tente de novo" : e?.message)
+        || "erro";
+      setMsg(`❌ Erro ao recalcular: ${det}`); // fica na tela até a próxima ação
+    } finally {
       setRecalc(false);
-      setTimeout(() => setMsg(""), 3000);
     }
   }
 
