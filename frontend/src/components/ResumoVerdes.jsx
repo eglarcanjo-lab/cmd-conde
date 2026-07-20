@@ -38,15 +38,14 @@ export default function ResumoVerdes() {
   const meses = data ? data.meses : [];
   const temDados = meses.length > 0 && serie.some((x) => x > 0);
 
-  // pontos da linha (normaliza para a altura do gráfico)
-  const W = 300, H = 96, padX = 16, top = 12, bot = 84;
+  // pontos da linha — X = centro da "coluna" de cada mês (alinha 1:1 com os rótulos flex).
+  const W = 300, H = 96, top = 12, bot = 84;
   const max = Math.max(1, ...serie);
   const n = meses.length;
-  const pts = meses.map((_, i) => {
-    const x = n <= 1 ? W / 2 : padX + (i * (W - 2 * padX)) / (n - 1);
-    const y = bot - (serie[i] / max) * (bot - top);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const colX = (i) => ((i + 0.5) / Math.max(n, 1)) * W;
+  const pts = meses.map((_, i) => `${colX(i).toFixed(1)},${(bot - (serie[i] / max) * (bot - top)).toFixed(1)}`);
+  const x0 = colX(0), xN = colX(Math.max(n - 1, 0));
+  const multiAno = new Set(meses.map((m) => String(m).slice(0, 4))).size > 1; // mostra o ano se >1 ano
   const atual = serie.length ? serie[serie.length - 1] : 0;
 
   return (
@@ -66,13 +65,12 @@ export default function ResumoVerdes() {
       ) : (
         <>
           <div style={S.val}>{fmt(atual)} <small style={S.unit}>{aba === "cobertura" ? "coberturas" : "caixas"} · {rotMes(meses[meses.length - 1])}</small></div>
-          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" style={{ marginTop: 4 }} aria-hidden="true">
-            <line x1={padX} y1={bot} x2={W - padX} y2={bot} stroke="rgba(255,255,255,0.12)" />
-            {n > 1 && <polyline points={`${padX},${bot} ${pts.join(" ")} ${W - padX},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
-            <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-            {pts.map((p, i) => { const [x, y] = p.split(","); return <circle key={i} cx={x} cy={y} r="2.6" fill="#7DBA3D" />; })}
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 4, display: "block" }} aria-hidden="true">
+            <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
+            {n > 1 && <polyline points={`${x0},${bot} ${pts.join(" ")} ${xN},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
+            <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
           </svg>
-          <div style={S.mlab}>{meses.map((m) => <span key={m} style={S.ms}>{rotMes(m)}</span>)}</div>
+          <div style={S.mlab}>{meses.map((m) => <span key={m} style={S.ms}>{rotMes(m)}{multiAno ? <small style={{ opacity: 0.55 }}>/{String(m).slice(2, 4)}</small> : null}</span>)}</div>
         </>
       )}
     </div>

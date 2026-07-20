@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.35.2** — Recalcular RV: timeout 180s no front + erro real (fim do "cold start")
+Versão atual: **v3.35.3** — fix visual do gráfico Verdes (linha alinhada aos meses + ano)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
