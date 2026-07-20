@@ -1,0 +1,23 @@
+name: keepalive
+
+# Mantém o backend (Render free) acordado — sem isso ele "dorme" após ~15 min de
+# inatividade e a próxima carga leva ~50s (cold start). Pinga o /health a cada 10 min.
+# Só o backend (o processador pode dormir; imports toleram o cold start).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend /health
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 70 https://cmd-conde.onrender.com/health || echo "000")
+            echo "tentativa $i -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "backend não respondeu 200 (pode estar acordando) — não falha o job"

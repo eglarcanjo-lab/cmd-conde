@@ -309,8 +309,17 @@ async function initializeSheets() {
 // ── Seleção de backend de dados (flag reversível) ─────────────────────────────
 // DATA_BACKEND=sql → usa o PostgreSQL (sqlRepo); qualquer outro valor → Google Sheets.
 // Padrão = sheets (zero impacto até virar a chave). Reversível: basta mudar a env.
+// Fallback do readSheetMonths no Sheets: lê tudo e filtra pelos meses (sem otimização,
+// mas mantém a assinatura do encaixe). No SQL o sqlRepo filtra direto no banco.
+async function readSheetMonths(tabName, monthCol, months) {
+  const ms = new Set((months || []).filter(Boolean).map(String));
+  if (!ms.size) return [];
+  const all = await readSheet(tabName);
+  return all.filter((r) => ms.has(String(r[monthCol] || "").slice(0, 7)) || ms.has(String(r[monthCol] || "")));
+}
+
 const _sheetsImpl = {
-  readSheet, appendRow, appendRows, updateRow, deleteRow,
+  readSheet, readSheetMonths, appendRow, appendRows, updateRow, deleteRow,
   sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
 };
 

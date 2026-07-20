@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { readSheet } = require("../services/sheets");
+const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { filtrarPorPerfil } = require("../utils/perfil");
 
@@ -120,26 +120,27 @@ router.get("/foco-ne", async (req, res) => {
 // + GAP em HL. Escopo por perfil. Diário vem de vd_pdv/vd_produto; rank do trimestre (vendas).
 router.get("/rankings", async (req, res) => {
   try {
+    // Janela (fuso BR): mês atual, anterior e trimestre = 3 meses de CALENDÁRIO.
+    // (Antes o trimestre eram os "3 meses mais recentes das vendas"; com 2025 carregado
+    //  isso obrigava a ler a tabela inteira. Agora derivamos do calendário e lemos só esses.)
+    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const cutoffDia = brNow.getDate() - 1;
+    const y = brNow.getFullYear(), m0 = brNow.getMonth();
+    const ym = (yy, mm0) => { const d = new Date(yy, mm0, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+    const mesAtual = ym(y, m0);
+    const mesAnterior = ym(y, m0 - 1);
+    const trimestreMeses = [2, 1, 0].map((k) => ym(y, m0 - k));
+    const triSet = new Set(trimestreMeses);
+
+    // Lê SÓ os meses necessários (filtro no SQL) — não traz o histórico de 2025 inteiro.
     const [vendas, vdPdv, vdProd] = await Promise.all([
-      readSheet("vendas_cliente_produto").catch(() => []),
-      readSheet("vd_pdv").catch(() => []),
-      readSheet("vd_produto").catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", trimestreMeses).catch(() => []),
+      readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
+      readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
     ]);
     const vendasF = filtrarPorPerfil(vendas, req.user, "setor");
     const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
     const vdProdF = filtrarPorPerfil(vdProd, req.user, "setor");
-
-    // Trimestre p/ ranking: 3 meses mais recentes das vendas mensais.
-    const meses = [...new Set(vendasF.map((v) => String(v.mes_referencia || "").slice(0, 7)).filter(Boolean))].sort();
-    const triSet = new Set(meses.slice(-3));
-
-    // Janela D-1 (fuso BR): dia 01..(hoje-1); mês atual vs mês anterior.
-    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const cutoffDia = brNow.getDate() - 1;
-    const y = brNow.getFullYear(), m0 = brNow.getMonth();
-    const mesAtual = `${y}-${String(m0 + 1).padStart(2, "0")}`;
-    const prev = new Date(y, m0 - 1, 1);
-    const mesAnterior = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
 
     const triDe = (rows, codF, nomeF) => {
       const t = {};
@@ -196,8 +197,16 @@ router.get("/rankings", async (req, res) => {
 // Fonte: vendas_cliente_produto (acumula por mês) + produtos_base (categoria) + produtos_full (hl_caixa).
 router.get("/verdes", async (req, res) => {
   try {
+    // Janela rolante dos últimos 13 meses (fuso BR) — evita ler as vendas inteiras
+    // (2025+) e deixa a linha do gráfico limpa.
+    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const y = brNow.getFullYear(), m0 = brNow.getMonth();
+    const janela = Array.from({ length: 13 }, (_, k) => {
+      const d = new Date(y, m0 - (12 - k), 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    });
     const [vendas, prodBase, prodFull] = await Promise.all([
-      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", janela).catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("produtos_full").catch(() => []),
     ]);

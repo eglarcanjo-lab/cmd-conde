@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.35.3** — fix visual do gráfico Verdes (linha alinhada aos meses + ano)
+Versão atual: **v3.36.0** — performance: cache de leitura + leitura por mês + keep-alive
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -47,6 +47,19 @@ migração/reaprendizado dos usuários.
 
 ## Histórico
 
+### v3.36.0 — 2026-07-20
+- **Otimização de carregamento (abas lentas).** Três frentes:
+  - **Cache de leitura no backend (SQL):** o `sqlRepo` relia a tabela inteira (`SELECT *`)
+    a cada request — agora cacheia por **60s** por tabela (invalida em escrita e após
+    import/recálculo). Ganho geral em Produtos, PDVs e navegação.
+  - **Leitura por mês:** novo `readSheetMonths` (filtro no SQL). Os **rankings** da home
+    leem só o **trimestre** (vendas) e **mês atual+anterior** (vd_pdv/vd_produto), não o
+    histórico inteiro (pesou após carregar 2025). **Verdes** lê só os **últimos 13 meses**.
+  - **Keep-alive:** GitHub Action pinga o `/health` do backend a cada 10 min → acaba o
+    cold start de ~50s. Recalcular RV agora **limpa o cache** (reflete na hora).
+
+### v3.35.3 — 2026-07-16 · fix visual do gráfico Verdes (alinhado aos meses + ano)
+### v3.35.2 — 2026-07-16 · Recalcular RV com timeout 180s + erro real
 ### v3.35.1 — 2026-07-16
 - **Fix do quadro do GV:** o GV é avaliado como **um RN** — PO = **R$ 1.000** (teto
   **R$ 1.500**, Pontos Force R$ 500 até 150% = 750). O que **soma** é o **atingimento**

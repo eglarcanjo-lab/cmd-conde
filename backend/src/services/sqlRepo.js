@@ -54,25 +54,56 @@ async function colunas(tab) {
   return cols;
 }
 
-// Lê a aba inteira → array de objetos com valores em string (ordem estável por ctid)
-async function readSheet(tab) {
-  let r;
-  try {
-    r = await query(`SELECT * FROM ${qIdent(tab)} ORDER BY ctid`);
-  } catch (e) {
-    // tabela inexistente → vazio (igual ao Sheets quando a aba não existe)
-    if (e && e.code === "42P01") return [];
-    throw e;
-  }
-  return r.rows.map((row) => {
+function _rowsToObjs(rows) {
+  return rows.map((row) => {
     const o = {};
     for (const k of Object.keys(row)) o[k] = toStr(row[k]);
     return o;
   });
 }
 
+// Cache de dados por tabela (TTL curto). Sem ele, cada page load fazia um SELECT *
+// completo das tabelas grandes (pdv_base/cobertura ~20k, vendas ~200k...). Invalidado
+// nas escritas e por cacheClearAll (chamado após import via /ambos e recálculo de RV).
+const _dataCache = new Map(); // tab → { data, ts }
+const DATA_TTL = 60 * 1000;   // 60s
+
+// Lê a aba inteira → array de objetos com valores em string (ordem estável por ctid)
+async function readSheet(tab) {
+  const c = _dataCache.get(tab);
+  if (c && Date.now() - c.ts < DATA_TTL) return c.data;
+  let r;
+  try {
+    r = await query(`SELECT * FROM ${qIdent(tab)} ORDER BY ctid`);
+  } catch (e) {
+    // tabela inexistente → vazio (igual ao Sheets quando a aba não existe)
+    if (e && e.code === "42P01") { _dataCache.set(tab, { data: [], ts: Date.now() }); return []; }
+    throw e;
+  }
+  const out = _rowsToObjs(r.rows);
+  _dataCache.set(tab, { data: out, ts: Date.now() });
+  return out;
+}
+
+// Lê SÓ as linhas dos meses informados (filtro no SQL) — para tabelas grandes
+// particionadas por mês (vendas_cliente_produto, vd_pdv, vd_produto), evitando trazer o
+// histórico inteiro (2025+). Não cacheia (a chave varia com os meses).
+async function readSheetMonths(tab, monthCol, months) {
+  const ms = (months || []).filter(Boolean);
+  if (!ms.length) return [];
+  let r;
+  try {
+    r = await query(`SELECT * FROM ${qIdent(tab)} WHERE ${qIdentL(monthCol)} = ANY($1)`, [ms]);
+  } catch (e) {
+    if (e && e.code === "42P01") return [];
+    throw e;
+  }
+  return _rowsToObjs(r.rows);
+}
+
 // Insere uma linha (valores posicionais na ordem das colunas da tabela)
 async function appendRow(tab, values) {
+  _dataCache.delete(tab);
   const cols = await colunas(tab);
   if (!cols.length) throw new Error(`Tabela ${tab} não existe no banco.`);
   const ph = cols.map((_, i) => `$${i + 1}`).join(", ");
@@ -83,6 +114,7 @@ async function appendRow(tab, values) {
 // Insere várias linhas (cada uma posicional)
 async function appendRows(tab, rowsArray) {
   if (!rowsArray || rowsArray.length === 0) return;
+  _dataCache.delete(tab);
   const cols = await colunas(tab);
   if (!cols.length) throw new Error(`Tabela ${tab} não existe no banco.`);
   const tuples = [];
@@ -99,6 +131,7 @@ async function appendRows(tab, rowsArray) {
 
 // Atualiza a linha na posição rowIndex (1-based, na ordem do readSheet/ctid)
 async function updateRow(tab, rowIndex, values) {
+  _dataCache.delete(tab);
   const cols = await colunas(tab);
   if (!cols.length) throw new Error(`Tabela ${tab} não existe no banco.`);
   const set = cols.map((c, i) => `${qIdent(c)}=$${i + 1}`).join(", ");
@@ -110,6 +143,7 @@ async function updateRow(tab, rowIndex, values) {
 
 // Remove a linha de dados na posição dataRowIdx (0-based, ordem do readSheet/ctid)
 async function deleteRow(tab, dataRowIdx) {
+  _dataCache.delete(tab);
   const sql =
     `DELETE FROM ${qIdent(tab)} ` +
     `WHERE ctid = (SELECT ctid FROM ${qIdent(tab)} ORDER BY ctid OFFSET ${Math.max(0, dataRowIdx)} LIMIT 1)`;
@@ -120,6 +154,7 @@ async function deleteRow(tab, dataRowIdx) {
 // schema tipado). Computada: DROP+CREATE(TEXT)+INSERT (auto-ajusta colunas, como o ETL).
 async function sobrescreverAba(tab, rows) {
   _colsCache.delete(tab);
+  _dataCache.delete(tab);
   const header = (rows && rows[0]) ? rows[0].map((h) => String(h).trim()).filter((h) => h !== "") : [];
   const dados = (rows || []).slice(1);
 
@@ -154,9 +189,9 @@ async function sobrescreverAba(tab, rows) {
 // No SQL as tabelas já existem (schema.sql + ETL). No-ops compatíveis com o Sheets.
 async function ensureTab() { /* tabelas geridas pelo schema/ETL/sobrescreverAba */ }
 async function initializeSheets() { console.log("DATA_BACKEND=sql: tabelas já existem (schema.sql/ETL)."); }
-function cacheClearAll() { _colsCache.clear(); }
+function cacheClearAll() { _colsCache.clear(); _dataCache.clear(); }
 
 module.exports = {
-  readSheet, appendRow, appendRows, updateRow, deleteRow,
+  readSheet, readSheetMonths, appendRow, appendRows, updateRow, deleteRow,
   sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
 };

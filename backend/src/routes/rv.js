@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const { readSheet, appendRow, sobrescreverAba } = require("../services/sheets");
+const { readSheet, appendRow, sobrescreverAba, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 
 const PROCESSOR_URL = process.env.PROCESSOR_URL;
@@ -123,6 +123,9 @@ router.post("/calcular", adminOnly, async (req, res) => {
       mes ? { mes } : {},
       { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 180000 }
     );
+    // O processador reescreveu rv_resultado/rv_volume no SQL — limpa o cache de leitura
+    // do backend p/ o simulador e a home refletirem na hora (senão espera o TTL).
+    try { cacheClearAll(); } catch { /* no-op */ }
     return res.json(response.data);
   } catch (err) {
     console.error("rv/calcular:", err.message, "| body:", JSON.stringify(err.response?.data || "").slice(0, 200));
