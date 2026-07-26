@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.0** — performance: cache de leitura + leitura por mês + keep-alive
+Versão atual: **v3.36.1** — rankings: "Média 3M" (exclui mês atual) + coluna "Mês atual"
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

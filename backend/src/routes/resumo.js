@@ -129,12 +129,13 @@ router.get("/rankings", async (req, res) => {
     const ym = (yy, mm0) => { const d = new Date(yy, mm0, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
     const mesAtual = ym(y, m0);
     const mesAnterior = ym(y, m0 - 1);
-    const trimestreMeses = [2, 1, 0].map((k) => ym(y, m0 - k));
-    const triSet = new Set(trimestreMeses);
+    // Média = 3 meses COMPLETOS anteriores (EXCLUI o mês atual). Ex.: julho → abr/mai/jun.
+    const media3Meses = [3, 2, 1].map((k) => ym(y, m0 - k));
+    const media3Set = new Set(media3Meses);
 
-    // Lê SÓ os meses necessários (filtro no SQL) — não traz o histórico de 2025 inteiro.
+    // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual (p/ o total).
     const [vendas, vdPdv, vdProd] = await Promise.all([
-      readSheetMonths("vendas_cliente_produto", "mes_referencia", trimestreMeses).catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", [...media3Meses, mesAtual]).catch(() => []),
       readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
     ]);
@@ -142,12 +143,16 @@ router.get("/rankings", async (req, res) => {
     const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
     const vdProdF = filtrarPorPerfil(vdProd, req.user, "setor");
 
-    const triDe = (rows, codF, nomeF) => {
+    // Agrega por cod: soma3 = volume dos 3 meses da média; atualTotal = volume do mês atual.
+    const aggDe = (rows, codF, nomeF) => {
       const t = {};
       for (const v of rows) {
-        if (!triSet.has(String(v.mes_referencia || "").slice(0, 7))) continue;
+        const mes = String(v.mes_referencia || "").slice(0, 7);
         const cod = String(v[codF] || "").trim(); if (!cod) continue;
-        (t[cod] = t[cod] || { cod, nome: String(v[nomeF] || "").trim(), tri: 0 }).tri += num(v.volume_hl);
+        const e = t[cod] || (t[cod] = { cod, nome: String(v[nomeF] || "").trim(), soma3: 0, atualTotal: 0 });
+        const vol = num(v.volume_hl);
+        if (media3Set.has(mes)) e.soma3 += vol;
+        else if (mes === mesAtual) e.atualTotal += vol;
       }
       return t;
     };
@@ -165,22 +170,27 @@ router.get("/rankings", async (req, res) => {
       }
       return d;
     };
-    const montar = (triMap, d1Map, n) => Object.values(triMap)
-      .sort((a, b) => b.tri - a.tri).slice(0, n).map((t) => {
+    // Rank pela MÉDIA 3M (representa o volume "de base" do PDV/produto).
+    const montar = (aggMap, d1Map, n) => Object.values(aggMap)
+      .map((t) => ({ ...t, media3m: t.soma3 / 3 }))
+      .sort((a, b) => b.media3m - a.media3m).slice(0, n).map((t) => {
         const d = d1Map[t.cod] || { atual: 0, anterior: 0 };
         return {
-          cod: t.cod, nome: t.nome, tri: Math.round(t.tri * 10) / 10,
-          atual: Math.round(d.atual * 10) / 10, anterior: Math.round(d.anterior * 10) / 10,
+          cod: t.cod, nome: t.nome,
+          media3m: Math.round(t.media3m * 10) / 10,
+          mesAtualTotal: Math.round(t.atualTotal * 10) / 10,
           gap: Math.round((d.atual - d.anterior) * 10) / 10,
           delta: d.anterior > 0 ? Math.round(((d.atual - d.anterior) / d.anterior) * 1000) / 10 : (d.atual > 0 ? null : 0),
         };
       });
 
-    const pdvs = montar(triDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 20);
-    const produtos = montar(triDe(vendasF, "cod_produto", "nome_produto"), d1De(vdProdF, "cod_produto"), 20);
+    const pdvs = montar(aggDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 20);
+    const produtos = montar(aggDe(vendasF, "cod_produto", "nome_produto"), d1De(vdProdF, "cod_produto"), 20);
 
+    const rot = (m) => { const [, mo] = String(m).split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(Number(mo) || 1) - 1]; };
     return res.json({
       mesAtual, mesAnterior, cutoffDia,
+      mediaLabel: `${rot(media3Meses[0])}–${rot(media3Meses[2])}`, // ex.: "abr–jun"
       periodo: cutoffDia >= 1 ? `01–${String(cutoffDia).padStart(2, "0")}` : "—",
       temDiario: vdPdvF.length > 0,
       pdvs, produtos,

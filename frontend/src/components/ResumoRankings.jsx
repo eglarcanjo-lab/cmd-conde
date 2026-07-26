@@ -20,19 +20,20 @@ function Gap({ g }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt }) {
+function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
         <span style={S.titulo}>{titulo}</span>
-        <span style={S.sub}>dia {periodo} · {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
+        <span style={S.sub}>média {mediaLabel} · GAP dia {periodo} · {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
       </div>
       <table style={S.table}>
         <thead>
           <tr>
             <th style={{ ...S.th, width: 24 }}>#</th>
             <th style={S.th}>{colNome}</th>
-            <th style={{ ...S.th, textAlign: "right" }}>Vol tri (HL)</th>
+            <th style={{ ...S.th, textAlign: "right" }} title={`Média dos 3 meses anteriores (${mediaLabel}) — exclui o mês atual`}>Média 3M (HL)</th>
+            <th style={{ ...S.th, textAlign: "right", width: 88 }}>Mês atual (HL)</th>
             <th style={{ ...S.th, textAlign: "right", width: 92 }}>GAP (HL)</th>
             <th style={{ ...S.th, textAlign: "right", width: 78 }}>Δ</th>
           </tr>
@@ -42,12 +43,13 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt }) {
             <tr key={r.cod} style={i % 2 ? S.trOdd : undefined}>
               <td style={S.tdNum}>{i + 1}</td>
               <td style={S.tdNome} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
-              <td style={S.tdVol}>{fmt(r.tri)}</td>
+              <td style={S.tdVol}>{fmt(r.media3m)}</td>
+              <td style={{ ...S.tdVol, color: "#fff" }}>{fmt(r.mesAtualTotal)}</td>
               <td style={{ ...S.td, textAlign: "right" }}><Gap g={r.gap} /></td>
               <td style={{ ...S.td, textAlign: "right" }}><Delta d={r.delta} /></td>
             </tr>
           ))}
-          {!linhas.length && <tr><td colSpan={5} style={S.vazio}>Sem dados.</td></tr>}
+          {!linhas.length && <tr><td colSpan={6} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -83,8 +85,8 @@ export default function ResumoRankings() {
     <div>
       {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
       <div style={S.grid}>
-        <Tabela titulo="🏪 Top 20 PDVs — volume (tri)" colNome="PDV" linhas={data.pdvs} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
-        <Tabela titulo="📦 Top 20 produtos — volume (tri)" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} />
+        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={data.pdvs} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} />
+        <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} />
       </div>
     </div>
   );
