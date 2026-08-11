@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.1** — rankings: "Média 3M" (exclui mês atual) + coluna "Mês atual"
+Versão atual: **v3.36.2** — keep-alive também no processador (horário comercial): fim do redeploy manual pra importar
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

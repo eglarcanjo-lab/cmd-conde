@@ -1,8 +1,12 @@
 name: keepalive
 
-# Mantém o backend (Render free) acordado — sem isso ele "dorme" após ~15 min de
-# inatividade e a próxima carga leva ~50s (cold start). Pinga o /health a cada 10 min.
-# Só o backend (o processador pode dormir; imports toleram o cold start).
+# Mantém os serviços do Render (free) acordados — sem isso eles "dormem" após ~15 min
+# de inatividade e a próxima carga leva ~50s (cold start). Roda a cada 10 min.
+#
+# - BACKEND: pingado 24/7 (o app precisa abrir rápido a qualquer hora).
+# - PROCESSADOR: pingado só em HORÁRIO COMERCIAL (BRT), pra ele nunca dormir durante o
+#   expediente e a importação de relatórios nunca bater num serviço frio (que estourava
+#   429). Fora do horário ele pode dormir (economiza horas do plano free).
 on:
   schedule:
     - cron: "*/10 * * * *"
@@ -12,12 +16,27 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping backend /health
+      - name: Ping backend /health (24/7)
         run: |
           for i in 1 2 3; do
             code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 70 https://cmd-conde.onrender.com/health || echo "000")
-            echo "tentativa $i -> $code"
-            [ "$code" = "200" ] && exit 0
+            echo "backend tentativa $i -> $code"
+            [ "$code" = "200" ] && break
             sleep 15
           done
-          echo "backend não respondeu 200 (pode estar acordando) — não falha o job"
+
+      - name: Ping processador /health (horário comercial BRT)
+        run: |
+          # Hora UTC sem zero à esquerda (BRT = UTC-3).
+          H=$(date -u +%-H)
+          # Comercial: 06h–21h BRT  ==  09–23 UTC e 00 UTC.
+          if [ "$H" -ge 9 ] || [ "$H" -eq 0 ]; then
+            for i in 1 2 3; do
+              code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 70 https://cmd-conde-processor.onrender.com/health || echo "000")
+              echo "processador tentativa $i -> $code"
+              [ "$code" = "200" ] && break
+              sleep 15
+            done
+          else
+            echo "fora do horário comercial (UTC ${H}h) — processador pode dormir"
+          fi
