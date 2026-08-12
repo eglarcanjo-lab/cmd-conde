@@ -129,6 +129,33 @@ async function appendRows(tab, rowsArray) {
   await query(sql, flat);
 }
 
+// Insere várias linhas com UPSERT: se a chave (conflictCols) já existe, ATUALIZA as
+// demais colunas em vez de estourar violação de PK. Usado no import de metas (reimportar
+// o mês sobrescreve os valores existentes). Valores posicionais na ordem das colunas.
+async function upsertRows(tab, rowsArray, conflictCols) {
+  if (!rowsArray || rowsArray.length === 0) return;
+  _dataCache.delete(tab);
+  const cols = await colunas(tab);
+  if (!cols.length) throw new Error(`Tabela ${tab} não existe no banco.`);
+  const tuples = [];
+  const flat = [];
+  let n = 0;
+  for (const linha of rowsArray) {
+    const ph = cols.map(() => `$${++n}`);
+    tuples.push(`(${ph.join(", ")})`);
+    cols.forEach((_, i) => flat.push(param(linha[i])));
+  }
+  const conflict = conflictCols.map(qIdent).join(", ");
+  const updates = cols
+    .filter((c) => !conflictCols.includes(c))
+    .map((c) => `${qIdent(c)}=EXCLUDED.${qIdent(c)}`)
+    .join(", ");
+  const sql =
+    `INSERT INTO ${qIdent(tab)} (${cols.map(qIdent).join(", ")}) VALUES ${tuples.join(", ")} ` +
+    `ON CONFLICT (${conflict}) DO UPDATE SET ${updates}`;
+  await query(sql, flat);
+}
+
 // Atualiza a linha na posição rowIndex (1-based, na ordem do readSheet/ctid)
 async function updateRow(tab, rowIndex, values) {
   _dataCache.delete(tab);
@@ -192,6 +219,6 @@ async function initializeSheets() { console.log("DATA_BACKEND=sql: tabelas já e
 function cacheClearAll() { _colsCache.clear(); _dataCache.clear(); }
 
 module.exports = {
-  readSheet, readSheetMonths, appendRow, appendRows, updateRow, deleteRow,
+  readSheet, readSheetMonths, appendRow, appendRows, upsertRows, updateRow, deleteRow,
   sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
 };

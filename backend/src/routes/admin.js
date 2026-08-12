@@ -1,7 +1,7 @@
 // v2.4 - motivo no sku_foco + GET /produtos para auto-fill
 const express = require("express");
 const router = express.Router();
-const { readSheet, appendRow, appendRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
+const { readSheet, appendRow, appendRows, upsertRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 const { SENHA_PADRAO, hashSenha } = require("../utils/senha");
 
@@ -124,7 +124,9 @@ router.post("/metas/import", async (req, res) => {
       linhasValidas.push([m.setor, m.categoria, m.meta_volume, m.mes_referencia, m.peso || "", m.volume_tri || "", m.meta_aplicada || ""]);
     }
     if (linhasValidas.length > 0) {
-      await appendRows("metas", linhasValidas);
+      // UPSERT: se a meta (setor+categoria+mês) já existe, atualiza; senão insere.
+      // Assim é possível reimportar o mês sem estourar violação de PK (metas_pkey).
+      await upsertRows("metas", linhasValidas, ["setor", "categoria", "mes_referencia"]);
     }
     return res.json({ success: true, importadas: linhasValidas.length, erros: erros.length > 0 ? erros : undefined });
   } catch (err) {

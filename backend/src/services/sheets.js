@@ -318,8 +318,14 @@ async function readSheetMonths(tabName, monthCol, months) {
   return all.filter((r) => ms.has(String(r[monthCol] || "").slice(0, 7)) || ms.has(String(r[monthCol] || "")));
 }
 
+// Fallback do upsertRows no Sheets: não há constraint de PK, então apenas anexa
+// (comportamento histórico). Produção usa SQL (sqlRepo), onde o UPSERT é real.
+async function upsertRows(tabName, rowsArray /*, conflictCols */) {
+  return appendRows(tabName, rowsArray);
+}
+
 const _sheetsImpl = {
-  readSheet, readSheetMonths, appendRow, appendRows, updateRow, deleteRow,
+  readSheet, readSheetMonths, appendRow, appendRows, upsertRows, updateRow, deleteRow,
   sobrescreverAba, ensureTab, initializeSheets, cacheClearAll,
 };
 

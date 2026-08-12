@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.2** — keep-alive também no processador (horário comercial): fim do redeploy manual pra importar
+Versão atual: **v3.36.3** — fix import de metas: UPSERT (reimportar o mês atualiza em vez de estourar PK)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
