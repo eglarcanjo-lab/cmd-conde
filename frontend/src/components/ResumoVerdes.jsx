@@ -65,7 +65,9 @@ export default function ResumoVerdes() {
       ) : (
         <>
           <div style={S.val}>{fmt(atual)} <small style={S.unit}>{aba === "cobertura" ? "coberturas" : "caixas"} · {rotMes(meses[meses.length - 1])}</small></div>
-          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 4, display: "block" }} aria-hidden="true">
+          {/* rótulos de dados — alinhados 1:1 com os pontos (mesma técnica dos rótulos de mês) */}
+          <div style={S.vlab}>{meses.map((m, i) => <span key={m} style={S.vs}>{serie[i] ? fmt(serie[i]) : ""}</span>)}</div>
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 2, display: "block" }} aria-hidden="true">
             <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
             {n > 1 && <polyline points={`${x0},${bot} ${pts.join(" ")} ${xN},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
             <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
@@ -86,6 +88,8 @@ const S = {
   btnOn: { fontSize: "0.82rem", fontFamily: "inherit", color: "#0c1410", background: "#7DBA3D", border: "1px solid #7DBA3D", borderRadius: "20px", padding: "4px 13px", cursor: "pointer", fontWeight: "600" },
   val: { color: "#fff", fontSize: "1.3rem", fontWeight: "600", margin: "8px 0 0" },
   unit: { color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: "400", marginLeft: "4px" },
+  vlab: { display: "flex", marginTop: "6px", marginBottom: "1px" },
+  vs: { flex: 1, fontSize: "0.62rem", color: "#9fce6a", fontWeight: "600", textAlign: "center", whiteSpace: "nowrap" },
   mlab: { display: "flex", marginTop: "2px" },
   ms: { flex: 1, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textAlign: "center" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "10px 2px" },

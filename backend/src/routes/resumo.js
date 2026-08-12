@@ -134,10 +134,11 @@ router.get("/rankings", async (req, res) => {
     const media3Set = new Set(media3Meses);
 
     // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual (p/ o total).
-    const [vendas, vdPdv, vdProd] = await Promise.all([
+    const [vendas, vdPdv, vdProd, prodBase] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", [...media3Meses, mesAtual]).catch(() => []),
       readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
+      readSheet("produtos_base").catch(() => []),
     ]);
     const vendasF = filtrarPorPerfil(vendas, req.user, "setor");
     const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
@@ -186,6 +187,20 @@ router.get("/rankings", async (req, res) => {
 
     const pdvs = montar(aggDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 20);
     const produtos = montar(aggDe(vendasF, "cod_produto", "nome_produto"), d1De(vdProdF, "cod_produto"), 20);
+
+    // Nome COMPLETO do produto vem da base de produtos (a nomenclatura das vendas é abreviada).
+    // Casa por código (com e sem zeros à esquerda); se não achar, mantém o nome das vendas.
+    const normCod = (v) => { const s = String(v || "").trim(); return s.replace(/^0+/, "") || s; };
+    const nomeBase = {};
+    prodBase.forEach((p) => {
+      const nome = String(p.nome || p.descricao || p.nome_produto || "").trim();
+      const cod = String(p.cod || "").trim();
+      if (nome && cod) { nomeBase[cod] = nome; nomeBase[normCod(cod)] = nome; }
+    });
+    produtos.forEach((p) => {
+      const full = nomeBase[String(p.cod).trim()] || nomeBase[normCod(p.cod)];
+      if (full) p.nome = full;
+    });
 
     const rot = (m) => { const [, mo] = String(m).split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(Number(mo) || 1) - 1]; };
     return res.json({

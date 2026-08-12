@@ -45,8 +45,8 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel }) 
               <td style={S.tdNome} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
               <td style={S.tdVol}>{fmt(r.media3m)}</td>
               <td style={{ ...S.tdVol, color: "#fff" }}>{fmt(r.mesAtualTotal)}</td>
-              <td style={{ ...S.td, textAlign: "right" }}><Gap g={r.gap} /></td>
-              <td style={{ ...S.td, textAlign: "right" }}><Delta d={r.delta} /></td>
+              <td style={{ ...S.td, textAlign: "right", whiteSpace: "nowrap" }}><Gap g={r.gap} /></td>
+              <td style={{ ...S.td, textAlign: "right", whiteSpace: "nowrap" }}><Delta d={r.delta} /></td>
             </tr>
           ))}
           {!linhas.length && <tr><td colSpan={6} style={S.vazio}>Sem dados.</td></tr>}
@@ -102,7 +102,7 @@ const S = {
   th: { textAlign: "left", color: "rgba(255,255,255,0.45)", fontWeight: 500, fontSize: "0.8rem", padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   td: { padding: "7px 8px", color: "rgba(255,255,255,0.75)" },
   tdNum: { padding: "7px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" },
-  tdNome: { padding: "7px 8px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 260 },
+  tdNome: { padding: "7px 8px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 },
   tdVol: { padding: "7px 8px", color: "rgba(255,255,255,0.85)", textAlign: "right", fontVariantNumeric: "tabular-nums" },
   trOdd: { background: "rgba(255,255,255,0.02)" },
   vazio: { padding: "12px", textAlign: "center", color: "rgba(255,255,255,0.35)" },

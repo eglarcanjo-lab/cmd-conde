@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.3** — fix import de metas: UPSERT (reimportar o mês atualiza em vez de estourar PK)
+Versão atual: **v3.36.4** — home: rótulos no gráfico Verdes, coluna de nome mais estreita (sem quebra no Δ) e nome completo do produto (base) nos rankings
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
