@@ -41,10 +41,13 @@ router.post("/", upload.single("evidencia"), async (req, res) => {
     const criado_em = new Date().toLocaleString("pt-BR");
     const data = data_ocorrido || new Date().toISOString().split("T")[0];
 
-    // Ordem: data_criacao | id | setor | nome_rn | descricao | evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn
+    // Ordem das colunas no schema SQL: id | data_criacao | setor | nome_rn | descricao |
+    // evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn.
+    // (Antes o id ia na 2ª posição → o timestamp caía na coluna `id`, que contém barras,
+    //  e quebrava a URL de resposta com "Rota não encontrada".)
     await appendRow("incidentes", [
-      criado_em,
       id,
+      criado_em,
       req.user.cod,
       req.user.nome,
       descricao.trim(),
@@ -68,8 +71,8 @@ router.get("/meus", async (req, res) => {
   try {
     const todos = await readSheet("incidentes");
     const meus = todos
-      .filter((i) => String(i.cod_rn) === String(req.user.cod))
-      .sort((a, b) => b.criado_em?.localeCompare(a.criado_em));
+      .filter((i) => String(i.setor) === String(req.user.cod))
+      .sort((a, b) => String(b.data_criacao || "").localeCompare(String(a.data_criacao || "")));
     return res.json(meus);
   } catch (err) {
     return res.status(500).json({ error: "Erro ao buscar incidentes." });
@@ -82,8 +85,8 @@ router.get("/", async (req, res) => {
     const todos = await readSheet("incidentes");
     // Gestor vê tudo, RN vê só os seus
     const isGestor = ["admin", "director", "gv1", "gv3"].includes(req.user.perfil);
-    const lista = isGestor ? todos : todos.filter((i) => String(i.cod_rn) === String(req.user.cod));
-    return res.json(lista.sort((a, b) => b.criado_em?.localeCompare(a.criado_em)));
+    const lista = isGestor ? todos : todos.filter((i) => String(i.setor) === String(req.user.cod));
+    return res.json(lista.sort((a, b) => String(b.data_criacao || "").localeCompare(String(a.data_criacao || ""))));
   } catch (err) {
     return res.status(500).json({ error: "Erro ao buscar incidentes." });
   }
@@ -115,11 +118,11 @@ router.post("/:id/responder", adminOnly, async (req, res) => {
     const inc = todos[idx];
     const respondido_em = new Date().toLocaleString("pt-BR");
 
-    // Mesma ordem: data_criacao | id | setor | nome_rn | descricao | evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn
+    // Mesma ordem do schema: id | data_criacao | setor | nome_rn | descricao | evidencia_url | status | resposta | finalizado_em | data_ocorrido | perfil_rn
     const updated = [
-      inc.data_criacao || inc.criado_em,
       inc.id,
-      inc.setor || inc.cod_rn,
+      inc.data_criacao || inc.criado_em,
+      inc.setor,
       inc.nome_rn,
       inc.descricao,
       inc.evidencia_url,
