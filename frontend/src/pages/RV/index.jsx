@@ -89,17 +89,11 @@ export default function RV() {
 
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
   const pesoPontos = w.pontos;
-  const rvPontos    = apOk && pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
-  const rvPontosPot = pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
+  // AP não bloqueia mais a RV — o cálculo independe do Atendimento Produtivo.
+  const rvPontos = pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
 
-  // Pontos Bees: sem piso (paga de 0%), Resultados: piso 70%
+  // Resultados: piso 70%, cap 150%, pesos e PO do regulamento (premissas mantidas).
   const calcRv = (real, meta, peso, minPct = 70) => {
-    if (!apOk || !meta) return 0;
-    const p = Math.min((real / meta) * 100, 150);
-    if (p < minPct) return 0;
-    return (poTotal * peso / 100) * (p / 100);
-  };
-  const calcPot = (real, meta, peso, minPct = 70) => {
     if (!meta) return 0;
     const p = Math.min((real / meta) * 100, 150);
     if (p < minPct) return 0;
@@ -114,8 +108,7 @@ export default function RV() {
     { key: "match",       label: "Match (Volume HL)",     peso: w.match,       real: parseFloat(rv?.real_match || 0),       meta: parseFloat(rv?.meta_match || 0) },
   ].filter((d) => d.peso > 0);
 
-  const rvTotal    = rvPontos    + indicadoresRV.reduce((s, d) => s + calcRv(d.real, d.meta, d.peso), 0);
-  const rvTotalPot = rvPontosPot + indicadoresRV.reduce((s, d) => s + calcPot(d.real, d.meta, d.peso), 0);
+  const rvTotal = rvPontos + indicadoresRV.reduce((s, d) => s + calcRv(d.real, d.meta, d.peso), 0);
 
   return (
     <div style={styles.root}>
@@ -141,7 +134,7 @@ export default function RV() {
               <div style={styles.apHeader}>
                 <h3 style={styles.sectionTitle}>🎯 Atendimento Produtivo</h3>
                 <span style={{ ...styles.apBadge, background: apOk ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: apOk ? "#4ade80" : "#f87171" }}>
-                  {apOk ? "✅ OK — RV Liberada" : "❌ NOK — RV Bloqueada"}
+                  {apOk ? "✅ OK" : "❌ NOK"}
                 </span>
               </div>
               <div style={styles.apGrid}>
@@ -161,7 +154,7 @@ export default function RV() {
                   );
                 })}
               </div>
-              {!apOk && <p style={styles.apAviso}>⚠️ Todos os 4 KPIs precisam ser atingidos para liberar a RV.</p>}
+              <p style={{ ...styles.apAviso, color: "rgba(255,255,255,0.4)" }}>ℹ️ Indicador informativo — não bloqueia mais a RV.</p>
             </div>
 
             {/* Total */}
@@ -170,23 +163,18 @@ export default function RV() {
                 <p style={{ margin: "0 0 4px", color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>
                   Estimativa RV — {mesRef}
                 </p>
-                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: apOk ? "#4ade80" : "#7DBA3D" }}>
-                  R$ {(apOk ? rvTotal : rvTotalPot).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <p style={{ margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", color: "#4ade80" }}>
+                  R$ {rvTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                {!apOk && (
-                  <p style={{ margin: "0 0 2px", color: "#f87171", fontSize: "0.72rem", fontWeight: "600" }}>
-                    ⚠️ potencial — bloqueado por AP NOK
-                  </p>
-                )}
                 <p style={{ margin: 0, color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" }}>
                   de R$ {poTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} possíveis (100% PO)
                 </p>
               </div>
               <div style={{ textAlign: "center" }}>
                 <p style={{ margin: 0, fontSize: "2.5rem", fontWeight: "800", color: "#7DBA3D" }}>
-                  {poTotal > 0 ? (((apOk ? rvTotal : rvTotalPot) / poTotal) * 100).toFixed(1) : "0"}%
+                  {poTotal > 0 ? ((rvTotal / poTotal) * 100).toFixed(1) : "0"}%
                 </p>
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>{apOk ? "do PO" : "potencial"}</p>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>do PO</p>
               </div>
             </div>
 
@@ -199,7 +187,7 @@ export default function RV() {
                   { label: "Meta", val: META_PONTOS.toLocaleString("pt-BR"), color: "#fff" },
                   { label: "Atingimento", val: `${pctPontos.toFixed(1)}%`, color: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#7DBA3D" : "#f87171" },
                   { label: "Peso no PO", val: `${pesoPontos}%`, color: "#fff" },
-                  { label: "Valor estimado", val: `${apOk ? "" : "⚠️ "}R$ ${(apOk ? rvPontos : rvPontosPot).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: apOk ? "#4ade80" : "#7DBA3D" },
+                  { label: "Valor estimado", val: `R$ ${rvPontos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, color: "#4ade80" },
                 ].map((item) => (
                   <div key={item.label} style={styles.pontosItem}>
                     <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem" }}>{item.label}</span>
@@ -218,7 +206,7 @@ export default function RV() {
               <h3 style={styles.sectionTitle}>📊 Indicadores de Volume / Faturamento</h3>
               <div style={styles.barsGrid}>
                 {indicadoresRV.map((d) => (
-                  <BarIndicador key={d.key} label={d.label} real={d.real} meta={d.meta} peso={d.peso} po_total={poTotal} bloqueado={!apOk}/>
+                  <BarIndicador key={d.key} label={d.label} real={d.real} meta={d.meta} peso={d.peso} po_total={poTotal} bloqueado={false}/>
                 ))}
               </div>
             </div>

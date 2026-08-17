@@ -44,10 +44,11 @@ function normPeso(val, fallback) {
   return (v > 0 && v <= 100) ? v : fallback;
 }
 
-// Pontos Bees: sem piso (paga de 0% a 150%)
-// Resultados (volume/faturamento): piso 70% — abaixo não paga
+// Resultados (volume/faturamento): piso 70% — abaixo não paga.
+// AP não bloqueia mais a RV — o `apOk` fica na assinatura por compatibilidade dos
+// chamadores, mas não afeta o cálculo. Premissas mantidas (piso 70%, cap 150%).
 function calcRv(real, meta, peso, poTotal, apOk, minPct = 70) {
-  if (!apOk || !meta) return 0;
+  if (!meta) return 0;
   const p = pct(real, meta);
   if (p < minPct) return 0;
   return (poTotal * peso / 100) * (p / 100);
@@ -72,7 +73,6 @@ function BarRow({ label, real, meta, peso, poTotal, apOk, minPct = 70 }) {
   const p      = pct(real, meta);
   const cor    = p >= 100 ? "#4ade80" : p >= 70 ? "#7DBA3D" : "#f87171";
   const val    = calcRv(real, meta, peso, poTotal, apOk, minPct);
-  const valPot = calcRvPot(real, meta, peso, poTotal, minPct);
   return (
     <div style={s.barRow}>
       <div style={s.barRowTop}>
@@ -87,8 +87,8 @@ function BarRow({ label, real, meta, peso, poTotal, apOk, minPct = 70 }) {
         <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem" }}>
           {fmtNum(real, 2)} / {fmtNum(meta, 2)}
         </span>
-        <span style={{ color: apOk ? cor : "#7DBA3D", fontWeight: "600", fontSize: "0.82rem" }}>
-          {apOk ? `R$ ${fmtBrl(val)}` : `⚠️ R$ ${fmtBrl(valPot)}`}
+        <span style={{ color: cor, fontWeight: "600", fontSize: "0.82rem" }}>
+          R$ {fmtBrl(val)}
         </span>
       </div>
     </div>
@@ -164,7 +164,7 @@ export default function RvSimulador() {
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
     const pesoPontos = w.pontos;
     const pctPts = Math.min(pontosReal / META_PONTOS * 100, 150);
-    const rvPontos = apOk && pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvPontos = pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
 
     // ── Resultados — piso 70% ──
     const realCerv = parseFloat(rv?.real_cerveja || 0);
@@ -276,7 +276,6 @@ export default function RvSimulador() {
   // ── totalizador (todas as RNs) ────────────────────────────────────────────
   const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod) }));
   const somaTotal    = linhas.reduce((acc, l) => acc + l.total, 0);
-  const somaPotencial = linhas.reduce((acc, l) => acc + (l.apOk ? l.total : l.totalPot), 0);
 
   function exportarRelatorio() {
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -313,9 +312,9 @@ export default function RvSimulador() {
       "NAB %":            r2(pct(l.realNab, l.metaNab)),
       "Marketplace %":    l.pesoMktp  > 0 ? r2(pct(l.realMktp, l.metaMktp))   : "—",
       "Match %":          l.pesoMatch > 0 ? r2(pct(l.realMatch, l.metaMatch)) : "—",
-      "RV Total (R$)":    r2(l.apOk ? l.total : l.totalPot),
-      "% do PO":          l.poTotal > 0 ? r2(((l.apOk ? l.total : l.totalPot) / l.poTotal) * 100) : 0,
-      "Status":           l.apOk ? "Confirmada" : "Potencial (AP NOK)",
+      "RV Total (R$)":    r2(l.total),
+      "% do PO":          l.poTotal > 0 ? r2((l.total / l.poTotal) * 100) : 0,
+      "Status":           "Confirmada",
     }));
     resumo.push({
       "Setor": "TOTAL OPERAÇÃO", "Representante": "", "Segmento": "", "AP": "",
@@ -359,7 +358,7 @@ export default function RvSimulador() {
     linhas.forEach(l => {
       const ap = getAp(l.cod);
       const r0 = aoa.length;
-      push([`Setor ${l.cod} — ${l.nome}  (${l.tipo})`, "", "", "", l.apOk ? "AP OK" : "AP NOK — bloqueada"], "rn");
+      push([`Setor ${l.cod} — ${l.nome}  (${l.tipo})`, "", "", "", l.apOk ? "AP OK" : "AP NOK"], "rn");
       merges.push({ s: { r: r0, c: 0 }, e: { r: r0, c: 3 } });
       push([`PO Total: R$ ${fmtBrl(l.poTotal)}`, "", "", "", ""], "po");
       if (ap) {
@@ -371,13 +370,11 @@ export default function RvSimulador() {
         push(["AP →", gates[0] || "", gates[1] || "", gates[2] || "", gates[3] || ""], "gates");
       }
       push(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"], "thead");
-      push(["Pontos Force", r2(META_PONTOS), r2(l.pontosReal), r2(pct(l.pontosReal, META_PONTOS)), r2(l.apOk ? l.rvPontos : l.rvPontsPot)], "row");
+      push(["Pontos Force", r2(META_PONTOS), r2(l.pontosReal), r2(pct(l.pontosReal, META_PONTOS)), r2(l.rvPontos)], "row");
       l.indicadores.forEach(ind => {
-        push([ind.nome, r2(ind.meta), r2(ind.real), r2(pct(ind.real, ind.meta)), r2(l.apOk ? ind.rv : ind.rvPot)], "row");
+        push([ind.nome, r2(ind.meta), r2(ind.real), r2(pct(ind.real, ind.meta)), r2(ind.rv)], "row");
       });
-      const rvExibido = l.apOk ? l.total : l.totalPot;
-      push(["TOTAL RV", "", "", "", r2(rvExibido)], "total");
-      if (!l.apOk) push(["Potencial caso AP fosse OK", "", "", "", r2(l.totalPot)], "pot");
+      push(["TOTAL RV", "", "", "", r2(l.total)], "total");
       push(["", "", "", "", ""], "blank");
     });
 
@@ -522,8 +519,8 @@ export default function RvSimulador() {
                     ...s.rnAp,
                     color: t.apOk ? "#4ade80" : "#f87171",
                   }}>{t.apOk ? "✅" : "❌"}</span>
-                  <span style={{ color: t.apOk ? "#7DBA3D" : "#7DBA3D", fontSize: "0.7rem", fontWeight: "700" }}>
-                    {t.apOk ? "" : "⚠️ "}R$ {fmtBrl(t.apOk ? t.total : t.totalPot)}
+                  <span style={{ color: "#7DBA3D", fontSize: "0.7rem", fontWeight: "700" }}>
+                    R$ {fmtBrl(t.total)}
                   </span>
                 </button>
               );
@@ -539,7 +536,7 @@ export default function RvSimulador() {
                 <span style={{ ...s.detalheTipo, color: sel?.tipo === "OFF" ? "#60a5fa" : "#4ade80" }}>{sel?.tipo}</span>
               </div>
               <div style={s.apBadge(tot.apOk)}>
-                {tot.apOk ? "✅ AP OK — RV Liberada" : "❌ AP NOK — RV Bloqueada"}
+                {tot.apOk ? "✅ AP OK" : "❌ AP NOK"}
               </div>
             </div>
 
@@ -567,21 +564,16 @@ export default function RvSimulador() {
             <div style={s.totalCard}>
               <div>
                 <p style={s.totalLabel}>Estimativa RV — {mesRef}</p>
-                <p style={{ ...s.totalValor, color: tot.apOk ? "#4ade80" : "#7DBA3D" }}>
-                  R$ {fmtBrl(tot.apOk ? tot.total : tot.totalPot)}
+                <p style={{ ...s.totalValor, color: "#4ade80" }}>
+                  R$ {fmtBrl(tot.total)}
                 </p>
-                {!tot.apOk && (
-                  <p style={{ margin: "0 0 2px", color: "#f87171", fontSize: "0.72rem", fontWeight: "600" }}>
-                    ⚠️ potencial — bloqueado por AP NOK
-                  </p>
-                )}
                 <p style={s.totalSub}>de R$ {fmtBrl(tot.poTotal)} possíveis (100% PO)</p>
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={{ ...s.totalPct, color: tot.apOk ? "#7DBA3D" : "#7DBA3D" }}>
-                  {tot.poTotal > 0 ? (((tot.apOk ? tot.total : tot.totalPot) / tot.poTotal) * 100).toFixed(1) : "0"}%
+                <p style={{ ...s.totalPct, color: "#7DBA3D" }}>
+                  {tot.poTotal > 0 ? ((tot.total / tot.poTotal) * 100).toFixed(1) : "0"}%
                 </p>
-                <p style={s.totalPctLabel}>{tot.apOk ? "do PO" : "potencial"}</p>
+                <p style={s.totalPctLabel}>do PO</p>
               </div>
             </div>
 
@@ -611,9 +603,7 @@ export default function RvSimulador() {
             <div style={s.sectionHeader}>
               <h3 style={s.sectionTitle}>📊 Totalizador — Todos os RNs</h3>
               <span style={s.somaChip}>
-                Confirmado: <strong>R$ {fmtBrl(somaTotal)}</strong>
-                &nbsp;·&nbsp;
-                <span style={{ color: "#7DBA3D" }}>⚠️ Potencial: <strong>R$ {fmtBrl(somaPotencial)}</strong></span>
+                Total operação: <strong>R$ {fmtBrl(somaTotal)}</strong>
               </span>
             </div>
             <div style={s.tableWrap}>
@@ -652,8 +642,7 @@ export default function RvSimulador() {
                           <td style={{ ...s.td, color: cor(pNab),  fontWeight: "600" }}>{pNab.toFixed(0)}%</td>
                           <td style={{ ...s.td, color: cor(pVar),  fontWeight: "600" }}>{pVar.toFixed(0)}%</td>
                           <td style={{ ...s.td, color: "#7DBA3D", fontWeight: "700" }}>
-                            {!l.apOk && <span style={{ fontSize: "0.65rem", marginRight: "2px" }}>⚠️</span>}
-                            R$ {fmtBrl(l.apOk ? l.total : l.totalPot)}
+                            R$ {fmtBrl(l.total)}
                           </td>
                           <td style={{ ...s.td, color: ppPO >= 100 ? "#4ade80" : ppPO >= 70 ? "#7DBA3D" : "#f87171", fontWeight: "600" }}>
                             {ppPO.toFixed(1)}%

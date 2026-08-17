@@ -16,13 +16,9 @@ const n = (v) => parseFloat(v || 0);
 const brl = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = (real, meta) => meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
 
-function calcRv(real, meta, peso, po, apOk, minPct = 70) {
-  if (!apOk || !meta) return 0;
-  const p = pct(real, meta);
-  if (p < minPct) return 0;
-  return (po * peso / 100) * (p / 100);
-}
-function calcPot(real, meta, peso, po, minPct = 70) {
+// AP não bloqueia mais a RV — cálculo independe do Atendimento Produtivo.
+// Premissas mantidas: piso 70%, cap 150%, pesos por segmento e PO.
+function calcRv(real, meta, peso, po, minPct = 70) {
   if (!meta) return 0;
   const p = pct(real, meta);
   if (p < minPct) return 0;
@@ -30,16 +26,15 @@ function calcPot(real, meta, peso, po, minPct = 70) {
 }
 
 function rvRN(r) {
-  const apOk = r.ap_ok === "OK";
+  const apOk = r.ap_ok === "OK"; // informativo apenas
   const po   = n(r.po_total);
   const seg  = r.segmento || "OFF";
   const w    = PESOS[seg] || PESOS.ON;
 
-  // Pontos Force — sem piso
+  // Pontos Force — piso 70%
   const pesoPt = w.pontos;
   const pctPt  = pct(n(r.pontos_real), META_PONTOS);
-  const rvPt   = apOk && pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
-  const potPt  = pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
+  const rvPt   = pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
 
   // Resultados — piso 70%, conforme peso do segmento (peso 0 = não entra)
   const defs = [
@@ -51,18 +46,16 @@ function rvRN(r) {
   const indicadores = defs.filter(d => d.peso > 0).map(d => ({
     ...d,
     pctVal: pct(d.real, d.meta),
-    rv:     calcRv(d.real, d.meta, d.peso, po, apOk),
-    rvPot:  calcPot(d.real, d.meta, d.peso, po),
+    rv:     calcRv(d.real, d.meta, d.peso, po),
   }));
 
   const total = rvPt + indicadores.reduce((s, i) => s + i.rv, 0);
-  const pot   = potPt + indicadores.reduce((s, i) => s + i.rvPot, 0);
 
   // Variável principal do segmento (para a coluna resumo): OFF→Match, ON→Marketplace
   const varKey = seg === "OFF" ? "match" : "marketplace";
   const varInd = indicadores.find(i => i.key === varKey) || { pctVal: 0 };
 
-  return { apOk, po, seg, pesoPt, pctPt, rvPt, indicadores, total, pot, pctVar: varInd.pctVal };
+  return { apOk, po, seg, pesoPt, pctPt, rvPt, indicadores, total, pctVar: varInd.pctVal };
 }
 
 // ── componente principal ──────────────────────────────────────────────────────
@@ -99,9 +92,8 @@ export default function RVRelatorio() {
     const c = rvRN(r);
     acc.po    += c.po;
     acc.total += c.total;
-    acc.pot   += c.pot;
     return acc;
-  }, { po: 0, total: 0, pot: 0 });
+  }, { po: 0, total: 0 });
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif", background: "#fff", color: "#111", minHeight: "100vh" }}>
@@ -227,9 +219,8 @@ export default function RVRelatorio() {
                         <td style={{ padding: "6px 8px", textAlign: "center", color: pctVr >= 100 ? "#16a34a" : pctVr >= 70 ? "#b45309" : "#dc2626", fontWeight: "600" }}>
                           {pctVr.toFixed(1)}%
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "800", fontSize: "0.85rem", color: c.apOk ? "#0c1410" : "#dc2626" }}>
+                        <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "800", fontSize: "0.85rem", color: "#0c1410" }}>
                           R$ {brl(c.total)}
-                          {!c.apOk && <div style={{ fontSize: "0.65rem", color: "#dc2626", fontWeight: "400" }}>AP NOK</div>}
                         </td>
                       </tr>
                     );
@@ -238,9 +229,7 @@ export default function RVRelatorio() {
                   <tr style={{ background: "#111", color: "#fff", fontWeight: "700", borderTop: "2px solid #7DBA3D" }}>
                     <td colSpan={4} style={{ padding: "7px 8px", fontSize: "0.75rem", letterSpacing: "0.04em" }}>TOTAL OPERAÇÃO</td>
                     <td style={{ padding: "7px 8px", textAlign: "right" }}>R$ {brl(totais.po)}</td>
-                    <td colSpan={4} style={{ padding: "7px 8px", textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
-                      Potencial: R$ {brl(totais.pot)}
-                    </td>
+                    <td colSpan={4} style={{ padding: "7px 8px" }}></td>
                     <td style={{ padding: "7px 8px", textAlign: "right", color: "#7DBA3D", fontSize: "0.95rem" }}>
                       R$ {brl(totais.total)}
                     </td>
@@ -276,7 +265,7 @@ export default function RVRelatorio() {
                   })),
                 ];
                 return (
-                  <div key={r.setor} className="avoid-break" style={{ border: `2px solid ${c.apOk ? "#e5e7eb" : "#fca5a5"}`, borderRadius: "8px", overflow: "hidden", fontSize: "0.75rem" }}>
+                  <div key={r.setor} className="avoid-break" style={{ border: "2px solid #e5e7eb", borderRadius: "8px", overflow: "hidden", fontSize: "0.75rem" }}>
                     {/* Card header */}
                     <div style={{ background: "#111", color: "#fff", padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
@@ -341,25 +330,14 @@ export default function RVRelatorio() {
                         })}
                       </tbody>
                       <tfoot>
-                        <tr style={{ background: c.apOk ? "#fefce8" : "#fef2f2", borderTop: "2px solid #e5e7eb" }}>
+                        <tr style={{ background: "#fefce8", borderTop: "2px solid #e5e7eb" }}>
                           <td colSpan={4} style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "0.78rem", color: "#444" }}>
-                            {!c.apOk && <span style={{ color: "#dc2626", marginRight: "8px", fontSize: "0.7rem" }}>AP NOK — RV bloqueada</span>}
                             TOTAL RV:
                           </td>
-                          <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "900", fontSize: "0.88rem", color: c.apOk ? "#0c1410" : "#dc2626" }}>
+                          <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "900", fontSize: "0.88rem", color: "#0c1410" }}>
                             R$ {brl(c.total)}
                           </td>
                         </tr>
-                        {!c.apOk && (
-                          <tr style={{ background: "#fff7ed" }}>
-                            <td colSpan={4} style={{ padding: "4px 8px", textAlign: "right", fontSize: "0.68rem", color: "#92400e" }}>
-                              Potencial caso AP fosse OK:
-                            </td>
-                            <td style={{ padding: "4px 8px", textAlign: "right", fontSize: "0.78rem", fontWeight: "700", color: "#92400e" }}>
-                              R$ {brl(c.pot)}
-                            </td>
-                          </tr>
-                        )}
                       </tfoot>
                     </table>
                   </div>
