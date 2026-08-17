@@ -62,6 +62,7 @@ export default function Tasks() {
   const [viewMode, setViewMode] = useState("pdv");
   const [taskExpandida, setTaskExpandida] = useState(null);
   const [taskDetalhe, setTaskDetalhe]     = useState(null); // modal detalhe Por Task
+  const [ordem, setOrdem] = useState("qtd_desc"); // ordenar por qtd de task
 
   useEffect(() => { carregar(); }, []);
 
@@ -126,15 +127,30 @@ export default function Tasks() {
   const totalTasks  = tasksDia.length;
   const pdvsComTask = Object.keys(porPdv).length;
 
-  // Agrupa Por Task (por descrição)
+  // Agrupa Por Task (por descrição) — soma os pontos do grupo
   const porTask = {};
   tasksVisiveis.forEach((t) => {
     const key = t.descricao || t.cluster_primario || "(sem descrição)";
-    if (!porTask[key]) porTask[key] = { cluster: t.cluster_primario, categoria: t.categoria, pdvs: [] };
+    if (!porTask[key]) porTask[key] = { cluster: t.cluster_primario, categoria: t.categoria, pdvs: [], pontos: 0 };
     porTask[key].pdvs.push(t);
+    porTask[key].pontos += Number(t.pontuacao) || 0;
   });
-  const taskGroups = Object.entries(porTask)
-    .sort((a, b) => b[1].pdvs.length - a[1].pdvs.length);
+
+  // Ordenação (por quantidade de task, ou nome)
+  const cmpQtd = (na, nb) => (ordem === "qtd_asc" ? na - nb : nb - na);
+  const porPdvOrdenado = Object.entries(porPdv).sort((a, b) =>
+    ordem === "nome"
+      ? String(mapaPdv[a[0]]?.nome_fantasia || a[0]).localeCompare(String(mapaPdv[b[0]]?.nome_fantasia || b[0]))
+      : cmpQtd(a[1].length, b[1].length)
+  );
+  const taskGroups = Object.entries(porTask).sort((a, b) =>
+    ordem === "nome"
+      ? a[0].localeCompare(b[0])
+      : cmpQtd(new Set(a[1].pdvs.map((t) => t.cod_pdv)).size, new Set(b[1].pdvs.map((t) => t.cod_pdv)).size)
+  );
+
+  // Total de pontos das tasks visíveis (mostrado na visão Por Task)
+  const totalPontos = tasksVisiveis.reduce((s, t) => s + (Number(t.pontuacao) || 0), 0);
 
   return (
     <div style={styles.root}>
@@ -260,9 +276,20 @@ export default function Tasks() {
               <option value="">Todos clusters</option>
               {clusters.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
+            <select
+              className="tk-select"
+              style={styles.inputSelect}
+              value={ordem}
+              onChange={(e) => setOrdem(e.target.value)}
+              title="Ordenar"
+            >
+              <option value="qtd_desc">Mais tasks primeiro</option>
+              <option value="qtd_asc">Menos tasks primeiro</option>
+              <option value="nome">Nome (A–Z)</option>
+            </select>
           </div>
           <span style={styles.countLabel} className="tk-count">
-            {Object.keys(porPdv).length} PDVs · {tasksVisiveis.length} tasks
+            {Object.keys(porPdv).length} PDVs · {tasksVisiveis.length} tasks{viewMode === "task" ? ` · ⭐ ${totalPontos} pts` : ""}
           </span>
         </div>
 
@@ -275,7 +302,7 @@ export default function Tasks() {
 
           /* ── VISÃO POR PDV ── */
           <div style={styles.lista}>
-            {Object.entries(porPdv).map(([codPdv, tasksPdv]) => {
+            {porPdvOrdenado.map(([codPdv, tasksPdv]) => {
               const pdv   = mapaPdv[codPdv];
               const aberto = pdvExpandido === codPdv;
               return (
@@ -351,6 +378,7 @@ export default function Tasks() {
                       <span className="tk-pdv-nome" style={styles.pdvNome}>{descricao}</span>
                     </div>
                     <div style={styles.pdvHeaderRight}>
+                      {grupo.pontos > 0 && <span style={{ ...styles.ptsTag, whiteSpace: "nowrap" }}>⭐ {grupo.pontos} pts</span>}
                       <span className="tk-tag-aberta" style={styles.tagAberta}>{pdvsUnicos.length} PDV{pdvsUnicos.length !== 1 ? "s" : ""}</span>
                       <span style={styles.expandIcon}>{aberto ? "▲" : "▼"}</span>
                     </div>

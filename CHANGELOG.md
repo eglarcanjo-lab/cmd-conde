@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.6** — Incidentes: RN volta a ver suas solicitações (filtro por setor) + fix "Rota não encontrada" ao responder (ordem id/data_criacao)
+Versão atual: **v3.36.7** — Tasks: ordenador por quantidade de task + somatório de pontos na visão Por Task
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
