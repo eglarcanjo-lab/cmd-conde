@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.13** — RV Simulador: nomes do pessoal vêm da tabela de usuários (refletem troca de setor), não mais fixos no código
+Versão atual: **v3.36.14** — RV Simulador: export Excel agora inclui a aba "GV" (consolidado da sala) junto do Resumo e Detalhamento dos RNs
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

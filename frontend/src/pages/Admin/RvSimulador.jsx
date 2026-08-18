@@ -425,7 +425,52 @@ export default function RvSimulador() {
       }
     });
 
+    // ════════════════════════════════════════════════════════════
+    // ABA GV — CONSOLIDADO DA SALA (mesma memória de cálculo dos RNs)
+    // ════════════════════════════════════════════════════════════
+    const gvAoa = [];
+    const gvTypes = [];
+    const gvMerges = [];
+    const gpush = (row, type) => { gvAoa.push(row); gvTypes.push(type); };
+    gpush([`GV — CONSOLIDADO DA SALA — Competência ${mesRef}`, "", "", "", ""], "title");
+    gvMerges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
+    gpush([`${gv.nRns} RNs · PO base R$ ${fmtBrl(gv.poGV)} · avaliado como 1 RN (teto 150%, piso 70%)`, "", "", "", ""], "po");
+    gvMerges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } });
+    gpush(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"], "thead");
+    gv.linhas.forEach((l) => {
+      gpush([l.label, r2(l.meta), r2(l.real), r2(pct(l.real, l.meta)), r2(l.rv)], "row");
+    });
+    gpush(["TOTAL RV DO GV", "", "", "", r2(gv.total)], "total");
+    gpush(["% do PO", "", "", "", gv.poGV > 0 ? r2((gv.total / gv.poGV) * 100) : 0], "pot");
+
+    const wsGV = XLSX.utils.aoa_to_sheet(gvAoa);
+    wsGV["!cols"] = [30, 16, 16, 16, 16].map((w) => ({ wch: w }));
+    wsGV["!merges"] = gvMerges;
+    gvTypes.forEach((type, R) => {
+      if (type === "title") setStyle(wsGV, R, 0, stTitle);
+      else if (type === "po") setStyle(wsGV, R, 0, stPO);
+      else if (type === "thead") { for (let C = 0; C <= 4; C++) setStyle(wsGV, R, C, stThead); }
+      else if (type === "row") {
+        for (let C = 0; C <= 4; C++) {
+          const al = C === 0 ? "left" : "right";
+          const fmt = C === 4 ? FMT_BRL : (C === 3 ? FMT_PCT : (C >= 1 ? FMT_NUM : null));
+          setStyle(wsGV, R, C, { ...stCell, alignment: { vertical: "center", horizontal: al } }, fmt);
+        }
+      } else if (type === "total") {
+        for (let C = 0; C <= 4; C++) {
+          const al = C === 0 ? "left" : "right";
+          setStyle(wsGV, R, C, { ...stTotal, alignment: { vertical: "center", horizontal: al } }, C === 4 ? FMT_BRL : null);
+        }
+      } else if (type === "pot") {
+        for (let C = 0; C <= 4; C++) {
+          const al = C === 0 ? "left" : "right";
+          setStyle(wsGV, R, C, { ...stPot, alignment: { horizontal: al } }, C === 4 ? FMT_PCT : null);
+        }
+      }
+    });
+
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsGV,     "GV");
     XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
     XLSX.utils.book_append_sheet(wb, wsDet,    "Detalhamento");
     XLSX.writeFile(wb, `relatorio_rv_${mesRef}.xlsx`);
