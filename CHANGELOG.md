@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.10** — Usuários: permite alterar o Código (setor) na edição, com checagem de duplicidade e confirmação
+Versão atual: **v3.36.11** — Usuários: ordenador por setor (↑/↓) e por nome na lista
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

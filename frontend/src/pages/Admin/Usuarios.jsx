@@ -36,6 +36,7 @@ export default function Usuarios() {
   const [sucesso, setSucesso] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [busca, setBusca] = useState("");
+  const [ordem, setOrdem] = useState("setor_asc");
   const [solicitacoes, setSolicitacoes] = useState([]);
 
   useEffect(() => { carregar(); carregarSolicitacoes(); }, []);
@@ -179,6 +180,16 @@ export default function Usuarios() {
     u.perfil?.toLowerCase().includes(busca.toLowerCase())
   );
 
+  // Ordenação. Setor = cod (numérico quando possível, senão alfanumérico).
+  const ordenados = [...filtrados].sort((a, b) => {
+    if (ordem === "nome") return String(a.nome || "").localeCompare(String(b.nome || ""));
+    const na = Number(a.cod), nb = Number(b.cod);
+    const cmp = (isNaN(na) || isNaN(nb))
+      ? String(a.cod || "").localeCompare(String(b.cod || ""), undefined, { numeric: true })
+      : na - nb;
+    return ordem === "setor_desc" ? -cmp : cmp;
+  });
+
   return (
     <div>
       {/* Solicitações de redefinição de senha */}
@@ -206,13 +217,18 @@ export default function Usuarios() {
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
+        <select style={styles.ordenarSel} value={ordem} onChange={(e) => setOrdem(e.target.value)} title="Ordenar">
+          <option value="setor_asc">Setor ↑ (menor→maior)</option>
+          <option value="setor_desc">Setor ↓ (maior→menor)</option>
+          <option value="nome">Nome (A–Z)</option>
+        </select>
         <button style={styles.btnPrimary} onClick={abrirNovo}>+ Novo Usuário</button>
       </div>
 
       {/* Tabela */}
       {loading ? (
         <p style={styles.msg}>Carregando...</p>
-      ) : filtrados.length === 0 ? (
+      ) : ordenados.length === 0 ? (
         <p style={styles.msg}>Nenhum usuário encontrado.</p>
       ) : (
         <div style={styles.tableWrap}>
@@ -225,7 +241,7 @@ export default function Usuarios() {
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((u) => (
+              {ordenados.map((u) => (
                 <tr key={u.cod} style={styles.tr}>
                   <td style={styles.td}><span style={styles.codBadge}>{u.cod}</span></td>
                   <td style={styles.td}>{u.nome}</td>
@@ -358,6 +374,18 @@ const styles = {
     fontSize: "0.9rem",
     fontFamily: "inherit",
     outline: "none",
+  },
+  ordenarSel: {
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "10px",
+    color: "#fff",
+    padding: "10px 12px",
+    fontSize: "0.85rem",
+    fontFamily: "inherit",
+    outline: "none",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   btnPrimary: {
     background: "linear-gradient(135deg, #7DBA3D, #2E7D32)",
