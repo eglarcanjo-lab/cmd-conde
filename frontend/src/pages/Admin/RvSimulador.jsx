@@ -104,6 +104,7 @@ export default function RvSimulador() {
   const [rvData,   setRvData]   = useState([]);
   const [pontosData, setPontosData] = useState([]);
   const [apData,   setApData]   = useState([]);
+  const [usuariosMap, setUsuariosMap] = useState({}); // cod -> nome (tabela viva de usuários)
   const [loading,  setLoading]  = useState(true);
   const [recalc,   setRecalc]   = useState(false);
   const [msg,      setMsg]      = useState("");
@@ -113,14 +114,18 @@ export default function RvSimulador() {
   async function carregar() {
     setLoading(true);
     try {
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         api.get(`/api/rv?mes=${mesRef}`),
         api.get(`/api/rv/pontos?mes=${mesRef}`),
         api.get(`/api/rv/ap?mes=${mesRef}`),
+        api.get("/api/admin/usuarios").catch(() => ({ data: [] })),
       ]);
       setRvData(r1.data || []);
       setPontosData(r2.data || []);
       setApData(r3.data || []);
+      const mapa = {};
+      (r4.data || []).forEach((u) => { if (u.cod) mapa[String(u.cod)] = u.nome; });
+      setUsuariosMap(mapa);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -149,6 +154,8 @@ export default function RvSimulador() {
   function getRv(cod)     { return rvData.find(r => r.setor === cod) || null; }
   function getPontos(cod) { return pontosData.find(r => r.setor === cod) || null; }
   function getAp(cod)     { return apData.find(r => r.setor === cod) || null; }
+  // Nome do colaborador: tabela viva de usuários (reflete troca de setor); fallback no fixo.
+  const nomeDe = (cod) => usuariosMap[String(cod)] || SETORES.find(s => s.cod === cod)?.nome || cod;
 
   function computeTotals(cod) {
     const rv     = getRv(cod);
@@ -274,7 +281,7 @@ export default function RvSimulador() {
   const apSel = getAp(setorSel);
 
   // ── totalizador (todas as RNs) ────────────────────────────────────────────
-  const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod) }));
+  const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod), nome: nomeDe(s.cod) }));
   const somaTotal    = linhas.reduce((acc, l) => acc + l.total, 0);
 
   function exportarRelatorio() {
@@ -513,7 +520,7 @@ export default function RvSimulador() {
                   onClick={() => setSetorSel(s2.cod)}
                 >
                   <span style={s.rnCod}>{s2.cod}</span>
-                  <span style={s.rnNome}>{s2.nome.split(" ")[0]}</span>
+                  <span style={s.rnNome}>{nomeDe(s2.cod).split(" ")[0]}</span>
                   <span style={{ ...s.rnTipo, color: s2.tipo === "OFF" ? "#60a5fa" : "#4ade80" }}>{s2.tipo}</span>
                   <span style={{
                     ...s.rnAp,
@@ -532,7 +539,7 @@ export default function RvSimulador() {
             <div style={s.detalheHeader}>
               <div>
                 <span style={s.detalheCod}>{sel?.cod}</span>
-                <span style={s.detalheNome}>{sel?.nome}</span>
+                <span style={s.detalheNome}>{nomeDe(setorSel)}</span>
                 <span style={{ ...s.detalheTipo, color: sel?.tipo === "OFF" ? "#60a5fa" : "#4ade80" }}>{sel?.tipo}</span>
               </div>
               <div style={s.apBadge(tot.apOk)}>

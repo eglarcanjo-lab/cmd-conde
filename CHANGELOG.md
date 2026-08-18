@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.12** — Usuários: reatribuir setor de usuário INATIVO a outro colaborador (libera o código; ativo continua bloqueando)
+Versão atual: **v3.36.13** — RV Simulador: nomes do pessoal vêm da tabela de usuários (refletem troca de setor), não mais fixos no código
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
