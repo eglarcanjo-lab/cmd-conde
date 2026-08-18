@@ -50,7 +50,7 @@ router.post("/usuarios", async (req, res) => {
 router.put("/usuarios/:cod", async (req, res) => {
   try {
     const { cod } = req.params;
-    const { nome, cpf, telefone, perfil, gv, ativo, senha } = req.body;
+    const { cod: novoCodRaw, nome, cpf, telefone, perfil, gv, ativo, senha } = req.body;
 
     const usuarios = await readSheet("usuarios");
     const idx = usuarios.findIndex((u) => u.cod === cod);
@@ -58,6 +58,16 @@ router.put("/usuarios/:cod", async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado." });
 
     const u = usuarios[idx];
+
+    // Permite alterar o código/setor. Valida que o novo não colide com outro usuário.
+    // OBS: dados históricos já lançados no setor antigo (metas, incidentes, RV, imports)
+    // continuam no setor antigo — a troca vale para login e lançamentos futuros.
+    const novoCod = (novoCodRaw !== undefined && String(novoCodRaw).trim() !== "")
+      ? String(novoCodRaw).trim() : cod;
+    if (novoCod !== cod && usuarios.some((x) => u !== x && x.cod === novoCod)) {
+      return res.status(409).json({ error: `O código/setor ${novoCod} já está em uso por outro usuário.` });
+    }
+
     // Senha definida pelo admin: se for real, guarda como hash; "1234" fica como
     // sentinela em texto (força troca no 1º login); vazio mantém a atual.
     let senhaFinal = u.senha;
@@ -65,7 +75,7 @@ router.put("/usuarios/:cod", async (req, res) => {
       senhaFinal = senha === SENHA_PADRAO ? SENHA_PADRAO : await hashSenha(senha);
     }
     const updated = [
-      cod,
+      novoCod,
       nome ?? u.nome,
       cpf?.replace(/\D/g, "") ?? u.cpf,
       telefone?.replace(/\D/g, "") ?? u.telefone,
@@ -77,7 +87,10 @@ router.put("/usuarios/:cod", async (req, res) => {
     ];
 
     await updateRow("usuarios", idx + 1, updated);
-    return res.json({ success: true, message: "Usuário atualizado." });
+    return res.json({
+      success: true,
+      message: novoCod !== cod ? `Usuário atualizado — setor ${cod} → ${novoCod}.` : "Usuário atualizado.",
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao atualizar usuário." });

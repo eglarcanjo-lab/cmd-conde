@@ -118,6 +118,16 @@ export default function Usuarios() {
       return;
     }
 
+    // Trocar o setor/código é sensível — confirma e avisa sobre dados históricos.
+    if (editando && String(form.cod).trim() !== String(editando.cod).trim()) {
+      const ok = window.confirm(
+        `Mudar o setor/código de ${editando.cod} para ${form.cod}?\n\n` +
+        `• O login e os lançamentos FUTUROS passam a usar ${form.cod}.\n` +
+        `• Dados já lançados no setor ${editando.cod} (metas, incidentes, RV, importações) continuam no setor antigo.`
+      );
+      if (!ok) return;
+    }
+
     setSalvando(true);
     try {
       if (editando) {
@@ -256,8 +266,11 @@ export default function Usuarios() {
             <div style={styles.modalBody}>
               <div style={styles.row}>
                 <div style={styles.fieldGroup}>
-                  <label style={styles.label}>Código *</label>
-                  <input style={styles.input} value={form.cod} onChange={(e) => setField("cod", e.target.value)} placeholder="101" disabled={!!editando} />
+                  <label style={styles.label}>Código (setor) *</label>
+                  <input style={styles.input} value={form.cod} onChange={(e) => setField("cod", e.target.value)} placeholder="101" />
+                  {editando && String(form.cod).trim() !== String(editando.cod).trim() && (
+                    <span style={{ color: "#f5c451", fontSize: "0.72rem" }}>⚠️ Muda o setor/login: {editando.cod} → {form.cod || "?"}</span>
+                  )}
                 </div>
                 <div style={{ ...styles.fieldGroup, flex: 2 }}>
                   <label style={styles.label}>Nome completo *</label>
