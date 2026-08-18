@@ -115,4 +115,26 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/faturados-buffer/pedido?num=123 — produtos de um pedido (drill-down).
+// Fonte: pedido_produtos (nº pedido × produto → volume marcação), montada no processador.
+router.get("/pedido", async (req, res) => {
+  try {
+    const np = String(req.query.num || "").trim().replace(/^0+/, "");
+    if (!np) return res.json({ num: np, produtos: [] });
+    const todos = await readSheet("pedido_produtos").catch(() => []);
+    const produtos = todos
+      .filter((r) => String(r.num_pedido || "").trim().replace(/^0+/, "") === np)
+      .map((r) => ({
+        cod_produto: String(r.cod_produto || "").trim(),
+        nome_produto: String(r.nome_produto || "").trim(),
+        vol: r1(num(r.volume_marcacao)),
+      }))
+      .sort((a, b) => b.vol - a.vol);
+    return res.json({ num: np, produtos });
+  } catch (e) {
+    console.error("faturados-buffer/pedido:", e);
+    return res.status(500).json({ error: "Erro ao buscar produtos do pedido." });
+  }
+});
+
 module.exports = router;

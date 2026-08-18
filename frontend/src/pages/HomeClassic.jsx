@@ -24,7 +24,7 @@ export default function HomeClassic() {
     { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: false, soRn: false },
     { icon: "🚨", label: "Incidentes",    route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer", ativo: true, soGestor: false, soRn: false },
-    { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
+    { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
   ].filter((m) => {
     if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director

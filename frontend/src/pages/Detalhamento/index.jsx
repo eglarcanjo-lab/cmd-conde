@@ -35,7 +35,7 @@ export default function Detalhamento() {
       <div style={S.header}>
         <button style={S.voltar} onClick={() => navigate("/")}>← Início</button>
         <div>
-          <h1 style={S.titulo}>🌿 Detalhamento HOP</h1>
+          <h1 style={S.titulo}>🌿 Devolução × Ruptura</h1>
           <p style={S.sub}>Relatórios de análise · admin</p>
         </div>
       </div>

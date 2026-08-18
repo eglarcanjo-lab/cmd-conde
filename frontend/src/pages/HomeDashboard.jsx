@@ -50,7 +50,7 @@ export default function HomeDashboard() {
     { icon: "📊", label: "SPO",           route: "/spo" },
     { icon: "🚨", label: "Incidentes",    route: "/incidentes" },
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer" },
-    { icon: "🌿", label: "Detalhamento HOP", route: "/detalhamento" },
+    { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento" },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
   ].filter((m) => !(isAdminOuDirector && m.soRn));
 

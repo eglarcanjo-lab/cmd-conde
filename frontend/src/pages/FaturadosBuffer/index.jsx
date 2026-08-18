@@ -6,6 +6,23 @@ import api from "../../services/api";
 const fmtHL = (v) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function PdvRow({ pdv, aberto, onToggle, cor }) {
+  const [pedAberto, setPedAberto] = useState(null); // nº do pedido expandido
+  const [prods, setProds] = useState({});           // cache: num -> array | "loading" | "erro"
+
+  const togglePed = async (num) => {
+    if (pedAberto === num) { setPedAberto(null); return; }
+    setPedAberto(num);
+    if (prods[num] === undefined) {
+      setProds((p) => ({ ...p, [num]: "loading" }));
+      try {
+        const r = await api.get(`/api/faturados-buffer/pedido?num=${encodeURIComponent(num)}`);
+        setProds((p) => ({ ...p, [num]: r.data.produtos || [] }));
+      } catch {
+        setProds((p) => ({ ...p, [num]: "erro" }));
+      }
+    }
+  };
+
   return (
     <div style={S.pdv}>
       <div style={S.pdvHead} onClick={onToggle}>
@@ -24,17 +41,42 @@ function PdvRow({ pdv, aberto, onToggle, cor }) {
       </div>
       {aberto && (
         <div style={S.pedidos}>
-          {pdv.pedidos.map((ped) => (
-            <div key={ped.num} style={S.ped}>
-              <span style={S.pedNum}>#{ped.num}</span>
-              <span style={S.pedItens}>
-                {ped.itens.map((it, i) => (
-                  <span key={i} style={S.pedItem}>{it.tipo} <b>{fmtHL(it.vol)}</b></span>
-                ))}
-              </span>
-              <span style={S.pedTot}>{fmtHL(ped.total)} HL</span>
-            </div>
-          ))}
+          {pdv.pedidos.map((ped) => {
+            const abertoP = pedAberto === ped.num;
+            const pl = prods[ped.num];
+            return (
+              <div key={ped.num} style={S.pedWrap}>
+                <div style={{ ...S.ped, cursor: "pointer" }} onClick={() => togglePed(ped.num)} title="Ver produtos do pedido">
+                  <span style={S.pedCaret}>{abertoP ? "▾" : "▸"}</span>
+                  <span style={S.pedNum}>#{ped.num}</span>
+                  <span style={S.pedItens}>
+                    {ped.itens.map((it, i) => (
+                      <span key={i} style={S.pedItem}>{it.tipo} <b>{fmtHL(it.vol)}</b></span>
+                    ))}
+                  </span>
+                  <span style={S.pedTot}>{fmtHL(ped.total)} HL</span>
+                </div>
+                {abertoP && (
+                  <div style={S.prodBox}>
+                    {pl === "loading" ? (
+                      <div style={S.prodMsg}>Carregando produtos…</div>
+                    ) : pl === "erro" ? (
+                      <div style={S.prodMsg}>Erro ao carregar — toque de novo.</div>
+                    ) : !pl || pl.length === 0 ? (
+                      <div style={S.prodMsg}>Sem produtos p/ este pedido (reimporte os Pedidos).</div>
+                    ) : (
+                      pl.map((pr) => (
+                        <div key={pr.cod_produto} style={S.prodRow}>
+                          <span style={S.prodNome} title={`cod ${pr.cod_produto}`}>{pr.nome_produto || pr.cod_produto}</span>
+                          <span style={S.prodVol}>{fmtHL(pr.vol)} HL</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -188,11 +230,18 @@ const S = {
   chips: { display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "7px", paddingLeft: "22px" },
   chip: { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)", borderRadius: "20px", padding: "2px 9px", fontSize: "0.7rem" },
   pedidos: { marginTop: "9px", paddingLeft: "22px", display: "flex", flexDirection: "column", gap: "5px" },
+  pedWrap: { display: "flex", flexDirection: "column", gap: "3px" },
   ped: { display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,0,0,0.18)", borderRadius: "8px", padding: "6px 9px", flexWrap: "wrap" },
+  pedCaret: { color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", width: "10px", flexShrink: 0 },
   pedNum: { color: "#7DBA3D", fontSize: "0.74rem", fontWeight: "600", flexShrink: 0 },
   pedItens: { display: "flex", flexWrap: "wrap", gap: "8px", flex: 1 },
   pedItem: { color: "rgba(255,255,255,0.55)", fontSize: "0.72rem" },
   pedTot: { color: "rgba(255,255,255,0.75)", fontSize: "0.74rem", flexShrink: 0 },
+  prodBox: { margin: "0 0 2px 18px", padding: "6px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "3px" },
+  prodMsg: { color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" },
+  prodRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" },
+  prodNome: { color: "rgba(255,255,255,0.7)", fontSize: "0.73rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  prodVol: { color: "rgba(255,255,255,0.85)", fontSize: "0.73rem", fontWeight: "600", flexShrink: 0, fontVariantNumeric: "tabular-nums" },
   footer: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginTop: "12px", padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)" },
   footLbl: { color: "rgba(255,255,255,0.45)", fontSize: "0.76rem" },
   footChip: { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", borderRadius: "20px", padding: "3px 10px", fontSize: "0.74rem" },

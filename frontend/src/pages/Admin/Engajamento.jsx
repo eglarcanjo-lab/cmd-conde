@@ -10,7 +10,7 @@ const TELA_LABEL = {
   "/": "🏠 Início", "/volume-diario": "📈 Volume Diário", "/cobertura": "📊 Cobertura & Distribuição",
   "/pdvs": "🗺️ PDVs", "/tasks": "✅ Tasks", "/spo": "📊 SPO", "/rv": "💰 Remuneração",
   "/incidentes": "🚨 Incidentes", "/incentivos": "🏆 Incentivos", "/produtos": "📦 Produtos",
-  "/detalhamento": "🌿 Detalhamento HOP", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
+  "/detalhamento": "🌿 Devolução × Ruptura", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
   "/rv-admin": "💰 RV Simulador",
 };
 const telaLabel = (t) => TELA_LABEL[t] || t;

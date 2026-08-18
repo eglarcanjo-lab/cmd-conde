@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.8** — Cobertura & Distribuição: botão de lupa p/ expandir a tabela (tela cheia + paisagem no mobile)
+Versão atual: **v3.36.9** — Faturados×Buffer drill-down de produtos; Detalhamento→"Devolução × Ruptura"; Devoluções rotina 030224; links BI de Cupons e Score 5
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

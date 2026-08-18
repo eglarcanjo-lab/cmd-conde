@@ -14,7 +14,7 @@ const TELAS = [
   { v: "/incidentes", l: "🚨 Incidentes" },
   { v: "/incentivos", l: "🏆 Incentivos" },
   { v: "/produtos", l: "📦 Produtos" },
-  { v: "/detalhamento", l: "🌿 Detalhamento HOP" },
+  { v: "/detalhamento", l: "🌿 Devolução × Ruptura" },
 ];
 const TIPOS = [
   { v: "info", l: "ℹ️ Informação" },
