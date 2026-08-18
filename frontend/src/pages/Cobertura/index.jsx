@@ -66,6 +66,24 @@ function corNumDist(n) {
   return "#4ade80";
 }
 
+// Envolve uma tabela com botão de lupa: expande em tela cheia (paisagem no mobile).
+function TabelaLupa({ full, onToggle, children }) {
+  return (
+    <div className={full ? "cob-fullscreen" : ""} style={full ? { padding: 0 } : {}}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6,
+        ...(full ? { position: "sticky", top: 0, background: "#0c1410", padding: "10px 12px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
+        <button onClick={onToggle} title={full ? "Fechar" : "Expandir tabela (paisagem no celular)"}
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, color: "#fff", padding: "5px 11px", cursor: "pointer", fontSize: "0.95rem", lineHeight: 1, fontFamily: "inherit" }}>
+          {full ? "✕ Fechar" : "🔍 Expandir"}
+        </button>
+      </div>
+      <div style={full ? { padding: "0 12px 12px", overflowX: "auto" } : {}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function Cobertura() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -81,6 +99,15 @@ export default function Cobertura() {
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useState("cobertura");
   const [catFiltro, setCatFiltro]   = useState(null);
+  const [tabelaFull, setTabelaFull] = useState(false);
+
+  // Lupa: expande a tabela em tela cheia e tenta travar paisagem no mobile
+  // (fallback CSS rotate 90° no iOS via classe .cob-fullscreen).
+  async function toggleTabelaFull() {
+    if (!tabelaFull) { setTabelaFull(true); try { await screen.orientation.lock("landscape"); } catch (_) {} }
+    else { setTabelaFull(false); try { screen.orientation.unlock(); } catch (_) {} }
+  }
+  const trocarAba = (nova) => { setAba(nova); setTabelaFull(false); };
 
   useEffect(() => { carregar(); }, []);
 
@@ -236,6 +263,21 @@ export default function Cobertura() {
 
   return (
     <div style={styles.root}>
+      <style>{`
+        .cob-fullscreen {
+          position: fixed !important; top: 0 !important; left: 0 !important;
+          width: 100vw !important; height: 100vh !important;
+          z-index: 9999; background: #0c1410; overflow: auto;
+          -webkit-overflow-scrolling: touch; padding: 0; border-radius: 0 !important;
+        }
+        @media (orientation: portrait) {
+          .cob-fullscreen {
+            width: 100vh !important; height: 100vw !important;
+            top: calc(50vh - 50vw) !important; left: calc(50vw - 50vh) !important;
+            transform: rotate(90deg) !important; transform-origin: center center !important;
+          }
+        }
+      `}</style>
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
@@ -253,20 +295,20 @@ export default function Cobertura() {
         <div style={styles.abas}>
           <button
             style={{ ...styles.abaBtn, ...(aba === "cobertura" ? styles.abaBtnAtivo : {}) }}
-            onClick={() => setAba("cobertura")}
+            onClick={() => trocarAba("cobertura")}
           >
             📊 Cobertura
           </button>
           <button
             style={{ ...styles.abaBtn, ...(aba === "distribuicao" ? styles.abaBtnAtivo : {}) }}
-            onClick={() => setAba("distribuicao")}
+            onClick={() => trocarAba("distribuicao")}
           >
             📦 Distribuição
           </button>
           {isGestor && (
             <button
               style={{ ...styles.abaBtn, ...(aba === "analitico" ? styles.abaBtnAtivo : {}) }}
-              onClick={() => setAba("analitico")}
+              onClick={() => trocarAba("analitico")}
             >
               🔬 Analítico
             </button>
@@ -380,6 +422,7 @@ export default function Cobertura() {
               ) : pdvsFiltrados.length === 0 ? (
                 <p style={styles.msg}>Nenhum PDV encontrado para {diaFiltro}.</p>
               ) : (
+                <TabelaLupa full={tabelaFull} onToggle={toggleTabelaFull}>
                 <div style={styles.tableWrap}>
                   <table style={styles.table}>
                     <thead>
@@ -416,6 +459,7 @@ export default function Cobertura() {
                     </tbody>
                   </table>
                 </div>
+                </TabelaLupa>
               )}
             </div>
           </>
@@ -537,6 +581,7 @@ export default function Cobertura() {
                   Nenhum PDV encontrado para o filtro atual.
                 </p>
               ) : (
+                <TabelaLupa full={tabelaFull} onToggle={toggleTabelaFull}>
                 <div style={styles.tableWrap}>
                   <table style={styles.table}>
                     <thead>
@@ -576,6 +621,7 @@ export default function Cobertura() {
                     </tbody>
                   </table>
                 </div>
+                </TabelaLupa>
               )}
             </div>
 

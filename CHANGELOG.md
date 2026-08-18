@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.7** — Tasks: ordenador por quantidade de task + somatório de pontos na visão Por Task
+Versão atual: **v3.36.8** — Cobertura & Distribuição: botão de lupa p/ expandir a tabela (tela cheia + paisagem no mobile)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
