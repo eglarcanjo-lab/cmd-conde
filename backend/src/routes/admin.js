@@ -30,11 +30,16 @@ router.post("/usuarios", async (req, res) => {
     }
 
     const existentes = await readSheet("usuarios");
-    if (existentes.find((u) => u.cod === String(cod))) {
-      return res.status(409).json({ error: "Código já cadastrado." });
+    const donoCod = existentes.find((u) => u.cod === String(cod));
+    if (donoCod && String(donoCod.ativo) === "true") {
+      return res.status(409).json({ error: "Código já cadastrado (usuário ativo)." });
     }
-    if (existentes.find((u) => u.cpf?.replace(/\D/g, "") === cpfLimpo)) {
+    if (existentes.find((u) => u.cpf?.replace(/\D/g, "") === cpfLimpo && u.cod !== String(cod))) {
       return res.status(409).json({ error: "CPF já cadastrado." });
+    }
+    // Código pertencia a um usuário INATIVO: remove o cadastro inativo p/ liberar o setor.
+    if (donoCod) {
+      await deleteRow("usuarios", existentes.findIndex((u) => u.cod === String(cod)));
     }
 
     const criado_em = new Date().toISOString();
@@ -52,21 +57,32 @@ router.put("/usuarios/:cod", async (req, res) => {
     const { cod } = req.params;
     const { cod: novoCodRaw, nome, cpf, telefone, perfil, gv, ativo, senha } = req.body;
 
-    const usuarios = await readSheet("usuarios");
-    const idx = usuarios.findIndex((u) => u.cod === cod);
+    let usuarios = await readSheet("usuarios");
+    let idx = usuarios.findIndex((u) => u.cod === cod);
 
     if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado." });
 
-    const u = usuarios[idx];
-
-    // Permite alterar o código/setor. Valida que o novo não colide com outro usuário.
-    // OBS: dados históricos já lançados no setor antigo (metas, incidentes, RV, imports)
-    // continuam no setor antigo — a troca vale para login e lançamentos futuros.
+    // Permite alterar o código/setor. Regra na colisão: se o dono atual está ATIVO,
+    // bloqueia; se está INATIVO, libera o setor removendo o cadastro inativo (handover
+    // de território). OBS: dados históricos do setor antigo (metas, incidentes, RV,
+    // imports) continuam no setor antigo — a troca vale p/ login e lançamentos futuros.
     const novoCod = (novoCodRaw !== undefined && String(novoCodRaw).trim() !== "")
       ? String(novoCodRaw).trim() : cod;
-    if (novoCod !== cod && usuarios.some((x) => u !== x && x.cod === novoCod)) {
-      return res.status(409).json({ error: `O código/setor ${novoCod} já está em uso por outro usuário.` });
+    if (novoCod !== cod) {
+      const dono = usuarios.find((x) => x.cod === novoCod && x.cod !== cod);
+      if (dono) {
+        if (String(dono.ativo) === "true") {
+          return res.status(409).json({ error: `O código/setor ${novoCod} já está em uso por um usuário ATIVO (${dono.nome}). Desative-o antes de reatribuir.` });
+        }
+        // Dono inativo: remove p/ liberar o setor, depois relê p/ reindexar.
+        await deleteRow("usuarios", usuarios.findIndex((x) => x.cod === novoCod));
+        usuarios = await readSheet("usuarios");
+        idx = usuarios.findIndex((u) => u.cod === cod);
+        if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado após liberar o setor." });
+      }
     }
+
+    const u = usuarios[idx];
 
     // Senha definida pelo admin: se for real, guarda como hash; "1234" fica como
     // sentinela em texto (força troca no 1º login); vazio mantém a atual.

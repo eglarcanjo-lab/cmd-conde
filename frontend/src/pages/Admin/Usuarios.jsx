@@ -119,14 +119,21 @@ export default function Usuarios() {
       return;
     }
 
-    // Trocar o setor/código é sensível — confirma e avisa sobre dados históricos.
-    if (editando && String(form.cod).trim() !== String(editando.cod).trim()) {
-      const ok = window.confirm(
-        `Mudar o setor/código de ${editando.cod} para ${form.cod}?\n\n` +
-        `• O login e os lançamentos FUTUROS passam a usar ${form.cod}.\n` +
-        `• Dados já lançados no setor ${editando.cod} (metas, incidentes, RV, importações) continuam no setor antigo.`
-      );
-      if (!ok) return;
+    // Setor (código): bloqueia colisão com usuário ATIVO; se o dono for INATIVO,
+    // confirma a remoção do cadastro inativo p/ liberar o setor.
+    const codNovo = String(form.cod).trim();
+    const codAtual = editando ? String(editando.cod).trim() : null;
+    const mudouCod = codNovo !== codAtual;
+    const dono = mudouCod ? usuarios.find((u) => String(u.cod) === codNovo && String(u.cod) !== codAtual) : null;
+    if (dono && String(dono.ativo) === "true") {
+      setErro(`O setor ${codNovo} já é de ${dono.nome} (ATIVO). Desative-o antes de usar esse código.`);
+      return;
+    }
+    if ((editando && mudouCod) || dono) {
+      let msg = editando ? `Mudar o setor de ${codAtual} para ${codNovo}?` : `Usar o setor ${codNovo} para ${form.nome}?`;
+      if (dono) msg += `\n\n⚠️ O setor ${codNovo} pertence a ${dono.nome} (INATIVO) — esse cadastro será REMOVIDO para liberar o setor.`;
+      if (editando) msg += `\n\n• Login e lançamentos FUTUROS passam a usar ${codNovo}.\n• Dados históricos do setor ${codAtual} continuam no setor antigo.`;
+      if (!window.confirm(msg)) return;
     }
 
     setSalvando(true);
