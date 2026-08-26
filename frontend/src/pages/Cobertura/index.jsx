@@ -40,6 +40,8 @@ const STATUS_COLORS = {
   "—":      { bg: "transparent",           color: "rgba(255,255,255,0.15)" },
 };
 
+const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+
 function getDiaHoje() {
   const dias = ["DOM","SEG","TER","QUA","QUI","SEX","SAB"];
   return dias[new Date().getDay()];
@@ -100,6 +102,18 @@ export default function Cobertura() {
   const [aba, setAba]               = useState("cobertura");
   const [catFiltro, setCatFiltro]   = useState(null);
   const [tabelaFull, setTabelaFull] = useState(false);
+  const [drill, setDrill] = useState(null);         // { cod, nome, categoria }
+  const [drillData, setDrillData] = useState(null); // null=carregando | obj | "erro"
+
+  // Drill-down de uma célula: SKUs comprados (OK, com HL/caixas) e não comprados (NOK) da categoria.
+  async function abrirDrill(pdv, categoria) {
+    setDrill({ cod: pdv.cod_pdv, nome: pdv.nome_fantasia, categoria });
+    setDrillData(null);
+    try {
+      const r = await api.get(`/api/cobertura/sku-pdv?cod_pdv=${encodeURIComponent(pdv.cod_pdv)}&categoria=${encodeURIComponent(categoria)}`);
+      setDrillData(r.data);
+    } catch { setDrillData("erro"); }
+  }
 
   // Lupa: expande a tabela em tela cheia e tenta travar paisagem no mobile
   // (fallback CSS rotate 90° no iOS via classe .cob-fullscreen).
@@ -448,7 +462,11 @@ export default function Cobertura() {
                             const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
                             return (
                               <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
-                                <span style={{ ...styles.statusPill, background: clr.bg, color: clr.color }}>
+                                <span
+                                  style={{ ...styles.statusPill, background: clr.bg, color: clr.color, cursor: st !== "—" ? "pointer" : "default" }}
+                                  onClick={st !== "—" ? () => abrirDrill(p, c.key) : undefined}
+                                  title={st !== "—" ? "Ver SKUs comprados / não comprados" : undefined}
+                                >
                                   {st === "PENDENTE" ? "PEN" : st}
                                 </span>
                               </td>
@@ -610,7 +628,11 @@ export default function Cobertura() {
                             </td>
                             {colsCat.map((c) => (
                               <td key={c.key} style={{ ...styles.td, ...styles.tdCat }}>
-                                <span style={{ fontWeight: "700", color: corNumDist(p.distByCat[c.key]), fontSize: "0.88rem" }}>
+                                <span
+                                  style={{ fontWeight: "700", color: corNumDist(p.distByCat[c.key]), fontSize: "0.88rem", cursor: "pointer" }}
+                                  onClick={() => abrirDrill(p, c.key)}
+                                  title="Ver SKUs (caixas e HL)"
+                                >
                                   {p.distByCat[c.key]}
                                 </span>
                               </td>
@@ -626,6 +648,61 @@ export default function Cobertura() {
             </div>
 
           </>
+        )}
+
+        {/* ── Drill-down de SKUs (célula clicada) ─────────────────────── */}
+        {drill && (
+          <div style={styles.drillOverlay} onClick={(e) => e.target === e.currentTarget && setDrill(null)}>
+            <div style={styles.drillModal}>
+              <div style={styles.drillHead}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={styles.drillTitle}>{drill.nome || `PDV ${drill.cod}`}</div>
+                  <div style={styles.drillSub}>cod {drill.cod} · categoria <b style={{ color: "#7DBA3D" }}>{drill.categoria}</b></div>
+                </div>
+                <button style={styles.drillClose} onClick={() => setDrill(null)}>✕</button>
+              </div>
+              <div style={styles.drillBody}>
+                {drillData === null ? (
+                  <div style={styles.drillMsg}>Carregando SKUs…</div>
+                ) : drillData === "erro" ? (
+                  <div style={styles.drillMsg}>Erro ao carregar. Toque de novo.</div>
+                ) : (
+                  <>
+                    <div style={styles.drillResumo}>
+                      <b style={{ color: "#4ade80" }}>{drillData.comprou.length}</b> SKUs comprados ·{" "}
+                      <b>{fmtN(drillData.total_caixas)}</b> cx · <b>{fmtN(drillData.total_hl)}</b> HL
+                    </div>
+                    <div style={styles.drillSecTitle}>✅ Comprou ({drillData.comprou.length})</div>
+                    {drillData.comprou.length === 0 ? (
+                      <div style={styles.drillMsg}>Nenhum SKU desta categoria comprado no mês.</div>
+                    ) : (
+                      <div style={styles.drillList}>
+                        {drillData.comprou.map((s) => (
+                          <div key={s.cod} style={styles.drillRow}>
+                            <span style={styles.drillNome} title={`cod ${s.cod}`}>{s.nome}</span>
+                            <span style={styles.drillQtd}>{s.caixas != null ? `${fmtN(s.caixas)} cx` : "s/ caixa"} · {fmtN(s.volume_hl)} HL</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ ...styles.drillSecTitle, color: "#f0997b" }}>❌ Não comprou ({drillData.naoComprou.length})</div>
+                    <div style={styles.drillSubtle}>SKUs desta categoria vendidos no setor que este PDV não comprou.</div>
+                    {drillData.naoComprou.length === 0 ? (
+                      <div style={styles.drillMsg}>—</div>
+                    ) : (
+                      <div style={{ ...styles.drillList, maxHeight: 200, overflowY: "auto" }}>
+                        {drillData.naoComprou.map((s) => (
+                          <div key={s.cod} style={styles.drillRow}>
+                            <span style={styles.drillNome} title={`cod ${s.cod}`}>{s.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
       </div>
@@ -696,4 +773,20 @@ const styles = {
   skuQtd: { margin: 0, fontSize: "0.7rem", color: "rgba(255,255,255,0.35)" },
   skuBadge: { padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", flexShrink: 0 },
   semDados: { fontSize: "0.78rem", color: "rgba(255,255,255,0.25)", margin: 0 },
+  // Drill-down modal
+  drillOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: "16px" },
+  drillModal: { background: "#111c16", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "100%", maxWidth: "520px", maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden" },
+  drillHead: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  drillTitle: { color: "#fff", fontWeight: "700", fontSize: "1rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  drillSub: { color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", marginTop: "2px" },
+  drillClose: { background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "1.1rem", cursor: "pointer", flexShrink: 0 },
+  drillBody: { padding: "14px 18px 18px", overflowY: "auto" },
+  drillMsg: { color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", padding: "8px 0" },
+  drillResumo: { color: "rgba(255,255,255,0.75)", fontSize: "0.85rem", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "8px 10px", marginBottom: "12px" },
+  drillSecTitle: { color: "#4ade80", fontSize: "0.82rem", fontWeight: "700", margin: "10px 0 6px" },
+  drillSubtle: { color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginBottom: "6px" },
+  drillList: { display: "flex", flexDirection: "column", gap: "4px" },
+  drillRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "6px 9px", background: "rgba(255,255,255,0.03)", borderRadius: "7px" },
+  drillNome: { color: "rgba(255,255,255,0.82)", fontSize: "0.78rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  drillQtd: { color: "rgba(255,255,255,0.6)", fontSize: "0.76rem", fontWeight: "600", flexShrink: 0, fontVariantNumeric: "tabular-nums" },
 };

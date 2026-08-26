@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.36.14** — RV Simulador: export Excel agora inclui a aba "GV" (consolidado da sala) junto do Resumo e Detalhamento dos RNs
+Versão atual: **v3.37.0** — Cobertura & Distribuição: clicar na célula abre os SKUs do PDV na categoria (comprou c/ HL+caixas · não comprou/oportunidade)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
