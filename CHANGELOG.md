@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.37.0** — Cobertura & Distribuição: clicar na célula abre os SKUs do PDV na categoria (comprou c/ HL+caixas · não comprou/oportunidade)
+Versão atual: **v3.37.1** — SPO: trimestre Jul–Set/2026 (início avaliação Julho); +RGB fora do tri (ativo:false + sem rota de importação). Reconciliação de KPIs em andamento.
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

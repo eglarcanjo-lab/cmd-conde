@@ -38,7 +38,7 @@ export const SPO_KPIS = [
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: true },
   { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true },
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true },
-  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: true },
+  { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false }, // saiu do tri Jul–Set/2026 (código preservado, sem rota de importação)
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: true },
