@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.38.1** — Home: Top 20 produtos com fonte vermelha quando a Média 3M do produto fica abaixo de 50 (HL)
+Versão atual: **v3.38.2** — Home: coluna "Estoque" (disponível/Grade) no Top 20 produtos; vermelho quando zerado
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

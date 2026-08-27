@@ -134,11 +134,12 @@ router.get("/rankings", async (req, res) => {
     const media3Set = new Set(media3Meses);
 
     // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual (p/ o total).
-    const [vendas, vdPdv, vdProd, prodBase] = await Promise.all([
+    const [vendas, vdPdv, vdProd, prodBase, gradeEstoque] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", [...media3Meses, mesAtual]).catch(() => []),
       readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheet("produtos_base").catch(() => []),
+      readSheet("grade_estoque").catch(() => []),
     ]);
     const vendasF = filtrarPorPerfil(vendas, req.user, "setor");
     const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
@@ -200,6 +201,14 @@ router.get("/rankings", async (req, res) => {
     produtos.forEach((p) => {
       const full = nomeBase[String(p.cod).trim()] || nomeBase[normCod(p.cod)];
       if (full) p.nome = full;
+    });
+
+    // Estoque disponível (saldo/"Disp") por produto — vem da Grade de Estoque (grade_estoque).
+    const estoqueMap = {};
+    gradeEstoque.forEach((r) => { const c = normCod(r.cod); if (c && c !== "0") estoqueMap[c] = Math.round(num(r.saldo)); });
+    produtos.forEach((p) => {
+      const e = estoqueMap[String(p.cod).trim()] ?? estoqueMap[normCod(p.cod)];
+      p.estoque = e === undefined ? null : e;
     });
 
     const rot = (m) => { const [, mo] = String(m).split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(Number(mo) || 1) - 1]; };
