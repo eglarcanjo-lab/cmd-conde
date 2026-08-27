@@ -14,7 +14,7 @@ const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026
 
 // Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
 // compartilhada com o Painel SPO e o admin de Metas.
-const SPO_ITEMS = SPO_KPIS;
+const SPO_ITEMS = SPO_KPIS.filter((k) => k.ativo); // só KPIs ativos (inativos preservam código/histórico)
 
 const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
 
@@ -74,6 +74,7 @@ export default function SPO() {
   const [aloneFiltroRN, setAloneFiltroRN] = useState("TODOS");
   const [aloneFiltroDia, setAloneFiltroDia] = useState("TODOS");
   const [aloneFiltroPDV, setAloneFiltroPDV] = useState("TODOS");
+  const [spoCfg, setSpoCfg] = useState({}); // { item: {pts, peso} } — config editável (spo_kpi_config)
   const [rgb, setRgb] = useState([]);
   const [rgbLit, setRgbLit] = useState([]);
   const [rgbInt, setRgbInt] = useState([]);
@@ -142,6 +143,26 @@ export default function SPO() {
   })();
 
   useEffect(() => { carregar(); }, []);
+
+  // Config editável de pts/peso por KPI (admin Metas SPO) — alimenta o consolidado.
+  useEffect(() => {
+    api.get("/api/spo/painel/config")
+      .then((r) => { const m = {}; (r.data || []).forEach((x) => { m[String(x.item)] = { pts: x.pts, peso: x.peso }; }); setSpoCfg(m); })
+      .catch(() => {});
+  }, []);
+
+  // pts/peso do KPI: usa a config editável; se vazia, cai no registro (config/spoKpis.js).
+  const ptsDe = (n) => {
+    const c = spoCfg[String(n)];
+    if (c && c.pts !== "" && c.pts != null) return parseFloat(c.pts) || 0;
+    return SPO_ITEMS.find((s) => s.n === n)?.pts ?? 0;
+  };
+  const pesoDe = (n) => {
+    const c = spoCfg[String(n)];
+    if (c && c.peso !== "" && c.peso != null) return parseFloat(c.peso) || 0;
+    return SPO_ITEMS.find((s) => s.n === n)?.peso ?? 0;
+  };
+  const totalPts = SPO_ITEMS.reduce((s, i) => s + ptsDe(i.n), 0);
 
   // Resetar aba quando KPI muda para evitar aba inválida visível
   useEffect(() => {
@@ -351,7 +372,7 @@ export default function SPO() {
         {/* Scoreboard dos 24 KPIs */}
         <div style={styles.scoreboard}>
           <div style={styles.scoreboardHeader}>
-            <span style={styles.scoreboardTitle}>Painel SPO — {TOTAL_PTS} pontos</span>
+            <span style={styles.scoreboardTitle}>Painel SPO — {totalPts} pontos</span>
             <span style={styles.scoreboardSub}>KPIs ativos em amarelo</span>
           </div>
           <div className="spo-kpi-grid" style={styles.kpiGrid}>
@@ -387,8 +408,8 @@ export default function SPO() {
                   <span style={styles.kpiN}>#{item.n}</span>
                   <span style={styles.kpiLabel}>{item.label}</span>
                   <div style={styles.kpiPts}>
-                    <span style={{ color: item.ativo ? "#7DBA3D" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{item.pts} pts</span>
-                    <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{item.peso}%</span>
+                    <span style={{ color: item.ativo ? "#7DBA3D" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{ptsDe(item.n)} pts</span>
+                    <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>{pesoDe(item.n)}%</span>
                   </div>
                 </div>
               );
@@ -2258,7 +2279,7 @@ export default function SPO() {
                             const getReal = (n, mes) => getRealDados(n, mes);
               
                             // Busca pts do item no SPO_ITEMS (ITENS_SPO interno não tem pts)
-                            const getPts = (n) => SPO_ITEMS.find(s => s.n === n)?.pts ?? 0;
+                            const getPts = ptsDe; // pts da config editável (fallback no registro)
 
                             // Total de pontos por mês — soma pts de cada KPI que bateu a meta
                             const pontosMes = (mes) => ITENS_SPO.reduce((acc, item) => {
@@ -2335,7 +2356,7 @@ export default function SPO() {
                                       const tReal   = triAccumReal(item.n);
                                       const tPts    = tOK !== null ? (tOK ? 3 : 0) : null;
                                       const tPtsSPO = tOK !== null ? (tOK ? getPts(item.n) : 0) : null;
-                                      const tPctSPO = tOK !== null ? (tOK ? (getPts(item.n) / TOTAL_PTS * 100).toFixed(1) + "%" : "0.0%") : null;
+                                      const tPctSPO = tOK !== null ? (tOK ? (getPts(item.n) / totalPts * 100).toFixed(1) + "%" : "0.0%") : null;
                                       const corTri  = tOK === true ? "#4ade80" : tOK === false ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
                                         <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(125,186,61,0.08)", boxShadow: "inset 3px 0 0 #7DBA3D" } : {}) }}>
@@ -2385,7 +2406,7 @@ export default function SPO() {
                                         {ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0)}
                                       </td>
                                       <td style={{ ...tdStyle, color: "#4ade80", fontWeight: "700", fontSize: "0.9rem", background: "rgba(125,186,61,0.06)" }}>
-                                        {(ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0) / TOTAL_PTS * 100).toFixed(1)}%
+                                        {(ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0) / totalPts * 100).toFixed(1)}%
                                       </td>
                                     </tr>
                                   </tbody>

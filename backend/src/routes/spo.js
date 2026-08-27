@@ -440,6 +440,37 @@ router.post("/painel/metas", async (req, res) => {
   }
 });
 
+// GET /api/spo/painel/config — pontuação (pts) e peso por KPI, editáveis no admin.
+// Alimenta o consolidado (fallback: constantes do registro config/spoKpis.js).
+router.get("/painel/config", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_kpi_config");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// POST /api/spo/painel/config — substitui a aba spo_kpi_config
+router.post("/painel/config", async (req, res) => {
+  try {
+    const { linhas } = req.body;
+    if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
+    const headers = ["item", "pts", "peso"];
+    const rows = [
+      headers,
+      ...linhas.map((l) => [
+        String(l.item ?? ""),
+        l.pts !== "" && l.pts !== null && l.pts !== undefined ? String(l.pts) : "",
+        l.peso !== "" && l.peso !== null && l.peso !== undefined ? String(l.peso) : "",
+      ]),
+    ];
+    await sobrescreverAba("spo_kpi_config", rows);
+    return res.json({ success: true, total: linhas.length });
+  } catch (err) {
+    console.error("spo/painel/config:", err);
+    return res.status(500).json({ error: "Erro ao salvar config SPO." });
+  }
+});
+
 
 // PATCH /api/spo/painel/limpar-reais — zera os realizados de um mês em spo_metas (preserva metas)
 router.patch("/painel/limpar-reais", async (req, res) => {

@@ -1,10 +1,10 @@
 // v1.1 - botão Snapshot (fechar mês) + import/edit spo_metas
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
-import { SPO_KPIS_BASICO } from "../../config/spoKpis";
+import { SPO_KPIS, SPO_KPIS_BASICO } from "../../config/spoKpis";
 
-const MESES = ["2026-04","2026-05","2026-06"];
-const MESES_LABEL = { "2026-04":"Abril","2026-05":"Maio","2026-06":"Junho" };
+const MESES = ["2026-07","2026-08","2026-09"];
+const MESES_LABEL = { "2026-07":"Julho","2026-08":"Agosto","2026-09":"Setembro" };
 
 // Calcula o mês anterior ao atual (padrão do snapshot)
 function mesAnterior() {
@@ -16,10 +16,14 @@ function mesAnterior() {
 
 // Lista de KPIs vem do registro único (config/spoKpis.js).
 const ITENS = SPO_KPIS_BASICO;
+// Defaults de pts/peso do registro — placeholder até o admin salvar a config.
+const REG = {};
+SPO_KPIS.forEach((k) => { REG[k.n] = { pts: k.pts, peso: k.peso }; });
 
 export default function SpoMetas() {
   const fileRef = useRef(null);
-  const [dados, setDados] = useState({});   // { "1_2026-04": {meta, real}, ... }
+  const [dados, setDados] = useState({});   // { "1_2026-07": {meta, real}, ... }
+  const [cfg, setCfg] = useState({});       // { item: { pts, peso } }
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
@@ -34,19 +38,29 @@ export default function SpoMetas() {
   async function carregar() {
     setLoading(true);
     try {
-      const res = await api.get("/api/spo/painel/metas");
+      const [resM, resC] = await Promise.all([
+        api.get("/api/spo/painel/metas"),
+        api.get("/api/spo/painel/config").catch(() => ({ data: [] })),
+      ]);
       const mapa = {};
-      (res.data || []).forEach((r) => {
+      (resM.data || []).forEach((r) => {
         const k = `${r.item}_${r.mes}`;
         mapa[k] = { meta: r.meta ?? "", real: r.real ?? "" };
       });
       setDados(mapa);
+      const cmap = {};
+      (resC.data || []).forEach((r) => { cmap[String(r.item)] = { pts: r.pts ?? "", peso: r.peso ?? "" }; });
+      setCfg(cmap);
     } catch {
       setMsg("❌ Erro ao carregar metas.");
     } finally {
       setLoading(false);
     }
   }
+
+  const getCfg = (item, campo) => cfg[String(item)]?.[campo] ?? "";
+  const setCfgVal = (item, campo, v) =>
+    setCfg((prev) => ({ ...prev, [String(item)]: { ...prev[String(item)], [campo]: v } }));
 
   function getVal(item, mes, campo) {
     return dados[`${item}_${mes}`]?.[campo] ?? "";
@@ -75,7 +89,14 @@ export default function SpoMetas() {
         });
       });
       await api.post("/api/spo/painel/metas", { linhas });
-      setMsg(`✅ ${linhas.length} linhas salvas com sucesso!`);
+
+      // Salva também a config de pontuação/peso por KPI (alimenta o consolidado).
+      const cfgLinhas = ITENS
+        .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso") }))
+        .filter((l) => l.pts !== "" || l.peso !== "");
+      await api.post("/api/spo/painel/config", { linhas: cfgLinhas });
+
+      setMsg(`✅ ${linhas.length} metas + ${cfgLinhas.length} configs salvas!`);
     } catch {
       setMsg("❌ Erro ao salvar metas.");
     } finally {
@@ -304,6 +325,8 @@ export default function SpoMetas() {
               <tr>
                 <th style={{ ...thS, textAlign: "left", minWidth: "40px" }}>#</th>
                 <th style={{ ...thS, textAlign: "left", minWidth: "200px" }}>Indicador</th>
+                <th style={{ ...thS, minWidth: "56px", background: "rgba(125,186,61,0.1)" }} rowSpan={2}>Pts</th>
+                <th style={{ ...thS, minWidth: "56px", background: "rgba(125,186,61,0.1)" }} rowSpan={2}>Peso %</th>
                 {MESES.map((mes) => (
                   <th key={mes} colSpan={2} style={{ ...thS, background: "rgba(125,186,61,0.06)", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
                     {MESES_LABEL[mes]}
@@ -324,6 +347,12 @@ export default function SpoMetas() {
                 <tr key={n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <td style={{ padding: "6px 10px", color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>{n}</td>
                   <td style={{ padding: "6px 10px", color: "rgba(255,255,255,0.8)", fontSize: "0.8rem", whiteSpace: "nowrap" }}>{label}</td>
+                  <td style={{ padding: "4px 6px", background: "rgba(125,186,61,0.04)" }}>
+                    <input style={{ ...inpStyle, width: "50px" }} value={getCfg(n, "pts")} onChange={(e) => setCfgVal(n, "pts", e.target.value)} placeholder={String(REG[n]?.pts ?? "")} />
+                  </td>
+                  <td style={{ padding: "4px 6px", background: "rgba(125,186,61,0.04)" }}>
+                    <input style={{ ...inpStyle, width: "50px" }} value={getCfg(n, "peso")} onChange={(e) => setCfgVal(n, "peso", e.target.value)} placeholder={String(REG[n]?.peso ?? "")} />
+                  </td>
                   {MESES.map((mes) => (
                     [
                       <td key={mes + "m"} style={{ padding: "4px 6px", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>

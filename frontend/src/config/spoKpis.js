@@ -25,19 +25,19 @@ export const SPO_KPIS = [
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: true },
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
-  { n: 7,  label: "% PDVs abrindo Promoção no BEES",    pts: 10, peso: 5.6,  ativo: true },
+  { n: 7,  label: "% PDVs abrindo Promoção no BEES",    pts: 10, peso: 5.6,  ativo: false }, // fora do tri Jul–Set/2026
   { n: 8,  label: "Aderência de Política Comercial",    pts: 8,  peso: 4.4,  ativo: true },
   { n: 9,  label: "Execução Menu de Cerveja",           pts: 10, peso: 5.6,  ativo: true },
-  { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: false },
+  { n: 10, label: "Academia Bees RN",                   pts: 14, peso: 7.8,  ativo: true },
   { n: 11, label: "Tasks Cerveja TT (Portfolio)",       pts: 10, peso: 5.6,  ativo: true },
   { n: 12, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.3,  ativo: true },
   { n: 13, label: "Tasks NAB TT (Portfolio)",           pts: 10, peso: 5.6,  ativo: true },
-  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: true },
+  { n: 14, label: "Tasks de Volume",                    pts: 6,  peso: 3.3,  ativo: false }, // fora do tri (substituído por "SKU/PDV TT", KPI novo)
   { n: 15, label: "Tasks de Marketplace",               pts: 8,  peso: 4.4,  ativo: true },
   { n: 16, label: "Tasks de Match (Portfolio)",         pts: 8,  peso: 4.4,  ativo: true },
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 6,  peso: 3.3,  ativo: true },
   { n: 18, label: "Tarefa de Digitalização",            pts: 4,  peso: 2.2,  ativo: true },
-  { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: true },
+  { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: false }, // fora do tri Jul–Set/2026
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false }, // saiu do tri Jul–Set/2026 (código preservado, sem rota de importação)
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 6,  peso: 3.3,  ativo: true },
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true },
@@ -45,8 +45,9 @@ export const SPO_KPIS = [
   { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: true },
 ];
 
-// Versão enxuta {n, label} para o Painel SPO e o admin de Metas.
-export const SPO_KPIS_BASICO = SPO_KPIS.map(({ n, label }) => ({ n, label }));
+// Versão enxuta {n, label} para o Painel SPO e o admin de Metas — SÓ os KPIs ativos
+// (ativo:false sai do consolidado/painel/metas, mas a linha e o código são preservados).
+export const SPO_KPIS_BASICO = SPO_KPIS.filter((k) => k.ativo).map(({ n, label }) => ({ n, label }));
 
 // O mapa do "realizado" por KPI (SPO_REAL) agora é fonte ÚNICA no backend
 // (backend/src/config/spoKpis.js) e chega ao front via GET /api/spo/config —
