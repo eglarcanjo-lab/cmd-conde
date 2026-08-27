@@ -10,13 +10,20 @@ const META_GV = 36;
 // Meses e início de avaliação por KPI — espelha as constantes do painel consolidado
 const MESES_TRI = ["2026-07","2026-08","2026-09"];
 // Trimestre Jul–Set/2026: todos os KPIs começam a ser avaliados em Julho.
-const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07"};
+const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07"};
 
 // Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
 // compartilhada com o Painel SPO e o admin de Metas.
 const SPO_ITEMS = SPO_KPIS.filter((k) => k.ativo); // só KPIs ativos (inativos preservam código/histórico)
 
 const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
+
+// Estilos da seção Rotina+ (detalhada)
+const rmCard = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "12px 16px", textAlign: "center", minWidth: "108px" };
+const rmBig = (c) => ({ fontSize: "1.5rem", fontWeight: "800", color: c });
+const rmLbl = { fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", marginTop: "2px" };
+const rmTh = { padding: "7px 8px", color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: "600", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" };
+const rmTd = { padding: "6px 8px", color: "rgba(255,255,255,0.8)", fontSize: "0.78rem", textAlign: "center", whiteSpace: "nowrap" };
 
 function BarraProgresso({ pct, cor }) {
   const w = Math.min(pct, 100);
@@ -75,6 +82,8 @@ export default function SPO() {
   const [aloneFiltroDia, setAloneFiltroDia] = useState("TODOS");
   const [aloneFiltroPDV, setAloneFiltroPDV] = useState("TODOS");
   const [spoCfg, setSpoCfg] = useState({}); // { item: {pts, peso} } — config editável (spo_kpi_config)
+  const [rotinaMais, setRotinaMais] = useState([]);       // resumo por setor + OPERACAO
+  const [rotinaMaisDet, setRotinaMaisDet] = useState([]); // detalhe por visita
   const [rgb, setRgb] = useState([]);
   const [rgbLit, setRgbLit] = useState([]);
   const [rgbInt, setRgbInt] = useState([]);
@@ -149,6 +158,14 @@ export default function SPO() {
     api.get("/api/spo/painel/config")
       .then((r) => { const m = {}; (r.data || []).forEach((x) => { m[String(x.item)] = { pts: x.pts, peso: x.peso }; }); setSpoCfg(m); })
       .catch(() => {});
+  }, []);
+
+  // Rotina+ (KPI 25) — resumo (setor/OPERACAO) + detalhe por visita.
+  useEffect(() => {
+    Promise.all([
+      api.get("/api/spo/rotina-mais/resumo").catch(() => ({ data: [] })),
+      api.get("/api/spo/rotina-mais/detalhe").catch(() => ({ data: [] })),
+    ]).then(([a, b]) => { setRotinaMais(a.data || []); setRotinaMaisDet(b.data || []); });
   }, []);
 
   // pts/peso do KPI: usa a config editável; se vazia, cai no registro (config/spoKpis.js).
@@ -621,6 +638,60 @@ export default function SPO() {
                 })}
                 {desafios.length === 0 && <p style={styles.msg}>Preencha em Admin → SPO Desafios.</p>}
               </div>
+            </div>
+            )}
+
+            {/* ROTINA + */}
+            {(kpiAtivo === null || kpiAtivo === 25) && (
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 5 — Rotina + · % Visitas Medianas ou Excelentes</h3>
+              {rotinaMais.length === 0 ? (
+                <p style={styles.msg}>Importe o relatório <b>Rotina +</b> (aba Arquivos) para calcular.</p>
+              ) : (() => {
+                const op = rotinaMais.find((r) => r.setor === "OPERACAO") || {};
+                const setores = rotinaMais.filter((r) => r.setor !== "OPERACAO").sort((a, b) => String(a.setor).localeCompare(String(b.setor)));
+                const nf = (v) => (Number(v) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+                const meta = 49;
+                const kpi = Number(op.pct_med_exc) || 0;
+                return (
+                  <>
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
+                      <div style={rmCard}><div style={rmBig(kpi >= meta ? "#4ade80" : "#f87171")}>{nf(kpi)}%</div><div style={rmLbl}>% Med+Exc · meta {meta}%</div></div>
+                      <div style={rmCard}><div style={rmBig("#fff")}>{nf(op.visitas)}</div><div style={rmLbl}>Visitas (GPS OK)</div></div>
+                      <div style={rmCard}><div style={rmBig("#f87171")}>{nf(op.pct_critica)}%</div><div style={rmLbl}>Críticas</div></div>
+                      <div style={rmCard}><div style={rmBig("#f5c451")}>{nf(op.pct_mediana)}%</div><div style={rmLbl}>Medianas</div></div>
+                      <div style={rmCard}><div style={rmBig("#4ade80")}>{nf(op.pct_excelente)}%</div><div style={rmLbl}>Excelentes</div></div>
+                    </div>
+                    <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                        <thead>
+                          <tr>{["Setor", "Visitas", "%Crít", "%Med", "%Exc", "%Med+Exc", "P2 Gelad.", "P3 Nível", "P4 BEES", "P5 Alav.", "P6 Exec."].map((h) => <th key={h} style={rmTh}>{h}</th>)}</tr>
+                        </thead>
+                        <tbody>
+                          {setores.map((r) => (
+                            <tr key={r.setor} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                              <td style={{ ...rmTd, fontWeight: "700", color: "#fff" }}>{r.setor}</td>
+                              <td style={rmTd}>{nf(r.visitas)}</td>
+                              <td style={{ ...rmTd, color: "#f87171" }}>{nf(r.pct_critica)}%</td>
+                              <td style={{ ...rmTd, color: "#f5c451" }}>{nf(r.pct_mediana)}%</td>
+                              <td style={{ ...rmTd, color: "#4ade80" }}>{nf(r.pct_excelente)}%</td>
+                              <td style={{ ...rmTd, fontWeight: "700", color: (Number(r.pct_med_exc) || 0) >= meta ? "#4ade80" : "#f87171" }}>{nf(r.pct_med_exc)}%</td>
+                              <td style={rmTd}>{nf(r.passo2)}%</td>
+                              <td style={rmTd}>{nf(r.passo3)}%</td>
+                              <td style={rmTd}>{nf(r.passo4)}%</td>
+                              <td style={rmTd}>{nf(r.passo5)}%</td>
+                              <td style={rmTd}>{nf(r.passo6)}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>
+                      Crítica ≤2 passos · Mediana 3 · Excelente ≥4. Apuradas = visitas com GPS OK. {rotinaMaisDet.length > 0 ? `${rotinaMaisDet.length} visitas no detalhe.` : ""}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
             )}
 
@@ -2203,7 +2274,7 @@ export default function SPO() {
                           {(() => {
                             const MESES = ["2026-07","2026-08","2026-09"];
                             const MESES_LABEL = {"2026-07":"Julho","2026-08":"Agosto","2026-09":"Setembro"};
-                            const INICIO_AVAL = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07"};
+                            const INICIO_AVAL = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07"};
               
                             const ITENS_SPO = SPO_KPIS_BASICO; // registro único (config/spoKpis.js)
               
@@ -2232,6 +2303,7 @@ export default function SPO() {
                                 spo_pedido_alone_resumo: alone, spo_rgb_total: rgb, spo_cupons_resumo: cupons,
                                 spo_loja_ideal_resumo: lojaIdeal, spo_scanntech_resumo: scanntech,
                                 spo_portfolio_ideal_resumo: portIdeal,
+                                spo_rotina_mais_resumo: rotinaMais,
                               };
 
                               switch(n) {

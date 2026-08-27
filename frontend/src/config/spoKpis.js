@@ -23,6 +23,7 @@ export const SPO_KPIS = [
   { n: 2,  label: "Rota Coaching",                      pts: 10, peso: 5.6,  ativo: true },
   { n: 3,  label: "TT Dias com Rotas",                  pts: 6,  peso: 3.3,  ativo: true },
   { n: 4,  label: "Abertura de Desafios Diários",       pts: 4,  peso: 2.2,  ativo: true },
+  { n: 25, label: "Rotina +",                           pts: 14, peso: 7.8,  ativo: true }, // % Visitas Medianas ou Excelentes (meta 49%) — pts/peso oficiais via painel Metas
   { n: 5,  label: "Atendimento Produtivo",              pts: 14, peso: 7.8,  ativo: true },
   { n: 6,  label: "DTO GC",                             pts: 6,  peso: 3.3,  ativo: true },
   { n: 7,  label: "% PDVs abrindo Promoção no BEES",    pts: 10, peso: 5.6,  ativo: false }, // fora do tri Jul–Set/2026

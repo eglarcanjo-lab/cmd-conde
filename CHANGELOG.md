@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.37.2** — SPO: pts/peso editáveis no painel Metas (fluem pro consolidado); KPIs respeitam ativo; removidos Promoção BEES/Compra Indep/Volume/+RGB do tri; Academia reativada
+Versão atual: **v3.38.0** — SPO: novo KPI **Rotina +** (% Visitas Medianas ou Excelentes, meta 49%) — import, processamento, consolidado e seção detalhada (cluster + abertura por passo)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

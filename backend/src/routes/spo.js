@@ -231,6 +231,22 @@ router.get("/score5/detalhe", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/rotina-mais/resumo — Rotina+ (% Med+Exc) por setor + OPERACAO
+router.get("/rotina-mais/resumo", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rotina_mais_resumo");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
+// GET /api/spo/rotina-mais/detalhe — 1 linha por visita (GPS OK)
+router.get("/rotina-mais/detalhe", async (req, res) => {
+  try {
+    const dados = await readSheet("spo_rotina_mais_detalhe");
+    return res.json(dados);
+  } catch { return res.json([]); }
+});
+
 
 // GET /api/spo/tasks-nab/resumo
 router.get("/tasks-nab/resumo", async (req, res) => {
