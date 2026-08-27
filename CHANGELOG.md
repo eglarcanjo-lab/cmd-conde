@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.38.0** — SPO: novo KPI **Rotina +** (% Visitas Medianas ou Excelentes, meta 49%) — import, processamento, consolidado e seção detalhada (cluster + abertura por passo)
+Versão atual: **v3.38.1** — Home: Top 20 produtos com fonte vermelha quando a Média 3M do produto fica abaixo de 50 (HL)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

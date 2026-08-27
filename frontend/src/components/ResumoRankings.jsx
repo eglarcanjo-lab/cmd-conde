@@ -20,7 +20,7 @@ function Gap({ g }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel }) {
+function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
@@ -39,16 +39,21 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel }) 
           </tr>
         </thead>
         <tbody>
-          {linhas.map((r, i) => (
+          {linhas.map((r, i) => {
+            // Abaixo do limite (ex.: produtos < 50 HL na Média 3M) → fonte vermelha.
+            const baixo = limiteBaixo != null && (Number(r.media3m) || 0) < limiteBaixo;
+            const corBaixo = baixo ? { color: "#f87171" } : {};
+            return (
             <tr key={r.cod} style={i % 2 ? S.trOdd : undefined}>
               <td style={S.tdNum}>{i + 1}</td>
-              <td style={S.tdNome} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
-              <td style={S.tdVol}>{fmt(r.media3m)}</td>
-              <td style={{ ...S.tdVol, color: "#fff" }}>{fmt(r.mesAtualTotal)}</td>
+              <td style={{ ...S.tdNome, ...corBaixo }} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
+              <td style={{ ...S.tdVol, ...corBaixo }}>{fmt(r.media3m)}</td>
+              <td style={{ ...S.tdVol, color: baixo ? "#f87171" : "#fff" }}>{fmt(r.mesAtualTotal)}</td>
               <td style={{ ...S.td, textAlign: "right", whiteSpace: "nowrap" }}><Gap g={r.gap} /></td>
               <td style={{ ...S.td, textAlign: "right", whiteSpace: "nowrap" }}><Delta d={r.delta} /></td>
             </tr>
-          ))}
+            );
+          })}
           {!linhas.length && <tr><td colSpan={6} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
@@ -86,7 +91,7 @@ export default function ResumoRankings() {
       {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
       <div style={S.grid}>
         <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={data.pdvs} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} />
-        <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} />
+        <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} limiteBaixo={50} />
       </div>
     </div>
   );
