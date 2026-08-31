@@ -14,7 +14,8 @@ export default function ResumoVerdes() {
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
   const [aba, setAba] = useState("cobertura");   // flag mestre: cobertura | distribuicao
-  const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor>
+  const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
+  const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
 
   useEffect(() => {
     let cancel = false, tent = 0;
@@ -46,9 +47,11 @@ export default function ResumoVerdes() {
   const serie = rnSel === "todos" ? serieDe(data && data.consolidado) : serieDe(rnObj);
   const temDados = meses.length > 0 && serie.some((x) => x > 0);
 
-  // Ranking dos RNs pelo flag atual (soma do período), maior→menor.
+  // Ranking dos RNs pelo flag atual, maior→menor. Se um mês estiver selecionado,
+  // usa o valor daquele mês; senão, a soma do trimestre.
+  const valRank = (r) => { const arr = serieDe(r); return mesSel != null ? (Number(arr[mesSel]) || 0) : arr.reduce((s, x) => s + (Number(x) || 0), 0); };
   const ranking = porRn
-    .map((r) => ({ setor: r.setor, rn: r.rn, total: serieDe(r).reduce((s, x) => s + (Number(x) || 0), 0) }))
+    .map((r) => ({ setor: r.setor, rn: r.rn, total: valRank(r) }))
     .filter((r) => r.total > 0)
     .sort((a, b) => b.total - a.total);
   const maxRank = ranking.length ? ranking[0].total : 1;
@@ -61,7 +64,7 @@ export default function ResumoVerdes() {
   const pts = meses.map((_, i) => `${colX(i).toFixed(1)},${(bot - ((serie[i] || 0) / max) * (bot - top)).toFixed(1)}`);
   const x0 = colX(0), xN = colX(Math.max(n - 1, 0));
   const multiAno = new Set(meses.map((m) => String(m).slice(0, 4))).size > 1;
-  const atual = serie.length ? serie[serie.length - 1] : 0;
+  const atual = mesSel != null ? (serie[mesSel] || 0) : (serie.length ? serie[serie.length - 1] : 0);
   const unidade = aba === "cobertura" ? "PDVs" : "caixas";
 
   return (
@@ -78,36 +81,29 @@ export default function ResumoVerdes() {
         <div style={S.skel}>Acordando o servidor…</div>
       ) : (
         <>
-          {/* Seletor de RN */}
-          <div style={S.rnRow}>
-            <label style={S.rnLbl}>RN:</label>
-            <select style={S.rnSel} value={rnSel} onChange={(e) => setRnSel(e.target.value)}>
-              <option value="todos">Todos (consolidado)</option>
-              {porRn.map((r) => (
-                <option key={r.setor} value={r.setor}>{r.setor}{r.rn ? ` · ${primeiroNome(r.rn)}` : ""}</option>
-              ))}
-            </select>
-          </div>
-
           {!temDados ? (
             <div style={S.skel}>Sem vendas de {prod.nome} {rnSel !== "todos" ? `no setor ${rnSel}` : ""} — importe pedidos por mês.</div>
           ) : (
             <>
-              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : ""}</small></div>
+              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : ""}</small></div>
               <div style={S.vlab}>{meses.map((m, i) => <span key={m} style={S.vs}>{serie[i] ? fmt(serie[i]) : ""}</span>)}</div>
               <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 2, display: "block" }} aria-hidden="true">
                 <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
                 {n > 1 && <polyline points={`${x0},${bot} ${pts.join(" ")} ${xN},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
                 <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               </svg>
-              <div style={S.mlab}>{meses.map((m) => <span key={m} style={S.ms}>{rotMes(m)}{multiAno ? <small style={{ opacity: 0.55 }}>/{String(m).slice(2, 4)}</small> : null}</span>)}</div>
+              <div style={S.mlab}>{meses.map((m, i) => (
+                <span key={m} onClick={() => setMesSel(mesSel === i ? null : i)} style={{ ...S.ms, ...(mesSel === i ? S.msOn : {}) }} title="Clique para filtrar a faixa por este mês">
+                  {rotMes(m)}{multiAno ? <small style={{ opacity: 0.55 }}>/{String(m).slice(2, 4)}</small> : null}
+                </span>
+              ))}</div>
             </>
           )}
 
           {/* Faixa de ranking dos RNs pelo flag atual */}
           {ranking.length > 0 && (
             <div style={S.faixaWrap}>
-              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "distribuição"} (maior → menor)</div>
+              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "distribuição"} · {mesSel != null ? rotMes(meses[mesSel]) : "trimestre"} (maior → menor) · clique num RN ou mês p/ filtrar</div>
               {ranking.map((r) => {
                 const sel = String(r.setor) === String(rnSel);
                 return (
@@ -146,7 +142,8 @@ const S = {
   vlab: { display: "flex", marginTop: "6px", marginBottom: "1px" },
   vs: { flex: 1, fontSize: "0.62rem", color: "#9fce6a", fontWeight: "600", textAlign: "center", whiteSpace: "nowrap" },
   mlab: { display: "flex", marginTop: "2px" },
-  ms: { flex: 1, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textAlign: "center" },
+  ms: { flex: 1, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textAlign: "center", cursor: "pointer", padding: "2px 0", borderRadius: "4px" },
+  msOn: { color: "#7DBA3D", fontWeight: "700", background: "rgba(125,186,61,0.14)" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "10px 2px" },
   faixaWrap: { marginTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "10px", display: "flex", flexDirection: "column", gap: "5px" },
   faixaTit: { color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", marginBottom: "3px" },

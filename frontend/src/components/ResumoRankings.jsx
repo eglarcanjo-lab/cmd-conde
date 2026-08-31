@@ -32,8 +32,9 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
         <thead>
           <tr>
             <th style={{ ...S.th, width: 24 }}>#</th>
+            {mostrarRN && <th style={{ ...S.th, textAlign: "right", width: 58 }}>Cod</th>}
             <th style={S.th}>{colNome}</th>
-            {mostrarRN && <th style={S.th}>RN resp.</th>}
+            {mostrarRN && <th style={{ ...S.th, textAlign: "right", width: 52 }} title="Setor = RN responsável">Setor</th>}
             <th style={{ ...S.th, textAlign: "right" }} title={`Média dos 3 meses anteriores (${mediaLabel}) — exclui o mês atual`}>Média 3M (HL)</th>
             <th style={{ ...S.th, textAlign: "right", width: 88 }}>Mês atual (HL)</th>
             {mostrarEstoque && <th style={{ ...S.th, textAlign: "right", width: 74 }} title="Estoque disponível (Grade de Estoque)">Estoque</th>}
@@ -49,8 +50,9 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             return (
             <tr key={r.cod} style={i % 2 ? S.trOdd : undefined}>
               <td style={S.tdNum}>{i + 1}</td>
+              {mostrarRN && <td style={S.tdPlain}>{r.cod}</td>}
               <td style={{ ...S.tdNome, ...corBaixo }} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
-              {mostrarRN && <td style={S.tdRN} title={r.rn ? `${r.rn} · setor ${r.setor}` : undefined}>{r.rn || "—"}</td>}
+              {mostrarRN && <td style={S.tdPlain} title={r.rn ? `${r.rn} · setor ${r.setor}` : `setor ${r.setor}`}>{r.setor}</td>}
               <td style={{ ...S.tdVol, ...corBaixo }}>{fmt(r.media3m)}</td>
               <td style={{ ...S.tdVol, color: baixo ? "#f87171" : "#fff" }}>{fmt(r.mesAtualTotal)}</td>
               {mostrarEstoque && (
@@ -63,7 +65,7 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             </tr>
             );
           })}
-          {!linhas.length && <tr><td colSpan={6 + (mostrarEstoque ? 1 : 0) + (mostrarRN ? 1 : 0)} style={S.vazio}>Sem dados.</td></tr>}
+          {!linhas.length && <tr><td colSpan={6 + (mostrarEstoque ? 1 : 0) + (mostrarRN ? 2 : 0)} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -128,6 +130,7 @@ const S = {
   tdNum: { padding: "7px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" },
   tdNome: { padding: "7px 8px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 },
   tdRN: { padding: "7px 8px", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 },
+  tdPlain: { padding: "7px 8px", color: "rgba(255,255,255,0.55)", fontSize: "0.82rem", textAlign: "right", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   tdVol: { padding: "7px 8px", color: "rgba(255,255,255,0.85)", textAlign: "right", fontVariantNumeric: "tabular-nums" },
   trOdd: { background: "rgba(255,255,255,0.02)" },
   vazio: { padding: "12px", textAlign: "center", color: "rgba(255,255,255,0.35)" },

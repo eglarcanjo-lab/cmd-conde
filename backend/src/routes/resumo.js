@@ -243,10 +243,12 @@ router.get("/verdes", async (req, res) => {
     const normCod = (x) => { const s = String(x || "").trim(); return s.replace(/^0+/, "") || s; };
     const SKU = normCod(req.query.sku || "33857");
 
+    // Trimestre atual (civil): jan-mar, abr-jun, jul-set, out-dez.
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const y = brNow.getFullYear(), m0 = brNow.getMonth();
-    const janela = Array.from({ length: 13 }, (_, k) => {
-      const d = new Date(y, m0 - (12 - k), 1);
+    const triStart = Math.floor(m0 / 3) * 3;
+    const janela = [0, 1, 2].map((k) => {
+      const d = new Date(y, triStart + k, 1);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     });
     const [vendas, prodFull, usuarios] = await Promise.all([
@@ -279,7 +281,7 @@ router.get("/verdes", async (req, res) => {
       consDist[mes] = (consDist[mes] || 0) + cx;
     });
 
-    const meses = janela.filter((m) => (consCob[m] && consCob[m].size) || consDist[m]);
+    const meses = janela; // sempre os 3 meses do trimestre atual (mostra Jul/Ago/Set mesmo sem dado)
     const porRn = Object.keys(perRn).sort().map((setor) => {
       const e = perRn[setor];
       return {

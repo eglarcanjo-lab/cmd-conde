@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.39.0** — Home Verdes: foco no SKU 33857 (Stella Pure Gold) — seletor de RN (Todos/consolida ou 1 RN), linha mensal do selecionado e faixa de ranking dos RNs (maior→menor), tudo pelo flag Cobertura/Distribuição
+Versão atual: **v3.39.1** — Top 20 PDVs: colunas Cod + Setor (mesma fonte); Verdes Stella: fixo no tri atual, sem dropdown (seleção pela faixa), clique no mês filtra as barras
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
