@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.39.1** — Top 20 PDVs: colunas Cod + Setor (mesma fonte); Verdes Stella: fixo no tri atual, sem dropdown (seleção pela faixa), clique no mês filtra as barras
+Versão atual: **v3.39.2** — Verdes Stella: botão "⤓ Excel" exporta linha a linha dos pedidos do SKU 33857 (nº pedido, NF, PDV, data, volume) respeitando o RN e o mês filtrados
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

@@ -2,6 +2,7 @@
 // Flag Cobertura/Distribuição controla TUDO: a linha do RN selecionado (Todos = consolidado)
 // e a faixa de ranking dos RNs (maior→menor). Dado: GET /api/resumo/verdes.
 import { useState, useEffect } from "react";
+import * as XLSX from "xlsx-js-style";
 import api from "../services/api";
 
 const MESES_ABR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -33,6 +34,38 @@ export default function ResumoVerdes() {
     buscar();
     return () => { cancel = true; };
   }, []);
+
+  // Export Excel: linha a linha dos pedidos do SKU, respeitando o filtro atual (RN + mês).
+  async function exportarExcel() {
+    try {
+      const params = new URLSearchParams();
+      if (rnSel !== "todos") params.set("setor", rnSel);
+      if (mesSel != null && (data?.meses || [])[mesSel]) params.set("mes", data.meses[mesSel]);
+      const r = await api.get(`/api/resumo/verdes/pedidos?${params.toString()}`);
+      const linhas = r.data || [];
+      if (!linhas.length) { alert("Sem linhas de pedido para este filtro.\nReimporte os Pedidos para gerar o detalhe (tabela nova)."); return; }
+      const rows = linhas.map((x) => ({
+        "Nº Pedido": x.num_pedido || "",
+        "NF": x.nota_fiscal || "",
+        "Data": x.data || "",
+        "Setor": x.setor || "",
+        "Cod PDV": x.cod_pdv || "",
+        "PDV": x.nome_pdv || "",
+        "Cod Prod": x.cod_produto || "",
+        "Produto": x.nome_produto || "",
+        "Volume (HL)": Number(x.volume_hl) || 0,
+        "Mês": x.mes_referencia || "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [12, 12, 12, 8, 10, 28, 10, 28, 12, 10].map((w) => ({ wch: w }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Pedidos 33857");
+      const suf = (rnSel !== "todos" ? `_setor${rnSel}` : "") + (mesSel != null ? `_${data.meses[mesSel]}` : "");
+      XLSX.writeFile(wb, `verdes_stella_33857${suf}.xlsx`);
+    } catch (e) {
+      alert("Erro ao exportar: " + (e?.response?.data?.error || e?.message || "falha"));
+    }
+  }
 
   if (erro) return null;
   if (!data && !esperando) return null;
@@ -74,6 +107,7 @@ export default function ResumoVerdes() {
         <span style={S.tgl}>
           <button style={aba === "cobertura" ? S.btnOn : S.btn} onClick={() => setAba("cobertura")}>Cobertura</button>
           <button style={aba === "distribuicao" ? S.btnOn : S.btn} onClick={() => setAba("distribuicao")}>Distribuição</button>
+          <button style={S.excelBtn} onClick={exportarExcel} title="Exportar linhas do pedido (Excel) — respeita o RN e o mês filtrados">⤓ Excel</button>
         </span>
       </div>
 
@@ -134,6 +168,7 @@ const S = {
   tgl: { marginLeft: "auto", display: "flex", gap: "5px" },
   btn: { fontSize: "0.82rem", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "4px 13px", cursor: "pointer" },
   btnOn: { fontSize: "0.82rem", fontFamily: "inherit", color: "#0c1410", background: "#7DBA3D", border: "1px solid #7DBA3D", borderRadius: "20px", padding: "4px 13px", cursor: "pointer", fontWeight: "600" },
+  excelBtn: { fontSize: "0.8rem", fontFamily: "inherit", color: "#4ade80", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", borderRadius: "20px", padding: "4px 12px", cursor: "pointer", fontWeight: "600" },
   rnRow: { display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" },
   rnLbl: { color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" },
   rnSel: { background: "#16211b", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", padding: "5px 10px", fontFamily: "inherit", fontSize: "0.82rem", cursor: "pointer", flex: 1, minWidth: 0 },

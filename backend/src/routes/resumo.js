@@ -306,4 +306,21 @@ router.get("/verdes", async (req, res) => {
   }
 });
 
+// GET /api/resumo/verdes/pedidos?setor=&mes= — linha a linha dos pedidos do SKU
+// (33857) p/ export Excel. Fonte: verdes_pedidos (montada no processador).
+router.get("/verdes/pedidos", async (req, res) => {
+  try {
+    const all = await readSheet("verdes_pedidos").catch(() => []);
+    let lin = filtrarPorPerfil(all, req.user, "setor");
+    const setor = String(req.query.setor || "").trim();
+    const mes = String(req.query.mes || "").trim();
+    if (setor) lin = lin.filter((r) => String(r.setor || "").trim() === setor);
+    if (mes) lin = lin.filter((r) => String(r.mes_referencia || "").slice(0, 7) === mes);
+    return res.json(lin);
+  } catch (e) {
+    console.error("resumo/verdes/pedidos:", e);
+    return res.status(500).json({ error: "Erro ao buscar pedidos dos Verdes." });
+  }
+});
+
 module.exports = router;
