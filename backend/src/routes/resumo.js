@@ -235,57 +235,68 @@ router.get("/rankings", async (req, res) => {
   }
 });
 
-// GET /api/resumo/verdes?mes=YYYY-MM — bloco "Verdes" (Trimarca Stella + Spaten), mês a mês.
-// Cobertura = nº de pares distintos (PDV × trimarca) que compraram (PDV que comprou as
-// duas conta 2). Distribuição = total de CAIXAS (= volume_hl ÷ hl_por_caixa).
-// Fonte: vendas_cliente_produto (acumula por mês) + produtos_base (categoria) + produtos_full (hl_caixa).
+// GET /api/resumo/verdes?sku=33857 — bloco "Verdes" focado num SKU (default 33857,
+// Stella Pure Gold), mês a mês, com quebra por RN (setor) + consolidado.
+// Cobertura = nº de PDVs distintos que compraram o SKU. Distribuição = CAIXAS (volume_hl ÷ hl_caixa).
 router.get("/verdes", async (req, res) => {
   try {
-    // Janela rolante dos últimos 13 meses (fuso BR) — evita ler as vendas inteiras
-    // (2025+) e deixa a linha do gráfico limpa.
+    const normCod = (x) => { const s = String(x || "").trim(); return s.replace(/^0+/, "") || s; };
+    const SKU = normCod(req.query.sku || "33857");
+
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const y = brNow.getFullYear(), m0 = brNow.getMonth();
     const janela = Array.from({ length: 13 }, (_, k) => {
       const d = new Date(y, m0 - (12 - k), 1);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     });
-    const [vendas, prodBase, prodFull] = await Promise.all([
+    const [vendas, prodFull, usuarios] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", janela).catch(() => []),
-      readSheet("produtos_base").catch(() => []),
       readSheet("produtos_full").catch(() => []),
+      readSheet("usuarios").catch(() => []),
     ]);
     const v = filtrarPorPerfil(vendas, req.user, "setor");
 
-    const trimDe = {}; // cod -> "Stella" | "Spaten"
-    prodBase.forEach((p) => {
-      const cod = String(p.cod || "").trim();
-      if (!cod) return;
-      const cats = String(p.categorias || p.categoria || "").toUpperCase();
-      if (cats.includes("STELLA")) trimDe[cod] = "Stella";
-      else if (cats.includes("SPATEN")) trimDe[cod] = "Spaten";
-    });
-    const hlCaixa = {};
-    prodFull.forEach((p) => { const cod = String(p.cod || "").trim(); if (cod) hlCaixa[cod] = num(p.hl_caixa); });
+    let hlc = 0, nomeSku = "";
+    prodFull.forEach((p) => { if (normCod(p.cod) === SKU) { hlc = num(p.hl_caixa); nomeSku = String(p.nome || "").trim(); } });
+    const rnMap = {};
+    usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
-    const cob = {};     // mes -> Set("pdv|trimarca")
-    const distrib = {}; // mes -> caixas
+    const perRn = {};   // setor -> { cob:{mes:Set pdv}, dist:{mes:caixas} }
+    const consCob = {}; // mes -> Set pdv (global)
+    const consDist = {};
     v.forEach((r) => {
-      const cod = String(r.cod_produto || "").trim();
-      const trim = trimDe[cod];
-      if (!trim) return;
-      const m = String(r.mes_referencia || "").slice(0, 7);
-      if (!m) return;
+      if (normCod(r.cod_produto) !== SKU) return;
+      const mes = String(r.mes_referencia || "").slice(0, 7);
+      if (!mes) return;
+      if (!nomeSku) nomeSku = String(r.nome_produto || "").trim();
+      const setor = String(r.setor || "").trim();
       const pdv = String(r.cod_pdv || "").trim();
-      (cob[m] = cob[m] || new Set()).add(pdv + "|" + trim);
-      const hlc = hlCaixa[cod];
-      if (hlc > 0) distrib[m] = (distrib[m] || 0) + num(r.volume_hl) / hlc;
+      const cx = hlc > 0 ? num(r.volume_hl) / hlc : 0;
+      const e = perRn[setor] || (perRn[setor] = { cob: {}, dist: {} });
+      (e.cob[mes] = e.cob[mes] || new Set()).add(pdv);
+      e.dist[mes] = (e.dist[mes] || 0) + cx;
+      (consCob[mes] = consCob[mes] || new Set()).add(pdv);
+      consDist[mes] = (consDist[mes] || 0) + cx;
     });
 
-    const meses = [...new Set([...Object.keys(cob), ...Object.keys(distrib)])].sort();
+    const meses = janela.filter((m) => (consCob[m] && consCob[m].size) || consDist[m]);
+    const porRn = Object.keys(perRn).sort().map((setor) => {
+      const e = perRn[setor];
+      return {
+        setor, rn: rnMap[setor] || "",
+        cobertura: meses.map((m) => (e.cob[m] ? e.cob[m].size : 0)),
+        distribuicao: meses.map((m) => Math.round(e.dist[m] || 0)),
+      };
+    });
+
     return res.json({
+      produto: { cod: SKU, nome: nomeSku || SKU },
       meses,
-      cobertura: meses.map((m) => (cob[m] ? cob[m].size : 0)),
-      distribuicao: meses.map((m) => Math.round(distrib[m] || 0)),
+      consolidado: {
+        cobertura: meses.map((m) => (consCob[m] ? consCob[m].size : 0)),
+        distribuicao: meses.map((m) => Math.round(consDist[m] || 0)),
+      },
+      porRn,
     });
   } catch (e) {
     console.error("resumo/verdes:", e);
