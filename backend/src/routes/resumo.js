@@ -151,7 +151,7 @@ router.get("/rankings", async (req, res) => {
       for (const v of rows) {
         const mes = String(v.mes_referencia || "").slice(0, 7);
         const cod = String(v[codF] || "").trim(); if (!cod) continue;
-        const e = t[cod] || (t[cod] = { cod, nome: String(v[nomeF] || "").trim(), soma3: 0, atualTotal: 0 });
+        const e = t[cod] || (t[cod] = { cod, nome: String(v[nomeF] || "").trim(), setor: String(v.setor || "").trim(), soma3: 0, atualTotal: 0 });
         const vol = num(v.volume_hl);
         if (media3Set.has(mes)) e.soma3 += vol;
         else if (mes === mesAtual) e.atualTotal += vol;
@@ -178,7 +178,7 @@ router.get("/rankings", async (req, res) => {
       .sort((a, b) => b.media3m - a.media3m).slice(0, n).map((t) => {
         const d = d1Map[t.cod] || { atual: 0, anterior: 0 };
         return {
-          cod: t.cod, nome: t.nome,
+          cod: t.cod, nome: t.nome, setor: t.setor,
           media3m: Math.round(t.media3m * 10) / 10,
           mesAtualTotal: Math.round(t.atualTotal * 10) / 10,
           gap: Math.round((d.atual - d.anterior) * 10) / 10,
@@ -186,7 +186,12 @@ router.get("/rankings", async (req, res) => {
         };
       });
 
-    const pdvs = montar(aggDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 20);
+    // PDVs: ranking completo p/ separar por segmento — AS = setor 101-103, Rota = os demais.
+    const pdvsFull = montar(aggDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 100000);
+    const isAS = (s) => ["101", "102", "103"].includes(String(s || "").trim());
+    const pdvs = pdvsFull.slice(0, 20);
+    const pdvsAS = pdvsFull.filter((p) => isAS(p.setor)).slice(0, 20);
+    const pdvsRota = pdvsFull.filter((p) => !isAS(p.setor)).slice(0, 20);
     const produtos = montar(aggDe(vendasF, "cod_produto", "nome_produto"), d1De(vdProdF, "cod_produto"), 20);
 
     // Nome COMPLETO do produto vem da base de produtos (a nomenclatura das vendas é abreviada).
@@ -217,7 +222,7 @@ router.get("/rankings", async (req, res) => {
       mediaLabel: `${rot(media3Meses[0])}–${rot(media3Meses[2])}`, // ex.: "abr–jun"
       periodo: cutoffDia >= 1 ? `01–${String(cutoffDia).padStart(2, "0")}` : "—",
       temDiario: vdPdvF.length > 0,
-      pdvs, produtos,
+      pdvs, pdvsAS, pdvsRota, produtos,
     });
   } catch (e) {
     console.error("resumo/rankings:", e);

@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.38.2** — Home: coluna "Estoque" (disponível/Grade) no Top 20 produtos; vermelho quando zerado
+Versão atual: **v3.38.3** — Home: Top 20 PDVs com flag Todos/AS/Rota (AS = setor 101-103, Rota = demais)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

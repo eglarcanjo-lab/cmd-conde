@@ -20,13 +20,14 @@ function Gap({ g }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo, mostrarEstoque }) {
+function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo, mostrarEstoque, acao }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
         <span style={S.titulo}>{titulo}</span>
         <span style={S.sub}>média {mediaLabel} · GAP dia {periodo} · {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
       </div>
+      {acao}
       <table style={S.table}>
         <thead>
           <tr>
@@ -71,6 +72,7 @@ export default function ResumoRankings() {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
+  const [segPdv, setSegPdv] = useState("todos"); // todos | as (101-103) | rota (demais)
 
   useEffect(() => {
     let cancel = false, tent = 0;
@@ -92,11 +94,20 @@ export default function ResumoRankings() {
   if (erro) return null;
   if (!data) return <div style={S.skel}>{esperando ? "Acordando o servidor…" : "Carregando rankings…"}</div>;
 
+  const linhasPdv = segPdv === "as" ? (data.pdvsAS || []) : segPdv === "rota" ? (data.pdvsRota || []) : data.pdvs;
+  const togglePdv = (
+    <div style={S.seg}>
+      {[["todos", "Todos"], ["as", "AS"], ["rota", "Rota"]].map(([k, l]) => (
+        <button key={k} onClick={() => setSegPdv(k)} style={segPdv === k ? S.segOn : S.segBtn}>{l}</button>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
       <div style={S.grid}>
-        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={data.pdvs} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} />
+        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={linhasPdv} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} acao={togglePdv} />
         <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} limiteBaixo={50} mostrarEstoque />
       </div>
     </div>
@@ -118,5 +129,8 @@ const S = {
   trOdd: { background: "rgba(255,255,255,0.02)" },
   vazio: { padding: "12px", textAlign: "center", color: "rgba(255,255,255,0.35)" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "10px 2px", marginBottom: "16px" },
+  seg: { display: "flex", gap: "5px", marginBottom: "8px" },
+  segBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.55)", borderRadius: "20px", padding: "3px 12px", fontSize: "0.74rem", cursor: "pointer", fontFamily: "inherit" },
+  segOn: { background: "rgba(125,186,61,0.16)", border: "1px solid #7DBA3D", color: "#7DBA3D", borderRadius: "20px", padding: "3px 12px", fontSize: "0.74rem", cursor: "pointer", fontFamily: "inherit", fontWeight: "700" },
   aviso: { background: "rgba(240,153,123,0.1)", border: "1px solid rgba(240,153,123,0.3)", color: "#f0b37e", borderRadius: "10px", padding: "8px 12px", fontSize: "0.82rem", marginBottom: "12px" },
 };
