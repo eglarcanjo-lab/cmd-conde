@@ -20,7 +20,7 @@ function Gap({ g }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo, mostrarEstoque, acao }) {
+function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo, mostrarEstoque, mostrarRN, acao }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
@@ -33,6 +33,7 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
           <tr>
             <th style={{ ...S.th, width: 24 }}>#</th>
             <th style={S.th}>{colNome}</th>
+            {mostrarRN && <th style={S.th}>RN resp.</th>}
             <th style={{ ...S.th, textAlign: "right" }} title={`Média dos 3 meses anteriores (${mediaLabel}) — exclui o mês atual`}>Média 3M (HL)</th>
             <th style={{ ...S.th, textAlign: "right", width: 88 }}>Mês atual (HL)</th>
             {mostrarEstoque && <th style={{ ...S.th, textAlign: "right", width: 74 }} title="Estoque disponível (Grade de Estoque)">Estoque</th>}
@@ -49,6 +50,7 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             <tr key={r.cod} style={i % 2 ? S.trOdd : undefined}>
               <td style={S.tdNum}>{i + 1}</td>
               <td style={{ ...S.tdNome, ...corBaixo }} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
+              {mostrarRN && <td style={S.tdRN} title={r.rn ? `${r.rn} · setor ${r.setor}` : undefined}>{r.rn || "—"}</td>}
               <td style={{ ...S.tdVol, ...corBaixo }}>{fmt(r.media3m)}</td>
               <td style={{ ...S.tdVol, color: baixo ? "#f87171" : "#fff" }}>{fmt(r.mesAtualTotal)}</td>
               {mostrarEstoque && (
@@ -61,7 +63,7 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             </tr>
             );
           })}
-          {!linhas.length && <tr><td colSpan={mostrarEstoque ? 7 : 6} style={S.vazio}>Sem dados.</td></tr>}
+          {!linhas.length && <tr><td colSpan={6 + (mostrarEstoque ? 1 : 0) + (mostrarRN ? 1 : 0)} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -107,7 +109,7 @@ export default function ResumoRankings() {
     <div>
       {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
       <div style={S.grid}>
-        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={linhasPdv} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} acao={togglePdv} />
+        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={linhasPdv} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} acao={togglePdv} mostrarRN />
         <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} limiteBaixo={50} mostrarEstoque />
       </div>
     </div>
@@ -125,6 +127,7 @@ const S = {
   td: { padding: "7px 8px", color: "rgba(255,255,255,0.75)" },
   tdNum: { padding: "7px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" },
   tdNome: { padding: "7px 8px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 },
+  tdRN: { padding: "7px 8px", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 },
   tdVol: { padding: "7px 8px", color: "rgba(255,255,255,0.85)", textAlign: "right", fontVariantNumeric: "tabular-nums" },
   trOdd: { background: "rgba(255,255,255,0.02)" },
   vazio: { padding: "12px", textAlign: "center", color: "rgba(255,255,255,0.35)" },

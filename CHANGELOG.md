@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.38.3** — Home: Top 20 PDVs com flag Todos/AS/Rota (AS = setor 101-103, Rota = demais)
+Versão atual: **v3.38.4** — Home: coluna "RN resp." no Top 20 PDVs (nome do RN pelo setor)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

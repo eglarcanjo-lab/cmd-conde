@@ -134,12 +134,13 @@ router.get("/rankings", async (req, res) => {
     const media3Set = new Set(media3Meses);
 
     // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual (p/ o total).
-    const [vendas, vdPdv, vdProd, prodBase, gradeEstoque] = await Promise.all([
+    const [vendas, vdPdv, vdProd, prodBase, gradeEstoque, usuarios] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", [...media3Meses, mesAtual]).catch(() => []),
       readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("grade_estoque").catch(() => []),
+      readSheet("usuarios").catch(() => []),
     ]);
     const vendasF = filtrarPorPerfil(vendas, req.user, "setor");
     const vdPdvF = filtrarPorPerfil(vdPdv, req.user, "setor");
@@ -188,6 +189,10 @@ router.get("/rankings", async (req, res) => {
 
     // PDVs: ranking completo p/ separar por segmento — AS = setor 101-103, Rota = os demais.
     const pdvsFull = montar(aggDe(vendasF, "cod_pdv", "nome_pdv"), d1De(vdPdvF, "cod_pdv"), 100000);
+    // RN responsável = usuário cujo cod é o setor do PDV.
+    const rnMap = {};
+    usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+    pdvsFull.forEach((p) => { p.rn = rnMap[String(p.setor).trim()] || ""; });
     const isAS = (s) => ["101", "102", "103"].includes(String(s || "").trim());
     const pdvs = pdvsFull.slice(0, 20);
     const pdvsAS = pdvsFull.filter((p) => isAS(p.setor)).slice(0, 20);
