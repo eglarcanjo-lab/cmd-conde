@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.39.2** — Verdes Stella: botão "⤓ Excel" exporta linha a linha dos pedidos do SKU 33857 (nº pedido, NF, PDV, data, volume) respeitando o RN e o mês filtrados
+Versão atual: **v3.39.3** — Grade de Estoque: leitura do novo formato CORA (STOCK_PRODUCT, colunas nomeadas), com fallback pro layout antigo
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
