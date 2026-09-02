@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.39.3** — Grade de Estoque: leitura do novo formato CORA (STOCK_PRODUCT, colunas nomeadas), com fallback pro layout antigo
+Versão atual: **v3.39.4** — Home Volumes: tendência do mês na mesma barra (projeção por ritmo de dias úteis), mais clara atrás do realizado (escuro)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

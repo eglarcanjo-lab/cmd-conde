@@ -50,9 +50,27 @@ router.get("/volumes", async (req, res) => {
     const realNab = soma("real_nab");
     const r1 = (n) => Math.round(n * 10) / 10;
     const pct = (r, m) => (m > 0 ? Math.round((r / m) * 100) : null);
-    const mk = (label, real, meta, monit) => ({
-      label, real: r1(real), meta: r1(meta), pct: pct(real, meta), monitoramento: !!monit,
-    });
+
+    // Tendência: projeta o realizado do MÊS ATUAL para o fim do mês pelo ritmo de
+    // dias úteis (seg-sex). Mês passado/fechado → fator 1 (sem projeção).
+    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const mesAtualStr = `${brNow.getFullYear()}-${String(brNow.getMonth() + 1).padStart(2, "0")}`;
+    let fator = 1;
+    if (mes === mesAtualStr) {
+      const yy = brNow.getFullYear(), mm = brNow.getMonth(), hoje = brNow.getDate();
+      const uteis = (ate) => { let c = 0; const d = new Date(yy, mm, 1); while (d.getMonth() === mm && d.getDate() <= ate) { const w = d.getDay(); if (w >= 1 && w <= 5) c++; d.setDate(d.getDate() + 1); } return c; };
+      const totalMes = uteis(31);
+      const decorridos = Math.max(1, uteis(hoje));
+      fator = totalMes / decorridos;
+    }
+
+    const mk = (label, real, meta, monit) => {
+      const tend = real * fator;
+      return {
+        label, real: r1(real), meta: r1(meta), pct: pct(real, meta),
+        tend: r1(tend), pctTend: pct(tend, meta), monitoramento: !!monit,
+      };
+    };
 
     const bars = [
       mk("Cerveja", realCerveja, soma("meta_cerveja")),
@@ -62,7 +80,7 @@ router.get("/volumes", async (req, res) => {
       mk("Cerveja Zero", volCat("CERVEJA ZERO"), 0.15 * realCerveja, true),
       mk("NAB Zero", volCat("NAB ZERO"), 0.15 * realNab, true),
     ];
-    return res.json({ mes, bars });
+    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100 });
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });

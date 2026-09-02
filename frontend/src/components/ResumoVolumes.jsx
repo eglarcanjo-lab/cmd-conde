@@ -9,6 +9,13 @@ const cor = (pct) => {
   if (pct >= 70) return "#7DBA3D";
   return "#f0997b";
 };
+// Versão clara/translúcida da cor (para a tendência, na mesma barra, mais sutil).
+const corClara = (pct) => {
+  const hex = cor(pct);
+  if (!hex.startsWith("#")) return "rgba(255,255,255,0.12)";
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},0.30)`;
+};
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
 export default function ResumoVolumes() {
@@ -53,20 +60,28 @@ export default function ResumoVolumes() {
   return (
     <div style={S.card}>
       <div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes — % da meta</div>
-      <div style={S.sub}>Cerveja (inclui zero) · NAB · Match · Mktp · zeros = monitoramento (meta 15%)</div>
+      <div style={S.sub}>Barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)</div>
       {!data ? (
         <div style={S.skel}>Carregando…</div>
       ) : (
         data.bars.map((b) => {
           const w = b.pct == null ? 0 : Math.min(b.pct, 100);
+          const wTend = b.pctTend == null ? 0 : Math.min(b.pctTend, 100);
           const c = cor(b.pct);
+          const tit = `Realizado ${fmt(b.real)} / ${fmt(b.meta)} HL (${b.pct == null ? "—" : b.pct + "%"})`
+            + (b.tend != null && b.pctTend != null ? ` · Tendência ${fmt(b.tend)} HL (${b.pctTend}%)` : "");
           return (
-            <div key={b.label} style={S.row} title={`${fmt(b.real)} / ${fmt(b.meta)} HL`}>
+            <div key={b.label} style={S.row} title={tit}>
               <div style={S.lbl}>
                 {b.label}
                 {b.monitoramento && <span style={S.monit} title="Sem meta oficial — monitoramento (15%)">·</span>}
               </div>
-              <div style={S.track}><div style={{ ...S.fill, width: `${w}%`, background: c }} /></div>
+              <div style={S.track}>
+                {/* tendência (projeção do mês) — mais clara, atrás */}
+                <div style={{ ...S.fill, width: `${wTend}%`, background: corClara(b.pctTend) }} />
+                {/* realizado — escuro, na frente */}
+                <div style={{ ...S.fill, width: `${w}%`, background: c }} />
+              </div>
               <div style={{ ...S.pc, color: c }}>{b.pct == null ? "—" : `${b.pct}%`}</div>
             </div>
           );
@@ -83,8 +98,8 @@ const S = {
   row: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" },
   lbl: { width: "108px", flexShrink: 0, fontSize: "0.92rem", color: "rgba(255,255,255,0.55)", textAlign: "right" },
   monit: { color: "#f0b37e", marginLeft: "3px", fontWeight: "700" },
-  track: { flex: 1, height: "15px", background: "rgba(255,255,255,0.06)", borderRadius: "7px", overflow: "hidden" },
-  fill: { height: "100%", borderRadius: "7px", transition: "width 0.4s" },
+  track: { flex: 1, height: "15px", background: "rgba(255,255,255,0.06)", borderRadius: "7px", overflow: "hidden", position: "relative" },
+  fill: { position: "absolute", left: 0, top: 0, height: "100%", borderRadius: "7px", transition: "width 0.4s" },
   pc: { width: "50px", flexShrink: 0, fontSize: "0.92rem", fontWeight: "600", textAlign: "right" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "8px 0" },
 };
