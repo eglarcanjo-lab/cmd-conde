@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.40.1** — Ações de Preço: agora aceita **combo de produtos** (ex.: Gua 2L + Gua 2L Zero); Volume soma as caixas do combo por PDV e Cobertura mostra quem não comprou **nenhum** deles
+Versão atual: **v3.40.2** — Ações de Preço: **TTV por produto** + flag **Escalonado / Preço fixo**; escalonado mostra o preço de cada degrau (TTV × (1−desc%)) e o Excel ganha aba **Preços**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.40.2 — 2026-09-02
+- **Ações de Preço — TTV e tipo de preço.**
+  - **TTV por produto** (R$/cx): campo na tabela "Produtos & preço" do combo.
+  - **Flag Tipo de preço:** **Escalonado** (degraus, como já existia) ou **Preço fixo**
+    (um único preço por produto na ação, sem degraus).
+  - No **escalonado**, cada degrau mostra o **preço resultante** = `TTV × (1 − desc%)`;
+    no **fixo**, mostra o desconto implícito a partir do TTV.
+  - **Excel** ganha a aba **Preços** (TTV + preço por degrau ou preço fixo por produto),
+    além da aba de PDVs/não compradores.
 
 ### v3.40.1 — 2026-09-02
 - **Ações de Preço — combo de produtos.** Botão "+" para empilhar vários SKUs numa
