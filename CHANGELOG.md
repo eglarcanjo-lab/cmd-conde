@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.40.0** — Nova tela **Ações de Preço** (diretoria+): monta descontos escalonados a partir da média mensal de caixas do trimestre anterior (Volume) ou lista não compradores (Cobertura), com degraus editáveis e export Excel
+Versão atual: **v3.40.1** — Ações de Preço: agora aceita **combo de produtos** (ex.: Gua 2L + Gua 2L Zero); Volume soma as caixas do combo por PDV e Cobertura mostra quem não comprou **nenhum** deles
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.40.1 — 2026-09-02
+- **Ações de Preço — combo de produtos.** Botão "+" para empilhar vários SKUs numa
+  mesma ação (chips com remover). Ex.: *Gua 2L + Gua 2L Zero*.
+  - **Volume:** a média mensal de caixas passa a ser a **soma do combo** por PDV
+    (cada SKU convertido por seu próprio HL/caixa; meses = união dos meses comprados).
+  - **Cobertura:** lista os PDVs que **não compraram nenhum** dos SKUs do combo
+    (comprador = comprou pelo menos um).
+  - Export Excel ganha colunas *Combo (cod)* e *Combo (produtos)*.
 
 ### v3.40.0 — 2026-09-02
 - **Nova tela: Ações de Preço** (menu solto, visível só para **diretoria+**). Apoio ao

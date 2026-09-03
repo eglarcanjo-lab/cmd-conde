@@ -20,6 +20,13 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
+// SKU único ou combo: "33857" ou "33857,12345". Dedup, sem zeros.
+function parseSkus(raw) {
+  const set = new Set();
+  String(raw || "").split(",").map((s) => normCod(s)).forEach((c) => { if (c && c !== "0") set.add(c); });
+  return [...set];
+}
+
 // Trimestre civil ANTERIOR ao atual (3 meses completos, sem o mês corrente).
 function trimestreAnterior() {
   const br = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -57,11 +64,13 @@ router.get("/produtos", async (req, res) => {
   } catch (e) { console.error("acoes-preco/produtos:", e); return res.status(500).json({ error: "Erro na busca." }); }
 });
 
-// GET /api/acoes-preco/volume?sku= — média mensal de caixas por PDV (tri anterior)
+// GET /api/acoes-preco/volume?sku=33857[,12345] — média mensal de caixas por PDV (tri anterior).
+// Combo: soma as caixas de todos os SKUs por PDV; meses = união dos meses em que comprou qualquer um.
 router.get("/volume", async (req, res) => {
   try {
-    const sku = normCod(req.query.sku);
-    if (!sku || sku === "0") return res.status(400).json({ error: "Informe o SKU." });
+    const skus = parseSkus(req.query.sku);
+    if (!skus.length) return res.status(400).json({ error: "Informe o(s) SKU(s)." });
+    const skuSet = new Set(skus);
     const { meses, label } = trimestreAnterior();
     const [vendasRaw, prodFull, usuarios] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
@@ -69,17 +78,19 @@ router.get("/volume", async (req, res) => {
       readSheet("usuarios").catch(() => []),
     ]);
     const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
-    let hlc = 0, nomeSku = "";
-    prodFull.forEach((p) => { if (normCod(p.cod) === sku) { hlc = num(p.hl_caixa); nomeSku = String(p.nome || "").trim(); } });
+    const hlMap = {}, nomeMap = {};
+    prodFull.forEach((p) => { const c = normCod(p.cod); if (skuSet.has(c)) { hlMap[c] = num(p.hl_caixa); nomeMap[c] = String(p.nome || "").trim(); } });
     const rnMap = {};
     usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
     const map = {};
     vendas.forEach((r) => {
-      if (normCod(r.cod_produto) !== sku) return;
+      const c = normCod(r.cod_produto);
+      if (!skuSet.has(c)) return;
       const cod = String(r.cod_pdv || "").trim(); if (!cod) return;
-      if (!nomeSku) nomeSku = String(r.nome_produto || "").trim();
+      if (!nomeMap[c]) nomeMap[c] = String(r.nome_produto || "").trim();
       const mes = String(r.mes_referencia || "").slice(0, 7);
+      const hlc = hlMap[c] || 0;
       const cx = hlc > 0 ? num(r.volume_hl) / hlc : 0;
       const e = map[cod] || (map[cod] = { cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), setor: String(r.setor || "").trim(), caixas: 0, meses: new Set() });
       e.caixas += cx;
@@ -93,15 +104,18 @@ router.get("/volume", async (req, res) => {
       .filter((p) => p.media_cx > 0)
       .sort((a, b) => b.media_cx - a.media_cx);
 
-    return res.json({ produto: { cod: sku, nome: nomeSku || sku, hl_caixa: hlc }, trimestre: label, meses, sem_hl: hlc <= 0, pdvs });
+    const produtos = skus.map((c) => ({ cod: c, nome: nomeMap[c] || c, hl_caixa: hlMap[c] || 0 }));
+    return res.json({ produtos, trimestre: label, meses, sem_hl: produtos.some((p) => p.hl_caixa <= 0), pdvs });
   } catch (e) { console.error("acoes-preco/volume:", e); return res.status(500).json({ error: "Erro ao calcular volume." }); }
 });
 
-// GET /api/acoes-preco/cobertura?sku= — PDVs que NÃO compraram o SKU no tri anterior
+// GET /api/acoes-preco/cobertura?sku=33857[,12345] — PDVs que NÃO compraram NENHUM
+// dos SKUs do combo no tri anterior (comprador = comprou pelo menos um deles).
 router.get("/cobertura", async (req, res) => {
   try {
-    const sku = normCod(req.query.sku);
-    if (!sku || sku === "0") return res.status(400).json({ error: "Informe o SKU." });
+    const skus = parseSkus(req.query.sku);
+    if (!skus.length) return res.status(400).json({ error: "Informe o(s) SKU(s)." });
+    const skuSet = new Set(skus);
     const { meses, label } = trimestreAnterior();
     const [vendasRaw, prodFull, usuarios, pdvBaseRaw] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
@@ -111,20 +125,21 @@ router.get("/cobertura", async (req, res) => {
     ]);
     const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
     const pdvBase = filtrarPorPerfil(pdvBaseRaw, req.user);
-    let nomeSku = "";
-    prodFull.forEach((p) => { if (normCod(p.cod) === sku) nomeSku = String(p.nome || "").trim(); });
+    const nomeMap = {};
+    prodFull.forEach((p) => { const c = normCod(p.cod); if (skuSet.has(c)) nomeMap[c] = String(p.nome || "").trim(); });
     const rnMap = {};
     usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
     const compradores = new Set();
-    vendas.forEach((r) => { if (normCod(r.cod_produto) === sku && num(r.volume_hl) > 0) compradores.add(normCod(r.cod_pdv)); });
+    vendas.forEach((r) => { if (skuSet.has(normCod(r.cod_produto)) && num(r.volume_hl) > 0) compradores.add(normCod(r.cod_pdv)); });
     const naoCompradores = pdvBase
       .map((p) => ({ cod_pdv: normCod(p.cod_pdv || p.cod), nome_pdv: String(p.nome_fantasia || p.nome || "").trim(), setor: String(p.setor || "").trim() }))
       .filter((p) => p.cod_pdv && p.cod_pdv !== "0" && !compradores.has(p.cod_pdv))
       .map((p) => ({ ...p, rn: rnMap[p.setor] || "" }))
       .sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
 
-    return res.json({ produto: { cod: sku, nome: nomeSku || sku }, trimestre: label, total_base: pdvBase.length, compradores: compradores.size, nao_compradores: naoCompradores });
+    const produtos = skus.map((c) => ({ cod: c, nome: nomeMap[c] || c }));
+    return res.json({ produtos, trimestre: label, total_base: pdvBase.length, compradores: compradores.size, nao_compradores: naoCompradores });
   } catch (e) { console.error("acoes-preco/cobertura:", e); return res.status(500).json({ error: "Erro ao calcular cobertura." }); }
 });
 
