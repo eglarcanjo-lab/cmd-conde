@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.39.4** — Home Volumes: tendência do mês na mesma barra (projeção por ritmo de dias úteis), mais clara atrás do realizado (escuro)
+Versão atual: **v3.40.0** — Nova tela **Ações de Preço** (diretoria+): monta descontos escalonados a partir da média mensal de caixas do trimestre anterior (Volume) ou lista não compradores (Cobertura), com degraus editáveis e export Excel
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,21 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.40.0 — 2026-09-02
+- **Nova tela: Ações de Preço** (menu solto, visível só para **diretoria+**). Apoio ao
+  cadastro de descontos escalonados para incentivar volume por cliente.
+  - **Busca de SKU** com autocomplete (produtos com venda no trimestre anterior, no escopo do perfil).
+  - **Modo Volume:** calcula a **média mensal de caixas** de cada PDV no **trimestre anterior**
+    (sem o mês atual). Caixas = `volume_hl / hl_caixa` (da `produtos_full`); média = total ÷ meses
+    em que comprou. A partir daí:
+    - **Box "aumento de volume alvo (%)"** → gera a *quantidade inicial p/ desconto* = `ceil(base × (1+%))`
+      (arredonda caixas **sempre pra cima**).
+    - **Piso (padrão 5 cx):** quem compra abaixo do piso usa o piso como base.
+    - **Degraus editáveis** (a partir de +X% de volume → Y% de desconto), quantos quiser.
+  - **Modo Cobertura:** lista os PDVs que **não compraram** o SKU no trimestre (potenciais).
+  - **Export Excel** nos dois modos (PDV, setor, RN, cod produto, quant. inicial e cada degrau).
+- Backend: `routes/acoes-preco.js` (`/produtos`, `/volume`, `/cobertura`) restrito a `director`/`admin`.
 
 ### v3.36.0 — 2026-07-20
 - **Otimização de carregamento (abas lentas).** Três frentes:

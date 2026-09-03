@@ -22,6 +22,7 @@ import EntregaRelatorio from "./pages/Detalhamento/EntregaRelatorio";
 import Produtos from "./pages/Produtos";
 import FaturadosBuffer from "./pages/FaturadosBuffer";
 import Refrigeradores from "./pages/Refrigeradores";
+import AcoesPreco from "./pages/AcoesPreco";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
@@ -120,6 +121,7 @@ function AppContent() {
       <Route path="/produtos" element={<PrivateRoute><ErrorBoundary><Produtos /></ErrorBoundary></PrivateRoute>} />
       <Route path="/faturados-buffer" element={<PrivateRoute><ErrorBoundary><FaturadosBuffer /></ErrorBoundary></PrivateRoute>} />
       <Route path="/refrigeradores" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><Refrigeradores /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/acoes-preco" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><AcoesPreco /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
@@ -127,7 +129,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.39.4";
+export const APP_VERSION = "v3.40.0";
 
 export default function App() {
   return (

@@ -26,6 +26,7 @@ export default function HomeClassic() {
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer", ativo: true, soGestor: false, soRn: false },
     { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
+    { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
   ].filter((m) => {
     if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director
     if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO

@@ -58,6 +58,7 @@ app.use("/api/cobertura-sku", require("./routes/cobertura-sku"));
 app.use("/api/avisos", require("./routes/avisos"));
 app.use("/api/uso", require("./routes/uso"));
 app.use("/api/resumo", require("./routes/resumo"));
+app.use("/api/acoes-preco", require("./routes/acoes-preco"));
 app.use("/api/faturados-buffer", require("./routes/faturadosBuffer"));
 app.use("/api/alertas", require("./routes/alertas"));
 app.use("/api/refrigeradores", require("./routes/refrigeradores"));
