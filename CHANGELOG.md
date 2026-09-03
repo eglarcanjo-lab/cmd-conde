@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.40.3** — Ações de Preço (correções): **só admin**; produtos vêm da **grade de estoque** com saldo e **disp −30%**; trimestre agora é **rolante** (3 meses antes do atual); tarja de **sugestão** de gap por categoria
+Versão atual: **v3.40.4** — Ações de Preço: no Volume, os **não compradores** não aparecem na tela (mais rápida) mas **saem no Excel com o piso** como base — a base toda entra na ação
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.40.4 — 2026-09-02
+- **Ações de Preço — base toda na ação (Volume).**
+  - Os **não compradores** do combo **não são renderizados na tela** (mantém a página
+    leve/rápida), mas **entram no Excel** com o **piso** como base
+    (`quant inicial = ceil(piso × (1+aumento%))`, degraus a partir do piso).
+  - Nova coluna **"Comprou tri?"** (Sim/Não) na aba de PDVs, separando compradores
+    (base = média) de não compradores (base = piso).
+  - **Cobertura** segue mostrando **só os não compradores** do combo.
 
 ### v3.40.3 — 2026-09-02
 - **Ações de Preço — correções pedidas:**

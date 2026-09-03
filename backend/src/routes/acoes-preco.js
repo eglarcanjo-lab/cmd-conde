@@ -135,14 +135,16 @@ router.get("/volume", async (req, res) => {
     if (!skus.length) return res.status(400).json({ error: "Informe o(s) SKU(s)." });
     const skuSet = new Set(skus);
     const { meses, label } = trimestreAnterior();
-    const [vendasRaw, prodFull, prodBase, usuarios, grade] = await Promise.all([
+    const [vendasRaw, prodFull, prodBase, usuarios, grade, pdvBaseRaw] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
       readSheet("produtos_full").catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("usuarios").catch(() => []),
       readSheet("grade_estoque").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
     ]);
     const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
+    const pdvBase = filtrarPorPerfil(pdvBaseRaw, req.user);
     const hlMap = {}, nomeMap = {}, saldoMap = {};
     prodFull.forEach((p) => { const c = normCod(p.cod); if (skuSet.has(c)) { hlMap[c] = num(p.hl_caixa); nomeMap[c] = String(p.nome || "").trim(); } });
     grade.forEach((r) => { const c = normCod(r.cod); if (skuSet.has(c)) saldoMap[c] = Math.round(num(r.saldo)); });
@@ -168,9 +170,18 @@ router.get("/volume", async (req, res) => {
       .filter((p) => p.media_cx > 0)
       .sort((a, b) => b.media_cx - a.media_cx);
 
+    // Não compradores do combo (base inteira menos quem comprou). Não vão pra tela
+    // (evita travar), mas entram no Excel com o piso como base → base toda na ação.
+    const compradores = new Set(pdvs.map((p) => normCod(p.cod_pdv)));
+    const naoCompradores = pdvBase
+      .map((p) => ({ cod_pdv: normCod(p.cod_pdv || p.cod), nome_pdv: String(p.nome_fantasia || p.nome || "").trim(), setor: String(p.setor || "").trim() }))
+      .filter((p) => p.cod_pdv && p.cod_pdv !== "0" && !compradores.has(p.cod_pdv))
+      .map((p) => ({ ...p, rn: rnMap[p.setor] || "" }))
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
+
     const produtos = skus.map((c) => { const saldo = saldoMap[c] ?? null; return { cod: c, nome: nomeMap[c] || c, categoria: (catMap[c] || [])[0] || "", hl_caixa: hlMap[c] || 0, saldo, disp: saldo != null ? Math.floor(saldo * (1 - DESC_ESTOQUE)) : null }; });
     const sugestao = await sugestaoCategoria(categoriaDoCombo(skus, catMap), req.user);
-    return res.json({ produtos, trimestre: label, meses, sem_hl: produtos.some((p) => p.hl_caixa <= 0), sugestao, pdvs });
+    return res.json({ produtos, trimestre: label, meses, sem_hl: produtos.some((p) => p.hl_caixa <= 0), sugestao, pdvs, nao_compradores: naoCompradores });
   } catch (e) { console.error("acoes-preco/volume:", e); return res.status(500).json({ error: "Erro ao calcular volume." }); }
 });
 

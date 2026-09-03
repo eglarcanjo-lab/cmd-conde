@@ -112,12 +112,18 @@ export default function AcoesPreco() {
   function exportar() {
     if (tipo === "volume" && vol) {
       const cs = codsStr(vol.produtos), ns = nomesStr(vol.produtos);
-      const pdvs = linhasVol.map((p) => {
-        const o = { "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Combo (cod)": cs, "Combo (produtos)": ns, "Média (cx)": p.media_cx, "Base (cx)": p.base, "Quant inicial (cx)": p.quantInicial };
-        if (escal) degOrd.forEach((d, i) => { o[`+${d.aumento}% · ${d.desconto}% desc (cx)`] = p.tiers[i]; });
+      const pisoN = Number(piso) || 0;
+      const linha = (p, comprou, media, base, qi, tiers) => {
+        const o = { "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Comprou tri?": comprou, "Combo (cod)": cs, "Combo (produtos)": ns, "Média (cx)": media, "Base (cx)": base, "Quant inicial (cx)": qi };
+        if (escal) degOrd.forEach((d, i) => { o[`+${d.aumento}% · ${d.desconto}% desc (cx)`] = tiers[i]; });
         return o;
-      });
-      baixar([{ name: "PDVs", rows: pdvs }, { name: "Precos", rows: planilhaPrecos(vol.produtos) }], `acao_preco_volume_${vol.produtos.map((p) => p.cod).join("-")}`);
+      };
+      // compradores (média) + não compradores (piso) → base toda entra na ação
+      const buyerRows = linhasVol.map((p) => linha(p, "Sim", p.media_cx, p.base, p.quantInicial, p.tiers));
+      const qiPiso = ceilN(pisoN * (1 + (Number(aumento) || 0) / 100));
+      const tiersPiso = escal ? degOrd.map((d) => ceilN(pisoN * (1 + d.aumento / 100))) : [];
+      const naoRows = (vol.nao_compradores || []).map((p) => linha(p, "Não", 0, pisoN, qiPiso, tiersPiso));
+      baixar([{ name: "PDVs", rows: [...buyerRows, ...naoRows] }, { name: "Precos", rows: planilhaPrecos(vol.produtos) }], `acao_preco_volume_${vol.produtos.map((p) => p.cod).join("-")}`);
     } else if (tipo === "cobertura" && cob) {
       const cs = codsStr(cob.produtos), ns = nomesStr(cob.produtos);
       const pdvs = (cob.nao_compradores || []).map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Combo (cod)": cs, "Combo (produtos)": ns, "Status": "Não comprou nenhum" }));
@@ -281,7 +287,8 @@ export default function AcoesPreco() {
 
                 <div style={S.resumo}>
                   <span><b style={{ color: "#fff" }}>{nomesStr(vol.produtos)}</b></span>
-                  <span> · {vol.pdvs.length} PDVs · média (soma do combo) do trimestre <b>{vol.trimestre}</b></span>
+                  <span> · {vol.pdvs.length} compradores · média (soma do combo) do trimestre <b>{vol.trimestre}</b></span>
+                  {vol.nao_compradores?.length > 0 && <span> · <b style={{ color: "#f0997b" }}>+{vol.nao_compradores.length} não compradores</b> entram no Excel com piso <b>{piso} cx</b></span>}
                   {vol.sem_hl && <span style={{ color: "#f0997b" }}> · ⚠️ algum produto sem HL/caixa — caixas podem sair zeradas</span>}
                   <button style={S.excel} onClick={exportar}>⤓ Exportar Excel</button>
                 </div>
