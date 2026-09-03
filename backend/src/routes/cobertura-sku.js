@@ -3,7 +3,7 @@
 // Distribuição = soma de CAIXAS (Volume ÷ HL Comercial do produto).
 const express = require("express");
 const router = express.Router();
-const { readSheet } = require("../services/sheets");
+const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 
 router.use(authMiddleware);
@@ -12,6 +12,12 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const r1 = (n) => Math.round(n * 10) / 10;
 const r3 = (n) => Math.round(n * 1000) / 1000;
 const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
+const mesAtualBR = () => { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+// meses=YYYY-MM,YYYY-MM → array válido; default = mês atual.
+const parseMeses = (raw) => {
+  const ms = String(raw || "").split(",").map((s) => s.trim()).filter((s) => /^\d{4}-\d{2}$/.test(s));
+  return ms.length ? [...new Set(ms)] : [mesAtualBR()];
+};
 
 // Só gestores (RN não acessa esta visão consolidada)
 function escopoPerfil(usuario) {
@@ -21,6 +27,18 @@ function escopoPerfil(usuario) {
   if (p === "gv3") return { ok: true, filtro: (s) => String(s).startsWith("3") };
   return { ok: false };
 }
+
+// GET /api/cobertura-sku/meses — meses com venda no escopo (para o seletor). Desc.
+router.get("/meses", async (req, res) => {
+  try {
+    const esc = escopoPerfil(req.user);
+    if (!esc.ok) return res.status(403).json({ error: "Acesso restrito a gestores." });
+    const vendas = await readSheet("vendas_cliente_produto").catch(() => []);
+    const set = new Set();
+    vendas.forEach((r) => { const m = String(r.mes_referencia || "").slice(0, 7); if (/^\d{4}-\d{2}$/.test(m)) set.add(m); });
+    return res.json([...set].sort().reverse());
+  } catch (err) { console.error("cobertura-sku/meses:", err); return res.status(500).json({ error: "Erro ao listar meses." }); }
+});
 
 // GET /api/cobertura-sku/buscar?q=stella — sugestões (autocomplete) dos produtos
 // que têm venda no escopo do gestor. Retorna [{cod, nome}].
@@ -65,11 +83,14 @@ router.get("/", async (req, res) => {
 
     const q = String(req.query.q || "").trim();
     if (!q) return res.status(400).json({ error: "Informe o SKU (código ou nome)." });
+    const meses = parseMeses(req.query.meses);
 
-    const [vendasRaw, produtosFull, statusArq] = await Promise.all([
-      readSheet("vendas_cliente_produto").catch(() => []),
+    const [vendasRaw, produtosFull, statusArq, pdvBaseRaw, usuarios] = await Promise.all([
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
       readSheet("produtos_full").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
+      readSheet("usuarios").catch(() => []),
     ]);
 
     const linhaPed = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
@@ -107,11 +128,20 @@ router.get("/", async (req, res) => {
       return cods.sort((a, b) => porCod[b] - porCod[a])[0];
     })();
 
-    if (!alvoCod) return res.json({ encontrado: false, atualizado_em: atualizadoEm });
+    // Fallback: SKU sem venda no período mas existente na base → resolve p/ mostrar
+    // a base inteira como "não comprou".
+    let alvo = alvoCod;
+    if (!alvo) {
+      const qn = normCod(q), ql = q.toLowerCase();
+      if (/^\d+$/.test(q) && hlMap[qn] !== undefined) alvo = qn;
+      else { const hit = Object.keys(nomeMap).find((c) => nomeMap[c].toLowerCase().includes(ql)); if (hit) alvo = hit; }
+    }
+    if (!alvo) return res.json({ encontrado: false, atualizado_em: atualizadoEm });
+    const alvoFinal = alvo;
 
-    const linhas = vendas.filter((r) => normCod(r.cod_produto) === alvoCod);
-    const hlCaixa = hlMap[alvoCod] || 0;
-    const nomeProduto = nomeMap[alvoCod] || (linhas[0] && linhas[0].nome_produto) || alvoCod;
+    const linhas = vendas.filter((r) => normCod(r.cod_produto) === alvoFinal);
+    const hlCaixa = hlMap[alvoFinal] || 0;
+    const nomeProduto = nomeMap[alvoFinal] || (linhas[0] && linhas[0].nome_produto) || alvoFinal;
     const mesRef = linhas[0]?.mes_referencia || "";
 
     // Por PDV (agrega caso o mesmo PDV apareça em + de uma linha)
@@ -140,15 +170,29 @@ router.get("/", async (req, res) => {
     const cobertura = porPdv.length;
     const distribuicao = r1(porPdv.reduce((s, p) => s + p.caixas, 0));
 
+    // Base que ainda NÃO comprou o SKU nos meses selecionados (escopo do gestor),
+    // com RN (nome) e dia de visita — para prospecção.
+    const compradores = new Set(porPdv.map((p) => normCod(p.cod_pdv)));
+    const rnMap = {};
+    usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+    const naoCompradores = pdvBaseRaw
+      .filter((p) => esc.filtro(String(p.setor || "").trim()))
+      .map((p) => ({ cod_pdv: normCod(p.cod_pdv || p.cod), nome_pdv: String(p.nome_fantasia || p.nome || "").trim(), setor: String(p.setor || "").trim(), dia_visita: String(p.dia_visita || "").trim() }))
+      .filter((p) => p.cod_pdv && p.cod_pdv !== "0" && !compradores.has(p.cod_pdv))
+      .map((p) => ({ ...p, rn: rnMap[p.setor] || "" }))
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
+
     return res.json({
       encontrado: true,
       atualizado_em: atualizadoEm,
       mes_referencia: mesRef,
-      produto: { cod: alvoCod, nome: nomeProduto, hl_caixa: hlCaixa },
-      consolidado: { cobertura, distribuicao },
+      meses,
+      produto: { cod: alvoFinal, nome: nomeProduto, hl_caixa: hlCaixa },
+      consolidado: { cobertura, distribuicao, total_base: pdvBaseRaw.filter((p) => esc.filtro(String(p.setor || "").trim())).length, nao_compradores: naoCompradores.length },
       sem_hl: hlCaixa <= 0,
       por_rn: porRn,
       por_pdv: porPdv,
+      nao_compradores: naoCompradores,
     });
   } catch (err) {
     console.error("cobertura-sku:", err);

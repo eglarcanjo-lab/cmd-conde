@@ -1,11 +1,29 @@
 // Cobertura & Distribuição por SKU — visão gestor (GV / diretoria / admin).
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
 
 const VERDE = "#7DBA3D";
 const BG = "#0c1410";
 const fmt = (v, d = 0) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const fmtMes = (m) => { const [y, mo] = String(m).split("-"); return `${ROT[(Number(mo) || 1) - 1]}/${String(y).slice(2)}`; };
+const mesAtual = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+
+const DIAS = [
+  { key: "SEG", label: "Seg" }, { key: "TER", label: "Ter" }, { key: "QUA", label: "Qua" },
+  { key: "QUI", label: "Qui" }, { key: "SEX", label: "Sex" }, { key: "SAB", label: "Sáb" },
+];
+const DIA_MAP = {
+  SEG: "SEG", SEGUNDA: "SEG", "SEGUNDA-FEIRA": "SEG", "2": "SEG",
+  TER: "TER", TERCA: "TER", "TERÇA": "TER", "TERCA-FEIRA": "TER", "TERÇA-FEIRA": "TER", "3": "TER",
+  QUA: "QUA", QUARTA: "QUA", "QUARTA-FEIRA": "QUA", "4": "QUA",
+  QUI: "QUI", QUINTA: "QUI", "QUINTA-FEIRA": "QUI", "5": "QUI",
+  SEX: "SEX", SEXTA: "SEX", "SEXTA-FEIRA": "SEX", "6": "SEX",
+  SAB: "SAB", SABADO: "SAB", "SÁBADO": "SAB", "7": "SAB",
+};
+const normalizeDia = (raw) => { const s = String(raw || "").trim().toUpperCase().split(/[\/,; \-]/)[0].trim(); return DIA_MAP[s] || s; };
 
 export default function CoberturaSku({ embutido = false }) {
   const navigate = useNavigate();
@@ -15,6 +33,11 @@ export default function CoberturaSku({ embutido = false }) {
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [mesesDisp, setMesesDisp] = useState([]);      // meses disponíveis
+  const [meses, setMeses] = useState([mesAtual()]);    // meses selecionados
+  const [termoAtual, setTermoAtual] = useState("");    // último SKU buscado
+  const [fltRn, setFltRn] = useState("");
+  const [fltDia, setFltDia] = useState("");
 
   // Autocomplete: sugere produtos enquanto digita (debounce)
   useEffect(() => {
@@ -30,18 +53,37 @@ export default function CoberturaSku({ embutido = false }) {
     return () => clearTimeout(t);
   }, [q]);
 
-  async function buscarTermo(termo) {
+  // meses disponíveis (para o seletor de período)
+  useEffect(() => {
+    api.get("/api/cobertura-sku/meses").then((r) => {
+      const ms = r.data || [];
+      setMesesDisp(ms);
+      if (ms.length && !ms.includes(mesAtual())) setMeses([ms[0]]); // sem dado do mês atual → usa o mais recente
+    }).catch(() => {});
+  }, []);
+
+  async function buscarTermo(termo, mesesArg) {
     if (!termo) return;
+    const ms = mesesArg || meses;
+    setTermoAtual(termo);
     setMostraSug(false);
     setLoading(true); setErro(""); setD(null);
     try {
-      const r = await api.get("/api/cobertura-sku", { params: { q: termo } });
+      const r = await api.get("/api/cobertura-sku", { params: { q: termo, meses: ms.join(",") }, timeout: 60000 });
       setD(r.data);
     } catch (err) {
       setErro(err.response?.data?.error || "Erro ao buscar.");
     } finally {
       setLoading(false);
     }
+  }
+
+  // Alterna um mês na seleção e re-busca o SKU atual (mantém ao menos 1 mês).
+  function toggleMes(m) {
+    const novo = meses.includes(m) ? meses.filter((x) => x !== m) : [...meses, m].sort();
+    if (!novo.length) return;
+    setMeses(novo);
+    if (termoAtual) buscarTermo(termoAtual, novo);
   }
 
   function buscar(e) {
@@ -94,6 +136,18 @@ export default function CoberturaSku({ embutido = false }) {
         </form>
       </div>
 
+      {/* Seletor de período — 1+ meses (marque mais meses para acumular) */}
+      {mesesDisp.length > 0 && (
+        <div className="no-print" style={S.periodo}>
+          <span style={S.periodoLbl}>Período:</span>
+          {mesesDisp.map((m) => (
+            <button key={m} type="button" onClick={() => toggleMes(m)}
+              style={meses.includes(m) ? S.mesOn : S.mes}>{fmtMes(m)}</button>
+          ))}
+          <span style={S.periodoHint}>{meses.length} {meses.length > 1 ? "meses" : "mês"} · marque mais para acumular</span>
+        </div>
+      )}
+
       {erro && <div style={S.erro}>{erro}</div>}
       {loading && <div style={S.info}><span className="cs-spin" /> Buscando…</div>}
 
@@ -109,7 +163,7 @@ export default function CoberturaSku({ embutido = false }) {
             <div style={S.evidProd}>{d.produto.nome} <span style={S.evidCod}>· cód {d.produto.cod}</span></div>
             <div style={S.evidSub}>
               {d.atualizado_em ? `🔄 atualizado em ${d.atualizado_em}` : ""}
-              {d.mes_referencia ? ` · mês ${d.mes_referencia}` : ""}
+              {d.meses?.length ? ` · período ${d.meses.map(fmtMes).join(", ")}` : (d.mes_referencia ? ` · mês ${d.mes_referencia}` : "")}
             </div>
             <button className="no-print" style={S.pdfBtn} onClick={() => window.print()}>📄 Exportar PDF</button>
           </div>
@@ -138,11 +192,60 @@ export default function CoberturaSku({ embutido = false }) {
             { k: "setor", t: "Setor" },
             { k: "caixas", t: "Caixas", num: true, fmt: (v) => fmt(v, 1) },
           ]} />
+
+          {/* Base que ainda não comprou — com filtro de RN e dia de visita */}
+          <NaoCompradores lista={d.nao_compradores || []} fltRn={fltRn} setFltRn={setFltRn} fltDia={fltDia} setFltDia={setFltDia} />
         </div>
       )}
 
       <style>{CSS}</style>
     </div>
+  );
+}
+
+function NaoCompradores({ lista, fltRn, setFltRn, fltDia, setFltDia }) {
+  // setor -> nome do RN (para rotular o filtro)
+  const rnPorSetor = {};
+  lista.forEach((p) => { if (p.setor && !rnPorSetor[p.setor]) rnPorSetor[p.setor] = p.rn || ""; });
+  const setores = Object.keys(rnPorSetor).sort();
+  const filtrada = lista.filter((p) =>
+    (!fltRn || String(p.setor) === String(fltRn)) &&
+    (!fltDia || normalizeDia(p.dia_visita) === fltDia)
+  );
+  function exportar() {
+    const rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "Cliente": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Dia visita": normalizeDia(p.dia_visita) }));
+    if (!rows.length) return;
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Nao compradores");
+    XLSX.writeFile(wb, "nao_compradores.xlsx");
+  }
+  return (
+    <>
+      <div style={S.naoHead}>
+        <h3 style={{ ...S.h3, margin: 0, color: "#f0997b" }}>Base que ainda não comprou ({filtrada.length}{filtrada.length !== lista.length ? ` de ${lista.length}` : ""})</h3>
+        <button className="no-print" style={S.excel} onClick={exportar}>⤓ Excel</button>
+      </div>
+      <div className="no-print" style={S.fltRow}>
+        <select style={S.select} value={fltRn} onChange={(e) => setFltRn(e.target.value)}>
+          <option value="">Todos os RNs / setores</option>
+          {setores.map((s) => <option key={s} value={s}>{s}{rnPorSetor[s] ? ` · ${rnPorSetor[s]}` : ""}</option>)}
+        </select>
+        <div style={S.diaBtns}>
+          {DIAS.map((dd) => (
+            <button key={dd.key} type="button" onClick={() => setFltDia(fltDia === dd.key ? "" : dd.key)}
+              style={fltDia === dd.key ? S.diaOn : S.dia}>{dd.label}</button>
+          ))}
+        </div>
+      </div>
+      <Tabela linhas={filtrada} colunas={[
+        { k: "cod_pdv", t: "Cód" },
+        { k: "nome_pdv", t: "Cliente" },
+        { k: "setor", t: "Setor" },
+        { k: "rn", t: "RN" },
+        { k: "dia_visita", t: "Dia visita", fmt: (v) => normalizeDia(v) || "—" },
+      ]} />
+    </>
   );
 }
 
@@ -207,6 +310,18 @@ const S = {
   kpiValor: { fontSize: "1.7rem", fontWeight: "800", lineHeight: 1.1 },
   kpiLabel: { color: "rgba(255,255,255,0.6)", fontSize: "0.8rem", marginTop: "6px" },
   kpiSub: { color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", marginTop: "2px" },
+  periodo: { display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "16px" },
+  periodoLbl: { color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", fontWeight: 600, marginRight: "2px" },
+  periodoHint: { color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginLeft: "4px" },
+  mes: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: "16px", padding: "5px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem" },
+  mesOn: { background: "rgba(125,186,61,0.16)", border: "1px solid #7DBA3D", color: "#7DBA3D", borderRadius: "16px", padding: "5px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 700 },
+  naoHead: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", marginTop: "22px" },
+  excel: { background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#4ade80", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
+  fltRow: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", margin: "10px 0" },
+  select: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "8px 12px", fontSize: "0.84rem", fontFamily: "inherit", outline: "none" },
+  diaBtns: { display: "flex", gap: "5px", flexWrap: "wrap" },
+  dia: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", borderRadius: "16px", padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem" },
+  diaOn: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.45)", color: "#7DBA3D", borderRadius: "16px", padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 700 },
   h3: { margin: "22px 0 10px", fontSize: "1rem", fontWeight: "700" },
   tabelaWrap: { overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px" },
   tabela: { width: "100%", borderCollapse: "collapse", fontSize: "0.84rem" },

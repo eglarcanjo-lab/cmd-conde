@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.40.4** — Ações de Preço: no Volume, os **não compradores** não aparecem na tela (mais rápida) mas **saem no Excel com o piso** como base — a base toda entra na ação
+Versão atual: **v3.41.0** — Cobertura & Distribuição (Analítico): **base que ainda não comprou** o SKU com filtro de **RN** e **dia de visita** + **Excel**; período por **mês** (multi-seleção, acumula meses)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.41.0 — 2026-09-03
+- **Cobertura & Distribuição — Analítico (por SKU):**
+  - **Período por mês:** seletor com os meses disponíveis; **multi-seleção** (marque mais
+    meses para acumular). Antes lia tudo; agora filtra pelos meses escolhidos (default: mês atual).
+  - **Base que ainda não comprou** o SKU no período: lista os PDVs da base (no escopo)
+    que não compraram, com **RN** e **dia de visita**, filtros por **RN/setor** e **dia**,
+    e **export Excel**. SKU sem venda no período ainda resolve (mostra a base inteira).
+  - Backend `/api/cobertura-sku`: novo `/meses`; `?meses=` filtra por mês; retorna `nao_compradores`.
 
 ### v3.40.4 — 2026-09-02
 - **Ações de Preço — base toda na ação (Volume).**
