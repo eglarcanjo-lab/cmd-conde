@@ -52,8 +52,8 @@ export default function HomeDashboard() {
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer" },
     { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento" },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
-    { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", soDir: true },
-  ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soDir && !isAdminOuDirector));
+    { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", soAdmin: true },
+  ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soAdmin && perfil !== "admin"));
 
   const toggleGrupo = (id) => {
     if (!aberto) { setAberto(true); setGrupos(new Set([id])); return; } // rail → expande e abre

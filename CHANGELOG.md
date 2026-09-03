@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.40.2** — Ações de Preço: **TTV por produto** + flag **Escalonado / Preço fixo**; escalonado mostra o preço de cada degrau (TTV × (1−desc%)) e o Excel ganha aba **Preços**
+Versão atual: **v3.40.3** — Ações de Preço (correções): **só admin**; produtos vêm da **grade de estoque** com saldo e **disp −30%**; trimestre agora é **rolante** (3 meses antes do atual); tarja de **sugestão** de gap por categoria
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,18 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.40.3 — 2026-09-02
+- **Ações de Preço — correções pedidas:**
+  - **Acesso:** volta a ser **só admin** (rota, backend e menu) por enquanto.
+  - **Produtos = grade de estoque:** a busca lista os itens da **grade**, mostrando
+    **Saldo (cx)** e **Disp −30% (cx)** (reserva 30% do estoque para não usar tudo numa ação).
+  - **Trimestre rolante:** a média passa a usar os **3 meses completos antes do mês atual**
+    (ex.: em setembro → **jun–ago**), em vez do trimestre civil (abr–jun).
+  - **Categoria por produto** exibida na tabela (via `produtos_base`).
+  - **Tarja de sugestão** por categoria: "Ação de {Cerveja/NAB/…} — para tendenciar **100%**
+    da meta, aumente ~X% o volume (≈ X HL a mais este mês)", com base na meta × tendência
+    (ritmo de dias úteis) do mês corrente.
 
 ### v3.40.2 — 2026-09-02
 - **Ações de Preço — TTV e tipo de preço.**

@@ -103,7 +103,7 @@ export default function AcoesPreco() {
   function planilhaPrecos(prods) {
     return prods.map((p) => {
       const t = numOf(ttv[p.cod]);
-      const o = { "Cod Prod": p.cod, "Produto": p.nome, "TTV (R$/cx)": t || "" };
+      const o = { "Cod Prod": p.cod, "Produto": p.nome, "Categoria": p.categoria || "", "Saldo (cx)": p.saldo ?? "", "Disp -30% (cx)": p.disp ?? "", "TTV (R$/cx)": t || "" };
       if (escal) degOrd.forEach((d) => { o[`+${d.aumento}% · ${d.desconto}% desc (R$/cx)`] = t > 0 ? Number((t * (1 - d.desconto / 100)).toFixed(2)) : ""; });
       else { const pf = numOf(precoFixo[p.cod]); o["Preço fixo (R$/cx)"] = pf || ""; o["Desconto (%)"] = t > 0 && pf > 0 ? Number((100 * (1 - pf / t)).toFixed(1)) : ""; }
       return o;
@@ -126,6 +126,7 @@ export default function AcoesPreco() {
   }
 
   const temCombo = combo.length > 0;
+  const sug = tipo === "volume" ? vol?.sugestao : cob?.sugestao;
 
   return (
     <div style={S.root}>
@@ -174,6 +175,9 @@ export default function AcoesPreco() {
                     <tr>
                       <th style={S.th}>Cod</th>
                       <th style={S.th}>Produto</th>
+                      <th style={S.th}>Cat</th>
+                      <th style={S.th}>Saldo (cx)</th>
+                      <th style={S.th} title="Estoque disponível para a ação (saldo −30%)">Disp −30% (cx)</th>
                       <th style={S.th}>TTV (R$/cx)</th>
                       {escal ? <th style={S.th}>Preços por degrau</th> : <><th style={S.th}>Preço fixo (R$/cx)</th><th style={S.th}>Desconto</th></>}
                       <th style={S.th}></th>
@@ -186,6 +190,9 @@ export default function AcoesPreco() {
                         <tr key={p.cod} style={S.tr}>
                           <td style={S.tdPlain}>{p.cod}</td>
                           <td style={S.tdNome} title={p.nome}>{p.nome}</td>
+                          <td style={S.tdCat} title={p.categoria}>{p.categoria || "—"}</td>
+                          <td style={S.tdNum}>{p.saldo != null ? fmt(p.saldo, 0) : "—"}</td>
+                          <td style={{ ...S.tdNum, color: VERDE, fontWeight: 700 }}>{p.disp != null ? fmt(p.disp, 0) : "—"}</td>
                           <td style={S.tdIn}><input style={S.inputMini2} type="number" value={ttv[p.cod] ?? ""} placeholder="0,00" onChange={(e) => setTtv((m) => ({ ...m, [p.cod]: e.target.value }))} /></td>
                           {escal ? (
                             <td style={S.tdPrecos}>
@@ -237,6 +244,22 @@ export default function AcoesPreco() {
 
             {erro && <div style={S.erro}>{erro}</div>}
             {loading && <div style={S.msg}>Carregando… (plano grátis pode levar ~50s)</div>}
+
+            {/* Tarja sugestão — gap da categoria para tendenciar 100% da meta */}
+            {!loading && sug && (
+              <div style={S.tarja}>
+                <span style={S.tarjaTag}>💡 Ação de {sug.categoria}</span>
+                {sug.meta_hl > 0 ? (
+                  sug.falta_hl > 0 ? (
+                    <span>Para tendenciar <b>100%</b> da meta, aumente <b style={{ color: VERDE }}>~{sug.aumento_pct}%</b> o volume — aprox. <b style={{ color: VERDE }}>{fmt(sug.falta_hl)} HL</b> a mais este mês. <span style={{ opacity: 0.55 }}>(projeção atual: {sug.pct_tend}% da meta)</span></span>
+                  ) : (
+                    <span>Categoria já projeta <b style={{ color: VERDE }}>{sug.pct_tend}%</b> da meta (≥100%) — sem gap este mês. 🎉</span>
+                  )
+                ) : (
+                  <span style={{ opacity: 0.7 }}>Sem meta cadastrada para a categoria neste mês.</span>
+                )}
+              </div>
+            )}
 
             {/* ── VOLUME ── */}
             {!loading && tipo === "volume" && vol && (
@@ -361,7 +384,10 @@ const S = {
   tdNome: { padding: "7px 10px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 220 },
   tdRn: { padding: "7px 10px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 130 },
   tdNum: { padding: "7px 10px", color: "rgba(255,255,255,0.85)", textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
+  tdCat: { padding: "7px 10px", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 },
   tdIn: { padding: "5px 10px", whiteSpace: "nowrap" },
+  tarja: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "linear-gradient(90deg, rgba(125,186,61,0.12), rgba(125,186,61,0.03))", border: "1px solid rgba(125,186,61,0.35)", borderRadius: 10, padding: "12px 16px", fontSize: "0.86rem", color: "rgba(255,255,255,0.85)" },
+  tarjaTag: { background: "rgba(125,186,61,0.2)", color: VERDE, borderRadius: 6, padding: "4px 10px", fontWeight: 700, fontSize: "0.8rem", whiteSpace: "nowrap" },
   tdX: { padding: "5px 10px", textAlign: "center" },
   tdPrecos: { padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 6 },
   precoTag: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 8px", fontSize: "0.78rem", color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap" },
