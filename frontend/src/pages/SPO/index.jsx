@@ -10,7 +10,7 @@ const META_GV = 36;
 // Meses e início de avaliação por KPI — espelha as constantes do painel consolidado
 const MESES_TRI = ["2026-07","2026-08","2026-09"];
 // Trimestre Jul–Set/2026: todos os KPIs começam a ser avaliados em Julho.
-const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07"};
+const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07",26:"2026-07",27:"2026-07"};
 
 // Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
 // compartilhada com o Painel SPO e o admin de Metas.
@@ -139,7 +139,8 @@ export default function SPO() {
   const kpiTriStatus = (() => {
     const status = {};
     SPO_ITEMS.forEach(({ n }) => {
-      const meses = MESES_TRI.filter(m => (INICIO_AVAL_KPI[n] || "2026-04") <= m && m <= _mesAtualStr);
+      const ini = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || "2026-07";
+      const meses = MESES_TRI.filter(m => ini <= m && m <= _mesAtualStr);
       let metaTot = 0, realTot = 0, hasMeta = false, hasReal = false;
       for (const mes of meses) {
         const row = spoMetas.find(r => String(r.item) === String(n) && r.mes === mes);
@@ -156,7 +157,7 @@ export default function SPO() {
   // Config editável de pts/peso por KPI (admin Metas SPO) — alimenta o consolidado.
   useEffect(() => {
     api.get("/api/spo/painel/config")
-      .then((r) => { const m = {}; (r.data || []).forEach((x) => { m[String(x.item)] = { pts: x.pts, peso: x.peso }; }); setSpoCfg(m); })
+      .then((r) => { const m = {}; (r.data || []).forEach((x) => { m[String(x.item)] = { pts: x.pts, peso: x.peso, inicio: x.inicio }; }); setSpoCfg(m); })
       .catch(() => {});
   }, []);
 
@@ -2274,7 +2275,10 @@ export default function SPO() {
                           {(() => {
                             const MESES = ["2026-07","2026-08","2026-09"];
                             const MESES_LABEL = {"2026-07":"Julho","2026-08":"Agosto","2026-09":"Setembro"};
-                            const INICIO_AVAL = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07"};
+                            // Início do apontamento: usa o configurado no painel Metas
+                            // (spo_kpi_config.inicio) com fallback no mapa padrão.
+                            const INICIO_AVAL = {};
+                            SPO_ITEMS.forEach(({ n }) => { INICIO_AVAL[n] = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || "2026-07"; });
               
                             const ITENS_SPO = SPO_KPIS_BASICO; // registro único (config/spoKpis.js)
               

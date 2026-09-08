@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.41.1** — Fix Volume Diário zerado: o "dia atual usa Volume Marcação" agora usa a data de **Brasília** (o Render roda em UTC e virava o dia ~21h, descartando a marcação de hoje) — **[processador]**
+Versão atual: **v3.42.0** — Metas SPO: **2 KPIs novos** (26 SKU/PDV TT, 27 +LN) na lista + nova coluna editável **Início do apontamento** por KPI (salva no `spo_kpi_config` e passa a definir a janela de meses avaliada no SPO)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.42.0 — 2026-09-08
+- **Metas SPO — lista de KPIs atualizada + início do apontamento.**
+  - **2 KPIs novos** no registro (`config/spoKpis.js`): **26 – SKU/PDV TT** e **27 – +LN**
+    (números provisórios, oficiais a confirmar). pts/peso começam em 0 → definir no painel.
+  - **Nova coluna editável "Início apont."** (mês, `type=month`) por KPI, salva em
+    `spo_kpi_config.inicio`. Passa a **definir a janela de meses avaliada** no SPO
+    (consolidado e detalhe), com fallback no padrão (2026-07) quando em branco.
+  - Nada do que já estava preenchido se perde: metas/reais/pts/peso ficam no banco,
+    chaveados pelo nº do KPI (os `n` existentes 1–25 não mudaram).
+  - Backend `/api/spo/painel/config` passa a persistir/retornar `inicio`.
 
 ### v3.41.1 — 2026-09-08 · **[processador]**
 - **Fix: Volume Diário zerado após importar pedidos.** A regra "no dia atual usa

@@ -44,6 +44,8 @@ export const SPO_KPIS = [
   { n: 22, label: "% Lojas Ideais",                     pts: 4,  peso: 2.2,  ativo: true },
   { n: 23, label: "Expansão Scanntech",                 pts: 2,  peso: 1.1,  ativo: true },
   { n: 24, label: "Portfólio Ideal Score 5",            pts: 8,  peso: 4.4,  ativo: true },
+  { n: 26, label: "SKU/PDV TT",                         pts: 0,  peso: 0,    ativo: true }, // novo — nº oficial a confirmar; pts/peso via painel Metas
+  { n: 27, label: "+LN",                                pts: 0,  peso: 0,    ativo: true }, // novo — nº oficial a confirmar; pts/peso via painel Metas
 ];
 
 // Versão enxuta {n, label} para o Painel SPO e o admin de Metas — SÓ os KPIs ativos

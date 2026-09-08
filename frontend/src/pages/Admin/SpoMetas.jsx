@@ -49,7 +49,7 @@ export default function SpoMetas() {
       });
       setDados(mapa);
       const cmap = {};
-      (resC.data || []).forEach((r) => { cmap[String(r.item)] = { pts: r.pts ?? "", peso: r.peso ?? "" }; });
+      (resC.data || []).forEach((r) => { cmap[String(r.item)] = { pts: r.pts ?? "", peso: r.peso ?? "", inicio: r.inicio ?? "" }; });
       setCfg(cmap);
     } catch {
       setMsg("❌ Erro ao carregar metas.");
@@ -92,8 +92,8 @@ export default function SpoMetas() {
 
       // Salva também a config de pontuação/peso por KPI (alimenta o consolidado).
       const cfgLinhas = ITENS
-        .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso") }))
-        .filter((l) => l.pts !== "" || l.peso !== "");
+        .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso"), inicio: getCfg(n, "inicio") }))
+        .filter((l) => l.pts !== "" || l.peso !== "" || l.inicio !== "");
       await api.post("/api/spo/painel/config", { linhas: cfgLinhas });
 
       setMsg(`✅ ${linhas.length} metas + ${cfgLinhas.length} configs salvas!`);
@@ -327,6 +327,7 @@ export default function SpoMetas() {
                 <th style={{ ...thS, textAlign: "left", minWidth: "200px" }}>Indicador</th>
                 <th style={{ ...thS, minWidth: "56px", background: "rgba(125,186,61,0.1)" }} rowSpan={2}>Pts</th>
                 <th style={{ ...thS, minWidth: "56px", background: "rgba(125,186,61,0.1)" }} rowSpan={2}>Peso %</th>
+                <th style={{ ...thS, minWidth: "92px", background: "rgba(125,186,61,0.1)" }} rowSpan={2} title="Mês a partir do qual o KPI passa a ser apontado (AAAA-MM)">Início apont.</th>
                 {MESES.map((mes) => (
                   <th key={mes} colSpan={2} style={{ ...thS, background: "rgba(125,186,61,0.06)", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
                     {MESES_LABEL[mes]}
@@ -352,6 +353,9 @@ export default function SpoMetas() {
                   </td>
                   <td style={{ padding: "4px 6px", background: "rgba(125,186,61,0.04)" }}>
                     <input style={{ ...inpStyle, width: "50px" }} value={getCfg(n, "peso")} onChange={(e) => setCfgVal(n, "peso", e.target.value)} placeholder={String(REG[n]?.peso ?? "")} />
+                  </td>
+                  <td style={{ padding: "4px 6px", background: "rgba(125,186,61,0.04)" }}>
+                    <input type="month" style={{ ...inpStyle, width: "84px" }} value={getCfg(n, "inicio")} onChange={(e) => setCfgVal(n, "inicio", e.target.value)} title="Mês de início do apontamento" />
                   </td>
                   {MESES.map((mes) => (
                     [

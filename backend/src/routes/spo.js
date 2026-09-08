@@ -470,14 +470,11 @@ router.post("/painel/config", async (req, res) => {
   try {
     const { linhas } = req.body;
     if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
-    const headers = ["item", "pts", "peso"];
+    const headers = ["item", "pts", "peso", "inicio"];
+    const val = (x) => (x !== "" && x !== null && x !== undefined ? String(x) : "");
     const rows = [
       headers,
-      ...linhas.map((l) => [
-        String(l.item ?? ""),
-        l.pts !== "" && l.pts !== null && l.pts !== undefined ? String(l.pts) : "",
-        l.peso !== "" && l.peso !== null && l.peso !== undefined ? String(l.peso) : "",
-      ]),
+      ...linhas.map((l) => [String(l.item ?? ""), val(l.pts), val(l.peso), val(l.inicio)]),
     ];
     await sobrescreverAba("spo_kpi_config", rows);
     return res.json({ success: true, total: linhas.length });
