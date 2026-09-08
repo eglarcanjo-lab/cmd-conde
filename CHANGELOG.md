@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.41.0** — Cobertura & Distribuição (Analítico): **base que ainda não comprou** o SKU com filtro de **RN** e **dia de visita** + **Excel**; período por **mês** (multi-seleção, acumula meses)
+Versão atual: **v3.41.1** — Fix Volume Diário zerado: o "dia atual usa Volume Marcação" agora usa a data de **Brasília** (o Render roda em UTC e virava o dia ~21h, descartando a marcação de hoje) — **[processador]**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.41.1 — 2026-09-08 · **[processador]**
+- **Fix: Volume Diário zerado após importar pedidos.** A regra "no dia atual usa
+  Volume Marcação (ainda não faturado)" comparava a data do arquivo com `date.today()`,
+  que no Render roda em **UTC** — em imports feitos no fim do dia (após ~21h BRT, já
+  virou o dia em UTC) a marcação de hoje era tratada como dia-passado (Volume Entrega
+  = 0) e **descartada** (`_vol_efetivo > 0`), zerando o dia. Agora usa `hoje_brasilia()`.
+- Afeta `_processar_volume_diario` (aba `volume_diario`) e `_processar_vendas_cliente`
+  (`vendas_cliente_produto` — Cobertura por SKU / assistente Hop).
+- **Só reprocessa ao reimportar os pedidos (03014701).**
 
 ### v3.41.0 — 2026-09-03
 - **Cobertura & Distribuição — Analítico (por SKU):**
