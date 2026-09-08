@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.42.0** — Metas SPO: **2 KPIs novos** (26 SKU/PDV TT, 27 +LN) na lista + nova coluna editável **Início do apontamento** por KPI (salva no `spo_kpi_config` e passa a definir a janela de meses avaliada no SPO)
+Versão atual: **v3.42.1** — SPO: lista de KPIs alinhada à **guia Comercial (Checklist Q3'26)** — numeração/ordem oficial (1–23), **pts e peso oficiais** (somam 180); dados preservados (nº interno mantido); Rota Coaching inicia em **Agosto**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.42.1 — 2026-09-08
+- **SPO — lista alinhada à guia Comercial oficial (Checklist Revendas Q3'26).**
+  - **Numeração e ordem oficiais (1–23):** cada KPI ganhou `ord` (nº oficial), usado na
+    exibição e na ordenação (painel Metas, cards e memória de cálculo do SPO).
+  - **Pts e peso oficiais** (da planilha; somam **180 pts**). Ex.: Atendimento Produtivo
+    26 pts (14,44%), Cerveja TT 20 (11,11%); SKU/PDV TT 8 (4,44%), +LN 4 (2,22%).
+  - **Rota Coaching** passa a iniciar o apontamento em **Agosto** (demais em Julho).
+  - **Dados preservados:** o número INTERNO (`n`) que amarra cálculo do realizado e as
+    metas/config no banco **não mudou** — só a numeração/ordem/pontuação exibida.
 
 ### v3.42.0 — 2026-09-08
 - **Metas SPO — lista de KPIs atualizada + início do apontamento.**

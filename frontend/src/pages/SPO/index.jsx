@@ -10,11 +10,11 @@ const META_GV = 36;
 // Meses e início de avaliação por KPI — espelha as constantes do painel consolidado
 const MESES_TRI = ["2026-07","2026-08","2026-09"];
 // Trimestre Jul–Set/2026: todos os KPIs começam a ser avaliados em Julho.
-const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07",26:"2026-07",27:"2026-07"};
+const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07",26:"2026-07",27:"2026-07"}; INICIO_AVAL_KPI[2]="2026-08";
 
 // Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
 // compartilhada com o Painel SPO e o admin de Metas.
-const SPO_ITEMS = SPO_KPIS.filter((k) => k.ativo); // só KPIs ativos (inativos preservam código/histórico)
+const SPO_ITEMS = SPO_KPIS.filter((k) => k.ativo).sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999)); // ativos, na ordem oficial (ord)
 
 const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
 
@@ -423,7 +423,7 @@ export default function SPO() {
                     cursor: "pointer",
                   }}
                 >
-                  <span style={styles.kpiN}>#{item.n}</span>
+                  <span style={styles.kpiN}>#{item.ord ?? item.n}</span>
                   <span style={styles.kpiLabel}>{item.label}</span>
                   <div style={styles.kpiPts}>
                     <span style={{ color: item.ativo ? "#7DBA3D" : "rgba(255,255,255,0.3)", fontWeight: "700" }}>{ptsDe(item.n)} pts</span>
@@ -2436,7 +2436,7 @@ export default function SPO() {
                                       const corTri  = tOK === true ? "#4ade80" : tOK === false ? "#f87171" : "rgba(255,255,255,0.25)";
                                       return (
                                         <tr key={item.n} className="spo-painel-tr" onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", ...(kpiAtivo === item.n ? { background: "rgba(125,186,61,0.08)", boxShadow: "inset 3px 0 0 #7DBA3D" } : {}) }}>
-                                          <td style={tdStyle}>{item.n}</td>
+                                          <td style={tdStyle}>{item.ord ?? item.n}</td>
                                           <td style={{ ...tdStyle, textAlign: "left", color: "rgba(255,255,255,0.85)" }}>{item.label}</td>
                                           <td style={{ ...tdStyle, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>{MESES_LABEL[INICIO_AVAL[item.n]]}</td>
                                           {MESES.map(mes => {
