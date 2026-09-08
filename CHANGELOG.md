@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.42.1** — SPO: lista de KPIs alinhada à **guia Comercial (Checklist Q3'26)** — numeração/ordem oficial (1–23), **pts e peso oficiais** (somam 180); dados preservados (nº interno mantido); Rota Coaching inicia em **Agosto**
+Versão atual: **v3.42.2** — Rotina+ (processador): classificação da visita (Crítica/Mediana/Excelente) agora **sem acento e por prefixo** — robusto a variações de gênero/caixa do export do BI — **[processador]**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.42.2 — 2026-09-08 · **[processador]**
+- **Rotina+ — robustez na classificação da visita.** A contagem Crítica/Mediana/Excelente
+  passou a normalizar o `Cluster Visita` (remove acento/caixa) e casar **por prefixo**
+  (`crit`/`median`/`excelen`), cobrindo tanto `Mediano/Crítico` quanto `Mediana/Crítica`.
+  Antes casava só o masculino → risco de zerar "mediana" se o BI mudasse o rótulo.
+  Metodologia inalterada: KPI = (Med+Exc) ÷ visitas com GPS OK; a lógica dos passos
+  (1 tarefa basta, Passo 4 = acesso BEES, sem-tarefa → passo automático) já vem pronta
+  do BI na coluna Cluster Visita. Meta TRI 49%. Só reprocessa ao reimportar o Rotina+.
 
 ### v3.42.1 — 2026-09-08
 - **SPO — lista alinhada à guia Comercial oficial (Checklist Revendas Q3'26).**
