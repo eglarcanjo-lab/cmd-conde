@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.43.1** — Metas SPO: modelo agora usa separador **`;`** (abre em colunas no Excel pt-BR, sem conflitar com a vírgula decimal); o Importar aceita `;` ou `,`
+Versão atual: **v3.44.0** — Incentivos: acompanhamento **Conversão Stella Pure Gold** (temporário) — PDVs que compram base 600ml (Original/Stella/Spaten) e não a PG600, e quem compra outra Long Neck e não a PG LN; trimestre anterior, com filtro de RN e Excel
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.44.0 — 2026-09-09
+- **Incentivos — Conversão Stella Pure Gold (acompanhamento temporário).** Bloco
+  colapsável no topo da aba Incentivos (carrega só ao abrir), base = **trimestre anterior**
+  (jun–ago), escopado por perfil, com **filtro de RN** e **export Excel**. Duas visões:
+  - **Pure Gold 600 (33857):** PDVs que compram ≥1 das 600ml — **Original (2546)**,
+    **Stella (20530)**, **Spaten (23186)** — e **ainda não** a PG600. Colunas com ✔/✘ por marca.
+  - **Pure Gold LN (29580):** PDVs que compram **alguma outra Long Neck** (por nome) e
+    **ainda não** a PG LN. Mostra quantas outras LN o PDV leva.
+  - Isolado de propósito (rota `/api/conversao-pg` + componente `ConversaoPG`), fácil de
+    remover quando a campanha passar.
 
 ### v3.43.1 — 2026-09-09
 - **Metas SPO — modelo em colunas no Excel.** O CSV do "Baixar modelo" passou a usar

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
+import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
 
 function fmtData(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
@@ -59,6 +60,8 @@ export default function Incentivos() {
           <p style={S.subtitle}>Campanhas e ações em andamento</p>
         </div>
       </div>
+
+      <ConversaoPG />
 
       {loading ? (
         <div style={S.loadingWrap}><div className="inc-spinner" /></div>
