@@ -54,6 +54,7 @@ export default function HomeDashboard() {
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
     { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", soAdmin: true },
     { icon: "📑", label: "Fechamentos", route: "/fechamentos", soGestor: true },
+    { icon: "🛣️", label: "Rota Efetiva", route: "/rota-efetiva", soGestor: true },
   ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soAdmin && perfil !== "admin") && !(m.soGestor && perfil === "rn"));
 
   const toggleGrupo = (id) => {

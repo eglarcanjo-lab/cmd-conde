@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.46.2** — Super Matinal: reconhecimento lista **todos** os RNs que atingiram o Atendimento Produtivo (não só o Top 5)
+Versão atual: **v3.47.0** — Nova aba **Rota Efetiva** (gestores): produtividade de visitas (RE%, GPS%) e **furos de cobertura** (PDVs ativos sem visita efetiva no mês: "sem visita" × "não validada"), com filtro e Excel — **[processador + app]**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.0 — 2026-09-09 · **[processador + app]**
+- **Nova aba Rota Efetiva** (gestores: admin/director/gv). Import do BI Rota Efetiva
+  (1 linha por visita planejada) → duas tabelas no processador:
+  `rota_efetiva_resumo` (setor×mês) e `rota_efetiva_pdv` (PDV×mês), acumuladas por mês.
+  - **Resumo:** **RE% = Visita Efetiva=1 ÷ planejadas** (excluindo dias expurgados),
+    **GPS%**, supervisitas, por setor/consolidado + destaque **% setores < 30% GPS**.
+  - **🎯 Furos:** cruza **PDVs ativos** (`pdv_base`) × relatório → ativos **sem visita
+    efetiva** no mês, separando **"sem visita"** (não apareceu na rota) de **"visita não
+    validada"** (planejada, Efetiva≠1). Cobertura %, filtros (situação/setor) e **Excel**.
+  - Backend `/api/rota-efetiva/{meses,resumo,furos}` (escopo por perfil); novo import
+    `rota_efetiva` na aba Arquivos. **Também corrigido:** `spo_rotina_mais` estava fora
+    do allowlist de upload do backend (import quebrava) — incluído.
 
 ### v3.46.2 — 2026-09-09
 - **Super Matinal — reconhecimento completo.** O ranking passou a listar **todos** os

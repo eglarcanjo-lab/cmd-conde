@@ -26,6 +26,7 @@ const ARQUIVOS_CONFIG = [
   // ── OUTROS ──────────────────────────────────────────────
   { id: "tasks",        campo: "tasks",        rotulo: "Tasks (BI)",          link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/3bab9612-85bd-4086-9828-6aec4111025b/7e62d4adb22216c40240?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "✅" },
   { id: "pontos_bees",  campo: "pontos_bees",  rotulo: "Pontos Bees",         link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/1658246a-7165-41d3-85f4-e2a1e43d23c4/5af1b0fcccee446e0a63?experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "⭐" },
+  { id: "rota_efetiva", campo: "rota_efetiva", rotulo: "Rota Efetiva (BI)",   extensoes: ".xlsx,.xls",     grupo: "outros", icon: "🛣️" },
 ];
 
 const GRUPOS = [

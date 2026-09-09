@@ -24,6 +24,7 @@ import FaturadosBuffer from "./pages/FaturadosBuffer";
 import Refrigeradores from "./pages/Refrigeradores";
 import AcoesPreco from "./pages/AcoesPreco";
 import Fechamentos from "./pages/Fechamentos";
+import RotaEfetiva from "./pages/RotaEfetiva";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
@@ -124,6 +125,7 @@ function AppContent() {
       <Route path="/refrigeradores" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><Refrigeradores /></ErrorBoundary></PrivateRoute>} />
       <Route path="/acoes-preco" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><AcoesPreco /></ErrorBoundary></PrivateRoute>} />
       <Route path="/fechamentos" element={<PrivateRoute perfisPermitidos={["admin","director","gv1","gv3"]}><ErrorBoundary><Fechamentos /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/rota-efetiva" element={<PrivateRoute perfisPermitidos={["admin","director","gv1","gv3"]}><ErrorBoundary><RotaEfetiva /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
@@ -131,7 +133,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.46.2";
+export const APP_VERSION = "v3.47.0";
 
 export default function App() {
   return (

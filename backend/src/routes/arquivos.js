@@ -15,7 +15,7 @@ const PROCESSOR_TOKEN = process.env.PROCESSOR_TOKEN; // sem default fixo (D2 da 
 
 router.use(authMiddleware, adminOnly);
 
-const uploadFields = upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "devolucoes" }, { name: "grade" }, { name: "faturados" }, { name: "buffer" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }]);
+const uploadFields = upload.fields([{ name: "clientes" }, { name: "pedidos" }, { name: "tasks" }, { name: "inadimplencia" }, { name: "devolucoes" }, { name: "grade" }, { name: "faturados" }, { name: "buffer" }, { name: "produtos_base" }, { name: "faturamento_mktp" }, { name: "pontos_bees" }, { name: "spo_visitacao_gv" }, { name: "spo_coaching" }, { name: "spo_dto" }, { name: "spo_promo" }, { name: "spo_score5" }, { name: "spo_alone" }, { name: "spo_rgb" }, { name: "spo_cupons" }, { name: "spo_loja_ideal" }, { name: "spo_scanntech" }, { name: "spo_portfolio_ideal" }, { name: "spo_ap" }, { name: "spo_rotina_mais" }, { name: "rota_efetiva" }]);
 
 // Wrapper que captura erros do multer (ex: arquivo grande demais) com mensagem clara
 function uploadHandler(req, res, next) {
@@ -47,6 +47,7 @@ router.post(
         "faturamento_mktp", "pontos_bees", "produtos_base", "tasks", "spo_alone", "spo_ap",
         "spo_portfolio_ideal", "spo_scanntech", "spo_loja_ideal", "spo_cupons", "spo_rgb",
         "inadimplencia", "devolucoes", "grade", "faturados", "buffer",
+        "spo_rotina_mais", "rota_efetiva",
       ];
       // FormData é um STREAM: é consumido no envio. Cada tentativa monta um form NOVO
       // (os buffers dos arquivos continuam em memória — reutilizáveis).
