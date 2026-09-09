@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.44.1** — Conversão Pure Gold: removida a coluna RN; incluídas **Dia de visita** (pdv_base) e **Última compra** do PDV (maior data em vd_pdv) na tela e no Excel
+Versão atual: **v3.45.0** — Faróis (motor): Conversão Pure Gold gera **mensagens prontas por RN e por GV** (texto p/ WhatsApp) com botão **📱 Mensagens** + Copiar; canal de envio a definir depois
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,17 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.45.0 — 2026-09-09
+- **Faróis via WhatsApp — motor (1º faról: Conversão Pure Gold).** Passo 1 do estudo de
+  envio consolidado por GV e RN. Sem enviar nada ainda — só **gera o texto pronto**:
+  - Endpoint `GET /api/conversao-pg/mensagens` → `{ rn:[{setor,nome,telefone,texto}],
+    gv:[{grupo,nome,telefone,texto}] }`. RN recebe o resumo do seu setor; GV recebe o
+    consolidado do time (1xx = GV1, 3xx = GV3), com telefones do cadastro `usuarios`.
+  - Núcleo do cálculo extraído em `computeConversao(user)` (reusado pela tabela e pelas
+    mensagens). Texto com cap de 25 PDVs por seção (evita mensagem gigante).
+  - No bloco Conversão: botão **📱 Mensagens (RN/GV)** abre um preview com o texto de
+    cada destinatário + **Copiar** (canal de envio — link/robô/API — fica p/ depois).
 
 ### v3.44.1 — 2026-09-09
 - **Conversão Pure Gold — ajustes.** Removida a coluna **RN**; adicionadas **Dia de

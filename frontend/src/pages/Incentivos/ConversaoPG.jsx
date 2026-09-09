@@ -15,6 +15,22 @@ export default function ConversaoPG() {
   const [erro, setErro] = useState("");
   const [tab, setTab] = useState("pg600");
   const [rn, setRn] = useState("");
+  const [msgs, setMsgs] = useState(null);
+  const [msgOpen, setMsgOpen] = useState(false);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [copiado, setCopiado] = useState("");
+
+  async function verMensagens() {
+    setMsgOpen(true);
+    if (msgs) return;
+    setMsgLoading(true);
+    try { const r = await api.get("/api/conversao-pg/mensagens", { timeout: 60000 }); setMsgs(r.data); }
+    catch { setMsgs({ rn: [], gv: [], erro: true }); }
+    finally { setMsgLoading(false); }
+  }
+  function copiar(id, texto) {
+    navigator.clipboard?.writeText(texto).then(() => { setCopiado(id); setTimeout(() => setCopiado(""), 1500); }).catch(() => {});
+  }
 
   async function abrir() {
     if (aberto) { setAberto(false); return; }
@@ -72,6 +88,7 @@ export default function ConversaoPG() {
                   </select>
                 )}
                 <span style={S.count}>{filtrada.length} PDVs</span>
+                <button style={S.msgBtn} onClick={verMensagens}>📱 Mensagens (RN/GV)</button>
                 <button style={S.excel} onClick={exportar}>⤓ Excel</button>
               </div>
 
@@ -118,6 +135,43 @@ export default function ConversaoPG() {
           )}
         </div>
       )}
+
+      {msgOpen && (
+        <div style={S.ovl} onClick={(e) => e.target === e.currentTarget && setMsgOpen(false)}>
+          <div style={S.modal}>
+            <div style={S.modalHead}>
+              <span style={{ fontWeight: 700 }}>📱 Mensagens prontas {msgs?.trimestre ? `· ${msgs.trimestre}` : ""}</span>
+              <button style={S.x} onClick={() => setMsgOpen(false)}>✕</button>
+            </div>
+            <div style={S.modalBody}>
+              {msgLoading && <div style={S.msg}>Gerando mensagens…</div>}
+              {msgs?.erro && <div style={S.erro}>Erro ao gerar. Tente de novo.</div>}
+              {msgs && !msgLoading && !msgs.erro && (
+                <>
+                  <div style={S.grpTit}>Consolidado por GV ({msgs.gv.length})</div>
+                  {msgs.gv.map((g) => <MsgCard key={"gv" + g.grupo} id={"gv" + g.grupo} titulo={`GV ${g.grupo}${g.nome ? " · " + g.nome : ""}`} tel={g.telefone} texto={g.texto} copiado={copiado} onCopy={copiar} />)}
+                  <div style={{ ...S.grpTit, marginTop: 14 }}>Por RN ({msgs.rn.length})</div>
+                  {msgs.rn.map((r) => <MsgCard key={"rn" + r.setor} id={"rn" + r.setor} titulo={`Setor ${r.setor}${r.nome ? " · " + r.nome : ""}`} tel={r.telefone} texto={r.texto} copiado={copiado} onCopy={copiar} />)}
+                  {!msgs.rn.length && !msgs.gv.length && <div style={S.msg}>Sem PDVs no recorte.</div>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MsgCard({ id, titulo, tel, texto, copiado, onCopy }) {
+  return (
+    <div style={S.mcard}>
+      <div style={S.mhead}>
+        <span style={{ fontWeight: 600, fontSize: "0.84rem" }}>{titulo}</span>
+        <span style={S.tel}>{tel ? `📞 ${tel}` : "sem telefone"}</span>
+        <button style={S.copy} onClick={() => onCopy(id, texto)}>{copiado === id ? "✓ copiado" : "⧉ copiar"}</button>
+      </div>
+      <textarea readOnly style={S.ta} value={texto} rows={Math.min(14, texto.split("\n").length + 1)} />
     </div>
   );
 }
@@ -133,7 +187,19 @@ const S = {
   tabOn: { background: "rgba(125,186,61,0.16)", border: "1px solid #7DBA3D", color: "#7DBA3D", borderRadius: 18, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700 },
   select: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", padding: "6px 10px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none" },
   count: { color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" },
-  excel: { marginLeft: "auto", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#4ade80", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
+  msgBtn: { marginLeft: "auto", background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
+  excel: { background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#4ade80", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
+  ovl: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 16 },
+  modal: { background: "#111c16", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, width: "100%", maxWidth: 640, maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden" },
+  modalHead: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", fontSize: "0.95rem" },
+  x: { background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "1.1rem", cursor: "pointer" },
+  modalBody: { padding: "12px 18px 18px", overflowY: "auto" },
+  grpTit: { color: VERDE, fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: "4px 0 8px" },
+  mcard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 10, marginBottom: 8 },
+  mhead: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 },
+  tel: { color: "rgba(255,255,255,0.45)", fontSize: "0.76rem" },
+  copy: { marginLeft: "auto", background: "rgba(37,211,102,0.14)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366", borderRadius: 7, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.76rem", fontWeight: 600 },
+  ta: { width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.85)", padding: "8px 10px", fontSize: "0.78rem", fontFamily: "inherit", resize: "vertical", lineHeight: 1.4 },
   hint: { margin: "2px 0 12px", fontSize: "0.76rem", color: "rgba(255,255,255,0.4)" },
   tableWrap: { overflowX: "auto", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" },

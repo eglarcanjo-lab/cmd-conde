@@ -33,8 +33,8 @@ function trimestreAnterior() {
 
 router.use(authMiddleware);
 
-router.get("/", async (req, res) => {
-  try {
+// Núcleo reutilizável: calcula os PDVs-alvo (PG600 e PGLN) no escopo do usuário.
+async function computeConversao(user) {
     const { meses, label } = trimestreAnterior();
     const [vendasRaw, prodFull, pdvBase, vdPdv] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
@@ -42,7 +42,7 @@ router.get("/", async (req, res) => {
       readSheet("pdv_base").catch(() => []),
       readSheet("vd_pdv").catch(() => []),
     ]);
-    const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
+    const vendas = filtrarPorPerfil(vendasRaw, user, "setor");
 
     // Dia de visita (pdv_base) e última compra (maior data em vd_pdv) por PDV.
     const diaMap = {};
@@ -95,14 +95,103 @@ router.get("/", async (req, res) => {
       }))
       .sort(ordena);
 
-    return res.json({
+    return {
       trimestre: label, meses,
       pg600: { alvo: PG600, base: BASE600, total: pg600.length, pdvs: pg600 },
       pgln: { alvo: PGLN, ln_skus: lnCods.size, total: pgln.length, pdvs: pgln },
-    });
+    };
+}
+
+router.get("/", async (req, res) => {
+  try {
+    return res.json(await computeConversao(req.user));
   } catch (e) {
     console.error("conversao-pg:", e);
     return res.status(500).json({ error: "Erro ao montar o acompanhamento." });
+  }
+});
+
+// ─── MOTOR DE FARÓIS — mensagens prontas por RN e por GV (texto p/ WhatsApp) ──
+// Não envia nada: só gera o texto consolidado. O canal (link/robô/API) fica p/ depois.
+const CAP = 25; // limite de PDVs listados por seção na mensagem (evita texto gigante)
+
+function textoRN(setor, nome, dados) {
+  const pg = dados.pg600.pdvs.filter((p) => p.setor === setor);
+  const ln = dados.pgln.pdvs.filter((p) => p.setor === setor);
+  const linha = (p) => `• ${p.cod_pdv} ${p.nome_pdv}` +
+    (p.dia_visita ? ` — visita ${p.dia_visita}` : "") +
+    (p.ultima_compra ? ` — últ. compra ${p.ultima_compra}` : "");
+  const secao = (titulo, lista) => {
+    if (!lista.length) return `${titulo}: nenhum 👍`;
+    const corpo = lista.slice(0, CAP).map(linha).join("\n");
+    const resto = lista.length > CAP ? `\n… e mais ${lista.length - CAP}` : "";
+    return `${titulo} (${lista.length}):\n${corpo}${resto}`;
+  };
+  return [
+    `🍺 *Conversão Stella Pure Gold* — ${dados.trimestre}`,
+    `Setor ${setor}${nome ? ` · ${nome}` : ""}`,
+    "",
+    `*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600`,
+    secao("PDVs", pg),
+    "",
+    `*Pure Gold LN* — compram outra Long Neck e ainda não a PG LN`,
+    secao("PDVs", ln),
+  ].join("\n");
+}
+
+function textoGV(setores, nomeGV, dados, nomePorSetor) {
+  const cont = (arr) => arr.reduce((m, p) => { m[p.setor] = (m[p.setor] || 0) + 1; return m; }, {});
+  const cpg = cont(dados.pg600.pdvs), cln = cont(dados.pgln.pdvs);
+  const totPg = dados.pg600.pdvs.filter((p) => setores.includes(p.setor)).length;
+  const totLn = dados.pgln.pdvs.filter((p) => setores.includes(p.setor)).length;
+  const linhas = setores
+    .map((s) => ({ s, pg: cpg[s] || 0, ln: cln[s] || 0 }))
+    .filter((x) => x.pg || x.ln)
+    .sort((a, b) => (b.pg + b.ln) - (a.pg + a.ln))
+    .map((x) => `• ${x.s} ${nomePorSetor[x.s] || ""} — PG600 ${x.pg} · PG LN ${x.ln}`.replace("  ", " "));
+  return [
+    `🍺 *Conversão Stella Pure Gold* — ${dados.trimestre}`,
+    `Consolidado ${nomeGV || "GV"}`,
+    `Total a converter: *PG600 ${totPg}* · *PG LN ${totLn}*`,
+    "",
+    "Por RN:",
+    linhas.length ? linhas.join("\n") : "• (sem PDVs no recorte)",
+  ].join("\n");
+}
+
+router.get("/mensagens", async (req, res) => {
+  try {
+    const dados = await computeConversao(req.user);
+    const usuarios = await readSheet("usuarios").catch(() => []);
+    // Setores presentes nos alvos, dentro do escopo já aplicado em computeConversao.
+    const setores = [...new Set([...dados.pg600.pdvs, ...dados.pgln.pdvs].map((p) => p.setor).filter(Boolean))].sort();
+    const infoSetor = {}; // setor -> {nome, telefone}
+    const nomePorSetor = {};
+    usuarios.forEach((u) => {
+      const c = String(u.cod || "").trim();
+      if (c) { infoSetor[c] = { nome: String(u.nome || "").trim(), telefone: String(u.telefone || "").trim() }; nomePorSetor[c] = String(u.nome || "").trim(); }
+    });
+
+    const rn = setores.map((s) => ({
+      setor: s, nome: infoSetor[s]?.nome || "", telefone: infoSetor[s]?.telefone || "",
+      texto: textoRN(s, infoSetor[s]?.nome || "", dados),
+    }));
+
+    // GV: agrupa por prefixo do setor (1xx = GV1, 3xx = GV3), acha o usuário GV.
+    const gruposGV = {}; // prefixo -> setores[]
+    setores.forEach((s) => { const p = String(s)[0]; (gruposGV[p] = gruposGV[p] || []).push(s); });
+    const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
+    const gv = Object.entries(gruposGV).map(([prefixo, sets]) => {
+      const perfilGV = perfilDoPrefixo[prefixo];
+      const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilGV && String(u.telefone || "").trim());
+      const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
+      return { grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto: textoGV(sets, nomeGV, dados, nomePorSetor) };
+    });
+
+    return res.json({ trimestre: dados.trimestre, rn, gv });
+  } catch (e) {
+    console.error("conversao-pg/mensagens:", e);
+    return res.status(500).json({ error: "Erro ao gerar mensagens." });
   }
 });
 
