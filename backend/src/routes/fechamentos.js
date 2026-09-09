@@ -30,7 +30,7 @@ const BUCKETS = {
   high_end:     ["HE", "HE RGB"],
   cerveja_zero: ["CERVEJA ZERO"],
   match:        ["MATCH"],
-  nab:          ["NAB"],
+  nab:          ["NAB", "NAB ZERO"], // NAB total (inclui zero); dedup conta 1x
   nab_zero:     ["NAB ZERO"],
 };
 const BUCKET_LABEL = {

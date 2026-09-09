@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.46.0** — Nova aba **Fechamentos** (gestores): 1º relatório **Super Matinal** gerado em **PowerPoint** (resultado do ano, evolução mensal, mês fechado e reconhecimento do Atendimento Produtivo), volumes por bucket sem duplicar
+Versão atual: **v3.46.1** — Super Matinal: bucket **NAB** passa a ser o total (**NAB + NAB Zero**), com NAB Zero seguindo separado
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.46.1 — 2026-09-09
+- **Super Matinal — NAB total.** O bucket **NAB** passou a somar **NAB + NAB Zero**
+  (total, como o Cerveja TT), com dedup (produto conta 1x). **NAB Zero** continua
+  como bucket separado.
 
 ### v3.46.0 — 2026-09-09
 - **Nova aba Fechamentos + Super Matinal (.pptx).** Aba de geração de relatórios
