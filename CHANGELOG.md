@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.44.0** — Incentivos: acompanhamento **Conversão Stella Pure Gold** (temporário) — PDVs que compram base 600ml (Original/Stella/Spaten) e não a PG600, e quem compra outra Long Neck e não a PG LN; trimestre anterior, com filtro de RN e Excel
+Versão atual: **v3.44.1** — Conversão Pure Gold: removida a coluna RN; incluídas **Dia de visita** (pdv_base) e **Última compra** do PDV (maior data em vd_pdv) na tela e no Excel
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.44.1 — 2026-09-09
+- **Conversão Pure Gold — ajustes.** Removida a coluna **RN**; adicionadas **Dia de
+  visita** (de `pdv_base`) e **Última compra** do PDV (maior data em `vd_pdv`,
+  dd/mm/aaaa) nas duas tabelas (PG600 e PG LN) e no export Excel.
 
 ### v3.44.0 — 2026-09-09
 - **Incentivos — Conversão Stella Pure Gold (acompanhamento temporário).** Bloco

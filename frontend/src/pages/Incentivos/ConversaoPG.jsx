@@ -35,9 +35,9 @@ export default function ConversaoPG() {
   function exportar() {
     let rows;
     if (tab === "pg600") {
-      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Original 600": p.original ? "V" : "X", "Stella 600": p.stella ? "V" : "X", "Spaten 600": p.spaten ? "V" : "X", "Pure Gold 600": "X" }));
+      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita, "Última compra": p.ultima_compra, "Original 600": p.original ? "V" : "X", "Stella 600": p.stella ? "V" : "X", "Spaten 600": p.spaten ? "V" : "X", "Pure Gold 600": "X" }));
     } else {
-      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "RN": p.rn, "Outras LN (SKUs)": p.qtd_ln, "Pure Gold LN": "X" }));
+      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita, "Última compra": p.ultima_compra, "Outras LN (SKUs)": p.qtd_ln, "Pure Gold LN": "X" }));
     }
     if (!rows.length) { alert("Sem linhas para exportar."); return; }
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -67,7 +67,7 @@ export default function ConversaoPG() {
                 <button style={tab === "pgln" ? S.tabOn : S.tab} onClick={() => setTab("pgln")}>Pure Gold LN ({d.pgln.total})</button>
                 {setores.length > 1 && (
                   <select style={S.select} value={rn} onChange={(e) => setRn(e.target.value)}>
-                    <option value="">Todos os RNs</option>
+                    <option value="">Todos os setores</option>
                     {setores.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
@@ -85,7 +85,7 @@ export default function ConversaoPG() {
                 <table style={S.table}>
                   <thead>
                     <tr>
-                      {["Cod", "PDV", "Setor", "RN"].map((h) => <th key={h} style={S.th}>{h}</th>)}
+                      {["Cod", "PDV", "Setor", "Dia visita", "Última compra"].map((h) => <th key={h} style={S.th}>{h}</th>)}
                       {tab === "pg600"
                         ? ["Original", "Stella", "Spaten"].map((h) => <th key={h} style={S.thC}>{h} 600</th>)
                         : <th style={S.thC}>Outras LN</th>}
@@ -97,7 +97,8 @@ export default function ConversaoPG() {
                         <td style={S.tdPlain}>{p.cod_pdv}</td>
                         <td style={S.tdNome} title={p.nome_pdv}>{p.nome_pdv}</td>
                         <td style={S.tdPlain}>{p.setor}</td>
-                        <td style={S.tdRn} title={p.rn}>{p.rn || "—"}</td>
+                        <td style={S.tdPlain}>{p.dia_visita || "—"}</td>
+                        <td style={S.tdPlain}>{p.ultima_compra || "—"}</td>
                         {tab === "pg600" ? (
                           <>
                             <td style={{ ...S.tdC, color: p.original ? VERDE : "#f87171" }}>{check(p.original)}</td>
@@ -109,7 +110,7 @@ export default function ConversaoPG() {
                         )}
                       </tr>
                     ))}
-                    {!filtrada.length && <tr><td colSpan={tab === "pg600" ? 7 : 5} style={S.vazio}>Ninguém nesse recorte. 🎉</td></tr>}
+                    {!filtrada.length && <tr><td colSpan={tab === "pg600" ? 8 : 6} style={S.vazio}>Ninguém nesse recorte. 🎉</td></tr>}
                   </tbody>
                 </table>
               </div>

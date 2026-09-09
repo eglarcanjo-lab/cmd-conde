@@ -36,14 +36,25 @@ router.use(authMiddleware);
 router.get("/", async (req, res) => {
   try {
     const { meses, label } = trimestreAnterior();
-    const [vendasRaw, prodFull, usuarios] = await Promise.all([
+    const [vendasRaw, prodFull, pdvBase, vdPdv] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
       readSheet("produtos_full").catch(() => []),
-      readSheet("usuarios").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
+      readSheet("vd_pdv").catch(() => []),
     ]);
     const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
-    const rnMap = {};
-    usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+
+    // Dia de visita (pdv_base) e última compra (maior data em vd_pdv) por PDV.
+    const diaMap = {};
+    pdvBase.forEach((p) => { const c = normCod(p.cod_pdv || p.cod); if (c) diaMap[c] = String(p.dia_visita || "").trim(); });
+    const ultMap = {};
+    vdPdv.forEach((r) => {
+      const c = normCod(r.cod_pdv);
+      const dt = String(r.data || "").slice(0, 10);
+      if (!c || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+      if (!ultMap[c] || dt > ultMap[c]) ultMap[c] = dt;
+    });
+    const fmtBR = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
 
     // SKUs Long Neck (por nome), exceto a própria Pure Gold LN.
     const lnCods = new Set();
@@ -68,7 +79,8 @@ router.get("/", async (req, res) => {
     const pg600 = arr
       .filter((e) => !e.comprou.has(PG600) && BASE600.some((b) => e.comprou.has(b.cod)))
       .map((e) => ({
-        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor, rn: rnMap[e.setor] || "",
+        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor,
+        dia_visita: diaMap[normCod(e.cod_pdv)] || "", ultima_compra: fmtBR(ultMap[normCod(e.cod_pdv)]),
         original: e.comprou.has("2546"), stella: e.comprou.has("20530"), spaten: e.comprou.has("23186"),
       }))
       .sort(ordena);
@@ -77,7 +89,8 @@ router.get("/", async (req, res) => {
     const pgln = arr
       .filter((e) => !e.comprou.has(PGLN) && [...e.comprou].some((c) => lnCods.has(c)))
       .map((e) => ({
-        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor, rn: rnMap[e.setor] || "",
+        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor,
+        dia_visita: diaMap[normCod(e.cod_pdv)] || "", ultima_compra: fmtBR(ultMap[normCod(e.cod_pdv)]),
         qtd_ln: [...e.comprou].filter((c) => lnCods.has(c)).length,
       }))
       .sort(ordena);
