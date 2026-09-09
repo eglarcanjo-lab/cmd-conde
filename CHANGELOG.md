@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.42.3** — Metas SPO: **proteção contra apagar as metas** — o Salvar não sobrescreve a aba se o carregamento falhou nem com conjunto vazio (o POST substitui a aba inteira)
+Versão atual: **v3.43.0** — Metas SPO: botão **⬇️ Baixar modelo** — CSV já preenchido com os valores atuais (meta + real) de todos os KPIs × meses, pra editar no Excel e reimportar (Real vazio = ao vivo)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.43.0 — 2026-09-09
+- **Metas SPO — Baixar modelo.** Novo botão **⬇️ Baixar modelo** gera um **CSV já
+  preenchido com os valores atuais** (colunas: ordem, indicador, item, mes, meta, real)
+  de todos os KPIs × meses (Jul/Ago/Set). O admin edita meta/real no Excel e reimporta
+  pelo **📥 Importar JSON/CSV** existente. **Real em branco = usa o dado ao vivo.**
+  BOM UTF-8 no arquivo (acentos corretos no Excel); `indicador`/`ordem` são só leitura.
 
 ### v3.42.3 — 2026-09-09
 - **Metas SPO — proteção contra perda de dados.** O `POST /painel/metas` **substitui a

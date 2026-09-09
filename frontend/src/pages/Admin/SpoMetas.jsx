@@ -200,6 +200,32 @@ export default function SpoMetas() {
     e.target.value = "";
   }
 
+  // Baixa um MODELO CSV já preenchido com os valores atuais (metas + realizado) de
+  // todos os KPIs × meses. O admin edita no Excel e reimporta pelo "Importar JSON/CSV".
+  // Real em branco = usa o dado ao vivo. Colunas ordem/indicador são só de leitura.
+  function baixarModelo() {
+    const headers = ["ordem", "indicador", "item", "mes", "meta", "real"];
+    const linhas = [headers.join(",")];
+    ITENS.forEach(({ n, label, ord }) => {
+      const ind = String(label).replace(/[,\r\n]/g, " "); // sem vírgula (CSV simples)
+      MESES.forEach((mes) => {
+        linhas.push([ord ?? "", ind, n, mes, getVal(n, mes, "meta"), getVal(n, mes, "real")].join(","));
+      });
+    });
+    const csv = "﻿" + linhas.join("\n"); // BOM p/ Excel abrir UTF-8 (ç/ã)
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `modelo_metas_spo_${MESES[0]}_a_${MESES[MESES.length - 1]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setMsg("⬇️ Modelo baixado (com os valores atuais). Edite meta/real e reimporte. Real vazio = ao vivo.");
+    setTimeout(() => setMsg(""), 7000);
+  }
+
   function aplicarLinhas(linhas) {
     const mapa = {};
     linhas.forEach((r) => {
@@ -249,6 +275,12 @@ export default function SpoMetas() {
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
           <input ref={fileRef} type="file" accept=".json,.csv" style={{ display: "none" }} onChange={importarExcel} />
+          <button
+            onClick={baixarModelo}
+            title="Baixa um CSV com os valores atuais para editar no Excel e reimportar"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" }}>
+            ⬇️ Baixar modelo
+          </button>
           <button
             onClick={() => fileRef.current?.click()}
             style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit" }}>
