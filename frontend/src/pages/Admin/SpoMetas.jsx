@@ -25,6 +25,7 @@ export default function SpoMetas() {
   const [dados, setDados] = useState({});   // { "1_2026-07": {meta, real}, ... }
   const [cfg, setCfg] = useState({});       // { item: { pts, peso } }
   const [loading, setLoading] = useState(true);
+  const [loadOk, setLoadOk] = useState(false); // proteção: só salva se carregou OK
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -37,6 +38,7 @@ export default function SpoMetas() {
 
   async function carregar() {
     setLoading(true);
+    setLoadOk(false);
     try {
       const [resM, resC] = await Promise.all([
         api.get("/api/spo/painel/metas"),
@@ -51,8 +53,9 @@ export default function SpoMetas() {
       const cmap = {};
       (resC.data || []).forEach((r) => { cmap[String(r.item)] = { pts: r.pts ?? "", peso: r.peso ?? "", inicio: r.inicio ?? "" }; });
       setCfg(cmap);
+      setLoadOk(true); // carregou sem erro → seguro salvar
     } catch {
-      setMsg("❌ Erro ao carregar metas.");
+      setMsg("❌ Erro ao carregar metas. Recarregue antes de salvar.");
     } finally {
       setLoading(false);
     }
@@ -75,6 +78,13 @@ export default function SpoMetas() {
   }
 
   async function salvar() {
+    // Proteção contra apagar tudo: o POST substitui a aba inteira. Se o carregamento
+    // falhou (dados vazios por erro), NÃO deixa salvar — senão sobrescreve em branco.
+    if (!loadOk) {
+      setMsg("❌ Os dados não carregaram — recarregue a página antes de salvar (proteção contra apagar as metas).");
+      setTimeout(() => setMsg(""), 7000);
+      return;
+    }
     setSalvando(true);
     setMsg("");
     try {
@@ -88,6 +98,17 @@ export default function SpoMetas() {
           }
         });
       });
+      // Nunca sobrescreve as metas com um conjunto VAZIO (evita zerar a aba por engano).
+      if (linhas.length === 0) {
+        const cfgLinhas0 = ITENS
+          .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso"), inicio: getCfg(n, "inicio") }))
+          .filter((l) => l.pts !== "" || l.peso !== "" || l.inicio !== "");
+        if (cfgLinhas0.length) await api.post("/api/spo/painel/config", { linhas: cfgLinhas0 });
+        setMsg("⚠️ Nenhuma meta/real preenchido — metas NÃO foram sobrescritas (proteção). Config salva.");
+        setSalvando(false);
+        setTimeout(() => setMsg(""), 7000);
+        return;
+      }
       await api.post("/api/spo/painel/metas", { linhas });
 
       // Salva também a config de pontuação/peso por KPI (alimenta o consolidado).

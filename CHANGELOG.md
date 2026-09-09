@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.42.2** — Rotina+ (processador): classificação da visita (Crítica/Mediana/Excelente) agora **sem acento e por prefixo** — robusto a variações de gênero/caixa do export do BI — **[processador]**
+Versão atual: **v3.42.3** — Metas SPO: **proteção contra apagar as metas** — o Salvar não sobrescreve a aba se o carregamento falhou nem com conjunto vazio (o POST substitui a aba inteira)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.42.3 — 2026-09-09
+- **Metas SPO — proteção contra perda de dados.** O `POST /painel/metas` **substitui a
+  aba inteira** `spo_metas`; se o botão Salvar rodasse antes das metas carregarem (ou
+  após erro de carregamento), reescrevia tudo **em branco**. Agora o painel:
+  - só permite salvar se o **carregamento foi OK** (novo flag `loadOk`);
+  - **nunca sobrescreve as metas com um conjunto vazio** (salva só a config nesse caso).
 
 ### v3.42.2 — 2026-09-08 · **[processador]**
 - **Rotina+ — robustez na classificação da visita.** A contagem Crítica/Mediana/Excelente
