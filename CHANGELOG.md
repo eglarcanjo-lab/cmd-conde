@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.46.1** — Super Matinal: bucket **NAB** passa a ser o total (**NAB + NAB Zero**), com NAB Zero seguindo separado
+Versão atual: **v3.46.2** — Super Matinal: reconhecimento lista **todos** os RNs que atingiram o Atendimento Produtivo (não só o Top 5)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.46.2 — 2026-09-09
+- **Super Matinal — reconhecimento completo.** O ranking passou a listar **todos** os
+  RNs que **atingiram** o Atendimento Produtivo (AP = Sim) no mês anterior, ordenados por
+  KPIs OK e Positivação — antes limitava ao Top 5.
 
 ### v3.46.1 — 2026-09-09
 - **Super Matinal — NAB total.** O bucket **NAB** passou a somar **NAB + NAB Zero**

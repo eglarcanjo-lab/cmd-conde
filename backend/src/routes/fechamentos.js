@@ -101,6 +101,7 @@ router.get("/super-matinal", async (req, res) => {
     usuarios.forEach((u) => { if (u.cod) nomeSetor[String(u.cod).trim()] = String(u.nome || "").trim(); });
     const apDet = filtrarPorPerfil(apDetAll, req.user, "setor")
       .filter((r) => String(r.mes_referencia || "").slice(0, 7) === mesAnterior);
+    // Reconhecimento = TODOS os RNs que atingiram o Atendimento Produtivo (AP = Sim).
     const reconhecimento = apDet
       .map((r) => ({
         setor: String(r.setor || "").trim(), nome: nomeSetor[String(r.setor || "").trim()] || "",
@@ -108,8 +109,8 @@ router.get("/super-matinal", async (req, res) => {
         kpis_ok: parseInt(r.kpis_ok) || 0,
         positiv_real: num(r.positiv_real),
       }))
-      .sort((a, b) => (b.ap_ok - a.ap_ok) || (b.kpis_ok - a.kpis_ok) || (b.positiv_real - a.positiv_real))
-      .slice(0, 5);
+      .filter((r) => r.ap_ok)
+      .sort((a, b) => (b.kpis_ok - a.kpis_ok) || (b.positiv_real - a.positiv_real));
 
     return res.json({
       titulo: "Fechamento Comercial · Super Matinal",
