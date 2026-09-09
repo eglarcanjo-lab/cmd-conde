@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.43.0** — Metas SPO: botão **⬇️ Baixar modelo** — CSV já preenchido com os valores atuais (meta + real) de todos os KPIs × meses, pra editar no Excel e reimportar (Real vazio = ao vivo)
+Versão atual: **v3.43.1** — Metas SPO: modelo agora usa separador **`;`** (abre em colunas no Excel pt-BR, sem conflitar com a vírgula decimal); o Importar aceita `;` ou `,`
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,11 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.43.1 — 2026-09-09
+- **Metas SPO — modelo em colunas no Excel.** O CSV do "Baixar modelo" passou a usar
+  **`;`** como separador (o Excel pt-BR abre já em colunas e não confunde com a vírgula
+  decimal). O **Importar** detecta o separador (`;` ou `,`) e ignora o BOM do cabeçalho.
 
 ### v3.43.0 — 2026-09-09
 - **Metas SPO — Baixar modelo.** Novo botão **⬇️ Baixar modelo** gera um **CSV já

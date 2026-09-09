@@ -186,9 +186,10 @@ export default function SpoMetas() {
         aplicarLinhas(json);
       } catch {
         const lines = ev.target.result.split("\n").filter(Boolean);
-        const header = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/"/g,""));
+        const delim = lines[0].includes(";") ? ";" : ","; // aceita ; (Excel pt-BR) ou ,
+        const header = lines[0].split(delim).map((h) => h.trim().toLowerCase().replace(/^﻿/, "").replace(/"/g,""));
         const parsed = lines.slice(1).map((l) => {
-          const cols = l.split(",").map((c) => c.trim().replace(/"/g,""));
+          const cols = l.split(delim).map((c) => c.trim().replace(/"/g,""));
           const obj = {};
           header.forEach((h, i) => { obj[h] = cols[i] ?? ""; });
           return obj;
@@ -204,12 +205,14 @@ export default function SpoMetas() {
   // todos os KPIs × meses. O admin edita no Excel e reimporta pelo "Importar JSON/CSV".
   // Real em branco = usa o dado ao vivo. Colunas ordem/indicador são só de leitura.
   function baixarModelo() {
+    // Separador ";" → Excel pt-BR abre em colunas separadas (e não conflita com a
+    // vírgula decimal). O Importar aceita ";" ou ",".
     const headers = ["ordem", "indicador", "item", "mes", "meta", "real"];
-    const linhas = [headers.join(",")];
+    const linhas = [headers.join(";")];
     ITENS.forEach(({ n, label, ord }) => {
-      const ind = String(label).replace(/[,\r\n]/g, " "); // sem vírgula (CSV simples)
+      const ind = String(label).replace(/[;\r\n]/g, " ");
       MESES.forEach((mes) => {
-        linhas.push([ord ?? "", ind, n, mes, getVal(n, mes, "meta"), getVal(n, mes, "real")].join(","));
+        linhas.push([ord ?? "", ind, n, mes, getVal(n, mes, "meta"), getVal(n, mes, "real")].join(";"));
       });
     });
     const csv = "﻿" + linhas.join("\n"); // BOM p/ Excel abrir UTF-8 (ç/ã)
