@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.45.0** — Faróis (motor): Conversão Pure Gold gera **mensagens prontas por RN e por GV** (texto p/ WhatsApp) com botão **📱 Mensagens** + Copiar; canal de envio a definir depois
+Versão atual: **v3.46.0** — Nova aba **Fechamentos** (gestores): 1º relatório **Super Matinal** gerado em **PowerPoint** (resultado do ano, evolução mensal, mês fechado e reconhecimento do Atendimento Produtivo), volumes por bucket sem duplicar
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,19 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.46.0 — 2026-09-09
+- **Nova aba Fechamentos + Super Matinal (.pptx).** Aba de geração de relatórios
+  (gestores: admin/director/gv), 1º relatório = **Fechamento Comercial · Super Matinal**
+  em **PowerPoint** (PptxGenJS, deck limpo com a logo da HOP).
+  - **Volumes por bucket sem duplicar:** calculados do `vendas_cliente_produto` (1 linha
+    por SKU/mês) somando cada produto **1x por bucket** — evita a dupla contagem de
+    produtos multi-categoria. **Cerveja TT** = CERVEJA+ZERO+BALANCED+GIRO RGB+HE+HE RGB+
+    LITRINHO+MULTIPACK; **RGB** = GIRO RGB+LITRINHO+HE RGB; **High End** = HE+HE RGB;
+    Cerveja Zero, Match, NAB, NAB Zero; **Marketplace** = faturamento R$ (`rv_resultado`).
+  - Slides: capa, **Resultado do Ano (YTD)**, **Evolução Mensal**, **mês fechado** e
+    **Reconhecimento** (melhores do Atendimento Produtivo do mês anterior, de `spo_ap_detalhe`).
+  - Backend `GET /api/fechamentos/super-matinal` (escopo por perfil). Sem reprocessar dados.
 
 ### v3.45.0 — 2026-09-09
 - **Faróis via WhatsApp — motor (1º faról: Conversão Pure Gold).** Passo 1 do estudo de

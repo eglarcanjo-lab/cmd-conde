@@ -53,7 +53,8 @@ export default function HomeDashboard() {
     { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento" },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
     { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", soAdmin: true },
-  ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soAdmin && perfil !== "admin"));
+    { icon: "📑", label: "Fechamentos", route: "/fechamentos", soGestor: true },
+  ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soAdmin && perfil !== "admin") && !(m.soGestor && perfil === "rn"));
 
   const toggleGrupo = (id) => {
     if (!aberto) { setAberto(true); setGrupos(new Set([id])); return; } // rail → expande e abre
