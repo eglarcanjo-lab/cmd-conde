@@ -27,7 +27,6 @@ export default function HomeClassic() {
     { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
     { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", ativo: true, soGestor: false, soRn: false, soAdmin: true },
-    { icon: "📑", label: "Fechamentos", route: "/fechamentos", ativo: true, soGestor: true, soRn: false },
     { icon: "🛣️", label: "Rota Efetiva", route: "/rota-efetiva", ativo: true, soGestor: true, soRn: false },
   ].filter((m) => {
     if (m.soAdmin && perfil !== "admin") return false; // só admin

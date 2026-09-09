@@ -51,7 +51,6 @@ app.use("/api/manutencao", require("./routes/manutencao"));
 app.use("/api/volume-diario", require("./routes/volume-diario"));
 app.use("/api/incentivos", require("./routes/incentivos"));
 app.use("/api/conversao-pg", require("./routes/conversao-pg")); // acompanhamento temporário Pure Gold
-app.use("/api/fechamentos", require("./routes/fechamentos"));
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/popups", require("./routes/popups"));
 app.use("/api/hop", require("./routes/hop"));

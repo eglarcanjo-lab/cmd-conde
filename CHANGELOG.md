@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.0** — Nova aba **Rota Efetiva** (gestores): produtividade de visitas (RE%, GPS%) e **furos de cobertura** (PDVs ativos sem visita efetiva no mês: "sem visita" × "não validada"), com filtro e Excel — **[processador + app]**
+Versão atual: **v3.47.1** — Removida a aba **Fechamentos** (Super Matinal / .pptx) — não será mais usada; dependência `pptxgenjs` retirada
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.1 — 2026-09-09
+- **Removida a aba Fechamentos / Super Matinal.** Não será mais usada. Retirados:
+  página `Fechamentos`, rota `/fechamentos`, backend `routes/fechamentos.js` +
+  mount `/api/fechamentos`, itens de menu (2 homes) e a dependência **pptxgenjs**
+  (package.json + lock). O import de Atendimento Produtivo (`spo_ap`) segue normal.
 
 ### v3.47.0 — 2026-09-09 · **[processador + app]**
 - **Nova aba Rota Efetiva** (gestores: admin/director/gv). Import do BI Rota Efetiva
