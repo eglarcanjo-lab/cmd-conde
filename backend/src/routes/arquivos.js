@@ -61,9 +61,11 @@ router.post(
         return form;
       };
 
-      // A borda do Render/Cloudflare às vezes responde 429 (sem corpo JSON) quando o
-      // processador está redeployando/acordando. 429 = a requisição NEM foi processada,
-      // então é SEGURO retentar. Até 3 tentativas, esperando 15s/30s entre elas.
+      // O Render (plano free) DORME o processador; ao acordar/redeployar a borda
+      // responde 429/502/503/504 (ou a conexão cai) ANTES da requisição chegar ao app —
+      // então é SEGURO retentar (e o processador é idempotente: sobrescreve por mês).
+      // Até 5 tentativas com espera crescente (cobre cold start ~40-60s).
+      const RETRIABLE = new Set([429, 502, 503, 504]);
       let response;
       for (let tentativa = 1; ; tentativa++) {
         try {
@@ -80,9 +82,11 @@ router.post(
           break;
         } catch (errTent) {
           const st = errTent.response?.status;
-          if (st === 429 && tentativa < 3) {
-            const esperaMs = tentativa * 15000;
-            console.warn(`Processador respondeu 429 (infra) — tentativa ${tentativa}/3; aguardando ${esperaMs / 1000}s...`);
+          // Sem response (ECONNRESET/ECONNREFUSED/timeout) OU status de gateway = infra acordando.
+          const infra = !errTent.response || RETRIABLE.has(st);
+          if (infra && tentativa < 5) {
+            const esperaMs = Math.min(tentativa * 20000, 60000); // 20s, 40s, 60s, 60s
+            console.warn(`Processador indisponível (${st || errTent.code || "conn"}) — tentativa ${tentativa}/5; aguardando ${esperaMs / 1000}s (cold start)...`);
             await new Promise((r) => setTimeout(r, esperaMs));
             continue;
           }
@@ -108,14 +112,15 @@ router.post(
         "| body:", String(typeof err.response?.data === "string" ? err.response.data : JSON.stringify(err.response?.data || "")).slice(0, 300));
       const status = err.response?.status;
       let msg = err.response?.data?.error;
-      if (!msg && status === 429) {
-        // 429 SEM corpo JSON não vem do processador (que sempre manda {error}) — vem da
-        // infraestrutura (proxy/Render reiniciando ou limitando). Não é o Google Sheets.
-        msg = "O servidor do processador limitou/recusou a requisição (429 da infraestrutura — " +
-              "provavelmente reiniciando após deploy ou sob carga). Aguarde ~1-2 min e tente de novo.";
+      // 429/502/503/504 sem corpo JSON = infraestrutura (Render acordando/reiniciando),
+      // não o processador. Propaga o status (o front reconhece cold start e re-tenta).
+      const gateway = [429, 502, 503, 504].includes(status);
+      if (!msg && gateway) {
+        msg = `O processador está reiniciando/acordando (erro ${status} da infraestrutura, ` +
+              "não do Google Sheets). Aguarde ~1-2 min e tente de novo.";
       }
       msg = msg || err.message || "Erro ao processar arquivos.";
-      return res.status(status === 429 ? 429 : 500).json({ error: msg });
+      return res.status(gateway ? status : 500).json({ error: msg });
     }
   }
 );

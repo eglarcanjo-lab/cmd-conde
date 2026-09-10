@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.6** — Arquivos: link do BI **Rota Efetiva** adicionado (botão copiar)
+Versão atual: **v3.47.7** — Import resiliente a cold start: backend agora **retenta 502/503/504 e erro de conexão** (não só 429) ao acordar o processador, e propaga o status de gateway (fim do "[500] status code 502")
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,15 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.7 — 2026-09-10
+- **Import resiliente ao cold start do processador.** O backend só re-tentava **429**;
+  um **502/503/504** (Render acordando o processador) era convertido em **500** e
+  surfava como *"Erro ao processar [500]: status code 502"* — sem retry. Agora:
+  - retenta **429/502/503/504 e falha de conexão** (sem response), até **5×** com espera
+    crescente (20/40/60s) — cobre o cold start ~40-60s. Seguro (processador é idempotente).
+  - se esgotar, **propaga o status de gateway** (502/503/504) — o front reconhece como
+    cold start, mostra mensagem clara e ainda re-tenta.
 
 ### v3.47.6 — 2026-09-10
 - **Arquivos:** adicionado o **link do Power BI** na entrada *Rota Efetiva (BI)*
