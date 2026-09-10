@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.5** — Auditoria SPO: fix no **snapshot de fechamento** que só ia até o KPI 24 — **Rotina+ (25) não era gravado** ao fechar o mês; loop estendido a 27
+Versão atual: **v3.47.6** — Arquivos: link do BI **Rota Efetiva** adicionado (botão copiar)
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,10 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.6 — 2026-09-10
+- **Arquivos:** adicionado o **link do Power BI** na entrada *Rota Efetiva (BI)*
+  (botão de copiar o relatório).
 
 ### v3.47.5 — 2026-09-10
 - **Auditoria do painel SPO consolidado (arquivo → import → processador → tabela →
