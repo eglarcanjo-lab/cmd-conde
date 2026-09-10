@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.1** — Removida a aba **Fechamentos** (Super Matinal / .pptx) — não será mais usada; dependência `pptxgenjs` retirada
+Versão atual: **v3.47.2** — Arquivos: rótulo "Score 5 (ON_TRADE)" renomeado para **"Tasks de Faturamento Score 5"**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,10 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.2 — 2026-09-10
+- **Arquivos:** rótulo do import **"Score 5 (ON_TRADE)" → "Tasks de Faturamento Score 5"**
+  (só o nome exibido; `campo`/import inalterados).
 
 ### v3.47.1 — 2026-09-09
 - **Removida a aba Fechamentos / Super Matinal.** Não será mais usada. Retirados:
