@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.4** — Fix import: **Score 5 não era repassado ao processador** (`spo_score5` faltava na lista `CAMPOS` do backend) — por isso "processado" sem carregar linhas, e SPO/FAT vazios. Corrigido
+Versão atual: **v3.47.5** — Auditoria SPO: fix no **snapshot de fechamento** que só ia até o KPI 24 — **Rotina+ (25) não era gravado** ao fechar o mês; loop estendido a 27
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,16 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.5 — 2026-09-10
+- **Auditoria do painel SPO consolidado (arquivo → import → processador → tabela →
+  SPO_REAL → painel).** Resultado: cadeia OK; campos do SPO_REAL batem com as colunas
+  das tabelas; imports de Score 5 e Rotina+ já corrigidos (v3.47.4/3.47.0).
+  - **Fix:** o **snapshot de fechamento** (`/painel/fechar-mes`) percorria só KPIs 1–24
+    → **Rotina+ (25) não era gravado** ao fechar o mês (26/27 também não). Loop estendido
+    a 27 (26/27 sem fonte retornam null e são ignorados).
+  - Observações (não são bug de rota): **Academia (10)** e **SKU/PDV TT (26)** e **+LN (27)**
+    não têm import/cálculo automático — realizado é **manual** no painel Metas.
 
 ### v3.47.4 — 2026-09-10
 - **Fix: import do Score 5 não carregava.** O campo `spo_score5` estava no `uploadFields`

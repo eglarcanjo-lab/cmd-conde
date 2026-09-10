@@ -644,9 +644,9 @@ router.patch("/painel/fechar-mes", async (req, res) => {
     };
 
     const reais = [];
-    for (let n = 1; n <= 24; n++) {
-      if (n === 10) continue; // Academia Bees RN (inativo)
-      const real = computeReal(n);
+    for (let n = 1; n <= 27; n++) {
+      if (n === 10) continue; // Academia Bees RN — sem fonte automática (realizado manual no painel)
+      const real = computeReal(n); // 25 (Rotina+) via SPO_REAL; 26/27 sem fonte → null (ignorado)
       if (real !== null) reais.push({ item: n, real });
     }
 
