@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.7** — Import resiliente a cold start: backend agora **retenta 502/503/504 e erro de conexão** (não só 429) ao acordar o processador, e propaga o status de gateway (fim do "[500] status code 502")
+Versão atual: **v3.47.8** — Fix Rota Efetiva: a data (`Dia de Visita`, ISO) era lida com `dayfirst` e **descartava ~60% das linhas** (todo dia > 12); agora parseia tudo — **[processador]**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.8 — 2026-09-10 · **[processador]**
+- **Fix Rota Efetiva — parse da data.** `Dia de Visita` vem em **ISO** (YYYY-MM-DD), mas
+  era lido com `dayfirst=True` → o pandas **falhava em todo dia > 12**, descartando
+  ~60% das linhas (só 24k de 59k). Removido o `dayfirst` → parseia as 58.975 linhas.
+  Reimportar o Rota Efetiva pra corrigir os números.
 
 ### v3.47.7 — 2026-09-10
 - **Import resiliente ao cold start do processador.** O backend só re-tentava **429**;
