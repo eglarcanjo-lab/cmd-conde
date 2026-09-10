@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.3** — Score 5 (Tasks de Faturamento): cálculo alinhado à doc oficial — **% = (validadas + PDVs sem task) ÷ total score 5** (PDV sem task = OK; denominador = base toda) — **[processador]**
+Versão atual: **v3.47.4** — Fix import: **Score 5 não era repassado ao processador** (`spo_score5` faltava na lista `CAMPOS` do backend) — por isso "processado" sem carregar linhas, e SPO/FAT vazios. Corrigido
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,13 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.4 — 2026-09-10
+- **Fix: import do Score 5 não carregava.** O campo `spo_score5` estava no `uploadFields`
+  do backend mas **faltava na lista `CAMPOS`** que repassa os arquivos ao processador —
+  o multer aceitava o arquivo e ele era **descartado** (nunca chegava ao processador).
+  Resultado: import dizia "processado" sem contar linhas, e o KPI ficava vazio no SPO
+  consolidado e no FAT da home. Adicionado. (uploadFields × CAMPOS agora batem 25=25.)
 
 ### v3.47.3 — 2026-09-10 · **[processador]**
 - **Score 5 / Tasks de Faturamento — cálculo conforme a doc oficial do KPI.**

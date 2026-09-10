@@ -47,7 +47,7 @@ router.post(
         "faturamento_mktp", "pontos_bees", "produtos_base", "tasks", "spo_alone", "spo_ap",
         "spo_portfolio_ideal", "spo_scanntech", "spo_loja_ideal", "spo_cupons", "spo_rgb",
         "inadimplencia", "devolucoes", "grade", "faturados", "buffer",
-        "spo_rotina_mais", "rota_efetiva",
+        "spo_rotina_mais", "spo_score5", "rota_efetiva",
       ];
       // FormData é um STREAM: é consumido no envio. Cada tentativa monta um form NOVO
       // (os buffers dos arquivos continuam em memória — reutilizáveis).
