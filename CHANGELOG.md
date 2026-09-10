@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.2** — Arquivos: rótulo "Score 5 (ON_TRADE)" renomeado para **"Tasks de Faturamento Score 5"**
+Versão atual: **v3.47.3** — Score 5 (Tasks de Faturamento): cálculo alinhado à doc oficial — **% = (validadas + PDVs sem task) ÷ total score 5** (PDV sem task = OK; denominador = base toda) — **[processador]**
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,14 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.3 — 2026-09-10 · **[processador]**
+- **Score 5 / Tasks de Faturamento — cálculo conforme a doc oficial do KPI.**
+  Antes: `pdvs_ok = TASK FAT=1` ÷ `PDVs com task`. Agora, seguindo a memória de cálculo:
+  - **% = (PDVs com task validada + PDVs SEM task) ÷ PDVs TOTAIS score 5** — PDV que
+    **não recebeu** a task de faturamento é considerado **OK**; o **denominador é a base
+    inteira** (não só os que têm task). TRI = média ponderada (soma ok ÷ soma total, mês a mês).
+  - Só reprocessa ao reimportar o Score 5. (Meta segue `META_SCORE5=46`, alinhável à oficial.)
 
 ### v3.47.2 — 2026-09-10
 - **Arquivos:** rótulo do import **"Score 5 (ON_TRADE)" → "Tasks de Faturamento Score 5"**
