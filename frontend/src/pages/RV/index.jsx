@@ -70,8 +70,8 @@ export default function RV() {
     setLoading(true);
     try {
       const [resRv, resPontos, resAp] = await Promise.all([
-        api.get("/api/rv"),
-        api.get("/api/rv/pontos"),
+        api.get(`/api/rv?mes=${mesRef}`),
+        api.get(`/api/rv/pontos?mes=${mesRef}`),
         api.get(`/api/rv/ap?mes=${mesRef}`),
       ]);
       const setor = usuario?.cod;

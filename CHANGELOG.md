@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.8** — Fix Rota Efetiva: a data (`Dia de Visita`, ISO) era lida com `dayfirst` e **descartava ~60% das linhas** (todo dia > 12); agora parseia tudo — **[processador]**
+Versão atual: **v3.47.9** — RV do RN: o seletor de mês agora filtra **tudo** (resultado + pontos, não só o AP) — o RN volta a ver o **mês anterior** depois da virada do mês
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**
@@ -46,6 +46,12 @@ migração/reaprendizado dos usuários.
 ---
 
 ## Histórico
+
+### v3.47.9 — 2026-09-10
+- **RV (RN) — seletor de mês aplica a tudo.** O `<input month>` já existia, mas só o
+  `/api/rv/ap` recebia o mês; `/api/rv` (resultado) e `/api/rv/pontos` iam sem `mes` →
+  sempre o mês corrente. Ao virar o mês, o RN não via o anterior. Agora as 3 chamadas
+  passam `?mes=`. (Backend já suportava o parâmetro.)
 
 ### v3.47.8 — 2026-09-10 · **[processador]**
 - **Fix Rota Efetiva — parse da data.** `Dia de Visita` vem em **ISO** (YYYY-MM-DD), mas
