@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.9** — RV do RN: o seletor de mês agora filtra **tudo** (resultado + pontos, não só o AP) — o RN volta a ver o **mês anterior** depois da virada do mês
+Versão atual: **v3.47.10** — SPO KPI 1 (Visitação GV): na Operação, troca o card "Pontos SPO" (redundante com o scoreboard) por um card **Gap** (meta − visitados) ao lado do realizado; no Detalhe, remove o filtro de **dia de visita**
+
+## v3.47.10 — Auditoria visual SPO (KPI 1 — Visitação GV na Base Foco)
+- **Operação:** removido o card "Pontos SPO" (a pontuação já aparece nos cards do scoreboard); adicionado card **Gap** (meta − visitados, 0 quando batida) logo ao lado de "Visitados".
+- **Detalhe:** removido o filtro (flag) de **dia de visita** da barra de filtros.
+
 
 A versão é exibida no rodapé do app (assinatura) e fica em `frontend/src/App.jsx`
 na constante `APP_VERSION`. **Toda mudança que vai para produção deve avançar o número**

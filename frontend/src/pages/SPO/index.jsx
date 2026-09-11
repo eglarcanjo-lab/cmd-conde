@@ -488,8 +488,8 @@ export default function SPO() {
                   {[
                     { label: "Meta Total", val: totalMeta, color: "#fff" },
                     { label: "Visitados", val: totalVisitados, color: "#4ade80" },
+                    { label: "Gap", val: totalMeta - totalVisitados > 0 ? totalMeta - totalVisitados : 0, color: totalMeta - totalVisitados > 0 ? "#f87171" : "#4ade80" },
                     { label: "Atingimento", val: `${pctOp}%`, color: pctOp >= 100 ? "#4ade80" : pctOp >= 70 ? "#7DBA3D" : "#f87171" },
-                    { label: "Pontos SPO", val: pctOp >= 100 ? "14 pts" : `${Math.round(14 * pctOp / 100)} pts`, color: "#7DBA3D" },
                   ].map((c) => (
                     <div key={c.label} style={styles.opCard}>
                       <p style={styles.opLabel}>{c.label}</p>
@@ -2172,10 +2172,6 @@ export default function SPO() {
                     <option value="todos">Todos</option>
                     <option value="ok">✅ Válidas</option>
                     <option value="nok">❌ Inválidas</option>
-                  </select>
-                  <select style={styles.inputFiltro} value={filtroDia} onChange={(e) => setFiltroDia(e.target.value)}>
-                    <option value="todos">Todos os dias</option>
-                    {diasUnicos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <span style={styles.countLabel}>{detalheFiltrado.length} visitas</span>
                 </div>
