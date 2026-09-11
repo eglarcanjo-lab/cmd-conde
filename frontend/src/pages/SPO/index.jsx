@@ -99,6 +99,8 @@ export default function SPO() {
   const [tasksMatch, setTasksMatch] = useState([]);
   const [tasksCervZero, setTasksCervZero] = useState([]);
   const [tasksDigit, setTasksDigit] = useState([]);
+  const [tasksLn, setTasksLn] = useState([]);
+  const [tasksLnDet, setTasksLnDet] = useState([]);
   const [alone, setAlone] = useState([]);
   const [aloneDetalhe, setAloneDetalhe] = useState([]);
   const [aloneView, setAloneView] = useState("mensal");
@@ -191,6 +193,14 @@ export default function SPO() {
     api.get("/api/spo/coaching/detalhe")
       .then((r) => setCoachingDet(r.data || []))
       .catch(() => {});
+  }, []);
+
+  // +LN (KPI 27) — task SKU/PDV Long Neck HE (resumo + detalhe de abertos).
+  useEffect(() => {
+    Promise.all([
+      api.get("/api/spo/tasks-ln/resumo").catch(() => ({ data: [] })),
+      api.get("/api/spo/tasks-ln/detalhe").catch(() => ({ data: [] })),
+    ]).then(([a, b]) => { setTasksLn(a.data || []); setTasksLnDet(b.data || []); });
   }, []);
 
   // Rotina+ (KPI 25) — resumo (setor/OPERACAO) + detalhe por visita.
@@ -1419,6 +1429,35 @@ export default function SPO() {
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
               {renderTabelaTasks(tasksDigit, 18)}
+            </div>
+            )}
+
+            {/* +LN — TASK SKU/PDV LONG NECK HE (KPI 27 / ord 19) */}
+            {kpiAtivo === 27 && (
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 19 — +LN · Task SKU/PDV de Long Neck HE</h3>
+              <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
+                Nº absoluto de tasks de SKU/PDV de Long Neck HE (Corona, Corona Cero, Stella, Stella Pure Gold, Spaten, Michelob) concluídas, acumulado no tri. Base = PDVs que receberam a task.
+              </p>
+              {renderTabelaTasks(tasksLn, 27)}
+              {tasksLnDet.length > 0 && (
+                <div style={{ marginTop: 14, overflowX: "auto", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                    <thead><tr>{["RN","PDV","Nome","Dia","Status Task"].map((h) => <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {tasksLnDet.map((r, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
+                          <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
+                          <td style={{ padding: "7px 10px" }}><span style={{ color: r.status_task === "OPEN" ? "#7DBA3D" : "#f87171", fontWeight: 600, fontSize: "0.74rem" }}>{r.status_task}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             )}
 

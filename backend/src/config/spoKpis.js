@@ -27,6 +27,7 @@ const SPO_REAL = {
   23: { aba: "spo_scanntech_resumo",       campos: ["pdvs_ativos", "ativos"] },
   24: { aba: "spo_portfolio_ideal_resumo", campos: ["pdvs_ideais"] },
   25: { aba: "spo_rotina_mais_resumo",     campos: ["pct_med_exc"] }, // Rotina+ (% Med+Exc)
+  27: { aba: "spo_tasks_ln_resumo",        campos: ["tasks_validas"] }, // +LN (task SKU/PDV Long Neck HE)
 };
 
 // Extrai o realizado de uma linha-resumo (OPERACAO do mês). Replica parseFloat(d.a||d.b||0).

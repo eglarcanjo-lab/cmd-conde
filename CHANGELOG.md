@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.48.4** — `/api/conversao-pg/mensagens` passa a devolver também os **dados estruturados** (lista de PDVs por RN e resumo por RN no GV) além do texto — usado pelo robô local de WhatsApp pra montar a **tabela como imagem**.
+Versão atual: **v3.49.0** — SPO **+LN (#19, n=27)** ganha cálculo automático: puxa do **relatório de task** a **Task de SKU/PDV de Long Neck HE**, conta as VALID (número absoluto, acumulado no tri) e alimenta o painel consolidado + uma aba própria com tabela e detalhe de abertos.
+
+## v3.49.0 — SPO +LN (n=27) automatizado via relatório de task
+- **Processador:** `_calcular_tasks_ln` filtra a aba `tasks` pela descrição da task (+LN / Long Neck HE) e grava `spo_tasks_ln_resumo` (+ `spo_tasks_ln_detalhe` dos abertos), no mesmo padrão dos demais KPIs de task (conta status VALID, por setor + OPERAÇÃO, acumulado no tri). Roda junto no `calcular_todos_spo_tasks` (não precisa de novo upload — usa o arquivo de tasks já importado).
+- **Backend:** `SPO_REAL[27]` → `spo_tasks_ln_resumo`/`tasks_validas`; painel consolidado passa a computar o realizado do #19; rotas `GET /api/spo/tasks-ln/resumo` e `/detalhe`.
+- **Frontend:** ao abrir o **#19 (+LN)**, tabela por RN (padrão dos KPIs de task, com flag mês/tri e barra com linha de meta) + detalhe dos PDVs com a task em aberto.
+- ⚠️ O filtro da task é por descrição ("+LN"/"Long Neck"). No import, o log mostra `[SPO - Tasks +LN] N tasks` — se vier 0, ajustar o filtro com a descrição/ID real da task.
+
+## v3.48.4 — `/api/conversao-pg/mensagens` passa a devolver também os **dados estruturados** (lista de PDVs por RN e resumo por RN no GV) além do texto — usado pelo robô local de WhatsApp pra montar a **tabela como imagem**.
 
 ## v3.48.4 — Mensagens da Conversão PG com dados estruturados (p/ envio em foto)
 - `/mensagens`: cada RN agora traz `pdvs` (cod/nome/última compra dos PG600 do dia); cada GV traz `linhas` (setor/RN/qtd) e `total`. O `texto` continua igual (fallback/caption).

@@ -265,6 +265,17 @@ router.get("/tasks-volume/resumo", async (req, res) => {
   } catch { return res.json([]); }
 });
 
+// GET /api/spo/tasks-ln/resumo — +LN (task SKU/PDV Long Neck HE)
+router.get("/tasks-ln/resumo", async (req, res) => {
+  try { return res.json(await readSheet("spo_tasks_ln_resumo")); }
+  catch { return res.json([]); }
+});
+// GET /api/spo/tasks-ln/detalhe — PDVs com a task +LN em aberto
+router.get("/tasks-ln/detalhe", async (req, res) => {
+  try { return res.json(await readSheet("spo_tasks_ln_detalhe")); }
+  catch { return res.json([]); }
+});
+
 
 // GET /api/spo/tasks-marketplace/resumo
 router.get("/tasks-marketplace/resumo", async (req, res) => {
@@ -539,7 +550,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       dtoResumo, promoResumo, politicaResumo, menuResumo,
       tasksCerveja, score5, tasksNab, tasksVolume, tasksMktp,
       tasksMatch, tasksCervZero, tasksDigit, alone, rgb,
-      cupons, lojaIdeal, scanntech, portIdeal,
+      cupons, lojaIdeal, scanntech, portIdeal, tasksLn,
     ] = await Promise.all([
       readSheet("spo_visitacao_gv_resumo"),
       readSheet("spo_coaching_resumo"),
@@ -564,6 +575,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       readSheet("spo_loja_ideal_resumo"),
       readSheet("spo_scanntech_resumo"),
       readSheet("spo_portfolio_ideal_resumo"),
+      readSheet("spo_tasks_ln_resumo"),
     ].map((p) => p.catch(() => [])));
 
     // Helper: linha OPERACAO filtrada pelo mês (normaliza seriais de data antes de comparar)
@@ -584,7 +596,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       spo_tasks_cerv_zero_resumo: tasksCervZero, spo_tasks_digit_resumo: tasksDigit,
       spo_pedido_alone_resumo: alone, spo_rgb_total: rgb, spo_cupons_resumo: cupons,
       spo_loja_ideal_resumo: lojaIdeal, spo_scanntech_resumo: scanntech,
-      spo_portfolio_ideal_resumo: portIdeal,
+      spo_portfolio_ideal_resumo: portIdeal, spo_tasks_ln_resumo: tasksLn,
     };
 
     // ── Computa real por KPI (mesma lógica do getRealDados no frontend) ────
