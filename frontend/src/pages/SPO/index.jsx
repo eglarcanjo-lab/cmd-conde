@@ -48,6 +48,7 @@ export default function SPO() {
   const [coaching, setCoaching] = useState([]);
   const [periodoCoaching, setPeriodoCoaching] = useState("trimestral");
   const [semCoaching, setSemCoaching] = useState([]);
+  const [coachingDet, setCoachingDet] = useState([]);
   const [diasRota, setDiasRota] = useState([]);
   const [periodoDiasRota, setPeriodoDiasRota] = useState("trimestral");
   const [desafios, setDesafios] = useState([]);
@@ -161,6 +162,13 @@ export default function SPO() {
       .catch(() => {});
   }, []);
 
+  // Rota Coaching (KPI 2) — detalhe por GV×RN×dia (alimenta o "Detalhado RN").
+  useEffect(() => {
+    api.get("/api/spo/coaching/detalhe")
+      .then((r) => setCoachingDet(r.data || []))
+      .catch(() => {});
+  }, []);
+
   // Rotina+ (KPI 25) — resumo (setor/OPERACAO) + detalhe por visita.
   useEffect(() => {
     Promise.all([
@@ -190,8 +198,8 @@ export default function SPO() {
       return;
     }
     if (kpiAtivo === 2) {
-      // sem_coaching é válida para KPI 2 — mantém se estiver nela
-      if (!["operacao", "sem_coaching"].includes(aba)) setAba("operacao");
+      // KPI 2 tem uma única visão: Detalhado RN
+      setAba("detalhe_rn");
       return;
     }
     // Demais KPIs: só operacao faz sentido
@@ -439,12 +447,12 @@ export default function SPO() {
         {(() => {
           let abasVisiveis = ["operacao"];
           if (kpiAtivo === null || kpiAtivo === 1) abasVisiveis = ["operacao", "gv", "detalhe"];
-          if (kpiAtivo === 2) abasVisiveis = ["operacao", "sem_coaching"];
+          if (kpiAtivo === 2) abasVisiveis = ["detalhe_rn"];
           return (
             <div style={styles.abas}>
               {abasVisiveis.map((a) => (
                 <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
-                  {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
+                  {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : a === "detalhe_rn" ? "👤 Detalhado RN" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
                 </button>
               ))}
             </div>
@@ -501,8 +509,8 @@ export default function SPO() {
               </div>
             )}
 
-            {/* COACHING */}
-            {(kpiAtivo === null || kpiAtivo === 2) && (
+            {/* COACHING — resumo por GV (só no panorama geral) */}
+            {kpiAtivo === null && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 2 — Rota Coaching</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -539,6 +547,71 @@ export default function SPO() {
                   <p style={styles.msg}>Importe o relatório em Admin → Arquivos → SPO Rota Coaching.</p>
                 )}
               </div>
+            </div>
+            )}
+
+            {/* COACHING — DETALHADO POR RN (KPI 2) */}
+            {kpiAtivo === 2 && (
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 2 — Rota Coaching · Detalhado por RN</h3>
+              <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", margin: "0 0 14px" }}>
+                Premissa do trimestre: cada RN deve ter <b>ao menos 1 coaching válido</b>. O coaching é contado <b>por dia</b> — o mesmo RN em dias diferentes conta como coachings distintos.
+              </p>
+              {(() => {
+                // Coachings válidos por RN = dias distintos com coaching_ok = SIM.
+                const porRN = {};
+                coachingDet.forEach((d) => {
+                  const setor = String(d.setor || "").trim();
+                  if (!setor) return;
+                  if (!porRN[setor]) porRN[setor] = { gv: d.gv, setor, validos: new Set() };
+                  const dia = d.data_visita || "";
+                  if (dia && String(d.coaching_ok).toUpperCase() === "SIM") porRN[setor].validos.add(dia);
+                });
+                // Inclui os RNs sem nenhum coaching válido (universo de zeros).
+                semCoaching.forEach((s) => {
+                  const setor = String(s.setor || "").trim();
+                  if (setor && !porRN[setor]) porRN[setor] = { gv: s.gv, setor, validos: new Set() };
+                });
+                const linhas = Object.values(porRN)
+                  .map((r) => ({ gv: r.gv, setor: r.setor, validos: r.validos.size }))
+                  .sort((a, b) => String(a.gv).localeCompare(String(b.gv)) || String(a.setor).localeCompare(String(b.setor)));
+                if (linhas.length === 0) return <p style={styles.msg}>Importe os 3 meses do relatório em Admin → Arquivos → SPO Rota Coaching.</p>;
+                const comCoaching = linhas.filter((l) => l.validos >= 1).length;
+                const semCount = linhas.filter((l) => l.validos === 0).length;
+                return (
+                  <>
+                    <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
+                      <div style={rmCard}><div style={rmBig("#4ade80")}>{comCoaching}</div><div style={rmLbl}>RNs com coaching</div></div>
+                      <div style={rmCard}><div style={rmBig(semCount > 0 ? "#f87171" : "#4ade80")}>{semCount}</div><div style={rmLbl}>RNs sem coaching</div></div>
+                      <div style={rmCard}><div style={rmBig("#fff")}>{linhas.length}</div><div style={rmLbl}>RNs na base</div></div>
+                    </div>
+                    <div style={styles.tableWrap}>
+                      <table style={styles.table}>
+                        <thead>
+                          <tr>{["GV", "RN (Setor)", "Coachings válidos", "Status"].map((h) => <th key={h} style={styles.th}>{h}</th>)}</tr>
+                        </thead>
+                        <tbody>
+                          {linhas.map((l) => {
+                            const ok = l.validos >= 1;
+                            return (
+                              <tr key={l.setor} style={styles.tr}>
+                                <td style={styles.td}>{l.gv}</td>
+                                <td style={styles.td}><span style={styles.codBadge}>{l.setor}</span></td>
+                                <td style={{ ...styles.td, fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>{l.validos}</td>
+                                <td style={styles.td}>
+                                  <span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>
+                                    {ok ? "✅ OK" : "❌ Sem coaching"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             )}
 
@@ -2124,37 +2197,6 @@ export default function SPO() {
                   })}
                   {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
                 </div>
-              </div>
-            )}
-
-            {/* SEM COACHING */}
-            {aba === "sem_coaching" && (kpiAtivo === null || kpiAtivo === 2) && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>RNs sem Coaching no Trimestre</h3>
-                {semCoaching.length === 0 ? (
-                  <p style={{ ...styles.msg, color: "#4ade80" }}>✅ Todos os RNs receberam coaching no trimestre!</p>
-                ) : (
-                  <div style={styles.tableWrap}>
-                    <table style={styles.table}>
-                      <thead>
-                        <tr>
-                          {["GV", "Setor", "Último mês de dados"].map((h) => (
-                            <th key={h} style={styles.th}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {semCoaching.map((r, i) => (
-                          <tr key={i} style={styles.tr}>
-                            <td style={styles.td}>{r.gv}</td>
-                            <td style={styles.td}><span style={styles.codBadge}>{r.setor}</span></td>
-                            <td style={styles.td}>{r.mes_referencia}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
               </div>
             )}
 

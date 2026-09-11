@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.10** — SPO KPI 1 (Visitação GV): na Operação, troca o card "Pontos SPO" (redundante com o scoreboard) por um card **Gap** (meta − visitados) ao lado do realizado; no Detalhe, remove o filtro de **dia de visita**
+Versão atual: **v3.47.11** — SPO KPI 2 (Rota Coaching): sub-abas "Operação" e "Sem Coaching" substituídas por uma única **Detalhado RN** — tabela com os coachings válidos por RN (contados por dia) e os RNs sem coaching válido; premissa do tri = cada RN ≥ 1 coaching
+
+## v3.47.11 — Auditoria visual SPO (KPI 2 — Rota Coaching)
+- Ao abrir o KPI 2, as sub-abas **Operação** e **Sem Coaching** deram lugar a uma única visão **👤 Detalhado RN**.
+- Tabela por RN (setor): **coachings válidos** = dias distintos com coaching OK (mesmo RN em dias diferentes conta como coachings distintos), + **Status** OK / Sem coaching. Inclui os RNs sem nenhum coaching válido.
+- Cards de resumo: RNs com coaching · RNs sem coaching · RNs na base. Respeita o filtro por perfil (RN vê o próprio, GV vê a sala).
+- O resumo por GV (mensal/trimestral) segue no panorama geral (nenhum KPI selecionado).
 
 ## v3.47.10 — Auditoria visual SPO (KPI 1 — Visitação GV na Base Foco)
 - **Operação:** removido o card "Pontos SPO" (a pontuação já aparece nos cards do scoreboard); adicionado card **Gap** (meta − visitados, 0 quando batida) logo ao lado de "Visitados".
