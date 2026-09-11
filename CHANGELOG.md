@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.49.0** — SPO **+LN (#19, n=27)** ganha cálculo automático: puxa do **relatório de task** a **Task de SKU/PDV de Long Neck HE**, conta as VALID (número absoluto, acumulado no tri) e alimenta o painel consolidado + uma aba própria com tabela e detalhe de abertos.
+Versão atual: **v3.49.1** — Fix "Erro ao salvar metas" (SPO Metas): meta/real agora são normalizados no backend (aceita vírgula decimal, remove %/lixo, inválido → vazio) e deduplicados por (item, mês) — não quebra mais o INSERT NUMERIC. E o +LN passou a ser identificado pelo **id da task `01_06_05`** (confirmado na base real).
+
+## v3.49.1 — Fix salvar metas SPO + trava do filtro +LN
+- **Salvar metas SPO:** `POST /painel/metas` normaliza `meta`/`real` (colunas NUMERIC) — `"46,8"` → `46.8`, remove `%` e caracteres inválidos (→ vazio/NULL) e **deduplica por (item, mês)** (a tabela tem PK item+mês). Antes, um valor com vírgula ou não-numérico quebrava o INSERT e dava "❌ Erro ao salvar metas".
+- **+LN (n=27):** filtro travado no **`id_task = 01_06_05`** ("Auxilie o PDV a comprar X SKUs distintos de Coleção +LN de Long Necks HE"), confirmado na base de task real (790 linhas, todos os setores). Fallback por descrição mantido.
+
+## v3.49.0 — SPO **+LN (#19, n=27)** ganha cálculo automático: puxa do **relatório de task** a **Task de SKU/PDV de Long Neck HE**, conta as VALID (número absoluto, acumulado no tri) e alimenta o painel consolidado + uma aba própria com tabela e detalhe de abertos.
 
 ## v3.49.0 — SPO +LN (n=27) automatizado via relatório de task
 - **Processador:** `_calcular_tasks_ln` filtra a aba `tasks` pela descrição da task (+LN / Long Neck HE) e grava `spo_tasks_ln_resumo` (+ `spo_tasks_ln_detalhe` dos abertos), no mesmo padrão dos demais KPIs de task (conta status VALID, por setor + OPERAÇÃO, acumulado no tri). Roda junto no `calcular_todos_spo_tasks` (não precisa de novo upload — usa o arquivo de tasks já importado).

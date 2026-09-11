@@ -446,21 +446,27 @@ router.post("/painel/metas", async (req, res) => {
     const { linhas } = req.body;
     if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
 
+    // meta/real são NUMERIC no Postgres: normaliza para número válido ou "" (→ NULL).
+    // Aceita vírgula decimal (46,8), remove % e outros caracteres; inválido vira vazio.
+    const toNum = (v) => {
+      if (v === "" || v === null || v === undefined) return "";
+      const s = String(v).trim().replace(/\s/g, "").replace(",", ".").replace(/[^0-9.\-]/g, "");
+      return s === "" || isNaN(Number(s)) ? "" : s;
+    };
+    // Dedup por (item, mes) — a tabela tem PK (item, mes); o último valor vence.
+    const mapa = new Map();
+    for (const l of linhas) mapa.set(`${String(l.item ?? "")}|${String(l.mes ?? "")}`, l);
+
     const headers = ["item", "mes", "meta", "real"];
     const rows = [
       headers,
-      ...linhas.map((l) => [
-        String(l.item ?? ""),
-        String(l.mes ?? ""),
-        l.meta !== "" && l.meta !== null && l.meta !== undefined ? String(l.meta) : "",
-        l.real !== "" && l.real !== null && l.real !== undefined ? String(l.real) : "",
-      ]),
+      ...[...mapa.values()].map((l) => [String(l.item ?? ""), String(l.mes ?? ""), toNum(l.meta), toNum(l.real)]),
     ];
     // Substitui a aba pelo encaixe único (services/sheets, usa RAW). sobrescreverAba
     // já invalida o cache da aba.
     await sobrescreverAba("spo_metas", rows);
 
-    return res.json({ success: true, total: linhas.length });
+    return res.json({ success: true, total: mapa.size });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao salvar metas SPO." });
