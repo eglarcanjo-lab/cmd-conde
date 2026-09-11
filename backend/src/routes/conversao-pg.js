@@ -150,7 +150,7 @@ function textoRN(setor, nome, dados, hoje) {
   };
   return [
     `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
-    `Setor ${setor}${nome ? ` · ${nome}` : ""}`,
+    `Setor ${setor}`,
     `Dia de visita ${hoje.diaLabel}`,
     "",
     "*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600",

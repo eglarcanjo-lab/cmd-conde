@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.48.2** — Mensagens da Conversão PG viram **diárias por dia de visita**: título "Base foco Stella Pure Gold" + data, "Dia de visita {hoje}", listando só os PDVs (PG600) cujo dia de visita é hoje (`?dia=` para testar outro dia). Na aba Incentivos, adicionado o **filtro por dia de visita** na tabela.
+Versão atual: **v3.48.3** — Mensagem da Conversão PG: removido o nome do RN do cabeçalho (fica só "Setor X").
+
+## v3.48.3 — Mensagem só com o setor (sem nome do RN)
+- No cabeçalho da mensagem por RN, tirado o `· Nome` — fica apenas `Setor X`.
+
+## v3.48.2 — Mensagens da Conversão PG viram **diárias por dia de visita**: título "Base foco Stella Pure Gold" + data, "Dia de visita {hoje}", listando só os PDVs (PG600) cujo dia de visita é hoje (`?dia=` para testar outro dia). Na aba Incentivos, adicionado o **filtro por dia de visita** na tabela.
 
 ## v3.48.2 — Mensagens diárias (base foco por dia de visita) + flag de dia em Incentivos
 - **Motor de mensagens (`/api/conversao-pg/mensagens`):** novo formato — `🍺 *Base foco Stella Pure Gold* {data}` · `Setor X · Nome` · `Dia de visita {hoje}`, seção **Pure Gold 600** listando `• cod nome — últ. compra dd/mm/aaaa`. **Filtra pelos PDVs cujo dia de visita é hoje** (mensagem diária de ação); só aparecem RNs/GVs com PDV no dia. Removida a seção Long Neck. Aceita `?dia=SEG..SAB` para teste.
