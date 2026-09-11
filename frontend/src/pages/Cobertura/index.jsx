@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import CoberturaSku from "../CoberturaSku";
+import ComparativoSku from "../CoberturaSku/Comparativo";
 
 const CATEGORIAS = [
   { key: "GIRO RGB",                   label: "GIRO RGB" },
@@ -329,7 +329,7 @@ export default function Cobertura() {
           )}
         </div>
 
-        {aba === "analitico" && isGestor && <CoberturaSku embutido />}
+        {aba === "analitico" && isGestor && <ComparativoSku embutido />}
 
         {/* ════════════════════════════════════════════════════════════════════
             ABA COBERTURA

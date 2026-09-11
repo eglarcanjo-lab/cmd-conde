@@ -200,4 +200,82 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ─── COMPARATIVO ENTRE SKUs (analítico) ─────────────────────────────────────
+const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+// Trimestre ATUAL = quadrimestre calendário do mês corrente (ex.: set → jul/ago/set).
+function trimestreAtual() {
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const y = d.getFullYear(), m = d.getMonth(); // 0-11
+  const startM = m - (m % 3); // 0,3,6,9
+  const meses = [0, 1, 2].map((k) => `${y}-${String(startM + k + 1).padStart(2, "0")}`);
+  const mesAtual = `${y}-${String(m + 1).padStart(2, "0")}`;
+  const anteriores = meses.filter((mm) => mm < mesAtual);
+  const rot = (mm) => ROT[(Number(mm.split("-")[1]) || 1) - 1];
+  return { meses, mesAtual, anteriores, label: `${rot(meses[0])}–${rot(meses[2])}` };
+}
+
+// GET /api/cobertura-sku/comparativo?skus=cod1,cod2,cod3
+// Lista todos os PDVs (escopo do gestor) que compraram ≥1 dos SKUs no TRIMESTRE ATUAL.
+// Por SKU: "atual" (comprou este mês) · "anterior" (comprou nos meses anteriores do tri) · "nao".
+router.get("/comparativo", async (req, res) => {
+  try {
+    const esc = escopoPerfil(req.user);
+    if (!esc.ok) return res.status(403).json({ error: "Acesso restrito a gestores." });
+
+    const skusReq = String(req.query.skus || "").split(",").map(normCod).filter((c) => c && c !== "0").slice(0, 3);
+    const { meses, mesAtual, anteriores, label } = trimestreAtual();
+    if (!skusReq.length) return res.json({ skus: [], pdvs: [], meses, mesAtual, trimestre: label, total: 0 });
+
+    const [vendasRaw, produtosFull, pdvBaseRaw, usuarios] = await Promise.all([
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
+      readSheet("produtos_full").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
+      readSheet("usuarios").catch(() => []),
+    ]);
+    const vendas = vendasRaw.filter((r) => esc.filtro(String(r.setor || "").trim()));
+
+    const nomeMap = {};
+    produtosFull.forEach((p) => { nomeMap[normCod(p.cod)] = String(p.nome || "").trim(); });
+    const skus = skusReq.map((c) => ({ cod: c, nome: nomeMap[c] || `SKU ${c}` }));
+    const skuSet = new Set(skusReq);
+
+    const diaMap = {};
+    pdvBaseRaw.forEach((p) => { const c = normCod(p.cod_pdv || p.cod); if (c) diaMap[c] = String(p.dia_visita || "").trim(); });
+    const rnMap = {};
+    usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+
+    // Agrega compras (volume > 0) por PDV × SKU × mês do tri.
+    const pdvs = {};
+    vendas.forEach((r) => {
+      if (num(r.volume_hl) <= 0) return;
+      const sku = normCod(r.cod_produto);
+      if (!skuSet.has(sku)) return;
+      const cod = String(r.cod_pdv || "").trim(); if (!cod) return;
+      const e = pdvs[cod] || (pdvs[cod] = { cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), setor: String(r.setor || "").trim(), porSku: {} });
+      (e.porSku[sku] = e.porSku[sku] || new Set()).add(String(r.mes_referencia || "").slice(0, 7));
+    });
+
+    const statusSku = (s) => {
+      if (!s || !s.size) return "nao";
+      if (s.has(mesAtual)) return "atual";
+      if (anteriores.some((m) => s.has(m))) return "anterior";
+      return "nao";
+    };
+
+    const pdvsOut = Object.values(pdvs)
+      .map((e) => ({
+        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor, rn: rnMap[e.setor] || "",
+        dia_visita: diaMap[normCod(e.cod_pdv)] || "",
+        skus: skusReq.map((c) => statusSku(e.porSku[c])),
+      }))
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
+
+    return res.json({ skus, pdvs: pdvsOut, meses, mesAtual, anteriores, trimestre: label, total: pdvsOut.length });
+  } catch (err) {
+    console.error("cobertura-sku/comparativo:", err);
+    return res.status(500).json({ error: "Erro ao montar o comparativo." });
+  }
+});
+
 module.exports = router;

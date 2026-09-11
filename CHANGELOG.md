@@ -1,6 +1,17 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.48.0** — Conversão Pure Gold (Incentivos): analítico refeito como **Comparativo entre SKUs** — escolha até 3 SKUs e veja todos os PDVs que compraram ≥1 deles no **tri atual**, com ✔ verde (comprou este mês) / ✔ amarelo (comprou nos meses anteriores do tri) / ✘ (não comprou). Removida a aba LN.
+Versão atual: **v3.48.1** — Correção do v3.48.0: a **Conversão Stella (Incentivos)** volta a ser só **PG600** (removido só o botão da Long Neck). O **Comparativo entre SKUs** foi para o lugar certo: **Cobertura & Distribuição → Analítico**, que agora funciona nessa forma comparativa (até 3 SKUs, tri, ✔ verde/amarelo · ✘).
+
+## v3.48.1 — Comparativo de SKUs vai para Cobertura › Analítico (ajuste do v3.48.0)
+- **Incentivos › Conversão Stella Pure Gold:** revertida para **só PG600** (a tabela do PG600 estava certa); removido apenas o botão/aba **Long Neck**. Mensagens (RN/GV) e Excel mantidos.
+- **Cobertura & Distribuição › Analítico:** deixou de ser o relatório de 1 SKU e passou a ser o **Comparativo entre SKUs**:
+  - seletor de **até 3 SKUs** (autocomplete reusando `/cobertura-sku/buscar`);
+  - tabela **Cód · Cliente · Setor · RN · Dia de visita · 1 coluna por SKU**, com todos os PDVs que compraram ≥1 dos SKUs no **trimestre atual**;
+  - célula: **✔ verde** = comprou este mês · **✔ amarelo** = comprou nos meses anteriores do tri · **✘** = não comprou (legenda no cabeçalho);
+  - filtros de RN/setor e dia de visita, export Excel. Só gestores (como já era o analítico).
+- Backend: novo `GET /api/cobertura-sku/comparativo?skus=`. Removidos os endpoints de comparativo que haviam sido postos por engano em `/api/conversao-pg`.
+
+## v3.48.0 — Conversão Pure Gold (Incentivos): analítico refeito como **Comparativo entre SKUs** — escolha até 3 SKUs e veja todos os PDVs que compraram ≥1 deles no **tri atual**, com ✔ verde (comprou este mês) / ✔ amarelo (comprou nos meses anteriores do tri) / ✘ (não comprou). Removida a aba LN.
 
 ## v3.48.0 — Conversão Pure Gold vira Comparativo entre SKUs
 - Removidas as abas **PG600 / PG LN** (o "flag" com a LN).
