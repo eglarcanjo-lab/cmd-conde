@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.49.1** — Fix "Erro ao salvar metas" (SPO Metas): meta/real agora são normalizados no backend (aceita vírgula decimal, remove %/lixo, inválido → vazio) e deduplicados por (item, mês) — não quebra mais o INSERT NUMERIC. E o +LN passou a ser identificado pelo **id da task `01_06_05`** (confirmado na base real).
+Versão atual: **v3.49.2** — Fix crash da aba SPO ("Cannot read properties of undefined (reading 'find')"): o painel client-side não tinha `spo_tasks_ln_resumo` no mapa de abas e o +LN (27) vindo do `/config` quebrava o cálculo. Mapeado + blindado (aba não mapeada → null, não quebra).
+
+## v3.49.2 — Fix crash da aba SPO (+LN no painel client-side)
+- O `ABAS_REAL` do painel consolidado (front) não mapeava `spo_tasks_ln_resumo`; como o backend passou a servir `SPO_REAL[27]`, o `default` fazia `.find` em `undefined` → tela SPO quebrava. Adicionado o mapeamento e um guard (aba sem array → retorna null).
+
+## v3.49.1 — Fix "Erro ao salvar metas" (SPO Metas): meta/real agora são normalizados no backend (aceita vírgula decimal, remove %/lixo, inválido → vazio) e deduplicados por (item, mês) — não quebra mais o INSERT NUMERIC. E o +LN passou a ser identificado pelo **id da task `01_06_05`** (confirmado na base real).
 
 ## v3.49.1 — Fix salvar metas SPO + trava do filtro +LN
 - **Salvar metas SPO:** `POST /painel/metas` normaliza `meta`/`real` (colunas NUMERIC) — `"46,8"` → `46.8`, remove `%` e caracteres inválidos (→ vazio/NULL) e **deduplica por (item, mês)** (a tabela tem PK item+mês). Antes, um valor com vírgula ou não-numérico quebrava o INSERT e dava "❌ Erro ao salvar metas".

@@ -2309,6 +2309,7 @@ export default function SPO() {
                                 spo_loja_ideal_resumo: lojaIdeal, spo_scanntech_resumo: scanntech,
                                 spo_portfolio_ideal_resumo: portIdeal,
                                 spo_rotina_mais_resumo: rotinaMais,
+                                spo_tasks_ln_resumo: tasksLn,
                               };
 
                               switch(n) {
@@ -2349,7 +2350,9 @@ export default function SPO() {
                                 default: {
                                   const rc = spoReal[n];
                                   if (!rc) return null;
-                                  return realDaLinha(rc, opMes(ABAS_REAL[rc.aba]));
+                                  const arr = ABAS_REAL[rc.aba];
+                                  if (!arr) return null; // aba ainda não mapeada no front → não quebra
+                                  return realDaLinha(rc, opMes(arr));
                                 }
                               }
                             };
