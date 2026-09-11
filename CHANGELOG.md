@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.49.2** — Fix crash da aba SPO ("Cannot read properties of undefined (reading 'find')"): o painel client-side não tinha `spo_tasks_ln_resumo` no mapa de abas e o +LN (27) vindo do `/config` quebrava o cálculo. Mapeado + blindado (aba não mapeada → null, não quebra).
+Versão atual: **v3.49.3** — Scanntech (SPO #22) [processador]: passa a **acumular por mês** (`sobrescrever_por_mes`) em vez de sobrescrever tudo — importar julho não apaga mais os outros meses. Como o arquivo não tem coluna de mês, use o campo **"Mês de referência"** no import para meses passados (fallback = mês atual, Brasília).
+
+## v3.49.3 — Scanntech acumula por mês (fix "importa julho e sai setembro")
+- **Processador:** `spo_scanntech_resumo`/`detalhe` agora usam **`sobrescrever_por_mes`** (mantém os demais meses ao importar um). Antes, `sobrescrever_aba` apagava tudo → só o último import sobrevivia.
+- Fallback do mês = **Brasília** (não UTC). O arquivo Scanntech é snapshot sem mês: para importar um mês passado (ex.: julho), preencha o **"Mês de referência" = 2026-07** no formulário de Arquivos, senão vai como o mês atual.
+- ⚠️ O que já entrou errado (julho rotulado como setembro) continua lá até corrigir: reimporte **julho com Mês de referência 2026-07** e **setembro** normalmente.
+
+## v3.49.2 — Fix crash da aba SPO ("Cannot read properties of undefined (reading 'find')"): o painel client-side não tinha `spo_tasks_ln_resumo` no mapa de abas e o +LN (27) vindo do `/config` quebrava o cálculo. Mapeado + blindado (aba não mapeada → null, não quebra).
 
 ## v3.49.2 — Fix crash da aba SPO (+LN no painel client-side)
 - O `ABAS_REAL` do painel consolidado (front) não mapeava `spo_tasks_ln_resumo`; como o backend passou a servir `SPO_REAL[27]`, o `default` fazia `.find` em `undefined` → tela SPO quebrava. Adicionado o mapeamento e um guard (aba sem array → retorna null).
