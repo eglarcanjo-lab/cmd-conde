@@ -193,9 +193,12 @@ router.get("/mensagens", async (req, res) => {
       if (c) { infoSetor[c] = { nome: String(u.nome || "").trim(), telefone: String(u.telefone || "").trim() }; nomePorSetor[c] = String(u.nome || "").trim(); }
     });
 
+    // PG600 do dia (uma vez) → alimenta o texto E os dados estruturados (p/ imagem).
+    const pgHoje = dados.pg600.pdvs.filter((p) => normDia(p.dia_visita) === hoje.diaKey);
     const rn = setores.map((s) => ({
       setor: s, nome: infoSetor[s]?.nome || "", telefone: infoSetor[s]?.telefone || "",
       texto: textoRN(s, infoSetor[s]?.nome || "", dados, hoje),
+      pdvs: pgHoje.filter((p) => p.setor === s).map((p) => ({ cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, ultima_compra: p.ultima_compra })),
     }));
 
     // GV: agrupa por prefixo do setor (1xx = GV1, 3xx = GV3), acha o usuário GV.
@@ -206,7 +209,12 @@ router.get("/mensagens", async (req, res) => {
       const perfilGV = perfilDoPrefixo[prefixo];
       const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilGV && String(u.telefone || "").trim());
       const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
-      return { grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto: textoGV(sets, nomeGV, dados, nomePorSetor, hoje) };
+      return {
+        grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(),
+        texto: textoGV(sets, nomeGV, dados, nomePorSetor, hoje),
+        total: pgHoje.filter((p) => sets.includes(p.setor)).length,
+        linhas: sets.map((s) => ({ setor: s, nome: nomePorSetor[s] || "", pg: pgHoje.filter((p) => p.setor === s).length })).filter((x) => x.pg).sort((a, b) => b.pg - a.pg),
+      };
     });
 
     return res.json({ data: hoje.dataBR, dia: hoje.diaLabel, rn, gv });

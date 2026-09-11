@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.48.3** — Mensagem da Conversão PG: removido o nome do RN do cabeçalho (fica só "Setor X").
+Versão atual: **v3.48.4** — `/api/conversao-pg/mensagens` passa a devolver também os **dados estruturados** (lista de PDVs por RN e resumo por RN no GV) além do texto — usado pelo robô local de WhatsApp pra montar a **tabela como imagem**.
+
+## v3.48.4 — Mensagens da Conversão PG com dados estruturados (p/ envio em foto)
+- `/mensagens`: cada RN agora traz `pdvs` (cod/nome/última compra dos PG600 do dia); cada GV traz `linhas` (setor/RN/qtd) e `total`. O `texto` continua igual (fallback/caption).
+- Suporte ao robô local (`Desktop\cmd-conde-whatsapp`) enviar a **tabela como imagem** (`FORMATO=foto`) — renderizada no Chromium do próprio PC.
+
+## v3.48.3 — Mensagem da Conversão PG: removido o nome do RN do cabeçalho (fica só "Setor X").
 
 ## v3.48.3 — Mensagem só com o setor (sem nome do RN)
 - No cabeçalho da mensagem por RN, tirado o `· Nome` — fica apenas `Setor X`.
