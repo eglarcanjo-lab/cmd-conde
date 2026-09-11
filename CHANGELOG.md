@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.12** — SPO KPIs de task (#10–#17): cards viram **tabela por RN** (ordem de setor) com **realizadas + barra com linha de meta**; flag **Mês × Trimestre** — no mês a meta é o rateio por RN, no tri agrega em Operação (soma do que foi fechado na aba Metas SPO)
+Versão atual: **v3.47.13** — SPO KPI #18 (Atendimento Produtivo): **cards por mês do tri** (clique troca o mês) + a tabela de AP de todos os RNs **ordenada por setor crescente**; o processador passa a **acumular o AP por mês** (spo_ap_detalhe/resumo via sobrescrever_por_mes) — reimportar cada mês do tri para popular os cards
+
+## v3.47.13 — Auditoria visual SPO (KPI #18 — Atendimento Produtivo)
+- Topo agora tem **um card por mês do trimestre** (Jul · Ago · Set) com o AP% de operação daquele mês; clicar troca o mês exibido.
+- A tabela de AP por RN mostra **o mês selecionado**, **ordenada por setor crescente** (101→106, 301→305). Filtros de GV e AP OK mantidos; contador de RNs do mês.
+- **Processador:** `spo_ap_detalhe` e `spo_ap_resumo` passaram de `sobrescrever_aba` (só o último mês) para **`sobrescrever_por_mes`** — os meses do tri ficam disponíveis. É preciso **reimportar cada mês** do AP para os cards aparecerem (o consolidado e o RV continuam corretos: `opMes` já filtra pelo mês).
+
+## v3.47.12 — SPO KPIs de task (#10–#17): cards viram **tabela por RN** (ordem de setor) com **realizadas + barra com linha de meta**; flag **Mês × Trimestre** — no mês a meta é o rateio por RN, no tri agrega em Operação (soma do que foi fechado na aba Metas SPO)
 
 ## v3.47.12 — Auditoria visual SPO (KPIs de task #10–#17)
 - Os KPIs de task (#10 Cerveja TT, #11 Score 5, #12 NAB, #14 Marketplace, #15 Match, #16 Cerveja Zero, #17 Digitalização) trocaram os **cards por uma tabela por RN** em ordem de setor: colunas **Realizadas · barra com linha da meta · Meta · % · Status**, com a linha 🏭 Operação no topo.

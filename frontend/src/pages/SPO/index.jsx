@@ -138,6 +138,7 @@ export default function SPO() {
   const [apDet, setApDet] = useState([]);
   const [apFiltroGV, setApFiltroGV] = useState("TODOS");
   const [apFiltroStatus, setApFiltroStatus] = useState("TODOS");
+  const [apMes, setApMes] = useState(""); // mês selecionado nos cards do tri (KPI 18 / n=5)
   const [busca, setBusca] = useState("");
   const [filtroGv, setFiltroGv] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -2006,40 +2007,43 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 5) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 5 — Atendimento Produtivo</h3>
-              {ap.length === 0 ? (
+              {ap.length === 0 && apDet.length === 0 ? (
                 <p style={styles.msg}>Importe o relatório de Atendimento Produtivo para calcular automaticamente.</p>
-              ) : (
+              ) : (() => {
+                // O detalhe/resumo do AP acumula por mês — cada mês do tri vira um card.
+                const mesesAp = [...new Set([...apDet, ...ap].map((r) => r.mes_referencia).filter(Boolean))].sort();
+                const mesAtivo = (apMes && mesesAp.includes(apMes)) ? apMes : (mesesAp[mesesAp.length - 1] || "");
+                const opDoMes = (m) => ap.find((r) => r.setor === "OPERACAO" && r.mes_referencia === m) || {};
+                const detMes = apDet
+                  .filter((r) => (mesAtivo ? r.mes_referencia === mesAtivo : true))
+                  .filter((r) => (apFiltroGV === "TODOS" || r.gv === apFiltroGV) && (apFiltroStatus === "TODOS" || r.ap_ok === apFiltroStatus))
+                  .sort((a, b) => String(a.setor).localeCompare(String(b.setor), undefined, { numeric: true }));
+                return (
                 <>
-                  {/* Resumo */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginBottom: "16px" }}>
-                    {ap.map((r) => {
-                      const pct = parseFloat(r.pct || 0);
+                  {/* Cards por mês do tri — clique troca o mês da tabela */}
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
+                    {mesesAp.map((m) => {
+                      const o = opDoMes(m);
+                      const pct = parseFloat(o.pct || 0);
                       const cor = pct >= 90 ? "#4ade80" : pct >= 60 ? "#7DBA3D" : "#f87171";
-                      const isOp = r.setor === "OPERACAO";
+                      const sel = m === mesAtivo;
                       return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                          <div style={styles.gvHeader}>
-                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.85rem" }}>
-                              {isOp ? "🏭 Operação" : `GV ${r.gv}`}
-                            </span>
-                            <span style={{ ...styles.apBadge, background: r.ok === "OK" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: r.ok === "OK" ? "#4ade80" : "#f87171" }}>{r.ok}</span>
-                          </div>
-                          <BarraProgresso pct={pct} cor={cor} />
-                          <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>{r.rns_ap_ok}/{r.rns_total} RNs</span>
-                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                          </div>
-                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: ≥ 90%</p>
+                        <div key={m} onClick={() => setApMes(m)}
+                          style={{ ...rmCard, cursor: "pointer", minWidth: "116px", border: sel ? "2px solid #7DBA3D" : "1px solid rgba(255,255,255,0.08)", background: sel ? "rgba(125,186,61,0.08)" : "rgba(255,255,255,0.04)" }}>
+                          <div style={rmLbl}>{fmtMes(m)}</div>
+                          <div style={rmBig(cor)}>{pct}%</div>
+                          <div style={rmLbl}>{o.rns_ap_ok ?? "—"}/{o.rns_total ?? "—"} RNs</div>
                         </div>
                       );
                     })}
+                    {mesesAp.length === 0 && <p style={styles.msg}>Sem mês de referência no dado importado.</p>}
                   </div>
-                  {/* Detalhe por RN */}
+                  {/* Tabela por RN do mês selecionado — ordem crescente de setor */}
                   {apDet.length > 0 && (
                     <>
                       <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         {[
-                          { label: "GV",     val: apFiltroGV,     set: setApFiltroGV,     opts: ["TODOS", ...new Set(apDet.map(r => r.gv).filter(Boolean))].sort() },
+                          { label: "GV",     val: apFiltroGV,     set: setApFiltroGV,     opts: ["TODOS", ...new Set(apDet.filter((r) => (mesAtivo ? r.mes_referencia === mesAtivo : true)).map((r) => r.gv).filter(Boolean))].sort() },
                           { label: "AP OK",  val: apFiltroStatus, set: setApFiltroStatus, opts: ["TODOS", "Sim", "Não"] },
                         ].map(({ label, val, set, opts }) => (
                           <select key={label} value={val} onChange={e => set(e.target.value)}
@@ -2047,6 +2051,7 @@ export default function SPO() {
                             {opts.map(o => <option key={o} value={o}>{label}: {o}</option>)}
                           </select>
                         ))}
+                        <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" }}>{fmtMes(mesAtivo)} · {detMes.length} RNs</span>
                       </div>
                       <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
@@ -2058,10 +2063,7 @@ export default function SPO() {
                             </tr>
                           </thead>
                           <tbody>
-                            {apDet.filter(r =>
-                              (apFiltroGV === "TODOS" || r.gv === apFiltroGV) &&
-                              (apFiltroStatus === "TODOS" || r.ap_ok === apFiltroStatus)
-                            ).map((r, i) => {
+                            {detMes.map((r, i) => {
                               const corAP = r.ap_ok === "Sim" ? "#4ade80" : "#f87171";
                               const corKPI = parseInt(r.kpis_ok) === 4 ? "#4ade80" : parseInt(r.kpis_ok) >= 2 ? "#7DBA3D" : "#f87171";
                               return (
@@ -2088,7 +2090,8 @@ export default function SPO() {
                     </>
                   )}
                 </>
-              )}
+                );
+              })()}
             </div>
             )}
 
