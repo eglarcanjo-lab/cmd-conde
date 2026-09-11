@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.50.2** — #17 Digitalização (tri, %): o **mês atual entra ao vivo** (validadas/total do resumo) e jul/ago ficam **como cadastrado na aba Metas SPO**.
+Versão atual: **v3.51.0** — Devolução × Ruptura ganha a sub-aba **🔎 Pesquisa Pedido**: busca o pedido BEES e monta um "documento" de rastreabilidade (NF, setor/RN, PDV, data, mapa, HL marcado × entregue, valor da NF, status entregue/devolvido e, se devolvido, motivo/carro/valor/volume/data).
+
+## v3.51.0 — Pesquisa Pedido (rastreabilidade do pedido BEES)
+- **Processador:** novas tabelas — `pedido_bees` (1 linha por Pedido Cliente/BEES, do 03014701: NF, setor, PDV, data, HL marcação×entrega, mapa, entrega real, motivo) e `faturado_nf` (valor por NF somando Total + mapa, do 030237). Devolução usa o `entregas_frustradas` (030224) já existente.
+- **Backend:** `GET /api/detalhamento/pedido-bees?q=` — casa por pedido BEES (ou NF, ou nº pedido), junta valor da NF (faturado_nf) e devolução (entregas_frustradas por NF); status = Entregue / Devolvido / Faturado; respeita o perfil.
+- **Frontend:** sub-aba **🔎 Pesquisa Pedido** com documento: cabeçalho (BEES + status), linha do tempo (Pedido → Faturado → Entregue/Devolvido), grid (NF, setor/RN, PDV, data, mapa, valor NF, HL marcado/entregue + **ruptura**) e bloco de devolução (motivo, **carro/placa**, valor, volume, data). O relatório traz o carro, não o motorista.
+- ⚠️ Requer **reimportar Pedidos Faturados (03014701) e Faturados NF (030237)** para popular as tabelas novas.
+
+## v3.50.2 — #17 Digitalização (tri, %): o **mês atual entra ao vivo** (validadas/total do resumo) e jul/ago ficam **como cadastrado na aba Metas SPO**.
 
 ## v3.50.2 — Digitalização tri: mês atual ao vivo, meses anteriores como cadastrado
 - No modo trimestral dos KPIs percentuais (#17), o **mês corrente** usa o valor ao vivo (Σvalidadas/Σtotais do resumo importado); **jul/ago** continuam com o que está lançado na aba Metas SPO. A média do tri combina os três.

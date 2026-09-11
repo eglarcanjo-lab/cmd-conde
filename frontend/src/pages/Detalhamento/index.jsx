@@ -42,12 +42,154 @@ export default function Detalhamento() {
       <div style={S.abas}>
         <button style={{ ...S.tab, ...(aba === "entrega" ? S.tabAtiva : {}) }} onClick={() => setAba("entrega")}>📦 Entrega</button>
         <button style={{ ...S.tab, ...(aba === "ruptura" ? S.tabAtiva : {}) }} onClick={() => setAba("ruptura")}>📉 Ruptura de Estoque</button>
+        <button style={{ ...S.tab, ...(aba === "pesquisa" ? S.tabAtiva : {}) }} onClick={() => setAba("pesquisa")}>🔎 Pesquisa Pedido</button>
       </div>
-      {aba === "entrega" ? <Entrega /> : <Ruptura />}
+      {aba === "entrega" ? <Entrega /> : aba === "ruptura" ? <Ruptura /> : <PesquisaPedido />}
       <style>{CSS}</style>
     </div>
   );
 }
+
+// ─── PESQUISA PEDIDO — documento de rastreabilidade do pedido BEES ───────────
+const CORStatus = { ENTREGUE: "#4ade80", DEVOLVIDO: VERMELHO, FATURADO: AMARELO };
+function PesquisaPedido() {
+  const [q, setQ] = useState("");
+  const [d, setD] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function buscar(e) {
+    e?.preventDefault?.();
+    const termo = q.trim();
+    if (!termo) return;
+    setLoading(true); setErro(""); setD(null);
+    try {
+      const r = await api.get("/api/detalhamento/pedido-bees", { params: { q: termo }, timeout: 60000 });
+      setD(r.data);
+    } catch (err) { setErro(err.response?.data?.error || "Erro ao buscar."); }
+    finally { setLoading(false); }
+  }
+
+  const P = d?.pedido;
+  const st = P?.status || "";
+  const rup = P && P.hl_diferenca > 0.001;
+
+  return (
+    <div>
+      <form onSubmit={buscar} style={{ display: "flex", gap: 8, marginBottom: 16, maxWidth: 520 }}>
+        <input style={PS.input} value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder="🔎 Pedido BEES, NF ou nº do pedido" autoComplete="off" />
+        <button type="submit" style={PS.btn} disabled={loading}>{loading ? "…" : "Buscar"}</button>
+      </form>
+      <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", margin: "-6px 0 16px" }}>
+        Busca o pedido no relatório de Pedidos Faturados (Pedido Cliente = BEES), traz a NF, valor (Faturados NF) e, se devolvido, os dados da devolução (030224).
+      </p>
+
+      {erro && <div style={PS.erro}>{erro}</div>}
+      {loading && <div style={PS.info}>Buscando…</div>}
+      {d && !d.encontrado && !loading && (
+        <div style={PS.vazio}>Nenhum pedido encontrado para "<b>{d.q}</b>". Confira o número ou reimporte os relatórios (Pedidos / Faturados).</div>
+      )}
+
+      {P && (
+        <div style={PS.doc}>
+          {/* Cabeçalho */}
+          <div style={PS.docHead}>
+            <div>
+              <div style={PS.docTit}>Pedido BEES</div>
+              <div style={PS.docBees}>{P.bees}</div>
+            </div>
+            <span style={{ ...PS.badge, background: `${CORStatus[st] || "#888"}22`, color: CORStatus[st] || "#888", border: `1px solid ${CORStatus[st] || "#888"}` }}>
+              {st === "ENTREGUE" ? "✅ Entregue" : st === "DEVOLVIDO" ? "↩️ Devolvido" : "🧾 Faturado"}
+            </span>
+          </div>
+
+          {/* Linha do tempo */}
+          <div style={PS.timeline}>
+            <Passo ok label="Pedido" val={P.data_pedido} />
+            <span style={PS.tlSep}>→</span>
+            <Passo ok={!!P.nf} label="Faturado (NF)" val={P.nf ? `NF ${P.nf}` : "—"} />
+            <span style={PS.tlSep}>→</span>
+            {st === "DEVOLVIDO"
+              ? <Passo cor={VERMELHO} label="Devolvido" val={d.devolucao?.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : ""} />
+              : <Passo ok cor="#4ade80" label="Entregue" val={P.entrega_real || ""} />}
+          </div>
+
+          {/* Grid de dados */}
+          <div style={PS.grid}>
+            <Campo label="NF" val={P.nf || "—"} />
+            <Campo label="Setor / RN" val={`${P.setor}${P.nome_setor ? " · " + P.nome_setor : ""}`} />
+            <Campo label="PDV" val={`${P.cod_pdv} · ${P.nome_pdv}`} span2 />
+            <Campo label="Data do pedido" val={P.data_pedido || "—"} />
+            <Campo label="Mapa (rota)" val={P.mapa || "—"} />
+            <Campo label="Nº pedido" val={P.pedido || "—"} />
+            <Campo label="Valor da NF" val={P.valor_nf != null ? fmtMoeda(P.valor_nf) : "—"} destaque />
+            <Campo label="HL marcado" val={`${fmt(P.hl_marcacao, 2)} HL`} />
+            <Campo label="HL entregue" val={`${fmt(P.hl_entrega, 2)} HL`} cor={rup ? AMARELO : "#4ade80"} />
+            <Campo label="Ruptura (marcado − entregue)" val={`${fmt(P.hl_diferenca, 2)} HL`} cor={rup ? VERMELHO : "rgba(255,255,255,0.5)"} />
+          </div>
+
+          {/* Devolução */}
+          {d.devolucao ? (
+            <div style={PS.devBox}>
+              <div style={PS.devTit}>↩️ Dados da devolução</div>
+              <div style={PS.grid}>
+                <Campo label="Motivo" val={d.devolucao.desc_motivo || "—"} span2 cor={VERMELHO} />
+                <Campo label="Carro (placa)" val={d.devolucao.placa || "—"} />
+                <Campo label="Cód. motivo" val={d.devolucao.cod_motivo || "—"} />
+                <Campo label="Valor devolvido" val={fmtMoeda(d.devolucao.valor)} />
+                <Campo label="Volume devolvido" val={`${fmt(d.devolucao.volume_hl, 2)} HL`} />
+                <Campo label="Data devolução" val={d.devolucao.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : "—"} />
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", margin: "8px 0 0" }}>
+                ℹ️ O relatório de devoluções traz o <b>carro (placa)</b>, não o nome do motorista.
+              </p>
+            </div>
+          ) : st === "ENTREGUE" ? (
+            <div style={{ ...PS.devBox, borderColor: "rgba(74,222,128,0.25)", background: "rgba(74,222,128,0.05)" }}>
+              <div style={{ ...PS.devTit, color: "#4ade80" }}>✅ Entregue{P.entrega_real ? ` · ${P.entrega_real}` : ""}</div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Passo({ label, val, ok = true, cor }) {
+  return (
+    <div style={{ textAlign: "center", minWidth: 90 }}>
+      <div style={{ fontSize: "1.1rem" }}>{ok ? "●" : "○"}</div>
+      <div style={{ fontSize: "0.7rem", color: cor || "rgba(255,255,255,0.55)", fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)" }}>{val || "—"}</div>
+    </div>
+  );
+}
+function Campo({ label, val, span2, destaque, cor }) {
+  return (
+    <div style={{ gridColumn: span2 ? "span 2" : "auto" }}>
+      <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
+      <div style={{ fontSize: destaque ? "1.15rem" : "0.92rem", fontWeight: destaque ? 800 : 600, color: cor || "#fff", marginTop: 2 }}>{val}</div>
+    </div>
+  );
+}
+const PS = {
+  input: { flex: 1, minWidth: 0, background: "rgba(255,255,255,0.06)", border: `1px solid ${VERDE}55`, borderRadius: 10, color: "#fff", padding: "11px 14px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none" },
+  btn: { flexShrink: 0, background: `linear-gradient(135deg,${VERDE},#2E7D32)`, color: "#0c1410", border: "none", borderRadius: 10, padding: "0 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+  erro: { color: VERMELHO, padding: 14, background: "rgba(239,68,68,0.1)", borderRadius: 10 },
+  info: { color: "rgba(255,255,255,0.6)", padding: "14px 0" },
+  vazio: { color: "rgba(255,255,255,0.55)", padding: 18, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 },
+  doc: { background: "rgba(255,255,255,0.03)", border: `1px solid ${VERDE}44`, borderRadius: 16, padding: "18px 20px", maxWidth: 720 },
+  docHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 12, marginBottom: 14 },
+  docTit: { color: VERDE, fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" },
+  docBees: { color: "#fff", fontSize: "1.35rem", fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1.2 },
+  badge: { padding: "6px 12px", borderRadius: 20, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" },
+  timeline: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap", background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 8px", marginBottom: 16 },
+  tlSep: { color: "rgba(255,255,255,0.3)", fontSize: "1.1rem" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: "12px 16px" },
+  devBox: { marginTop: 16, background: "rgba(239,111,111,0.06)", border: `1px solid ${VERMELHO}44`, borderRadius: 12, padding: "14px 16px" },
+  devTit: { color: VERMELHO, fontSize: "0.85rem", fontWeight: 700, marginBottom: 10 },
+};
 
 function Kpi({ label, valor, sub, cor }) {
   return (

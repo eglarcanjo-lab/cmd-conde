@@ -254,4 +254,62 @@ router.get("/ruptura", async (req, res) => {
   }
 });
 
+// GET /api/detalhamento/pedido-bees?q=<pedido BEES | NF | nº pedido>
+// Monta o "documento" de rastreabilidade do pedido: dados do pedido (pedido_bees),
+// valor da NF (faturado_nf) e, se devolvido, os dados da devolução (entregas_frustradas).
+router.get("/pedido-bees", async (req, res) => {
+  try {
+    const q = normNota(req.query.q || "");
+    if (!q) return res.status(400).json({ error: "Informe o pedido BEES, a NF ou o nº do pedido." });
+
+    const [pedidosRaw, faturadoNfRaw, devolucoesRaw] = await Promise.all([
+      readSheet("pedido_bees").catch(() => []),
+      readSheet("faturado_nf").catch(() => []),
+      readSheet("entregas_frustradas").catch(() => []),
+    ]);
+    // Escopo por perfil (setor): admin/diretor tudo; GV a sala; RN o próprio.
+    const pedidos = filtrarPorPerfil(pedidosRaw, req.user, "setor");
+
+    // Casa por pedido BEES, senão por NF, senão pelo nº do pedido interno.
+    let ped = pedidos.find((p) => normNota(p.bees) === q)
+           || pedidos.find((p) => normNota(p.nf) === q)
+           || pedidos.find((p) => normNota(p.pedido) === q);
+    if (!ped) return res.json({ encontrado: false, q });
+
+    const nf = normNota(ped.nf);
+    const fat = faturadoNfRaw.find((f) => normNota(f.nf) === nf) || null;
+    const dev = nf ? devolucoesRaw.find((d) => normNota(d.nota) === nf) || null : null;
+
+    const hlMarc = r3(num(ped.hl_marcacao));
+    const hlEntr = r3(num(ped.hl_entrega));
+    const devolvido = !!dev || (String(ped.motivo || "").trim() !== "");
+    const status = devolvido ? "DEVOLVIDO" : (hlEntr > 0 || ped.entrega_real ? "ENTREGUE" : "FATURADO");
+
+    return res.json({
+      encontrado: true,
+      pedido: {
+        bees: ped.bees, pedido: ped.pedido, nf,
+        setor: ped.setor, nome_setor: ped.nome_setor,
+        cod_pdv: ped.cod_pdv, nome_pdv: ped.nome_pdv,
+        data_pedido: ped.data_pedido, mapa: ped.mapa || (fat && fat.mapa) || "",
+        entrega_real: ped.entrega_real,
+        hl_marcacao: hlMarc, hl_entrega: hlEntr,
+        hl_diferenca: r3(hlMarc - hlEntr),
+        valor_nf: fat ? r2(num(fat.valor)) : null,
+        itens_nf: fat ? parseInt(fat.itens || 0) : null,
+        status,
+        motivo: ped.motivo || (dev && dev.desc_motivo) || "",
+      },
+      devolucao: dev ? {
+        placa: dev.placa || "", desc_motivo: dev.desc_motivo || "", cod_motivo: dev.cod_motivo || "",
+        valor: r2(num(dev.valor)), volume_hl: r3(num(dev.volume_hl)),
+        data_devol: dev.data_devol || "", data: dev.data || "",
+      } : null,
+    });
+  } catch (e) {
+    console.error("pedido-bees:", e);
+    return res.status(500).json({ error: "Erro ao buscar o pedido." });
+  }
+});
+
 module.exports = router;
