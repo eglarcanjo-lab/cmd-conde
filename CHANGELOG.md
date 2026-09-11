@@ -1,6 +1,16 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.11** — SPO KPI 2 (Rota Coaching): sub-abas "Operação" e "Sem Coaching" substituídas por uma única **Detalhado RN** — tabela com os coachings válidos por RN (contados por dia) e os RNs sem coaching válido; premissa do tri = cada RN ≥ 1 coaching
+Versão atual: **v3.47.12** — SPO KPIs de task (#10–#17): cards viram **tabela por RN** (ordem de setor) com **realizadas + barra com linha de meta**; flag **Mês × Trimestre** — no mês a meta é o rateio por RN, no tri agrega em Operação (soma do que foi fechado na aba Metas SPO)
+
+## v3.47.12 — Auditoria visual SPO (KPIs de task #10–#17)
+- Os KPIs de task (#10 Cerveja TT, #11 Score 5, #12 NAB, #14 Marketplace, #15 Match, #16 Cerveja Zero, #17 Digitalização) trocaram os **cards por uma tabela por RN** em ordem de setor: colunas **Realizadas · barra com linha da meta · Meta · % · Status**, com a linha 🏭 Operação no topo.
+- Novo flag **📅 Mês × 📊 Trimestre**:
+  - **Mês** — meta por RN = rateio do peso do RN (base de tasks/total) sobre a meta de operação do mês (mesma fórmula dos cards antigos, números idênticos; Score 5 sem uplift, em PDVs).
+  - **Trimestre** — como o relatório de task não tem retroativo (sempre o mês vivo), agrega em **Operação** usando o acumulado gravado no **fechamento manual** da aba Metas SPO (soma meta+real dos meses do tri). Sem detalhe por RN no tri.
+- A **linha da meta na barra** muda conforme o flag. Aviso quando a meta de operação do mês ainda não foi lançada.
+- Os detalhes por PDV (Cerveja TT, Score 5) foram mantidos abaixo da tabela. **#13 SKU/PDV** segue sem cálculo automático (fora dessa padronização).
+
+## v3.47.11 — SPO KPI 2 (Rota Coaching): sub-abas "Operação" e "Sem Coaching" substituídas por uma única **Detalhado RN** — tabela com os coachings válidos por RN (contados por dia) e os RNs sem coaching válido; premissa do tri = cada RN ≥ 1 coaching
 
 ## v3.47.11 — Auditoria visual SPO (KPI 2 — Rota Coaching)
 - Ao abrir o KPI 2, as sub-abas **Operação** e **Sem Coaching** deram lugar a uma única visão **👤 Detalhado RN**.

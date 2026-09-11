@@ -36,6 +36,28 @@ function BarraProgresso({ pct, cor }) {
   );
 }
 
+// Barra de progresso com uma LINHA marcando a meta. A escala é absoluta
+// (máx = maior entre realizado e meta): o preenchimento é o realizado e a
+// linha branca fica na posição da meta. Verde quando realizado ≥ meta.
+function BarraMeta({ real, meta }) {
+  const r = Number(real) || 0;
+  const m = Number(meta) || 0;
+  const escala = Math.max(r, m, 1);
+  const fill = Math.min((r / escala) * 100, 100);
+  const metaPos = m > 0 ? Math.min((m / escala) * 100, 100) : null;
+  const cor = m > 0 ? (r >= m ? "#4ade80" : r >= m * 0.7 ? "#7DBA3D" : "#f87171") : "#7DBA3D";
+  return (
+    <div style={{ position: "relative", height: "12px", minWidth: "80px" }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.08)", borderRadius: "6px", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${fill}%`, background: cor, transition: "width 0.4s" }} />
+      </div>
+      {metaPos !== null && (
+        <div title={`Meta: ${m}`} style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `calc(${metaPos}% - 1px)`, width: "2px", background: "#fff", borderRadius: "1px", boxShadow: "0 0 2px rgba(0,0,0,0.6)" }} />
+      )}
+    </div>
+  );
+}
+
 export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -63,6 +85,7 @@ export default function SPO() {
   const [menu, setMenu] = useState([]);
   const [tasksCerveja, setTasksCerveja] = useState([]);
   const [tasksCervejaDetalhe, setTasksCervejaDetalhe] = useState([]);
+  const [tasksView, setTasksView] = useState("mensal"); // flag mês × tri das tabelas de tasks (KPIs 10–17)
   const [kpi11FiltroRN, setKpi11FiltroRN] = useState("TODOS");
   const [kpi11FiltroDia, setKpi11FiltroDia] = useState("TODOS");
   const [score5, setScore5] = useState([]);
@@ -333,6 +356,127 @@ export default function SPO() {
   // KPI 8: meta RN = ceil(pdvs_aderidos × 0.60) — sem uplift
   // KPI 12: meta RN = ceil(pdvs_total × (meta_op / op_pdvs_total)) — sem uplift
   // KPIs tasks (9,11,13-18): meta RN = ceil(tasks_total × (meta_op / op_tasks_total) × 1.10)
+
+  // ── Tabela padrão dos KPIs de task (#10–#17) ────────────────────────────────
+  // Mensal: uma linha por RN (ordem de setor) com realizadas + barra c/ linha de
+  //   meta. A meta por RN = rateio do peso do RN (base de tasks/total) sobre a
+  //   meta de operação do mês (mesma fórmula dos cards antigos — números idênticos).
+  // Trimestral: o relatório de task só tem o mês vivo (sem retroativo), então
+  //   agrega em OPERAÇÃO usando o acumulado que o fechamento manual grava em
+  //   spo_metas (soma meta+real dos meses do tri). Sem detalhe por RN no tri.
+  const toggleTasksView = (
+    <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px", width: "fit-content", marginBottom: "12px" }}>
+      {["mensal", "trimestral"].map((v) => (
+        <button key={v} onClick={() => setTasksView(v)}
+          style={{ background: tasksView === v ? "rgba(125,186,61,0.2)" : "transparent", border: "none", color: tasksView === v ? "#7DBA3D" : "rgba(255,255,255,0.4)", padding: "5px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit", fontWeight: tasksView === v ? "600" : "400" }}>
+          {v === "mensal" ? "📅 Mês" : "📊 Trimestre"}
+        </button>
+      ))}
+    </div>
+  );
+
+  function renderTabelaTasks(dados, kpiN, opts = {}) {
+    const realField = opts.realField || "tasks_validas";
+    const totalField = opts.totalField || "tasks_total";
+    const uplift = opts.uplift ?? 1.10;
+    const unidade = opts.unidade || "tasks";
+    const semDados = opts.semDados || "Importe o arquivo de tasks para calcular automaticamente.";
+    if (!dados || dados.length === 0) return <p style={styles.msg}>{semDados}</p>;
+
+    const thL = { ...rmTh, textAlign: "left" };
+    const tdC = { ...rmTd };
+    const tdL = { ...rmTd, textAlign: "left" };
+
+    // ── TRIMESTRAL — agrega em Operação pelo spo_metas (meses do tri até o atual) ──
+    if (tasksView === "trimestral") {
+      const ini = spoCfg[String(kpiN)]?.inicio || INICIO_AVAL_KPI[kpiN] || "2026-07";
+      const meses = MESES_TRI.filter((m) => ini <= m && m <= mesAtual);
+      let metaTot = 0, realTot = 0, hasMeta = false, hasReal = false;
+      for (const mes of meses) {
+        const row = spoMetas.find((r) => String(r.item) === String(kpiN) && r.mes === mes);
+        if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; hasMeta = true; }
+        if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; hasReal = true; }
+      }
+      const ok = hasMeta && hasReal && realTot >= metaTot;
+      const pct = metaTot > 0 ? Math.round((realTot / metaTot) * 100) : 0;
+      return (
+        <>
+          {toggleTasksView}
+          <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.4)", margin: "0 0 10px" }}>
+            Trimestre: soma dos meses fechados na aba <b>Metas SPO</b> ({meses.map(fmtMes).join(" · ") || "—"}). O relatório de task não tem retroativo, então o tri é consolidado em Operação (sem detalhe por RN).
+          </p>
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr><th style={thL}>Nível</th><th style={rmTh}>Realizadas</th><th style={rmTh}>Progresso × Meta</th><th style={rmTh}>Meta</th><th style={rmTh}>%</th><th style={rmTh}>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <td style={{ ...tdL, fontWeight: "700", color: "#7DBA3D" }}>🏭 Operação (tri)</td>
+                  <td style={{ ...tdC, fontWeight: "700" }}>{realTot}</td>
+                  <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={realTot} meta={metaTot} /></td>
+                  <td style={tdC}>{hasMeta ? metaTot : "—"}</td>
+                  <td style={{ ...tdC, fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>{hasMeta ? `${pct}%` : "—"}</td>
+                  <td style={tdC}><span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{ok ? "✅ OK" : "❌ NOK"}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      );
+    }
+
+    // ── MENSAL — uma linha por RN (ordem de setor) ──
+    const opRow = dados.find((x) => x.setor === "OPERACAO") || {};
+    const opTot = parseFloat(opRow[totalField] || 0);
+    const mOp = spoMetaTotal(kpiN);
+    const linhas = dados
+      .filter((x) => x.setor !== "OPERACAO")
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor), undefined, { numeric: true }));
+    const opReal = parseFloat(opRow[realField] || 0);
+
+    return (
+      <>
+        {toggleTasksView}
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr><th style={thL}>Setor</th><th style={rmTh}>Realizadas</th><th style={rmTh}>Progresso × Meta</th><th style={rmTh}>Meta</th><th style={rmTh}>%</th><th style={rmTh}>Status</th></tr>
+            </thead>
+            <tbody>
+              {/* Operação (total do mês) */}
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(125,186,61,0.05)" }}>
+                <td style={{ ...tdL, fontWeight: "700", color: "#7DBA3D" }}>🏭 Operação</td>
+                <td style={{ ...tdC, fontWeight: "700" }}>{opReal}</td>
+                <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={opReal} meta={mOp ?? 0} /></td>
+                <td style={tdC}>{mOp !== null ? mOp : "—"}</td>
+                <td style={{ ...tdC, fontWeight: "700", color: mOp !== null && opReal >= mOp ? "#4ade80" : "#f87171" }}>{mOp !== null && mOp > 0 ? `${Math.round(opReal / mOp * 100)}%` : "—"}</td>
+                <td style={tdC}><span style={{ ...styles.statusTag, background: (mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: (mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "#4ade80" : "#f87171" }}>{(mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "✅ OK" : "❌ NOK"}</span></td>
+              </tr>
+              {linhas.map((r) => {
+                const real = parseFloat(r[realField] || 0);
+                const base = parseFloat(r[totalField] || 0);
+                const metaRN = (mOp !== null && opTot > 0) ? Math.ceil(base * (mOp / opTot) * uplift) : null;
+                const ok = metaRN !== null ? real >= metaRN : r.ok === "OK";
+                const pct = metaRN !== null && metaRN > 0 ? Math.round(real / metaRN * 100) : parseFloat(r.pct || 0);
+                return (
+                  <tr key={r.setor} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ ...tdL, fontWeight: "600", color: "#fff" }}>{r.setor}</td>
+                    <td style={tdC}>{real}<span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}> / {base} {unidade}</span></td>
+                    <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={real} meta={metaRN ?? 0} /></td>
+                    <td style={{ ...tdC, fontWeight: "700" }}>{metaRN !== null ? metaRN : "—"}</td>
+                    <td style={{ ...tdC, color: ok ? "#4ade80" : "#f87171" }}>{`${pct}%`}</td>
+                    <td style={tdC}><span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{ok ? "✅ OK" : "❌ NOK"}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {mOp === null && <p style={{ fontSize: "0.72rem", color: "#f5c451", marginTop: "8px" }}>⚠️ Sem meta de operação lançada para {fmtMes(mesAtual)} na aba Metas SPO — a linha de meta e o rateio por RN não aparecem até você lançar.</p>}
+      </>
+    );
+  }
 
   return (
     <div style={styles.root}>
@@ -1069,38 +1213,7 @@ export default function SPO() {
                 <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
               ) : (
                 <>
-                  {/* Consolidado por setor — contador POR PDV */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px", marginBottom: "16px" }}>
-                    {[...tasksCerveja].sort((a,b) => (b.setor === "OPERACAO" ? 1 : 0) - (a.setor === "OPERACAO" ? 1 : 0)).map((r) => {
-                      const isOp = r.setor === "OPERACAO";
-                      const real = parseFloat(r.tasks_validas || 0);
-                      const mOp = spoMetaTotal(11);
-                      const _opTot11 = parseFloat(tasksCerveja.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                      const mRN = (mOp !== null && _opTot11 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot11) * 1.10) : null;
-                      const metaRef = isOp ? mOp : mRN;
-                      const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                      const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                      const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                      return (
-                        <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                          <div style={styles.gvHeader}>
-                            <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                              {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                            </span>
-                            <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                          </div>
-                          <BarraProgresso pct={pct} cor={cor} />
-                          <div style={styles.gvFooter}>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>
-                              {r.tasks_validas}/{r.tasks_total} tasks
-                            </span>
-                            <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                          </div>
-                          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {renderTabelaTasks(tasksCerveja, 11)}
                   {/* Detalhe — PDVs com task em aberto */}
                   {tasksCervejaDetalhe.length > 0 && (
                     <>
@@ -1160,39 +1273,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 12) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 12 — Task de Faturamento Score 5</h3>
-              {score5.length === 0 ? (
-                <p style={styles.msg}>Importe o relatório de Task de Faturamento (task fat) para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {score5.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.pdvs_ok || 0);
-                    const mOp = spoMetaTotal(12);
-                    const _opTot12 = parseFloat(score5.find(x => x.setor === "OPERACAO")?.pdvs_total || 0);
-                    const mRN = (mOp !== null && _opTot12 > 0) ? Math.ceil(parseFloat(r.pdvs_total || 0) * (mOp / _opTot12)) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.pdvs_total} PDVs</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} PDVs` : "≥ 46%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(score5, 12, { realField: "pdvs_ok", totalField: "pdvs_total", uplift: 1.0, unidade: "PDVs", semDados: "Importe o relatório de Task de Faturamento (task fat) para calcular automaticamente." })}
 
               {/* Detalhe por PDV — quem possui task de fat e se bateu */}
               {score5Det.length > 0 && (() => {
@@ -1259,39 +1340,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 13) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 13 — Tasks de Portfólio NAB</h3>
-              {tasksNab.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksNab.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(13);
-                    const _opTot13 = parseFloat(tasksNab.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                    const mRN = (mOp !== null && _opTot13 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot13) * 1.10) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(tasksNab, 13)}
             </div>
             )}
 
@@ -1341,39 +1390,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 15) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 15 — Tasks de Marketplace</h3>
-              {tasksMktp.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksMktp.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(15);
-                    const _opTot15 = parseFloat(tasksMktp.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                    const mRN = (mOp !== null && _opTot15 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot15) * 1.10) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(tasksMktp, 15)}
             </div>
             )}
 
@@ -1382,39 +1399,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 16) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 16 — Tasks de Portfólio MATCH</h3>
-              {tasksMatch.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksMatch.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(16);
-                    const _opTot16 = parseFloat(tasksMatch.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                    const mRN = (mOp !== null && _opTot16 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot16) * 1.10) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(tasksMatch, 16)}
             </div>
             )}
 
@@ -1423,39 +1408,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 17) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 17 — Tasks de Portfólio Cerveja Zero</h3>
-              {tasksCervZero.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksCervZero.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(17);
-                    const _opTot17 = parseFloat(tasksCervZero.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                    const mRN = (mOp !== null && _opTot17 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot17) * 1.10) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(tasksCervZero, 17)}
             </div>
             )}
 
@@ -1464,39 +1417,7 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 18) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
-              {tasksDigit.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {tasksDigit.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.tasks_validas || 0);
-                    const mOp = spoMetaTotal(18);
-                    const _opTot18 = parseFloat(tasksDigit.find(x => x.setor === "OPERACAO")?.tasks_total || 0);
-                    const mRN = (mOp !== null && _opTot18 > 0) ? Math.ceil(parseFloat(r.tasks_total || 0) * (mOp / _opTot18) * 1.10) : null;
-                    const metaRef = isOp ? mOp : mRN;
-                    const pct = metaRef !== null ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.tasks_total} tasks</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} tasks` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTabelaTasks(tasksDigit, 18)}
             </div>
             )}
 
