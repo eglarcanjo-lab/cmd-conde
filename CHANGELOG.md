@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.50.1** — #17 Digitalização vira **percentual** (validadas/total; meta em %, ex.: 38% e não 38 tasks) na tabela e no consolidado; e o +LN rotula os produtos como **✔ comprando · EST estável · INS instável**.
+Versão atual: **v3.50.2** — #17 Digitalização (tri, %): o **mês atual entra ao vivo** (validadas/total do resumo) e jul/ago ficam **como cadastrado na aba Metas SPO**.
+
+## v3.50.2 — Digitalização tri: mês atual ao vivo, meses anteriores como cadastrado
+- No modo trimestral dos KPIs percentuais (#17), o **mês corrente** usa o valor ao vivo (Σvalidadas/Σtotais do resumo importado); **jul/ago** continuam com o que está lançado na aba Metas SPO. A média do tri combina os três.
+
+## v3.50.1 — #17 Digitalização vira **percentual** (validadas/total; meta em %, ex.: 38% e não 38 tasks) na tabela e no consolidado; e o +LN rotula os produtos como **✔ comprando · EST estável · INS instável**.
 
 ## v3.50.1 — #17 Digitalização em % + rótulos EST/INS no +LN
 - **#17 Digitalização:** passou a **percentual** — `renderTabelaTasks` ganhou modo `pct` (realizado = validadas/total, meta = % da aba Metas SPO, mesma linha de meta para todos os RNs; tri = média dos meses). Backend `SPO_REAL[18]` agora usa `pct` (consolidado compara % vs meta%). Conforme a doc: % efetivadas = validadas/total, cluster "Digitalização BEES".

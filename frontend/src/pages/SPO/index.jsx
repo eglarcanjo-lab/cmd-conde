@@ -406,11 +406,23 @@ export default function SPO() {
     if (tasksView === "trimestral") {
       const ini = spoCfg[String(kpiN)]?.inicio || INICIO_AVAL_KPI[kpiN] || "2026-07";
       const meses = MESES_TRI.filter((m) => ini <= m && m <= mesAtual);
+      // % + mês atual: usa o valor AO VIVO (Σvalidadas/Σtotais do resumo); jul/ago ficam
+      // como cadastrado na aba Metas SPO.
+      const opTri = dados.find((x) => x.setor === "OPERACAO") || {};
+      const liveTot = parseFloat(opTri[totalField] || 0);
+      const liveOpPct = pctOf(parseFloat(opTri[realField] || 0), liveTot);
+      const metaAtual = spoMetaTotal(kpiN);
       let metaTot = 0, realTot = 0, nMeta = 0, nReal = 0;
       for (const mes of meses) {
         const row = spoMetas.find((r) => String(r.item) === String(kpiN) && r.mes === mes);
-        if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; nMeta++; }
-        if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; nReal++; }
+        let metaV = (row?.meta !== "" && row?.meta != null) ? parseFloat(row.meta) : null;
+        let realV = (row?.real !== "" && row?.real != null) ? parseFloat(row.real) : null;
+        if (isPct && mes === mesAtual && liveTot > 0) {
+          realV = liveOpPct;                       // setembro ao vivo
+          if (metaV == null) metaV = metaAtual;    // meta do mês atual, se ainda não lançada
+        }
+        if (metaV != null) { metaTot += metaV; nMeta++; }
+        if (realV != null) { realTot += realV; nReal++; }
       }
       const hasMeta = nMeta > 0, hasReal = nReal > 0;
       // % → média dos meses (aprox. da média ponderada do doc); absoluto → soma.
@@ -422,7 +434,7 @@ export default function SPO() {
         <>
           {toggleTasksView}
           <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.4)", margin: "0 0 10px" }}>
-            Trimestre: {isPct ? "média dos %" : "soma"} dos meses fechados na aba <b>Metas SPO</b> ({meses.map(fmtMes).join(" · ") || "—"}). Consolidado em Operação (sem detalhe por RN).
+            Trimestre: {isPct ? "média dos meses" : "soma"} — {isPct ? <><b>{fmtMes(mesAtual)} ao vivo</b> (validadas/total do resumo); os demais como cadastrado na aba <b>Metas SPO</b></> : <>soma dos meses fechados na aba <b>Metas SPO</b></>} ({meses.map(fmtMes).join(" · ") || "—"}). Consolidado em Operação.
           </p>
           <div style={styles.tableWrap}>
             <table style={styles.table}>
