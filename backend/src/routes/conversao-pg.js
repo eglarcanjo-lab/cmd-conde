@@ -31,7 +31,100 @@ function trimestreAnterior() {
   return { meses, label: `${rot(meses[0])}–${rot(meses[2])}` };
 }
 
+// Trimestre ATUAL = quadrimestre calendário do mês corrente (ex.: set → jul/ago/set).
+// Retorna os meses do tri, o mês atual e os meses do tri já decorridos (anteriores ao atual).
+function trimestreAtual() {
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const y = d.getFullYear(), m = d.getMonth(); // m: 0-11
+  const startM = m - (m % 3); // 0,3,6,9
+  const meses = [0, 1, 2].map((k) => `${y}-${String(startM + k + 1).padStart(2, "0")}`);
+  const mesAtual = `${y}-${String(m + 1).padStart(2, "0")}`;
+  const anteriores = meses.filter((mm) => mm < mesAtual);
+  const rot = (mm) => ROT[(Number(mm.split("-")[1]) || 1) - 1];
+  return { meses, mesAtual, anteriores, label: `${rot(meses[0])}–${rot(meses[2])}` };
+}
+
 router.use(authMiddleware);
+
+// GET /api/conversao-pg/skus?q= — catálogo de SKUs (cod + nome) para o seletor.
+router.get("/skus", async (req, res) => {
+  try {
+    const prodFull = await readSheet("produtos_full").catch(() => []);
+    const q = String(req.query.q || "").trim().toLowerCase();
+    const seen = new Set();
+    let out = [];
+    prodFull.forEach((p) => {
+      const cod = normCod(p.cod);
+      const nome = String(p.nome || "").trim();
+      if (!cod || cod === "0" || seen.has(cod)) return;
+      seen.add(cod);
+      out.push({ cod, nome });
+    });
+    if (q) out = out.filter((s) => s.nome.toLowerCase().includes(q) || s.cod.includes(q));
+    out.sort((a, b) => a.nome.localeCompare(b.nome));
+    return res.json(out.slice(0, 300));
+  } catch (e) {
+    console.error("conversao-pg/skus:", e);
+    return res.json([]);
+  }
+});
+
+// GET /api/conversao-pg/comparativo?skus=cod1,cod2,cod3 — comparativo entre SKUs no tri atual.
+// Lista todos os PDVs (no escopo do usuário) que compraram ≥1 dos SKUs no trimestre atual.
+// Por SKU: "atual" (comprou este mês) · "anterior" (comprou nos meses anteriores do tri) · "nao".
+router.get("/comparativo", async (req, res) => {
+  try {
+    const skusReq = String(req.query.skus || "").split(",").map(normCod).filter((c) => c && c !== "0").slice(0, 3);
+    const { meses, mesAtual, anteriores, label } = trimestreAtual();
+    if (!skusReq.length) return res.json({ skus: [], pdvs: [], meses, mesAtual, trimestre: label, total: 0 });
+
+    const [vendasRaw, prodFull, pdvBase] = await Promise.all([
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
+      readSheet("produtos_full").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
+    ]);
+    const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
+
+    const nomePorCod = {};
+    prodFull.forEach((p) => { nomePorCod[normCod(p.cod)] = String(p.nome || "").trim(); });
+    const skus = skusReq.map((c) => ({ cod: c, nome: nomePorCod[c] || `SKU ${c}` }));
+    const skuSet = new Set(skusReq);
+
+    const diaMap = {};
+    pdvBase.forEach((p) => { const c = normCod(p.cod_pdv || p.cod); if (c) diaMap[c] = String(p.dia_visita || "").trim(); });
+
+    // Agrega compras (volume > 0) por PDV × SKU × mês.
+    const pdvs = {};
+    vendas.forEach((r) => {
+      if (num(r.volume_hl) <= 0) return;
+      const sku = normCod(r.cod_produto);
+      if (!skuSet.has(sku)) return;
+      const cod = String(r.cod_pdv || "").trim(); if (!cod) return;
+      const e = pdvs[cod] || (pdvs[cod] = { cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), setor: String(r.setor || "").trim(), porSku: {} });
+      (e.porSku[sku] = e.porSku[sku] || new Set()).add(String(r.mes_referencia || "").slice(0, 7));
+    });
+
+    const statusSku = (mesesSet) => {
+      if (!mesesSet || !mesesSet.size) return "nao";
+      if (mesesSet.has(mesAtual)) return "atual";
+      if (anteriores.some((m) => mesesSet.has(m))) return "anterior";
+      return "nao";
+    };
+
+    const pdvsOut = Object.values(pdvs)
+      .map((e) => ({
+        cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor,
+        dia_visita: diaMap[normCod(e.cod_pdv)] || "",
+        skus: skusReq.map((c) => statusSku(e.porSku[c])),
+      }))
+      .sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
+
+    return res.json({ skus, pdvs: pdvsOut, meses, mesAtual, anteriores, trimestre: label, total: pdvsOut.length });
+  } catch (e) {
+    console.error("conversao-pg/comparativo:", e);
+    return res.status(500).json({ error: "Erro ao montar o comparativo." });
+  }
+});
 
 // Núcleo reutilizável: calcula os PDVs-alvo (PG600 e PGLN) no escopo do usuário.
 async function computeConversao(user) {

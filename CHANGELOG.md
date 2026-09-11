@@ -1,6 +1,16 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.14** — AP · **Positivação (Tasks de Compra) virou número absoluto** (não % mais): ajustado no processador (parse inteiro) e no display em todo lugar — tela AP do SPO, RV do RN, simulador de RV e o form manual de AP
+Versão atual: **v3.48.0** — Conversão Pure Gold (Incentivos): analítico refeito como **Comparativo entre SKUs** — escolha até 3 SKUs e veja todos os PDVs que compraram ≥1 deles no **tri atual**, com ✔ verde (comprou este mês) / ✔ amarelo (comprou nos meses anteriores do tri) / ✘ (não comprou). Removida a aba LN.
+
+## v3.48.0 — Conversão Pure Gold vira Comparativo entre SKUs
+- Removidas as abas **PG600 / PG LN** (o "flag" com a LN).
+- Novo analítico: **seletor de até 3 SKUs** (busca por nome/código) + tabela **Cod · PDV · Setor · Dia de visita · 1 coluna por SKU**.
+- A tabela lista **todos os PDVs que compraram ≥1 dos SKUs no trimestre atual** (quadrimestre do mês corrente, ex.: jul–set).
+- Cada célula de SKU: **✔ verde** = comprou este mês · **✔ amarelo** = comprou nos meses anteriores do tri (não este mês) · **✘ vermelho** = não comprou no tri. **Legenda no cabeçalho.**
+- Filtro por setor, exportação Excel e o botão de Mensagens (motor PG600/LN) mantidos.
+- Backend: novos endpoints `GET /api/conversao-pg/skus` (catálogo p/ o seletor) e `GET /api/conversao-pg/comparativo?skus=` (respeita o perfil do usuário). Os endpoints antigos (`/` e `/mensagens`) seguem para o motor de faróis.
+
+## v3.47.14 — AP · **Positivação (Tasks de Compra) virou número absoluto** (não % mais): ajustado no processador (parse inteiro) e no display em todo lugar — tela AP do SPO, RV do RN, simulador de RV e o form manual de AP
 
 ## v3.47.14 — AP Positivação vira número absoluto (não %)
 - **Processador:** `positiv_meta/real/gap` (spo_ap_detalhe) e `tasks_compra_real/meta` (rv_ap) passaram de parse de `%` para **inteiro** (contagem de visitas positivadas).

@@ -1,24 +1,69 @@
 // Acompanhamento TEMPORÁRIO — Conversão Stella Pure Gold (dentro de Incentivos).
 // Fácil de remover: apagar este arquivo + o <ConversaoPG/> no Incentivos/index.jsx
 // + a rota /api/conversao-pg no backend.
-import { useState } from "react";
+//
+// Analítico = COMPARATIVO ENTRE SKUs: escolha até 3 SKUs; a tabela lista todos os
+// PDVs que compraram ≥1 deles no trimestre atual. Cada célula de SKU:
+//   ✔ verde   = comprou ESTE mês
+//   ✔ amarelo = comprou no tri (meses anteriores) mas não este mês
+//   ✘ vermelho = não comprou no tri
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
 
-const VERDE = "#7DBA3D";
-const check = (v) => (v ? "✔" : "✘");
+const VERDE = "#7DBA3D", AMARELO = "#f5c451", VERMELHO = "#f87171";
+const COR = { atual: VERDE, anterior: AMARELO, nao: VERMELHO };
+const MARK = { atual: "✔", anterior: "✔", nao: "✘" };
+const XTXT = { atual: "V (este mês)", anterior: "V (tri)", nao: "X" };
+const MAX = 3;
 
 export default function ConversaoPG() {
   const [aberto, setAberto] = useState(false);
-  const [d, setD] = useState(null);
+  const [skusDisp, setSkusDisp] = useState([]);   // catálogo p/ o seletor
+  const [busca, setBusca] = useState("");
+  const [sel, setSel] = useState([]);              // cods selecionados (até 3)
+  const [comp, setComp] = useState(null);          // resultado do comparativo
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
-  const [tab, setTab] = useState("pg600");
   const [rn, setRn] = useState("");
+  // Mensagens (motor de faróis PG600/LN — mantido)
   const [msgs, setMsgs] = useState(null);
   const [msgOpen, setMsgOpen] = useState(false);
   const [msgLoading, setMsgLoading] = useState(false);
   const [copiado, setCopiado] = useState("");
+
+  async function abrir() {
+    if (aberto) { setAberto(false); return; }
+    setAberto(true);
+    if (skusDisp.length) return;
+    try { const r = await api.get("/api/conversao-pg/skus", { timeout: 60000 }); setSkusDisp(r.data || []); }
+    catch { setSkusDisp([]); }
+  }
+
+  // Recarrega o comparativo sempre que a seleção muda (1 a 3 SKUs).
+  useEffect(() => {
+    if (!aberto) return;
+    if (!sel.length) { setComp(null); setErro(""); return; }
+    let cancel = false;
+    setLoading(true); setErro("");
+    api.get(`/api/conversao-pg/comparativo?skus=${sel.join(",")}`, { timeout: 60000 })
+      .then((r) => { if (!cancel) setComp(r.data); })
+      .catch((e) => { if (!cancel) setErro(e?.response?.data?.error || "Erro ao carregar."); })
+      .finally(() => { if (!cancel) setLoading(false); });
+    return () => { cancel = true; };
+  }, [sel, aberto]);
+
+  const nomeSku = (cod) => skusDisp.find((s) => s.cod === cod)?.nome || comp?.skus?.find((s) => s.cod === cod)?.nome || `SKU ${cod}`;
+  const addSku = (cod) => { if (sel.includes(cod) || sel.length >= MAX) return; setSel([...sel, cod]); setBusca(""); };
+  const remSku = (cod) => setSel(sel.filter((c) => c !== cod));
+
+  const resultadosBusca = busca.trim().length >= 2
+    ? skusDisp.filter((s) => !sel.includes(s.cod) && (s.nome.toLowerCase().includes(busca.trim().toLowerCase()) || s.cod.includes(busca.trim()))).slice(0, 25)
+    : [];
+
+  const pdvs = comp?.pdvs || [];
+  const setores = [...new Set(pdvs.map((p) => p.setor).filter(Boolean))].sort();
+  const filtrada = rn ? pdvs.filter((p) => String(p.setor) === String(rn)) : pdvs;
 
   async function verMensagens() {
     setMsgOpen(true);
@@ -32,55 +77,70 @@ export default function ConversaoPG() {
     navigator.clipboard?.writeText(texto).then(() => { setCopiado(id); setTimeout(() => setCopiado(""), 1500); }).catch(() => {});
   }
 
-  async function abrir() {
-    if (aberto) { setAberto(false); return; }
-    setAberto(true);
-    if (d) return;
-    setLoading(true); setErro("");
-    try {
-      const r = await api.get("/api/conversao-pg", { timeout: 60000 });
-      setD(r.data);
-    } catch (e) { setErro(e?.response?.data?.error || "Erro ao carregar."); }
-    finally { setLoading(false); }
-  }
-
-  const lista = tab === "pg600" ? (d?.pg600?.pdvs || []) : (d?.pgln?.pdvs || []);
-  const setores = [...new Set(lista.map((p) => p.setor).filter(Boolean))].sort();
-  const filtrada = rn ? lista.filter((p) => String(p.setor) === String(rn)) : lista;
-
   function exportar() {
-    let rows;
-    if (tab === "pg600") {
-      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita, "Última compra": p.ultima_compra, "Original 600": p.original ? "V" : "X", "Stella 600": p.stella ? "V" : "X", "Spaten 600": p.spaten ? "V" : "X", "Pure Gold 600": "X" }));
-    } else {
-      rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita, "Última compra": p.ultima_compra, "Outras LN (SKUs)": p.qtd_ln, "Pure Gold LN": "X" }));
-    }
-    if (!rows.length) { alert("Sem linhas para exportar."); return; }
+    if (!comp || !filtrada.length) { alert("Sem linhas para exportar."); return; }
+    const rows = filtrada.map((p) => {
+      const base = { "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita };
+      comp.skus.forEach((s, i) => { base[`${s.nome} (${s.cod})`] = XTXT[p.skus[i]] || "X"; });
+      return base;
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, tab === "pg600" ? "PG600" : "PGLN");
-    XLSX.writeFile(wb, `conversao_${tab}_${d?.trimestre || ""}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Comparativo SKUs");
+    XLSX.writeFile(wb, `conversao_comparativo_${comp.trimestre || ""}.xlsx`);
   }
 
   return (
     <div style={S.wrap}>
       <button style={S.head} onClick={abrir}>
-        <span style={S.headTit}>🎯 Conversão Stella Pure Gold {d ? `· ${d.trimestre}` : ""}</span>
+        <span style={S.headTit}>🎯 Conversão Stella Pure Gold {comp ? `· ${comp.trimestre}` : ""}</span>
         <span style={S.headSub}>
-          {d && !loading ? `${d.pg600.total} p/ PG600 · ${d.pgln.total} p/ PG LN` : "clique para carregar"}
+          {sel.length ? `${sel.length} SKU(s) · ${comp?.total ?? 0} PDVs` : "comparativo entre SKUs"}
           <span style={{ marginLeft: 8 }}>{aberto ? "▲" : "▼"}</span>
         </span>
       </button>
 
       {aberto && (
         <div style={S.body}>
+          {/* Seletor de SKUs */}
+          <p style={S.hint}>Escolha até {MAX} SKUs para comparar. A tabela mostra todos os PDVs que compraram ≥1 deles no trimestre atual.</p>
+          <div style={S.chips}>
+            {sel.map((c) => (
+              <span key={c} style={S.chip}>{nomeSku(c)} <b style={{ opacity: 0.6 }}>({c})</b>
+                <button style={S.chipX} onClick={() => remSku(c)}>✕</button>
+              </span>
+            ))}
+            {!sel.length && <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.8rem" }}>nenhum SKU selecionado</span>}
+          </div>
+          {sel.length < MAX && (
+            <div style={{ position: "relative", marginBottom: 12 }}>
+              <input style={S.search} placeholder="Buscar SKU por nome ou código…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+              {resultadosBusca.length > 0 && (
+                <div style={S.results}>
+                  {resultadosBusca.map((s) => (
+                    <button key={s.cod} style={S.resItem} onClick={() => addSku(s.cod)}>
+                      <span style={{ color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", marginRight: 8 }}>{s.cod}</span>{s.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {busca.trim().length >= 2 && resultadosBusca.length === 0 && <div style={S.results}><span style={{ ...S.resItem, color: "rgba(255,255,255,0.4)", cursor: "default" }}>Nenhum SKU encontrado.</span></div>}
+            </div>
+          )}
+
+          {/* Legenda */}
+          <div style={S.legend}>
+            <span><b style={{ color: VERDE }}>✔</b> comprou este mês</span>
+            <span><b style={{ color: AMARELO }}>✔</b> comprou no tri (meses anteriores)</span>
+            <span><b style={{ color: VERMELHO }}>✘</b> não comprou no tri</span>
+          </div>
+
           {loading && <div style={S.msg}>Carregando… (pode levar ~50s no plano grátis)</div>}
           {erro && <div style={S.erro}>{erro}</div>}
-          {d && !loading && (
+
+          {comp && !loading && (
             <>
               <div style={S.tabRow}>
-                <button style={tab === "pg600" ? S.tabOn : S.tab} onClick={() => setTab("pg600")}>Pure Gold 600 ({d.pg600.total})</button>
-                <button style={tab === "pgln" ? S.tabOn : S.tab} onClick={() => setTab("pgln")}>Pure Gold LN ({d.pgln.total})</button>
                 {setores.length > 1 && (
                   <select style={S.select} value={rn} onChange={(e) => setRn(e.target.value)}>
                     <option value="">Todos os setores</option>
@@ -92,20 +152,12 @@ export default function ConversaoPG() {
                 <button style={S.excel} onClick={exportar}>⤓ Excel</button>
               </div>
 
-              <p style={S.hint}>
-                {tab === "pg600"
-                  ? "PDVs que compram ≥1 das 600ml (Original/Stella/Spaten) e ainda NÃO compraram a Pure Gold 600 no trimestre."
-                  : "PDVs que compram alguma Long Neck e ainda NÃO compraram a Pure Gold LN no trimestre."}
-              </p>
-
               <div style={S.tableWrap}>
                 <table style={S.table}>
                   <thead>
                     <tr>
-                      {["Cod", "PDV", "Setor", "Dia visita", "Última compra"].map((h) => <th key={h} style={S.th}>{h}</th>)}
-                      {tab === "pg600"
-                        ? ["Original", "Stella", "Spaten"].map((h) => <th key={h} style={S.thC}>{h} 600</th>)
-                        : <th style={S.thC}>Outras LN</th>}
+                      {["Cod", "PDV", "Setor", "Dia visita"].map((h) => <th key={h} style={S.th}>{h}</th>)}
+                      {comp.skus.map((s) => <th key={s.cod} style={S.thC} title={`${s.cod} — ${s.nome}`}>{s.nome}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -115,19 +167,12 @@ export default function ConversaoPG() {
                         <td style={S.tdNome} title={p.nome_pdv}>{p.nome_pdv}</td>
                         <td style={S.tdPlain}>{p.setor}</td>
                         <td style={S.tdPlain}>{p.dia_visita || "—"}</td>
-                        <td style={S.tdPlain}>{p.ultima_compra || "—"}</td>
-                        {tab === "pg600" ? (
-                          <>
-                            <td style={{ ...S.tdC, color: p.original ? VERDE : "#f87171" }}>{check(p.original)}</td>
-                            <td style={{ ...S.tdC, color: p.stella ? VERDE : "#f87171" }}>{check(p.stella)}</td>
-                            <td style={{ ...S.tdC, color: p.spaten ? VERDE : "#f87171" }}>{check(p.spaten)}</td>
-                          </>
-                        ) : (
-                          <td style={S.tdC}>{p.qtd_ln}</td>
-                        )}
+                        {p.skus.map((st, i) => (
+                          <td key={i} style={{ ...S.tdC, color: COR[st] || VERMELHO }}>{MARK[st] || "✘"}</td>
+                        ))}
                       </tr>
                     ))}
-                    {!filtrada.length && <tr><td colSpan={tab === "pg600" ? 8 : 6} style={S.vazio}>Ninguém nesse recorte. 🎉</td></tr>}
+                    {!filtrada.length && <tr><td colSpan={4 + (comp.skus.length || 1)} style={S.vazio}>Ninguém comprou esses SKUs no trimestre. 🎉</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -182,9 +227,14 @@ const S = {
   headTit: { fontWeight: 700, fontSize: "0.95rem" },
   headSub: { fontSize: "0.78rem", color: "rgba(255,255,255,0.5)" },
   body: { padding: "14px 18px 18px" },
-  tabRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 },
-  tab: { background: "transparent", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.6)", borderRadius: 18, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem" },
-  tabOn: { background: "rgba(125,186,61,0.16)", border: "1px solid #7DBA3D", color: "#7DBA3D", borderRadius: 18, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700 },
+  chips: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10, minHeight: 30 },
+  chip: { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(125,186,61,0.16)", border: "1px solid #7DBA3D", color: "#dfeecb", borderRadius: 18, padding: "4px 8px 4px 12px", fontSize: "0.8rem" },
+  chipX: { background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: "0.85rem", padding: 0, lineHeight: 1 },
+  search: { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", padding: "8px 12px", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" },
+  results: { position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20, marginTop: 4, background: "#111c16", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, maxHeight: 260, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" },
+  resItem: { display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.85)", padding: "8px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem" },
+  legend: { display: "flex", gap: 16, flexWrap: "wrap", fontSize: "0.76rem", color: "rgba(255,255,255,0.55)", margin: "2px 0 12px", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)" },
+  tabRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 },
   select: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", padding: "6px 10px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none" },
   count: { color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" },
   msgBtn: { marginLeft: "auto", background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
@@ -200,16 +250,15 @@ const S = {
   tel: { color: "rgba(255,255,255,0.45)", fontSize: "0.76rem" },
   copy: { marginLeft: "auto", background: "rgba(37,211,102,0.14)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366", borderRadius: 7, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.76rem", fontWeight: 600 },
   ta: { width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.85)", padding: "8px 10px", fontSize: "0.78rem", fontFamily: "inherit", resize: "vertical", lineHeight: 1.4 },
-  hint: { margin: "2px 0 12px", fontSize: "0.76rem", color: "rgba(255,255,255,0.4)" },
+  hint: { margin: "2px 0 10px", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)" },
   tableWrap: { overflowX: "auto", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" },
   th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", padding: "8px 10px", textAlign: "left", whiteSpace: "nowrap", borderBottom: "1px solid rgba(255,255,255,0.08)" },
-  thC: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", padding: "8px 10px", textAlign: "center", whiteSpace: "nowrap", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  thC: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, padding: "8px 10px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", minWidth: 90 },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.05)" },
   tdPlain: { padding: "7px 10px", color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   tdNome: { padding: "7px 10px", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 240 },
-  tdRn: { padding: "7px 10px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 },
-  tdC: { padding: "7px 10px", textAlign: "center", fontWeight: 700 },
+  tdC: { padding: "7px 10px", textAlign: "center", fontWeight: 700, fontSize: "1rem" },
   vazio: { padding: 16, textAlign: "center", color: "rgba(255,255,255,0.35)" },
   msg: { color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", padding: "8px 0" },
   erro: { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", borderRadius: 8, padding: "10px 14px", fontSize: "0.85rem" },
