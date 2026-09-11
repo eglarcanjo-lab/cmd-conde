@@ -19,7 +19,7 @@ const SPO_REAL = {
   15: { aba: "spo_tasks_marketplace_resumo", campos: ["tasks_validas"] },
   16: { aba: "spo_tasks_match_resumo",     campos: ["tasks_validas"] },
   17: { aba: "spo_tasks_cerv_zero_resumo", campos: ["tasks_validas"] },
-  18: { aba: "spo_tasks_digit_resumo",     campos: ["tasks_validas"] },
+  18: { aba: "spo_tasks_digit_resumo",     campos: ["pct"] }, // % efetivadas (validadas/total) — meta em %
   19: { aba: "spo_pedido_alone_resumo",    campos: ["pdvs_alone"] },
   20: { aba: "spo_rgb_total",              campos: ["pdvs_bateu_meta"] },
   21: { aba: "spo_cupons_resumo",          campos: ["cupons_mes"] },

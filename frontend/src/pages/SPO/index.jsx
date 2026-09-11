@@ -392,44 +392,50 @@ export default function SPO() {
     const realField = opts.realField || "tasks_validas";
     const totalField = opts.totalField || "tasks_total";
     const uplift = opts.uplift ?? 1.10;
-    const unidade = opts.unidade || "tasks";
+    const isPct = !!opts.pct; // KPI percentual (ex.: Digitalização = validadas/total)
+    const unidade = opts.unidade || (isPct ? "tasks" : "tasks");
     const semDados = opts.semDados || "Importe o arquivo de tasks para calcular automaticamente.";
     if (!dados || dados.length === 0) return <p style={styles.msg}>{semDados}</p>;
 
     const thL = { ...rmTh, textAlign: "left" };
     const tdC = { ...rmTd };
     const tdL = { ...rmTd, textAlign: "left" };
+    const pctOf = (v, b) => (b > 0 ? Math.round((v / b) * 1000) / 10 : 0);
 
     // ── TRIMESTRAL — agrega em Operação pelo spo_metas (meses do tri até o atual) ──
     if (tasksView === "trimestral") {
       const ini = spoCfg[String(kpiN)]?.inicio || INICIO_AVAL_KPI[kpiN] || "2026-07";
       const meses = MESES_TRI.filter((m) => ini <= m && m <= mesAtual);
-      let metaTot = 0, realTot = 0, hasMeta = false, hasReal = false;
+      let metaTot = 0, realTot = 0, nMeta = 0, nReal = 0;
       for (const mes of meses) {
         const row = spoMetas.find((r) => String(r.item) === String(kpiN) && r.mes === mes);
-        if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; hasMeta = true; }
-        if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; hasReal = true; }
+        if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; nMeta++; }
+        if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; nReal++; }
       }
-      const ok = hasMeta && hasReal && realTot >= metaTot;
-      const pct = metaTot > 0 ? Math.round((realTot / metaTot) * 100) : 0;
+      const hasMeta = nMeta > 0, hasReal = nReal > 0;
+      // % → média dos meses (aprox. da média ponderada do doc); absoluto → soma.
+      const metaShow = !hasMeta ? null : (isPct ? Math.round((metaTot / nMeta) * 10) / 10 : metaTot);
+      const realShow = !hasReal ? null : (isPct ? Math.round((realTot / nReal) * 10) / 10 : realTot);
+      const ok = hasMeta && hasReal && realShow >= metaShow;
+      const pct = (metaShow && !isPct) ? Math.round((realShow / metaShow) * 100) : null;
       return (
         <>
           {toggleTasksView}
           <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.4)", margin: "0 0 10px" }}>
-            Trimestre: soma dos meses fechados na aba <b>Metas SPO</b> ({meses.map(fmtMes).join(" · ") || "—"}). O relatório de task não tem retroativo, então o tri é consolidado em Operação (sem detalhe por RN).
+            Trimestre: {isPct ? "média dos %" : "soma"} dos meses fechados na aba <b>Metas SPO</b> ({meses.map(fmtMes).join(" · ") || "—"}). Consolidado em Operação (sem detalhe por RN).
           </p>
           <div style={styles.tableWrap}>
             <table style={styles.table}>
               <thead>
-                <tr><th style={thL}>Nível</th><th style={rmTh}>Realizadas</th><th style={rmTh}>Progresso × Meta</th><th style={rmTh}>Meta</th><th style={rmTh}>%</th><th style={rmTh}>Status</th></tr>
+                <tr><th style={thL}>Nível</th><th style={rmTh}>{isPct ? "Realizado" : "Realizadas"}</th><th style={rmTh}>Progresso × Meta</th><th style={rmTh}>Meta</th><th style={rmTh}>%</th><th style={rmTh}>Status</th></tr>
               </thead>
               <tbody>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <td style={{ ...tdL, fontWeight: "700", color: "#7DBA3D" }}>🏭 Operação (tri)</td>
-                  <td style={{ ...tdC, fontWeight: "700" }}>{realTot}</td>
-                  <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={realTot} meta={metaTot} /></td>
-                  <td style={tdC}>{hasMeta ? metaTot : "—"}</td>
-                  <td style={{ ...tdC, fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>{hasMeta ? `${pct}%` : "—"}</td>
+                  <td style={{ ...tdC, fontWeight: "700" }}>{realShow == null ? "—" : (isPct ? `${realShow}%` : realShow)}</td>
+                  <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={realShow ?? 0} meta={metaShow ?? 0} /></td>
+                  <td style={tdC}>{metaShow == null ? "—" : (isPct ? `${metaShow}%` : metaShow)}</td>
+                  <td style={{ ...tdC, fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>{isPct ? (realShow == null ? "—" : `${realShow}%`) : (pct == null ? "—" : `${pct}%`)}</td>
                   <td style={tdC}><span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{ok ? "✅ OK" : "❌ NOK"}</span></td>
                 </tr>
               </tbody>
@@ -458,17 +464,38 @@ export default function SPO() {
             </thead>
             <tbody>
               {/* Operação (total do mês) */}
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(125,186,61,0.05)" }}>
-                <td style={{ ...tdL, fontWeight: "700", color: "#7DBA3D" }}>🏭 Operação</td>
-                <td style={{ ...tdC, fontWeight: "700" }}>{opReal}</td>
-                <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={opReal} meta={mOp ?? 0} /></td>
-                <td style={tdC}>{mOp !== null ? mOp : "—"}</td>
-                <td style={{ ...tdC, fontWeight: "700", color: mOp !== null && opReal >= mOp ? "#4ade80" : "#f87171" }}>{mOp !== null && mOp > 0 ? `${Math.round(opReal / mOp * 100)}%` : "—"}</td>
-                <td style={tdC}><span style={{ ...styles.statusTag, background: (mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: (mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "#4ade80" : "#f87171" }}>{(mOp !== null ? opReal >= mOp : opRow.ok === "OK") ? "✅ OK" : "❌ NOK"}</span></td>
-              </tr>
+              {(() => {
+                const opPct = pctOf(opReal, opTot);
+                const opShow = isPct ? opPct : opReal;
+                const opOk = mOp !== null ? opShow >= mOp : opRow.ok === "OK";
+                return (
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(125,186,61,0.05)" }}>
+                    <td style={{ ...tdL, fontWeight: "700", color: "#7DBA3D" }}>🏭 Operação</td>
+                    <td style={{ ...tdC, fontWeight: "700" }}>{isPct ? `${opPct}%` : opReal}<span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{isPct ? ` (${opReal}/${opTot})` : ""}</span></td>
+                    <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={opShow} meta={mOp ?? 0} /></td>
+                    <td style={tdC}>{mOp !== null ? (isPct ? `${mOp}%` : mOp) : "—"}</td>
+                    <td style={{ ...tdC, fontWeight: "700", color: opOk ? "#4ade80" : "#f87171" }}>{isPct ? `${opPct}%` : (mOp !== null && mOp > 0 ? `${Math.round(opReal / mOp * 100)}%` : "—")}</td>
+                    <td style={tdC}><span style={{ ...styles.statusTag, background: opOk ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: opOk ? "#4ade80" : "#f87171" }}>{opOk ? "✅ OK" : "❌ NOK"}</span></td>
+                  </tr>
+                );
+              })()}
               {linhas.map((r) => {
                 const real = parseFloat(r[realField] || 0);
                 const base = parseFloat(r[totalField] || 0);
+                if (isPct) {
+                  const pctRn = pctOf(real, base);
+                  const ok = mOp !== null ? pctRn >= mOp : r.ok === "OK";
+                  return (
+                    <tr key={r.setor} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <td style={{ ...tdL, fontWeight: "600", color: "#fff" }}>{r.setor}</td>
+                      <td style={tdC}>{pctRn}%<span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}> ({real}/{base})</span></td>
+                      <td style={{ ...tdC, minWidth: "140px" }}><BarraMeta real={pctRn} meta={mOp ?? 0} /></td>
+                      <td style={{ ...tdC, fontWeight: "700" }}>{mOp !== null ? `${mOp}%` : "—"}</td>
+                      <td style={{ ...tdC, color: ok ? "#4ade80" : "#f87171" }}>{`${pctRn}%`}</td>
+                      <td style={tdC}><span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{ok ? "✅ OK" : "❌ NOK"}</span></td>
+                    </tr>
+                  );
+                }
                 const metaRN = (mOp !== null && opTot > 0) ? Math.ceil(base * (mOp / opTot) * uplift) : null;
                 const ok = metaRN !== null ? real >= metaRN : r.ok === "OK";
                 const pct = metaRN !== null && metaRN > 0 ? Math.round(real / metaRN * 100) : parseFloat(r.pct || 0);
@@ -1430,7 +1457,10 @@ export default function SPO() {
             {(kpiAtivo === null || kpiAtivo === 18) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
-              {renderTabelaTasks(tasksDigit, 18)}
+              <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>
+                % de tarefas efetivadas = <b>validadas / total</b> (cluster Digitalização BEES). Meta em %. Tri = média ponderada dos meses.
+              </p>
+              {renderTabelaTasks(tasksDigit, 18, { pct: true })}
             </div>
             )}
 
@@ -1449,10 +1479,11 @@ export default function SPO() {
                 if (lnSoFalha) linhas = linhas.filter((d) => String(d.bateu).toUpperCase() !== "OK");
                 const flag = (v) => {
                   const s = String(v ?? "").trim().toUpperCase();
-                  if (s === "1") return { t: "✔", c: "#4ade80" };
-                  if (s === "INS") return { t: "✘", c: "#f87171" };
+                  if (s === "1") return { t: "✔", c: "#4ade80" };   // comprando
+                  if (s === "EST") return { t: "EST", c: "#f5c451" }; // estável: comprou jul-ago, não set
+                  if (s === "INS") return { t: "INS", c: "#fb923c" }; // instável: comprou jul, não ago
                   if (s === "" || s === "NAN") return { t: "—", c: "rgba(255,255,255,0.3)" };
-                  return { t: s, c: "#f5c451" }; // EST u outro
+                  return { t: s, c: "rgba(255,255,255,0.5)" };
                 };
                 const th = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap", fontSize: "0.7rem" };
                 const td = { padding: "7px 10px", textAlign: "center", whiteSpace: "nowrap" };
@@ -1468,7 +1499,7 @@ export default function SPO() {
                       <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
                         <input type="checkbox" checked={lnSoFalha} onChange={(e) => setLnSoFalha(e.target.checked)} /> Só não bateram
                       </label>
-                      <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>{linhas.length} PDVs · ✔ comprou · ✘ insuf. · EST</span>
+                      <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>{linhas.length} PDVs · ✔ comprando · EST estável (parou set) · INS instável (parou antes)</span>
                     </div>
                     <div style={{ overflowX: "auto", maxHeight: 460, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8 }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>

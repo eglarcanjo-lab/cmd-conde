@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.50.0** — +LN (SPO #19) migra para **base dedicada** (relatório +LN do BI): realizado = nº de PDVs que **bateram** (coluna Bateu), e o detalhe por PDV ganha **Gap** e **flag por produto LN** (STE, STE PG, COR, CORZ, SPT, MIC). Novo import "+LN" em Arquivos.
+Versão atual: **v3.50.1** — #17 Digitalização vira **percentual** (validadas/total; meta em %, ex.: 38% e não 38 tasks) na tabela e no consolidado; e o +LN rotula os produtos como **✔ comprando · EST estável · INS instável**.
+
+## v3.50.1 — #17 Digitalização em % + rótulos EST/INS no +LN
+- **#17 Digitalização:** passou a **percentual** — `renderTabelaTasks` ganhou modo `pct` (realizado = validadas/total, meta = % da aba Metas SPO, mesma linha de meta para todos os RNs; tri = média dos meses). Backend `SPO_REAL[18]` agora usa `pct` (consolidado compara % vs meta%). Conforme a doc: % efetivadas = validadas/total, cluster "Digitalização BEES".
+- **+LN produtos:** `1` = ✔ comprando (verde) · **EST** = estável (comprou jul-ago, não set, amarelo) · **INS** = instável (comprou jul, não ago, laranja). Legenda atualizada.
+
+## v3.50.0 — +LN (SPO #19) migra para **base dedicada** (relatório +LN do BI): realizado = nº de PDVs que **bateram** (coluna Bateu), e o detalhe por PDV ganha **Gap** e **flag por produto LN** (STE, STE PG, COR, CORZ, SPT, MIC). Novo import "+LN" em Arquivos.
 
 ## v3.50.0 — +LN via base dedicada (Bateu + Gap + produtos)
 - **Processador:** novo `processar_ln` lê o arquivo dedicado (+LN do BI, aba Export). Realizado por setor = PDVs com **Bateu=1**; grava `spo_tasks_ln_resumo` e `spo_tasks_ln_detalhe` (com `meta`, `real`, `bateu`, `gap` e status por produto `ste/ste_pg/cor/corz/spt/mic`), **acumulando por mês**. Saiu do relatório de task genérico (`_calcular_tasks_ln` removido do dispatch).
