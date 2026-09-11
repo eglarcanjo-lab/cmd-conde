@@ -27,7 +27,7 @@ const SETORES = [
 ];
 
 const KPIS_AP = [
-  { key: "tasks_compra",   label: "Tasks de Compra", pct: true  },
+  { key: "tasks_compra",   label: "Tasks de Compra", pct: false }, // contagem (visitas positivadas)
   { key: "compradores",    label: "Compradores",     pct: false }, // contagem (134 / 100)
   { key: "rota_efetiva",   label: "Rota Efetiva",    pct: true  },
   { key: "gps",            label: "GPS",             pct: true  },

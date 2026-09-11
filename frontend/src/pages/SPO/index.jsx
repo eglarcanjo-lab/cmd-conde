@@ -2057,7 +2057,7 @@ export default function SPO() {
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
                           <thead>
                             <tr>
-                              {["GV","RN","Segmento","AP OK","KPIs OK","Positiv %","Carteira","GPS %","Rota %"].map(h => (
+                              {["GV","RN","Segmento","AP OK","KPIs OK","Positivação","Carteira","GPS %","Rota %"].map(h => (
                                 <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
                               ))}
                             </tr>
@@ -2077,7 +2077,7 @@ export default function SPO() {
                                   <td style={{ padding: "7px 10px", textAlign: "center" }}>
                                     <span style={{ color: corKPI, fontWeight: "700" }}>{r.kpis_ok}/4</span>
                                   </td>
-                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.positiv_real) >= parseFloat(r.positiv_meta) ? "#4ade80" : "#f87171" }}>{r.positiv_real !== null ? `${r.positiv_real}%` : "—"}</td>
+                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.positiv_real) >= parseFloat(r.positiv_meta) ? "#4ade80" : "#f87171" }}>{r.positiv_real !== null && r.positiv_real !== "" ? r.positiv_real : "—"}</td>
                                   <td style={{ padding: "7px 10px", textAlign: "center", color: parseInt(r.carteira_real) >= parseInt(r.carteira_meta) ? "#4ade80" : "#f87171" }}>{r.carteira_real || "—"}</td>
                                   <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.gps_real) >= parseFloat(r.gps_meta) ? "#4ade80" : "#f87171" }}>{r.gps_real !== null ? `${r.gps_real}%` : "—"}</td>
                                   <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.rota_real) >= parseFloat(r.rota_meta) ? "#4ade80" : "#f87171" }}>{r.rota_real !== null ? `${r.rota_real}%` : "—"}</td>

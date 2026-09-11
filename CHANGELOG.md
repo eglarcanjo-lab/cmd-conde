@@ -1,6 +1,16 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.47.13** — SPO KPI #18 (Atendimento Produtivo): **cards por mês do tri** (clique troca o mês) + a tabela de AP de todos os RNs **ordenada por setor crescente**; o processador passa a **acumular o AP por mês** (spo_ap_detalhe/resumo via sobrescrever_por_mes) — reimportar cada mês do tri para popular os cards
+Versão atual: **v3.47.14** — AP · **Positivação (Tasks de Compra) virou número absoluto** (não % mais): ajustado no processador (parse inteiro) e no display em todo lugar — tela AP do SPO, RV do RN, simulador de RV e o form manual de AP
+
+## v3.47.14 — AP Positivação vira número absoluto (não %)
+- **Processador:** `positiv_meta/real/gap` (spo_ap_detalhe) e `tasks_compra_real/meta` (rv_ap) passaram de parse de `%` para **inteiro** (contagem de visitas positivadas).
+- **Tela SPO (KPI 18):** coluna "Positiv %" → **"Positivação"**, valor sem `%`.
+- **RV (RN):** Tasks de Compra e Compradores agora mostram **número** (não `%`); os counts deixam de aparecer como "134,0%".
+- **Simulador de RV:** `tasks_compra` marcado como não-percentual.
+- **Form manual de AP (admin):** cabeçalhos "Real/Meta" (sem `%`) para Tasks de Compra e Compradores.
+- Sem mudança no RV/Relatório (já exibia esses pilares como inteiros).
+
+## v3.47.13 — SPO KPI #18 (Atendimento Produtivo): **cards por mês do tri** (clique troca o mês) + a tabela de AP de todos os RNs **ordenada por setor crescente**; o processador passa a **acumular o AP por mês** (spo_ap_detalhe/resumo via sobrescrever_por_mes) — reimportar cada mês do tri para popular os cards
 
 ## v3.47.13 — Auditoria visual SPO (KPI #18 — Atendimento Produtivo)
 - Topo agora tem **um card por mês do trimestre** (Jul · Ago · Set) com o AP% de operação daquele mês; clicar troca o mês exibido.

@@ -16,8 +16,8 @@ const SETORES = [
 ];
 
 const KPIS = [
-  { key: "tasks_compra", label: "Tasks de Compra" },
-  { key: "compradores", label: "Compradores" },
+  { key: "tasks_compra", label: "Tasks de Compra", abs: true }, // número absoluto (visitas positivadas)
+  { key: "compradores", label: "Compradores", abs: true },      // contagem
   { key: "rota_efetiva", label: "Rota Efetiva" },
   { key: "gps", label: "GPS" },
 ];
@@ -134,8 +134,8 @@ export default function AtendimentoProdutivo() {
                 <th style={styles.thSub} colSpan={3}/>
                 {KPIS.map((k) => (
                   <>
-                    <th key={`${k.key}_r`} style={styles.thSub}>Real %</th>
-                    <th key={`${k.key}_m`} style={styles.thSub}>Meta %</th>
+                    <th key={`${k.key}_r`} style={styles.thSub}>{k.abs ? "Real" : "Real %"}</th>
+                    <th key={`${k.key}_m`} style={styles.thSub}>{k.abs ? "Meta" : "Meta %"}</th>
                   </>
                 ))}
                 <th style={styles.thSub}/>

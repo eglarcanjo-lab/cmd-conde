@@ -13,8 +13,8 @@ const PESOS = {
 };
 
 const KPIS_AP = [
-  { key: "tasks_compra", label: "Tasks de Compra" },
-  { key: "compradores", label: "Compradores" },
+  { key: "tasks_compra", label: "Tasks de Compra", abs: true }, // número absoluto (visitas positivadas)
+  { key: "compradores", label: "Compradores", abs: true },      // contagem
   { key: "rota_efetiva", label: "Rota Efetiva" },
   { key: "gps", label: "GPS" },
 ];
@@ -146,9 +146,9 @@ export default function RV() {
                     <div key={kpi.key} style={{ ...styles.apKpi, borderColor: ok ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)" }}>
                       <span style={styles.apKpiLabel}>{kpi.label}</span>
                       <span style={{ fontSize: "1.3rem", fontWeight: "700", color: ok ? "#4ade80" : "#f87171" }}>
-                        {real.toFixed(1)}%
+                        {kpi.abs ? Math.round(real) : `${real.toFixed(1)}%`}
                       </span>
-                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>meta: {meta.toFixed(1)}%</span>
+                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>meta: {kpi.abs ? Math.round(meta) : `${meta.toFixed(1)}%`}</span>
                       <span style={{ fontSize: "1rem" }}>{ok ? "✅" : "❌"}</span>
                     </div>
                   );
