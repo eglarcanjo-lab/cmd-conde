@@ -101,6 +101,8 @@ export default function SPO() {
   const [tasksDigit, setTasksDigit] = useState([]);
   const [tasksLn, setTasksLn] = useState([]);
   const [tasksLnDet, setTasksLnDet] = useState([]);
+  const [lnRN, setLnRN] = useState("TODOS");
+  const [lnSoFalha, setLnSoFalha] = useState(false);
   const [alone, setAlone] = useState([]);
   const [aloneDetalhe, setAloneDetalhe] = useState([]);
   const [aloneView, setAloneView] = useState("mensal");
@@ -1437,27 +1439,70 @@ export default function SPO() {
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 19 — +LN · Task SKU/PDV de Long Neck HE</h3>
               <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
-                Nº absoluto de tasks de SKU/PDV de Long Neck HE (Corona, Corona Cero, Stella, Stella Pure Gold, Spaten, Michelob) concluídas, acumulado no tri. Base = PDVs que receberam a task.
+                Realizado = nº de PDVs que <b>bateram</b> a task (compraram a meta de SKUs distintos de Long Neck HE). Marcas: Stella (STE), Stella Pure Gold (STE PG), Corona (COR), Corona Cero (CORZ), Spaten (SPT), Michelob (MIC).
               </p>
               {renderTabelaTasks(tasksLn, 27)}
-              {tasksLnDet.length > 0 && (
-                <div style={{ marginTop: 14, overflowX: "auto", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
-                    <thead><tr>{["RN","PDV","Nome","Dia","Status Task"].map((h) => <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-                    <tbody>
-                      {tasksLnDet.map((r, i) => (
-                        <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
-                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
-                          <td style={{ padding: "7px 10px", color: "rgba(255,255,255,0.7)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nome_pdv}</td>
-                          <td style={{ padding: "7px 10px", color: "#4ade80" }}>{r.dia_visita}</td>
-                          <td style={{ padding: "7px 10px" }}><span style={{ color: r.status_task === "OPEN" ? "#7DBA3D" : "#f87171", fontWeight: 600, fontSize: "0.74rem" }}>{r.status_task}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {tasksLnDet.length > 0 && (() => {
+                const rns = [...new Set(tasksLnDet.map((d) => d.setor))].sort();
+                let linhas = tasksLnDet;
+                if (lnRN !== "TODOS") linhas = linhas.filter((d) => d.setor === lnRN);
+                if (lnSoFalha) linhas = linhas.filter((d) => String(d.bateu).toUpperCase() !== "OK");
+                const flag = (v) => {
+                  const s = String(v ?? "").trim().toUpperCase();
+                  if (s === "1") return { t: "✔", c: "#4ade80" };
+                  if (s === "INS") return { t: "✘", c: "#f87171" };
+                  if (s === "" || s === "NAN") return { t: "—", c: "rgba(255,255,255,0.3)" };
+                  return { t: s, c: "#f5c451" }; // EST u outro
+                };
+                const th = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap", fontSize: "0.7rem" };
+                const td = { padding: "7px 10px", textAlign: "center", whiteSpace: "nowrap" };
+                const PRODS = [["ste","STE"],["ste_pg","STE PG"],["cor","COR"],["corz","CORZ"],["spt","SPT"],["mic","MIC"]];
+                return (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>📋 Detalhe por PDV</span>
+                      <select value={lnRN} onChange={(e) => setLnRN(e.target.value)} style={{ background: "#13231a", color: "#fff", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 6, padding: "4px 8px", fontSize: "0.78rem" }}>
+                        <option value="TODOS">Todos os setores</option>
+                        {rns.map((s) => <option key={s} value={s}>Setor {s}</option>)}
+                      </select>
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+                        <input type="checkbox" checked={lnSoFalha} onChange={(e) => setLnSoFalha(e.target.checked)} /> Só não bateram
+                      </label>
+                      <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>{linhas.length} PDVs · ✔ comprou · ✘ insuf. · EST</span>
+                    </div>
+                    <div style={{ overflowX: "auto", maxHeight: 460, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                        <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+                          <tr>
+                            {["Setor","PDV","Nome","Dia","Bateu","Meta","Real","Gap"].map((h) => <th key={h} style={{ ...th, textAlign: h === "Nome" ? "left" : "center" }}>{h}</th>)}
+                            {PRODS.map(([,l]) => <th key={l} style={th}>{l}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {linhas.slice(0, 500).map((r, i) => {
+                            const ok = String(r.bateu).toUpperCase() === "OK";
+                            const gap = parseInt(r.gap) || 0;
+                            return (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.75)", maxWidth: 170, overflow: "hidden", textOverflow: "ellipsis" }}>{r.nome_pdv}</td>
+                                <td style={{ ...td, color: "#4ade80", fontSize: "0.72rem" }}>{r.dia_visita || "—"}</td>
+                                <td style={td}><span style={{ padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>{r.bateu}</span></td>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{r.meta}</td>
+                                <td style={{ ...td, fontWeight: 700 }}>{r.real}</td>
+                                <td style={{ ...td, color: gap > 0 ? "#f5c451" : "rgba(255,255,255,0.35)", fontWeight: gap > 0 ? 700 : 400 }}>{gap > 0 ? gap : "—"}</td>
+                                {PRODS.map(([k]) => { const f = flag(r[k]); return <td key={k} style={{ ...td, color: f.c, fontWeight: 700, fontSize: f.t.length > 1 ? "0.68rem" : "0.9rem" }}>{f.t}</td>; })}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {linhas.length > 500 && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginTop: 6 }}>Mostrando 500 de {linhas.length}. Use os filtros.</p>}
+                  </div>
+                );
+              })()}
             </div>
             )}
 

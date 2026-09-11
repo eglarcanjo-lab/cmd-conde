@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.49.3** — Scanntech (SPO #22) [processador]: passa a **acumular por mês** (`sobrescrever_por_mes`) em vez de sobrescrever tudo — importar julho não apaga mais os outros meses. Como o arquivo não tem coluna de mês, use o campo **"Mês de referência"** no import para meses passados (fallback = mês atual, Brasília).
+Versão atual: **v3.50.0** — +LN (SPO #19) migra para **base dedicada** (relatório +LN do BI): realizado = nº de PDVs que **bateram** (coluna Bateu), e o detalhe por PDV ganha **Gap** e **flag por produto LN** (STE, STE PG, COR, CORZ, SPT, MIC). Novo import "+LN" em Arquivos.
+
+## v3.50.0 — +LN via base dedicada (Bateu + Gap + produtos)
+- **Processador:** novo `processar_ln` lê o arquivo dedicado (+LN do BI, aba Export). Realizado por setor = PDVs com **Bateu=1**; grava `spo_tasks_ln_resumo` e `spo_tasks_ln_detalhe` (com `meta`, `real`, `bateu`, `gap` e status por produto `ste/ste_pg/cor/corz/spt/mic`), **acumulando por mês**. Saiu do relatório de task genérico (`_calcular_tasks_ln` removido do dispatch).
+- **Novo import "+LN"** (campo `spo_ln`) em Admin → Arquivos, com o link do BI. Backend `uploadFields`/`CAMPOS` atualizados (26=26).
+- **Tela SPO #19:** detalhe por PDV com **Setor · PDV · Nome · Dia · Bateu · Meta · Real · Gap · STE · STE PG · COR · CORZ · SPT · MIC** (✔ comprou · ✘ insuf. · EST), filtros por setor e "só não bateram".
+
+## v3.49.3 — Scanntech (SPO #22) [processador]: passa a **acumular por mês** (`sobrescrever_por_mes`) em vez de sobrescrever tudo — importar julho não apaga mais os outros meses. Como o arquivo não tem coluna de mês, use o campo **"Mês de referência"** no import para meses passados (fallback = mês atual, Brasília).
 
 ## v3.49.3 — Scanntech acumula por mês (fix "importa julho e sai setembro")
 - **Processador:** `spo_scanntech_resumo`/`detalhe` agora usam **`sobrescrever_por_mes`** (mantém os demais meses ao importar um). Antes, `sobrescrever_aba` apagava tudo → só o último import sobrevivia.
