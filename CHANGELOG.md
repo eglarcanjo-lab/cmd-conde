@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.48.1** — Correção do v3.48.0: a **Conversão Stella (Incentivos)** volta a ser só **PG600** (removido só o botão da Long Neck). O **Comparativo entre SKUs** foi para o lugar certo: **Cobertura & Distribuição → Analítico**, que agora funciona nessa forma comparativa (até 3 SKUs, tri, ✔ verde/amarelo · ✘).
+Versão atual: **v3.48.2** — Mensagens da Conversão PG viram **diárias por dia de visita**: título "Base foco Stella Pure Gold" + data, "Dia de visita {hoje}", listando só os PDVs (PG600) cujo dia de visita é hoje (`?dia=` para testar outro dia). Na aba Incentivos, adicionado o **filtro por dia de visita** na tabela.
+
+## v3.48.2 — Mensagens diárias (base foco por dia de visita) + flag de dia em Incentivos
+- **Motor de mensagens (`/api/conversao-pg/mensagens`):** novo formato — `🍺 *Base foco Stella Pure Gold* {data}` · `Setor X · Nome` · `Dia de visita {hoje}`, seção **Pure Gold 600** listando `• cod nome — últ. compra dd/mm/aaaa`. **Filtra pelos PDVs cujo dia de visita é hoje** (mensagem diária de ação); só aparecem RNs/GVs com PDV no dia. Removida a seção Long Neck. Aceita `?dia=SEG..SAB` para teste.
+- **Incentivos › Conversão Stella Pure Gold:** adicionado o **flag/filtro por dia de visita** (botões Seg–Sáb) na tabela PG600, junto do filtro de setor.
+- Modal de mensagens agora mostra a **data e o dia** no cabeçalho.
+
+## v3.48.1 — Correção do v3.48.0: a **Conversão Stella (Incentivos)** volta a ser só **PG600** (removido só o botão da Long Neck). O **Comparativo entre SKUs** foi para o lugar certo: **Cobertura & Distribuição → Analítico**, que agora funciona nessa forma comparativa (até 3 SKUs, tri, ✔ verde/amarelo · ✘).
 
 ## v3.48.1 — Comparativo de SKUs vai para Cobertura › Analítico (ajuste do v3.48.0)
 - **Incentivos › Conversão Stella Pure Gold:** revertida para **só PG600** (a tabela do PG600 estava certa); removido apenas o botão/aba **Long Neck**. Mensagens (RN/GV) e Excel mantidos.

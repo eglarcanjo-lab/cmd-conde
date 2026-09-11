@@ -113,58 +113,79 @@ router.get("/", async (req, res) => {
 
 // ─── MOTOR DE FARÓIS — mensagens prontas por RN e por GV (texto p/ WhatsApp) ──
 // Não envia nada: só gera o texto consolidado. O canal (link/robô/API) fica p/ depois.
-const CAP = 25; // limite de PDVs listados por seção na mensagem (evita texto gigante)
+// A mensagem é DIÁRIA: lista só os PDVs cujo DIA DE VISITA é o dia escolhido (hoje por padrão).
+const CAP = 40; // limite de PDVs listados na mensagem (evita texto gigante)
 
-function textoRN(setor, nome, dados) {
-  const pg = dados.pg600.pdvs.filter((p) => p.setor === setor);
-  const ln = dados.pgln.pdvs.filter((p) => p.setor === setor);
-  const linha = (p) => `• ${p.cod_pdv} ${p.nome_pdv}` +
-    (p.dia_visita ? ` — visita ${p.dia_visita}` : "") +
-    (p.ultima_compra ? ` — últ. compra ${p.ultima_compra}` : "");
-  const secao = (titulo, lista) => {
-    if (!lista.length) return `${titulo}: nenhum 👍`;
+// Normalização do dia de visita (espelha o front) → SEG/TER/QUA/QUI/SEX/SAB/DOM.
+const DIA_NORM = {
+  SEG: "SEG", SEGUNDA: "SEG", "SEGUNDA-FEIRA": "SEG", "2": "SEG",
+  TER: "TER", TERCA: "TER", "TERÇA": "TER", "TERCA-FEIRA": "TER", "TERÇA-FEIRA": "TER", "3": "TER",
+  QUA: "QUA", QUARTA: "QUA", "QUARTA-FEIRA": "QUA", "4": "QUA",
+  QUI: "QUI", QUINTA: "QUI", "QUINTA-FEIRA": "QUI", "5": "QUI",
+  SEX: "SEX", SEXTA: "SEX", "SEXTA-FEIRA": "SEX", "6": "SEX",
+  SAB: "SAB", SABADO: "SAB", "SÁBADO": "SAB", "7": "SAB",
+  DOM: "DOM", DOMINGO: "DOM", "1": "DOM",
+};
+const normDia = (raw) => { const s = String(raw || "").trim().toUpperCase().split(/[\/,; \-]/)[0].trim(); return DIA_NORM[s] || s; };
+const DIA_KEYS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+const DIA_LABEL = { DOM: "Domingo", SEG: "Segunda-feira", TER: "Terça-feira", QUA: "Quarta-feira", QUI: "Quinta-feira", SEX: "Sexta-feira", SAB: "Sábado" };
+
+// Resolve o "dia alvo": ?dia=SEG..SAB (para teste) ou o dia de hoje (America/Sao_Paulo).
+function resolverDia(diaParam) {
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const dataBR = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  const forcado = normDia(diaParam);
+  const diaKey = DIA_KEYS.includes(forcado) ? forcado : DIA_KEYS[d.getDay()];
+  return { dataBR, diaKey, diaLabel: DIA_LABEL[diaKey] || diaKey };
+}
+
+function textoRN(setor, nome, dados, hoje) {
+  const pg = dados.pg600.pdvs.filter((p) => p.setor === setor && normDia(p.dia_visita) === hoje.diaKey);
+  const linha = (p) => `• ${p.cod_pdv} ${p.nome_pdv}` + (p.ultima_compra ? ` — últ. compra ${p.ultima_compra}` : "");
+  const secao = (lista) => {
+    if (!lista.length) return "PDVs: nenhum hoje 👍";
     const corpo = lista.slice(0, CAP).map(linha).join("\n");
     const resto = lista.length > CAP ? `\n… e mais ${lista.length - CAP}` : "";
-    return `${titulo} (${lista.length}):\n${corpo}${resto}`;
+    return `PDVs (${lista.length}):\n${corpo}${resto}`;
   };
   return [
-    `🍺 *Conversão Stella Pure Gold* — ${dados.trimestre}`,
+    `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
     `Setor ${setor}${nome ? ` · ${nome}` : ""}`,
+    `Dia de visita ${hoje.diaLabel}`,
     "",
-    `*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600`,
-    secao("PDVs", pg),
-    "",
-    `*Pure Gold LN* — compram outra Long Neck e ainda não a PG LN`,
-    secao("PDVs", ln),
+    "*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600",
+    secao(pg),
   ].join("\n");
 }
 
-function textoGV(setores, nomeGV, dados, nomePorSetor) {
-  const cont = (arr) => arr.reduce((m, p) => { m[p.setor] = (m[p.setor] || 0) + 1; return m; }, {});
-  const cpg = cont(dados.pg600.pdvs), cln = cont(dados.pgln.pdvs);
-  const totPg = dados.pg600.pdvs.filter((p) => setores.includes(p.setor)).length;
-  const totLn = dados.pgln.pdvs.filter((p) => setores.includes(p.setor)).length;
+function textoGV(setores, nomeGV, dados, nomePorSetor, hoje) {
+  const pgHoje = dados.pg600.pdvs.filter((p) => normDia(p.dia_visita) === hoje.diaKey);
+  const cont = pgHoje.reduce((m, p) => { m[p.setor] = (m[p.setor] || 0) + 1; return m; }, {});
+  const tot = pgHoje.filter((p) => setores.includes(p.setor)).length;
   const linhas = setores
-    .map((s) => ({ s, pg: cpg[s] || 0, ln: cln[s] || 0 }))
-    .filter((x) => x.pg || x.ln)
-    .sort((a, b) => (b.pg + b.ln) - (a.pg + a.ln))
-    .map((x) => `• ${x.s} ${nomePorSetor[x.s] || ""} — PG600 ${x.pg} · PG LN ${x.ln}`.replace("  ", " "));
+    .map((s) => ({ s, pg: cont[s] || 0 }))
+    .filter((x) => x.pg)
+    .sort((a, b) => b.pg - a.pg)
+    .map((x) => `• ${x.s} ${nomePorSetor[x.s] || ""} — PG600 ${x.pg}`.replace("  ", " "));
   return [
-    `🍺 *Conversão Stella Pure Gold* — ${dados.trimestre}`,
-    `Consolidado ${nomeGV || "GV"}`,
-    `Total a converter: *PG600 ${totPg}* · *PG LN ${totLn}*`,
+    `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
+    `Consolidado ${nomeGV || "GV"} · ${hoje.diaLabel}`,
+    `Total foco hoje: *PG600 ${tot}*`,
     "",
     "Por RN:",
-    linhas.length ? linhas.join("\n") : "• (sem PDVs no recorte)",
+    linhas.length ? linhas.join("\n") : "• (sem PDVs no dia de hoje)",
   ].join("\n");
 }
 
 router.get("/mensagens", async (req, res) => {
   try {
+    const hoje = resolverDia(req.query.dia);
     const dados = await computeConversao(req.user);
     const usuarios = await readSheet("usuarios").catch(() => []);
-    // Setores presentes nos alvos, dentro do escopo já aplicado em computeConversao.
-    const setores = [...new Set([...dados.pg600.pdvs, ...dados.pgln.pdvs].map((p) => p.setor).filter(Boolean))].sort();
+    // Só RNs com PDV-alvo cujo dia de visita é o dia escolhido (hoje por padrão).
+    const setores = [...new Set(
+      dados.pg600.pdvs.filter((p) => normDia(p.dia_visita) === hoje.diaKey).map((p) => p.setor).filter(Boolean)
+    )].sort();
     const infoSetor = {}; // setor -> {nome, telefone}
     const nomePorSetor = {};
     usuarios.forEach((u) => {
@@ -174,7 +195,7 @@ router.get("/mensagens", async (req, res) => {
 
     const rn = setores.map((s) => ({
       setor: s, nome: infoSetor[s]?.nome || "", telefone: infoSetor[s]?.telefone || "",
-      texto: textoRN(s, infoSetor[s]?.nome || "", dados),
+      texto: textoRN(s, infoSetor[s]?.nome || "", dados, hoje),
     }));
 
     // GV: agrupa por prefixo do setor (1xx = GV1, 3xx = GV3), acha o usuário GV.
@@ -185,10 +206,10 @@ router.get("/mensagens", async (req, res) => {
       const perfilGV = perfilDoPrefixo[prefixo];
       const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilGV && String(u.telefone || "").trim());
       const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
-      return { grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto: textoGV(sets, nomeGV, dados, nomePorSetor) };
+      return { grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto: textoGV(sets, nomeGV, dados, nomePorSetor, hoje) };
     });
 
-    return res.json({ trimestre: dados.trimestre, rn, gv });
+    return res.json({ data: hoje.dataBR, dia: hoje.diaLabel, rn, gv });
   } catch (e) {
     console.error("conversao-pg/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar mensagens." });

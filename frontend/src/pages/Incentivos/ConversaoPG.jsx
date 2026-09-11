@@ -9,12 +9,27 @@ import api from "../../services/api";
 const VERDE = "#7DBA3D";
 const check = (v) => (v ? "✔" : "✘");
 
+const DIAS = [
+  { key: "SEG", label: "Seg" }, { key: "TER", label: "Ter" }, { key: "QUA", label: "Qua" },
+  { key: "QUI", label: "Qui" }, { key: "SEX", label: "Sex" }, { key: "SAB", label: "Sáb" },
+];
+const DIA_MAP = {
+  SEG: "SEG", SEGUNDA: "SEG", "SEGUNDA-FEIRA": "SEG", "2": "SEG",
+  TER: "TER", TERCA: "TER", "TERÇA": "TER", "TERCA-FEIRA": "TER", "TERÇA-FEIRA": "TER", "3": "TER",
+  QUA: "QUA", QUARTA: "QUA", "QUARTA-FEIRA": "QUA", "4": "QUA",
+  QUI: "QUI", QUINTA: "QUI", "QUINTA-FEIRA": "QUI", "5": "QUI",
+  SEX: "SEX", SEXTA: "SEX", "SEXTA-FEIRA": "SEX", "6": "SEX",
+  SAB: "SAB", SABADO: "SAB", "SÁBADO": "SAB", "7": "SAB",
+};
+const normalizeDia = (raw) => { const s = String(raw || "").trim().toUpperCase().split(/[\/,; \-]/)[0].trim(); return DIA_MAP[s] || s; };
+
 export default function ConversaoPG() {
   const [aberto, setAberto] = useState(false);
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [rn, setRn] = useState("");
+  const [fltDia, setFltDia] = useState("");
   const [msgs, setMsgs] = useState(null);
   const [msgOpen, setMsgOpen] = useState(false);
   const [msgLoading, setMsgLoading] = useState(false);
@@ -46,7 +61,10 @@ export default function ConversaoPG() {
 
   const lista = d?.pg600?.pdvs || [];
   const setores = [...new Set(lista.map((p) => p.setor).filter(Boolean))].sort();
-  const filtrada = rn ? lista.filter((p) => String(p.setor) === String(rn)) : lista;
+  const filtrada = lista.filter((p) =>
+    (!rn || String(p.setor) === String(rn)) &&
+    (!fltDia || normalizeDia(p.dia_visita) === fltDia)
+  );
 
   function exportar() {
     const rows = filtrada.map((p) => ({ "Cod PDV": p.cod_pdv, "PDV": p.nome_pdv, "Setor": p.setor, "Dia visita": p.dia_visita, "Última compra": p.ultima_compra, "Original 600": p.original ? "V" : "X", "Stella 600": p.stella ? "V" : "X", "Spaten 600": p.spaten ? "V" : "X", "Pure Gold 600": "X" }));
@@ -80,6 +98,12 @@ export default function ConversaoPG() {
                     {setores.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
+                <div style={S.diaBtns}>
+                  {DIAS.map((dd) => (
+                    <button key={dd.key} type="button" onClick={() => setFltDia(fltDia === dd.key ? "" : dd.key)}
+                      style={fltDia === dd.key ? S.diaOn : S.dia}>{dd.label}</button>
+                  ))}
+                </div>
                 <span style={S.count}>{filtrada.length} PDVs</span>
                 <button style={S.msgBtn} onClick={verMensagens}>📱 Mensagens (RN/GV)</button>
                 <button style={S.excel} onClick={exportar}>⤓ Excel</button>
@@ -123,7 +147,7 @@ export default function ConversaoPG() {
         <div style={S.ovl} onClick={(e) => e.target === e.currentTarget && setMsgOpen(false)}>
           <div style={S.modal}>
             <div style={S.modalHead}>
-              <span style={{ fontWeight: 700 }}>📱 Mensagens prontas {msgs?.trimestre ? `· ${msgs.trimestre}` : ""}</span>
+              <span style={{ fontWeight: 700 }}>📱 Mensagens do dia {msgs?.data ? `· ${msgs.data}${msgs.dia ? ` · ${msgs.dia}` : ""}` : ""}</span>
               <button style={S.x} onClick={() => setMsgOpen(false)}>✕</button>
             </div>
             <div style={S.modalBody}>
@@ -167,6 +191,9 @@ const S = {
   body: { padding: "14px 18px 18px" },
   tabRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 },
   select: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", padding: "6px 10px", fontSize: "0.82rem", fontFamily: "inherit", outline: "none" },
+  diaBtns: { display: "flex", gap: 4, flexWrap: "wrap" },
+  dia: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", borderRadius: 14, padding: "5px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.76rem" },
+  diaOn: { background: "rgba(125,186,61,0.15)", border: "1px solid rgba(125,186,61,0.45)", color: "#7DBA3D", borderRadius: 14, padding: "5px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.76rem", fontWeight: 700 },
   count: { color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" },
   msgBtn: { marginLeft: "auto", background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
   excel: { background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#4ade80", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600 },
