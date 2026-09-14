@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.56.1** — Farol Volumes: números de HL com separador de milhar (`1.128,7`) pra não ficarem grudados.
+Versão atual: **v3.56.2** — Farol Volumes: **Mktp é R$** (faturamento), não HL. Foto do Mktp com colunas `(R$)` e valores `R$ …`; na foto do RN o Mktp vira linha em R$ e o `TOTAL (HL)` soma só as categorias de volume.
+
+## v3.56.2 — Farol Volumes: Mktp em R$ (faturamento), não HL
+- Cada categoria tem `unit`: Cerveja/NAB/Match = **HL**, Mktp = **R$**. Formatação e rótulos de coluna seguem a unidade (`Meta (HL)` vs `Meta (R$)`, valor `318,4` vs `R$ 9.100,00`).
+- Diretor/GV: a foto do Mktp sai toda em R$. RN: Mktp é uma linha `Mktp (R$)`; o `TOTAL (HL)` soma só Cerveja+NAB+Match (não mistura unidade).
 
 ## v3.56.1 — Farol Volumes: separador de milhar nos HL
 - `hl()` passou a formatar em pt-BR com agrupamento de milhar (`toLocaleString`), então valores grandes (Meta/Real/Tend) saem legíveis (`1.128,7` em vez de `1128,7`).

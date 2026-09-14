@@ -12,41 +12,46 @@ const { filtrarPorPerfil } = require("../utils/perfil");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const brl = (n) => "R$ " + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Formata conforme a unidade da categoria: HL (volume) ou R$ (marketplace = faturamento).
+const fmtU = (n, unit) => (unit === "R$" ? brl(n) : hl(n));
 const pad = (n) => String(n).padStart(2, "0");
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
+// Mktp (marketplace) é FATURAMENTO em R$; as demais são VOLUME em HL.
 const CATS = [
-  { key: "cerveja", label: "Cerveja", real: "real_cerveja", meta: "meta_cerveja" },
-  { key: "nab", label: "NAB", real: "real_nab", meta: "meta_nab" },
-  { key: "match", label: "Match", real: "real_match", meta: "meta_match" },
-  { key: "mktp", label: "Mktp", real: "real_marketplace", meta: "meta_marketplace" },
+  { key: "cerveja", label: "Cerveja", real: "real_cerveja", meta: "meta_cerveja", unit: "HL" },
+  { key: "nab", label: "NAB", real: "real_nab", meta: "meta_nab", unit: "HL" },
+  { key: "match", label: "Match", real: "real_match", meta: "meta_match", unit: "HL" },
+  { key: "mktp", label: "Mktp", real: "real_marketplace", meta: "meta_marketplace", unit: "R$" },
 ];
 
 // % da meta → cor: ≥100 verde (up) · 70–99 âmbar (mid) · <70 vermelho (down).
 const sinalPct = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
 
-// Formata um trio meta/real/tendência com os % (real/meta e tend/meta) já coloridos.
-function vol(meta, real, tend) {
+// Formata um trio meta/real/tendência (na unidade dada) com os % já coloridos.
+function vol(meta, real, tend, unit = "HL") {
   const pctR = meta > 0 ? Math.round((real / meta) * 100) : null;
   const pctT = meta > 0 ? Math.round((tend / meta) * 100) : null;
   return {
-    meta: hl(meta), real: hl(real), tend: hl(tend),
+    meta: fmtU(meta, unit), real: fmtU(real, unit), tend: fmtU(tend, unit),
     pctReal: pctR == null ? "—" : `${pctR}%`, pctTend: pctT == null ? "—" : `${pctT}%`,
     _cores: { pctReal: sinalPct(pctR), pctTend: sinalPct(pctT) },
   };
 }
 
-// Colunas do painel. Por RN (diretor/GV) e por categoria (RN).
-const colPorRn = [
+// Colunas do painel. Por RN (diretor/GV) — unidade da categoria no rótulo.
+const colPorRn = (unit) => [
   { key: "setor", label: "Setor" }, { key: "rn", label: "RN" },
-  { key: "meta", label: "Meta (HL)" }, { key: "real", label: "Real (HL)" }, { key: "pctReal", label: "% Meta" },
-  { key: "tend", label: "Tend (HL)" }, { key: "pctTend", label: "% Tend" },
+  { key: "meta", label: `Meta (${unit})` }, { key: "real", label: `Real (${unit})` }, { key: "pctReal", label: "% Meta" },
+  { key: "tend", label: `Tend (${unit})` }, { key: "pctTend", label: "% Tend" },
 ];
+// Por categoria (RN) — cada linha traz a unidade no nome; cabeçalho fica genérico.
 const colPorCat = [
   { key: "categoria", label: "Categoria" },
-  { key: "meta", label: "Meta (HL)" }, { key: "real", label: "Real (HL)" }, { key: "pctReal", label: "% Meta" },
-  { key: "tend", label: "Tend (HL)" }, { key: "pctTend", label: "% Tend" },
+  { key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pctReal", label: "% Meta" },
+  { key: "tend", label: "Tend" }, { key: "pctTend", label: "% Tend" },
 ];
 
 router.use(authMiddleware);
@@ -86,36 +91,37 @@ router.get("/mensagens", async (req, res) => {
     const base = { data: dataBR, dia: diaLabel, titulo: "Volumes", emoji: "📊", legenda, colunas: [], rn: [], gv: [], director: null };
     if (!setoresTodos.length) return res.json(base);
 
-    // Uma tabela "por RN" de uma categoria, para um conjunto de setores + linha total.
+    // Uma tabela "por RN" de UMA categoria (uma unidade só), para um conjunto de setores + total.
     const tabelaCat = (cat, setores, totalLabel) => {
       let tm = 0, tr = 0;
       const linhas = setores.map((s) => {
         const a = aggBySetor[s] || {};
         const meta = num(a[cat.meta]), real = num(a[cat.real]);
         tm += meta; tr += real;
-        return { setor: s, rn: nomeSetor[s] || "", ...vol(meta, real, real * fator) };
+        return { setor: s, rn: nomeSetor[s] || "", ...vol(meta, real, real * fator, cat.unit) };
       });
-      return [...linhas, { setor: "", rn: totalLabel, ...vol(tm, tr, tr * fator) }];
+      return [...linhas, { setor: "", rn: totalLabel, ...vol(tm, tr, tr * fator, cat.unit) }];
     };
-    // Uma tabela "por categoria" de um setor (RN) + linha total.
+    // Uma tabela "por categoria" de um setor (RN). Cada linha na sua unidade; o TOTAL
+    // soma só as categorias em HL (Mktp é R$, não entra no volume total).
     const tabelaSetor = (s) => {
-      let tm = 0, tr = 0;
+      const a = aggBySetor[s] || {};
       const linhas = CATS.map((cat) => {
-        const a = aggBySetor[s] || {};
         const meta = num(a[cat.meta]), real = num(a[cat.real]);
-        tm += meta; tr += real;
-        return { categoria: cat.label, ...vol(meta, real, real * fator) };
+        return { categoria: `${cat.label} (${cat.unit})`, ...vol(meta, real, real * fator, cat.unit) };
       });
-      return [...linhas, { categoria: "TOTAL", ...vol(tm, tr, tr * fator) }];
+      let tm = 0, tr = 0;
+      CATS.filter((c) => c.unit === "HL").forEach((c) => { tm += num(a[c.meta]); tr += num(a[c.real]); });
+      return [...linhas, { categoria: "TOTAL (HL)", ...vol(tm, tr, tr * fator, "HL") }];
     };
 
     // Texto (fallback quando não é foto).
     const txtCat = (cat, setores, totalLabel) => {
-      const l = setores.map((s) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${s} ${nomeSetor[s] || ""}: ${hl(r)}/${hl(m)} (${p}%)`; });
+      const l = setores.map((s) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${s} ${nomeSetor[s] || ""}: ${fmtU(r, cat.unit)}/${fmtU(m, cat.unit)} (${p}%)`; });
       const tm = setores.reduce((x, s) => x + num((aggBySetor[s] || {})[cat.meta]), 0);
       const tr = setores.reduce((x, s) => x + num((aggBySetor[s] || {})[cat.real]), 0);
       const tp = tm > 0 ? Math.round(tr / tm * 100) : "—";
-      return `*${cat.label}*\n${l.join("\n")}\n▸ ${totalLabel}: ${hl(tr)}/${hl(tm)} (${tp}%)`;
+      return `*${cat.label}*\n${l.join("\n")}\n▸ ${totalLabel}: ${fmtU(tr, cat.unit)}/${fmtU(tm, cat.unit)} (${tp}%)`;
     };
     const cab = (l2) => [`📊 *Volumes* ${dataBR}`, l2, legenda, ""].join("\n");
 
@@ -123,7 +129,7 @@ router.get("/mensagens", async (req, res) => {
     const rn = setoresTodos.map((s) => ({
       setor: s, nome: nomeSetor[s] || "", telefone: telSetor[s] || "",
       texto: [cab(`Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · ${diaLabel}`),
-        ...CATS.map((cat) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${cat.label}: ${hl(r)}/${hl(m)} (${p}%) · tend ${hl(r * fator)}`; })].join("\n"),
+        ...CATS.map((cat) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${cat.label}: ${fmtU(r, cat.unit)}/${fmtU(m, cat.unit)} (${p}%) · tend ${fmtU(r * fator, cat.unit)}`; })].join("\n"),
       blocos: [{ titulo: "Volumes", subtitulo: `Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · ${diaLabel}`, colunas: colPorCat, linhas: tabelaSetor(s) }],
     }));
 
@@ -137,7 +143,7 @@ router.get("/mensagens", async (req, res) => {
       return {
         grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(),
         texto: [cab(`Consolidado GV ${uGV?.nome || prefixo + "xx"} · ${diaLabel}`), ...CATS.map((cat) => txtCat(cat, sets, regLabel))].join("\n\n"),
-        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · GV ${prefixo}xx · ${diaLabel}`, colunas: colPorRn, linhas: tabelaCat(cat, sets, regLabel) })),
+        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · GV ${prefixo}xx · ${diaLabel}`, colunas: colPorRn(cat.unit), linhas: tabelaCat(cat, sets, regLabel) })),
       };
     });
 
@@ -147,7 +153,7 @@ router.get("/mensagens", async (req, res) => {
     if (diretores.length) {
       director = {
         texto: [cab(`Consolidado Diretoria · ${diaLabel}`), ...CATS.map((cat) => txtCat(cat, setoresTodos, "OPERAÇÃO"))].join("\n\n"),
-        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · Operação · ${diaLabel}`, colunas: colPorRn, linhas: tabelaCat(cat, setoresTodos, "OPERAÇÃO") })),
+        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · Operação · ${diaLabel}`, colunas: colPorRn(cat.unit), linhas: tabelaCat(cat, setoresTodos, "OPERAÇÃO") })),
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }
