@@ -217,7 +217,12 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    return res.json({ data: hoje.dataBR, dia: hoje.diaLabel, rn, gv });
+    return res.json({
+      data: hoje.dataBR, dia: hoje.diaLabel,
+      titulo: "Base foco Stella Pure Gold", emoji: "🍺",
+      colunas: [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }],
+      rn, gv,
+    });
   } catch (e) {
     console.error("conversao-pg/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar mensagens." });

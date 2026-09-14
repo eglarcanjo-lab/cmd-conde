@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.51.0** — Devolução × Ruptura ganha a sub-aba **🔎 Pesquisa Pedido**: busca o pedido BEES e monta um "documento" de rastreabilidade (NF, setor/RN, PDV, data, mapa, HL marcado × entregue, valor da NF, status entregue/devolvido e, se devolvido, motivo/carro/valor/volume/data).
+Versão atual: **v3.52.0** — Novo farol de WhatsApp: **PDVs sem visita registrada** (`/api/farol-visita/mensagens`), no mesmo padrão do Pure Gold. O robô ganhou `FAROL=pg|visita` e ficou genérico (título/colunas vêm do endpoint).
+
+## v3.52.0 — Farol "PDVs sem visita registrada" no motor de WhatsApp
+- **Backend:** `GET /api/farol-visita/mensagens?dia=` — por RN/GV, lista os PDVs ativos **sem visita efetiva no mês** (fonte: pdv_base × rota_efetiva_pdv) com visita prevista para o dia (hoje por padrão), com texto pronto + dados estruturados. Respeita o perfil.
+- **conversao-pg/mensagens:** passou a devolver também `titulo`/`emoji`/`colunas` (para o robô renderizar genérico).
+- **Robô WhatsApp:** novo `FAROL=pg|visita` (pg = Base foco Pure Gold, visita = PDVs sem visita). `htmlRN`/legenda/caption agora usam o título e as colunas do endpoint — mesmo robô serve os dois faróis (texto ou foto da tabela).
+
+## v3.51.0 — Devolução × Ruptura ganha a sub-aba **🔎 Pesquisa Pedido**: busca o pedido BEES e monta um "documento" de rastreabilidade (NF, setor/RN, PDV, data, mapa, HL marcado × entregue, valor da NF, status entregue/devolvido e, se devolvido, motivo/carro/valor/volume/data).
 
 ## v3.51.0 — Pesquisa Pedido (rastreabilidade do pedido BEES)
 - **Processador:** novas tabelas — `pedido_bees` (1 linha por Pedido Cliente/BEES, do 03014701: NF, setor, PDV, data, HL marcação×entrega, mapa, entrega real, motivo) e `faturado_nf` (valor por NF somando Total + mapa, do 030237). Devolução usa o `entregas_frustradas` (030224) já existente.
