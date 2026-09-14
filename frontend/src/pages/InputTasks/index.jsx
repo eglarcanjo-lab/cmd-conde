@@ -21,6 +21,7 @@ export default function InputTasks() {
   // busca de produto
   const [busca, setBusca] = useState("");
   const [sugestoes, setSugestoes] = useState([]);
+  const [textoFoco, setTextoFoco] = useState(false);
   const timer = useRef(null);
   // dados
   const [defs, setDefs] = useState([]);
@@ -105,6 +106,11 @@ export default function InputTasks() {
   const linhas = saida?.linhas || [];
   const MOSTRAR = 200;
 
+  // Sugestões de texto: os textos já lançados (distintos), filtrados pelo que se digita.
+  const textosUnicos = [...new Set(defs.map((d) => (d.texto || "").trim()).filter(Boolean))];
+  const alvo = texto.trim().toLowerCase();
+  const sugTexto = textosUnicos.filter((t) => t !== texto.trim() && (!alvo || t.toLowerCase().includes(alvo)));
+
   return (
     <div style={S.root}>
       <div style={S.header}>
@@ -157,7 +163,21 @@ export default function InputTasks() {
         )}
 
         <label style={{ ...S.lbl, marginTop: 12 }}>Texto da tarefa (replica para todos os PDVs)</label>
-        <textarea style={S.textarea} rows={3} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex.: Ofertar o portfólio de NAB e garantir gôndola…" />
+        <div style={S.buscaWrap}>
+          <textarea style={S.textarea} rows={3} value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onFocus={() => setTextoFoco(true)}
+            onBlur={() => setTimeout(() => setTextoFoco(false), 150)}
+            placeholder="Ex.: Ofertar o portfólio de NAB e garantir gôndola…" />
+          {textoFoco && sugTexto.length > 0 && (
+            <div style={S.dropdown}>
+              <div style={S.dropHead}>💡 Reaproveitar texto já lançado</div>
+              {sugTexto.map((t, i) => (
+                <div key={i} style={S.optTxt} onMouseDown={() => { setTexto(t); setTextoFoco(false); }}>{t}</div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {erro && <div style={S.erro}>{erro}</div>}
         <div style={S.actions}>
@@ -243,6 +263,8 @@ const S = {
   buscaWrap: { position: "relative" },
   dropdown: { position: "absolute", top: "100%", left: 0, right: 0, zIndex: 10, background: "#16211a", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, marginTop: 4, maxHeight: 260, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" },
   opt: { padding: "8px 11px", cursor: "pointer", fontSize: "0.86rem", borderBottom: "1px solid rgba(255,255,255,0.05)" },
+  optTxt: { padding: "8px 11px", cursor: "pointer", fontSize: "0.84rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.85)", whiteSpace: "normal", lineHeight: 1.4 },
+  dropHead: { padding: "7px 11px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#16211a" },
   chips: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 },
   chip: { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.3)", color: "#cfe8b0", borderRadius: 20, padding: "4px 10px", fontSize: "0.8rem" },
   chipX: { cursor: "pointer", color: "#f0997b", fontWeight: 700 },

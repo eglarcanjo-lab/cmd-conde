@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.0** — Nova aba **Input de Tasks** (grupo Ações de Preço, admin): gerador de tarefas. Monta definições (tipo · base total/não-compradora · produtos · texto), lista/edita as lançadas e gera a tabela de saída `UNB_PDV (1035185_cod) · cod_produto · texto · tipo` — exporta Excel/copia.
+Versão atual: **v3.58.1** — Input de Tasks: o campo de texto ganhou **sugestões** — reaproveita os textos já lançados no relatório (distintos, filtrados pelo que se digita).
+
+## v3.58.1 — Input de Tasks: sugestão de texto (reaproveita os já lançados)
+- No campo "Texto da tarefa", ao focar aparece um dropdown com os textos **distintos** das tasks já lançadas (sem duplicar); clicar preenche. Filtra pelo que estiver digitado — serve de base pra novas tasks.
 
 ## v3.58.0 — Input de Tasks (gerador de tarefas)
 - **Backend:** rota `/api/input-tasks` (admin) — CRUD de definições na tabela `input_tasks` (regravada inteira) + `GET /gerar` que monta 1 linha por PDV × task. Base **total** = todo o `pdv_base`; **não compradora** = PDVs que não compraram nenhum dos SKUs no tri anterior (3 meses completos, mesmo critério das Ações de Preço). Busca de produto em `produtos_full`.
