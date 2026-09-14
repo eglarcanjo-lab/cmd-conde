@@ -226,9 +226,20 @@ router.get("/mensagens", async (req, res) => {
         .map((s) => ({ setor: s, rn: nomePorSetor[s] || "", qtd: pgHoje.filter((p) => p.setor === s).length }))
         .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
       const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
-      const detalhe = pgHoje.map((p) => ({ setor: p.setor, cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, ultima_compra: p.ultima_compra }));
       const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PG600" }];
-      const colDetalhe = [{ key: "setor", label: "Setor" }, { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }];
+      const colDetRn = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }];
+      // 1ª foto: resumo por RN + OPERAÇÃO. Depois, 1 foto por RN com a base do setor.
+      const blocos = [{ titulo: "Pure Gold · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo }];
+      setores.forEach((s) => {
+        const lista = pgHoje.filter((p) => p.setor === s);
+        if (!lista.length) return;
+        blocos.push({
+          titulo: `Pure Gold · Setor ${s}${nomePorSetor[s] ? " · " + nomePorSetor[s] : ""}`,
+          subtitulo: `${hoje.diaLabel} · ${lista.length} PDV(s) foco PG600`,
+          colunas: colDetRn,
+          linhas: lista.map((p) => ({ cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, ultima_compra: p.ultima_compra })),
+        });
+      });
       director = {
         texto: [
           `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
@@ -236,10 +247,7 @@ router.get("/mensagens", async (req, res) => {
           `Total foco hoje: *PG600 ${totalOp}*`, "", "Por RN:",
           resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
         ].join("\n"),
-        blocos: [
-          { titulo: "Pure Gold · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo },
-          { titulo: "Pure Gold · detalhe", subtitulo: `PDVs foco hoje (${totalOp})`, colunas: colDetalhe, linhas: detalhe },
-        ],
+        blocos,
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }

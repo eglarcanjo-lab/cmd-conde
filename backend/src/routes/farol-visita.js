@@ -142,9 +142,20 @@ router.get("/mensagens", async (req, res) => {
         .map((s) => ({ setor: s, rn: nomeSetor[s] || "", qtd: (porSetor[s] || []).length }))
         .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
       const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
-      const detalhe = doDia.map((f) => ({ setor: f.setor, cod_pdv: f.cod_pdv, nome_pdv: f.nome_pdv, situacao: f.situacao }));
       const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PDVs s/ visita" }];
-      const colDetalhe = [{ key: "setor", label: "Setor" }, { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "situacao", label: "Situação" }];
+      const colDetRn = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "situacao", label: "Situação" }];
+      // 1ª foto: resumo por RN + OPERAÇÃO. Depois, 1 foto por RN com a base do setor.
+      const blocos = [{ titulo: "Sem visita · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo }];
+      setores.forEach((s) => {
+        const lista = porSetor[s] || [];
+        if (!lista.length) return;
+        blocos.push({
+          titulo: `Sem visita · Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""}`,
+          subtitulo: `${hoje.diaLabel} · ${lista.length} PDV(s) sem visita`,
+          colunas: colDetRn,
+          linhas: lista.map((p) => ({ cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, situacao: p.situacao })),
+        });
+      });
       director = {
         texto: [
           `🚦 *PDVs sem visita registrada* ${hoje.dataBR}`,
@@ -152,10 +163,7 @@ router.get("/mensagens", async (req, res) => {
           `Total sem visita hoje: *${totalOp}*`, "", "Por RN:",
           resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
         ].join("\n"),
-        blocos: [
-          { titulo: "Sem visita · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo },
-          { titulo: "Sem visita · detalhe", subtitulo: `PDVs sem visita hoje (${totalOp})`, colunas: colDetalhe, linhas: detalhe },
-        ],
+        blocos,
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }

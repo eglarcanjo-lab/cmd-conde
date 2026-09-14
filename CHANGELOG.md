@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.6** — Faróis **Pure Gold** e **Sem Visita** ganham consolidado para a **Diretoria** (operação + por RN + detalhe), enviado aos perfis director — como o queda/volumes já faziam.
+Versão atual: **v3.58.7** — Faróis Pure Gold e Sem Visita (Diretoria): o detalhe deixou de ser uma foto única e virou **uma foto por RN** (a base de cada setor), após a foto de resumo por RN.
+
+## v3.58.7 — Faróis Pure Gold e Sem Visita: detalhe da diretoria por RN
+- No consolidado do diretor, em vez de uma foto de "detalhe" com todos os PDVs, agora sai a foto de **resumo por RN** (+ OPERAÇÃO) seguida de **uma foto por setor** com a base daquele RN (Cód · PDV · Situação/Última compra).
 
 ## v3.58.6 — Faróis Pure Gold e Sem Visita: consolidado da Diretoria
 - `conversao-pg/mensagens` e `farol-visita/mensagens` passam a devolver `director` (objeto único `{ texto, blocos, destinatarios }`): 2 fotos — **por RN** (Setor · RN · Qtd + linha OPERAÇÃO) e **detalhe** dos PDVs. Vai para os usuários perfil=director com telefone.
