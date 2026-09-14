@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.54.2** — Farol Queda: destinatário **Diretoria** — mensagem consolidada (clientes **AS 101–103 × ROTA demais** + produtos gerais). O robô envia pros diretores quando `ALVO=ambos`.
+Versão atual: **v3.55.0** — Home ganha a tabela **Top 20 PDVs — média 3M** (abas Todos / AS / Rota), no mesmo formato da de produtos: Cod · PDV · Setor · Média 3M · Mês atual · GAP (HL) · Δ, com cores (▲ sobe · ▼ cai). Empilhada acima da de produtos.
+
+## v3.55.0 — Top 20 PDVs na Home (abas Todos/AS/Rota)
+- **Backend:** `GET /api/farol-queda/top-pdvs` — top 20 PDVs por média 3M (mês cheio) com GAP/Δ do período 01→D-1, em 3 recortes: **todos**, **AS (101–103)** e **rota (demais)**.
+- **Frontend:** componente `ResumoTopPDVs` na HomeDashboard, com abas Todos/AS/Rota e colunas #·Cod·PDV·Setor·Média 3M (HL)·Mês atual (HL)·GAP (HL)·Δ; cores no GAP/Δ. Empilhado com a tabela de produtos (uma abaixo da outra). Respeita o perfil.
+
+## v3.54.2 — Farol Queda: destinatário **Diretoria** — mensagem consolidada (clientes **AS 101–103 × ROTA demais** + produtos gerais). O robô envia pros diretores quando `ALVO=ambos`.
 
 ## v3.54.2 — Farol Queda: consolidado para a Diretoria (AS × ROTA)
 - **Backend:** `/api/farol-queda/mensagens` passou a devolver também `director[]` (um por usuário perfil=director com telefone): 3 blocos — Top clientes **AS (101–103)**, Top clientes **ROTA (demais)** (ambos com visita hoje) e Top **produtos gerais**.

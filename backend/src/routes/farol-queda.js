@@ -268,4 +268,53 @@ router.get("/top-produtos", async (req, res) => {
   }
 });
 
+// GET /api/farol-queda/top-pdvs — Top 20 PDVs por volume (média 3M) com variação
+// vs o mês atual no mesmo período (01..D-1). Três recortes: todos / AS (101–103) / rota.
+router.get("/top-pdvs", async (req, res) => {
+  try {
+    const hoje = resolverDia();
+    const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
+    const mesesRef = mesesAnteriores(mesAtual, 3);
+    const vdPdv = filtrarPorPerfil(await readSheet("vd_pdv").catch(() => []), req.user, "setor");
+
+    const mesesData = new Set();
+    vdPdv.forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
+    const refPresentes = mesesRef.filter((m) => mesesData.has(m));
+    const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
+    const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
+    if (!refPresentes.length) return res.json({ periodo, ref_label: refLabel, todos: [], as: [], rota: [] });
+
+    const agg = {};
+    vdPdv.forEach((r) => {
+      const data = String(r.data || "").slice(0, 10);
+      const day = Number(data.slice(8, 10)); if (!day) return;
+      const mes = data.slice(0, 7);
+      const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
+      if (!ehAtual && !ehRef) return;
+      const v = num(r.volume_hl); if (!v) return;
+      const setor = String(r.setor || "").trim(), cod = normCod(r.cod_pdv);
+      const k = `${setor}|${cod}`;
+      const e = agg[k] || (agg[k] = { setor, cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), full: 0, periodoRef: 0, atual: 0 });
+      if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
+      else if (day < diaCorte) e.atual += v;
+    });
+    const r1 = (n) => Math.round(n * 10) / 10;
+    const linhas = Object.values(agg).map((e) => {
+      const mediaFull = e.full / refPresentes.length, mediaPer = e.periodoRef / refPresentes.length, gap = e.atual - mediaPer;
+      return { cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor, media: r1(mediaFull), atual: r1(e.atual), gap_hl: r1(gap), gap_pct: mediaPer > 0 ? Math.round((gap / mediaPer) * 100) : 0 };
+    });
+    const AS = new Set(["101", "102", "103"]);
+    const top = (arr) => [...arr].sort((a, b) => b.media - a.media).slice(0, 20);
+    return res.json({
+      periodo, ref_label: refLabel,
+      todos: top(linhas),
+      as: top(linhas.filter((x) => AS.has(x.setor))),
+      rota: top(linhas.filter((x) => !AS.has(x.setor))),
+    });
+  } catch (e) {
+    console.error("farol-queda/top-pdvs:", e);
+    return res.status(500).json({ error: "Erro ao montar top PDVs." });
+  }
+});
+
 module.exports = router;

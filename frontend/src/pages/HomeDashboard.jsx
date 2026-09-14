@@ -7,6 +7,7 @@ import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
+import ResumoTopPDVs from "../components/ResumoTopPDVs";
 import ResumoTopProdutos from "../components/ResumoTopProdutos";
 import { HOP_ATIVA } from "../theme";
 
@@ -128,6 +129,7 @@ export default function HomeDashboard() {
         <ResumoFocoNE />
         <ResumoVerdes />
         <ResumoRankings />
+        <ResumoTopPDVs />
         <ResumoTopProdutos />
       </main>
     </div>
