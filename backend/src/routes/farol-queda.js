@@ -185,4 +185,46 @@ router.get("/mensagens", async (req, res) => {
   }
 });
 
+// GET /api/farol-queda/top-produtos — Top 20 produtos por volume (média 3M) com a
+// variação vs o mês atual no mesmo período (01..D-1). INCLUI quem SUBIU (para a Home).
+router.get("/top-produtos", async (req, res) => {
+  try {
+    const hoje = resolverDia();
+    const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
+    const mesesRef = mesesAnteriores(mesAtual, 3);
+    const vdProd = filtrarPorPerfil(await readSheet("vd_produto").catch(() => []), req.user, "setor");
+
+    const mesesData = new Set();
+    vdProd.forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
+    const refPresentes = mesesRef.filter((m) => mesesData.has(m));
+    const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
+    const refLabel = refPresentes.map(rotMes).join("·");
+    if (!refPresentes.length) return res.json({ periodo, ref_label: refLabel, produtos: [] });
+
+    const agg = {};
+    vdProd.forEach((r) => {
+      const data = String(r.data || "").slice(0, 10);
+      const day = Number(data.slice(8, 10)); if (!day || day >= diaCorte) return;
+      const mes = data.slice(0, 7);
+      const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
+      if (!ehAtual && !ehRef) return;
+      const v = num(r.volume_hl); if (!v) return;
+      const cod = normCod(r.cod_produto);
+      const e = agg[cod] || (agg[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), atual: 0, ref: 0 });
+      if (ehAtual) e.atual += v; else e.ref += v;
+    });
+    const r1 = (n) => Math.round(n * 10) / 10;
+    const produtos = Object.values(agg).map((e) => {
+      const media = e.ref / refPresentes.length;
+      const varHl = e.atual - media; // positivo = subiu
+      return { cod_produto: e.cod_produto, nome_produto: e.nome_produto, media: r1(media), atual: r1(e.atual), var_hl: r1(varHl), var_pct: media > 0 ? Math.round((varHl / media) * 100) : 0 };
+    }).sort((a, b) => b.media - a.media).slice(0, 20);
+
+    return res.json({ periodo, ref_label: refLabel, produtos });
+  } catch (e) {
+    console.error("farol-queda/top-produtos:", e);
+    return res.status(500).json({ error: "Erro ao montar top produtos." });
+  }
+});
+
 module.exports = router;

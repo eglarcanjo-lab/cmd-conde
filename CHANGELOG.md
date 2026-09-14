@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.53.2** — Queda de Volume: lista ordenada pela **maior média 3M** (maior volume primeiro), em PDVs e produtos, RN e GV.
+Versão atual: **v3.54.0** — Home (dashboard admin/diretoria): nova tabela **Top 20 Produtos · Volume** — os 20 de maior média 3M, com a variação vs o mês atual (mesmo período 01→D-1), mostrando quem caiu (▼) e quem subiu (▲), em HL e %.
+
+## v3.54.0 — Top 20 Produtos por volume na Home (sobe e desce)
+- Novo componente ResumoTopProdutos na HomeDashboard + rota GET /api/farol-queda/top-produtos: Top 20 produtos por media 3M no periodo 01..D-1, com variacao (HL e %) vs o mes atual, incluindo os que subiram. Respeita o perfil.
 
 ## v3.53.2 — Queda de Volume ordena por maior média (volume)
 - A ordenacao passou de "maior queda em HL" para "maior media dos 3 meses" (prioriza quem tem mais volume). Filtro segue so quem caiu (gap > 0).

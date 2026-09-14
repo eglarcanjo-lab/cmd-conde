@@ -7,6 +7,7 @@ import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
+import ResumoTopProdutos from "../components/ResumoTopProdutos";
 import { HOP_ATIVA } from "../theme";
 
 // Sub-abas do Admin (deep-link /admin?tab=id) — espelha as TABS de pages/Admin/index.jsx
@@ -127,6 +128,7 @@ export default function HomeDashboard() {
         <ResumoFocoNE />
         <ResumoVerdes />
         <ResumoRankings />
+        <ResumoTopProdutos />
       </main>
     </div>
   );
