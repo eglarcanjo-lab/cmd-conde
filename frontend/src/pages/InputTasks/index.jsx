@@ -107,15 +107,17 @@ export default function InputTasks() {
   const MOSTRAR = 200;
 
   // Sugestões de texto: os textos já lançados (distintos), filtrados pelo que se digita.
+  // Casa sem acento e sem diferenciar maiúsc./minúsc. (ex.: "florestal" acha "Florestal").
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const textosUnicos = [...new Set(defs.map((d) => (d.texto || "").trim()).filter(Boolean))];
-  const alvo = texto.trim().toLowerCase();
-  const sugTexto = textosUnicos.filter((t) => t !== texto.trim() && (!alvo || t.toLowerCase().includes(alvo)));
+  const alvo = norm(texto.trim());
+  const sugTexto = textosUnicos.filter((t) => t.trim() !== texto.trim() && (!alvo || norm(t).includes(alvo)));
 
   return (
     <div style={S.root}>
       <div style={S.header}>
         <button style={S.back} onClick={() => navigate("/")}>← Início</button>
-        <h1 style={S.h1}>📋 Input de Tasks</h1>
+        <h1 style={S.h1}>📋 Imput de Tasks</h1>
         <span style={S.badge}>Ações de Preço · Admin</span>
       </div>
 
@@ -146,6 +148,7 @@ export default function InputTasks() {
               {sugestoes.map((p) => (
                 <div key={p.cod} style={S.opt} onClick={() => addProduto(p)}>
                   <b style={{ color: VERDE }}>{p.cod}</b> · {p.nome}
+                  {p.saldo != null && <span style={S.optSaldo}>saldo {Number(p.saldo).toLocaleString("pt-BR")}</span>}
                 </div>
               ))}
             </div>
@@ -164,7 +167,7 @@ export default function InputTasks() {
 
         <label style={{ ...S.lbl, marginTop: 12 }}>Texto da tarefa (replica para todos os PDVs)</label>
         <div style={S.buscaWrap}>
-          <textarea style={S.textarea} rows={3} value={texto}
+          <input style={S.input} value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onFocus={() => setTextoFoco(true)}
             onBlur={() => setTimeout(() => setTextoFoco(false), 150)}
@@ -263,6 +266,7 @@ const S = {
   buscaWrap: { position: "relative" },
   dropdown: { position: "absolute", top: "100%", left: 0, right: 0, zIndex: 10, background: "#16211a", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, marginTop: 4, maxHeight: 260, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" },
   opt: { padding: "8px 11px", cursor: "pointer", fontSize: "0.86rem", borderBottom: "1px solid rgba(255,255,255,0.05)" },
+  optSaldo: { float: "right", color: "rgba(255,255,255,0.4)", fontSize: "0.76rem" },
   optTxt: { padding: "8px 11px", cursor: "pointer", fontSize: "0.84rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.85)", whiteSpace: "normal", lineHeight: 1.4 },
   dropHead: { padding: "7px 11px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#16211a" },
   chips: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 },

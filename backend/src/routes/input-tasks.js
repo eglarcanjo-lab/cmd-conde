@@ -49,15 +49,20 @@ async function salvarDefs(defs) {
   await sobrescreverAba("input_tasks", [HEADER, ...linhas]);
 }
 
-// GET /api/input-tasks/produtos?q=  — busca em produtos_full (todos os SKUs).
+// GET /api/input-tasks/produtos?q=  — busca na GRADE DE ESTOQUE (SKUs com saldo).
 router.get("/produtos", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim().toLowerCase();
     if (q.length < 2) return res.json([]);
-    const prodFull = await readSheet("produtos_full").catch(() => []);
-    const lista = prodFull
-      .map((p) => ({ cod: normCod(p.cod), nome: String(p.nome || "").trim() }))
+    const [grade, prodFull] = await Promise.all([
+      readSheet("grade_estoque").catch(() => []),
+      readSheet("produtos_full").catch(() => []),
+    ]);
+    const nomeMap = {}; prodFull.forEach((p) => { nomeMap[normCod(p.cod)] = String(p.nome || "").trim(); });
+    const lista = grade
+      .map((r) => { const c = normCod(r.cod); return { cod: c, nome: nomeMap[c] || String(r.descricao || r.nome || "").trim() || c, saldo: Math.round(num(r.saldo)) }; })
       .filter((p) => p.cod && p.cod !== "0" && (p.nome.toLowerCase().includes(q) || p.cod.includes(q)))
+      .sort((a, b) => b.saldo - a.saldo)
       .slice(0, 25);
     return res.json(lista);
   } catch (e) { console.error("input-tasks/produtos:", e); return res.status(500).json({ error: "Erro na busca." }); }

@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.1** — Input de Tasks: o campo de texto ganhou **sugestões** — reaproveita os textos já lançados no relatório (distintos, filtrados pelo que se digita).
+Versão atual: **v3.58.2** — Imput de Tasks: produtos vêm da **grade de estoque** (com saldo), campo de texto de **uma linha só**, sugestão de texto agora casa **sem acento/caixa** (digitar "florestal" acha "Florestal"), e o nome virou **Imput**.
+
+## v3.58.2 — Imput de Tasks: produtos da grade, texto 1 linha, sugestão sem acento
+- **Produtos** passam a vir da **grade de estoque** (`grade_estoque`, ordenado por saldo, mostra o saldo no dropdown) em vez de todo o `produtos_full`.
+- **Texto da tarefa** virou campo de **uma linha** (era caixa de 3 linhas) — o dropdown de sugestão fica logo abaixo.
+- **Sugestão de texto** casa **sem acento e sem diferenciar maiúsculas** (ex.: "florestal" acha "Florestal").
+- Nome exibido corrigido para **Imput de Tasks** (título + menus).
 
 ## v3.58.1 — Input de Tasks: sugestão de texto (reaproveita os já lançados)
 - No campo "Texto da tarefa", ao focar aparece um dropdown com os textos **distintos** das tasks já lançadas (sem duplicar); clicar preenche. Filtra pelo que estiver digitado — serve de base pra novas tasks.
