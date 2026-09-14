@@ -71,13 +71,17 @@ router.get("/mensagens", async (req, res) => {
     const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
     const mesesRef = mesesAnteriores(mesAtual, 3);
 
-    const [vdPdvRaw, vdProdRaw, gradeRaw, pdvBaseRaw, usuarios] = await Promise.all([
+    const [vdPdvRaw, vdProdRaw, gradeRaw, pdvBaseRaw, usuarios, produtosFull] = await Promise.all([
       readSheet("vd_pdv").catch(() => []),
       readSheet("vd_produto").catch(() => []),
       readSheet("grade_estoque").catch(() => []),
       readSheet("pdv_base").catch(() => []),
       readSheet("usuarios").catch(() => []),
+      readSheet("produtos_full").catch(() => []),
     ]);
+    // Alcunha completa do produto (base produtos_full); fallback no nome do vd_produto.
+    const nomeProd = {};
+    produtosFull.forEach((p) => { const c = normCod(p.cod); if (c) nomeProd[c] = String(p.nome || "").trim(); });
     const vdPdv = filtrarPorPerfil(vdPdvRaw, req.user, "setor");
     const vdProd = filtrarPorPerfil(vdProdRaw, req.user, "setor");
     const saldoMap = {};
@@ -93,12 +97,16 @@ router.get("/mensagens", async (req, res) => {
     const refPresentes = mesesRef.filter((m) => mesesData.has(m));
     const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
     const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
+    // Legenda (topo-direita da foto): períodos usados. Ex. hoje 14/09:
+    // "Média jun–ago · GAP dia 01–13 · set vs média 3M".
+    const mesAtualAbrev = rotMes(mesAtual);
+    const legenda = refLabel ? `Média ${refLabel} · GAP dia ${periodo} · ${mesAtualAbrev} vs média 3M` : "";
 
-    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Top 20 Volume", emoji: "📊", colunas: [], rn: [], gv: [], director: [] };
+    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Top 20 Volume", emoji: "📊", legenda, colunas: [], rn: [], gv: [], director: [] };
     if (!refPresentes.length) return res.json(base);
 
     const linhasPdv = agregar(vdPdv, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim(), false);
-    const linhasProd = agregar(vdProd, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => String(r.nome_produto || "").trim(), true);
+    const linhasProd = agregar(vdProd, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true);
 
     // Formatação com cores: _cor up/down/flat · GAP com sinal · Δ com seta.
     const sinal = (n) => (n > 0.001 ? "up" : n < -0.001 ? "down" : "flat");

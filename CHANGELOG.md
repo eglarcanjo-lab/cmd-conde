@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.55.5** — Farol Queda (WhatsApp): cada foto da diretoria ganha seu próprio título — **Top 20 PDVs AS**, **Top 20 PDVs ROTA** e **Top 20 Produtos** (antes as 3 vinham como "Top 20 Volume").
+Versão atual: **v3.55.6** — Farol Queda (WhatsApp): legenda dos períodos no topo-direita da foto (`Média jun–ago · GAP dia 01–13/09 · set vs média 3M`, dinâmica) e **alcunha completa** do produto (base `produtos_full`) em fonte menor pra caber.
+
+## v3.55.6 — Farol Queda: legenda de períodos + alcunha completa do produto
+- **Backend:** novo campo `legenda` na resposta (`Média {ref} · GAP dia {periodo} · {mes} vs média 3M`, montado do próprio cálculo). Nome do produto passa a vir da base `produtos_full` (alcunha completa), com fallback no `vd_produto`.
+- **Robô:** header vira 2 colunas — título/data à esquerda, legenda alinhada à direita (quebra por " · "). Célula de nome de produto em fonte 12px (quebra em 2 linhas) pra caber a alcunha longa; card já a 760px.
 
 ## v3.55.5 — Farol Queda: título por foto (AS / ROTA / Produtos)
 - **Backend:** blocos do `director` ganham `titulo` próprio (`Top 20 PDVs AS`, `Top 20 PDVs ROTA`, `Top 20 Produtos`).
