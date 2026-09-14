@@ -1,6 +1,8 @@
 // Farol "Queda de Volume" — Top 20 PDVs (com visita hoje) + Top 20 produtos que
-// caíram de volume, na MESMA mensagem/foto. Queda = volume do mês anterior − mês
-// atual (os 2 meses mais recentes de vendas_cliente_produto). Só quedas > 0.
+// caíram de volume, na MESMA mensagem/foto.
+// Regra: compara o volume do MÊS ATUAL no período 01..D-1 (hoje 14 → 01..13) com a
+// MÉDIA dos 3 meses anteriores no MESMO período (01..D-1). Gap em HL e em %.
+// Fonte: vd_pdv / vd_produto (volume diário). Só quedas > 0.
 const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
@@ -10,8 +12,9 @@ const { filtrarPorPerfil } = require("../utils/perfil");
 const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const rotMes = (m) => `${ROT[(Number(String(m).split("-")[1]) || 1) - 1]}/${String(m).slice(2, 4)}`;
+const rotMes = (m) => ROT[(Number(String(m).split("-")[1]) || 1) - 1];
 const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toFixed(1).replace(".", ",");
+const pct = (n) => `${Math.round(Number(n) || 0)}%`;
 const TOP = 20, CAP_TXT = 10;
 
 const DIA_NORM = {
@@ -31,7 +34,14 @@ function resolverDia(diaParam) {
   const dataBR = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   const forcado = normDia(diaParam);
   const diaKey = DIA_KEYS.includes(forcado) ? forcado : DIA_KEYS[d.getDay()];
-  return { dataBR, diaKey, diaLabel: DIA_LABEL[diaKey] || diaKey };
+  const mesAtual = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return { dataBR, diaKey, diaLabel: DIA_LABEL[diaKey] || diaKey, mesAtual, diaNum: d.getDate() };
+}
+// 3 meses anteriores a "YYYY-MM" → [m-1, m-2, m-3]
+function mesesAnteriores(ym, n = 3) {
+  const [y, m] = ym.split("-").map(Number); const out = [];
+  for (let k = 1; k <= n; k++) { const d = new Date(y, m - 1 - k, 1); out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }
+  return out;
 }
 
 router.use(authMiddleware);
@@ -40,74 +50,92 @@ router.use(authMiddleware);
 router.get("/mensagens", async (req, res) => {
   try {
     const hoje = resolverDia(req.query.dia);
-    const [vendasRaw, pdvBaseRaw, usuarios] = await Promise.all([
-      readSheet("vendas_cliente_produto").catch(() => []),
+    const diaCorte = hoje.diaNum;                 // hoje 14 → considera dias 01..13
+    const mesAtual = hoje.mesAtual;
+    const mesesRef = mesesAnteriores(mesAtual, 3);
+
+    const [vdPdvRaw, vdProdRaw, pdvBaseRaw, usuarios] = await Promise.all([
+      readSheet("vd_pdv").catch(() => []),
+      readSheet("vd_produto").catch(() => []),
       readSheet("pdv_base").catch(() => []),
       readSheet("usuarios").catch(() => []),
     ]);
-    const vendas = filtrarPorPerfil(vendasRaw, req.user, "setor");
-
-    // 2 meses mais recentes com dado: m1 (anterior) → m0 (atual)
-    const meses = [...new Set(vendas.map((r) => String(r.mes_referencia || "").slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort();
-    const m0 = meses[meses.length - 1], m1 = meses[meses.length - 2];
-    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Queda de Volume", emoji: "📉",
-      colunas: [], rn: [], gv: [] };
-    if (!m0 || !m1) return res.json(base);
+    const vdPdv = filtrarPorPerfil(vdPdvRaw, req.user, "setor");
+    const vdProd = filtrarPorPerfil(vdProdRaw, req.user, "setor");
 
     const diaMap = {};
     pdvBaseRaw.forEach((p) => { const c = normCod(p.cod_pdv || p.cod); if (c) diaMap[c] = String(p.dia_visita || "").trim(); });
     const nomeSetor = {}, telSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) { nomeSetor[c] = String(u.nome || "").trim(); telSetor[c] = String(u.telefone || "").trim(); } });
 
-    // Agrega volume por setor×PDV e por setor×produto nos 2 meses.
-    const pdvAgg = {}, prodAgg = {};
-    vendas.forEach((r) => {
-      const m = String(r.mes_referencia || "").slice(0, 7);
-      if (m !== m0 && m !== m1) return;
-      const setor = String(r.setor || "").trim(); if (!setor) return;
-      const v = num(r.volume_hl); if (!v) return;
-      const cod = normCod(r.cod_pdv);
-      const kp = `${setor}|${cod}`;
-      const ep = pdvAgg[kp] || (pdvAgg[kp] = { setor, cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), v0: 0, v1: 0 });
-      if (m === m0) ep.v0 += v; else ep.v1 += v;
-      const codp = normCod(r.cod_produto);
-      const kq = `${setor}|${codp}`;
-      const eq = prodAgg[kq] || (prodAgg[kq] = { setor, cod_produto: codp, nome_produto: String(r.nome_produto || "").trim(), v0: 0, v1: 0 });
-      if (m === m0) eq.v0 += v; else eq.v1 += v;
-    });
+    // Quais meses de referência realmente existem nos dados (p/ dividir a média certo).
+    const mesesData = new Set();
+    [...vdPdv, ...vdProd].forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
+    const refPresentes = mesesRef.filter((m) => mesesData.has(m));
 
-    // Top N por setor (queda = v1 − v0 > 0).
-    const topPorSetor = (agg, keyNome, soDia) => {
-      const out = {};
-      Object.values(agg).forEach((e) => {
-        const queda = e.v1 - e.v0;
-        if (queda <= 0.001) return;
-        if (soDia && normDia(diaMap[e.cod_pdv] || "") !== hoje.diaKey) return;
-        (out[e.setor] = out[e.setor] || []).push({
-          ...(e.cod_pdv ? { cod_pdv: e.cod_pdv } : {}),
-          [keyNome]: e[keyNome], antes: hl(e.v1), agora: hl(e.v0), queda: hl(queda), _q: queda,
-        });
+    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Queda de Volume", emoji: "📉", colunas: [], rn: [], gv: [] };
+    if (!refPresentes.length) return res.json(base); // sem histórico p/ comparar
+
+    // Agrega atual e refs por chave, só nos dias 01..diaCorte-1.
+    function agregar(rows, chaveFn, nomeKey, nomeVal) {
+      const agg = {};
+      rows.forEach((r) => {
+        const data = String(r.data || "").slice(0, 10);
+        const day = Number(data.slice(8, 10)); if (!day || day >= diaCorte) return;
+        const mes = data.slice(0, 7);
+        const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
+        if (!ehAtual && !ehRef) return;
+        const v = num(r.volume_hl); if (!v) return;
+        const k = chaveFn(r);
+        const e = agg[k] || (agg[k] = { setor: String(r.setor || "").trim(), chave: k, [nomeKey]: nomeVal(r), cod_pdv: r.cod_pdv ? normCod(r.cod_pdv) : undefined, atual: 0, ref: 0 });
+        if (ehAtual) e.atual += v; else e.ref += v;
       });
-      Object.keys(out).forEach((s) => { out[s].sort((a, b) => b._q - a._q); out[s] = out[s].slice(0, TOP).map(({ _q, ...x }) => x); });
-      return out;
-    };
-    const topPdv = topPorSetor(pdvAgg, "nome_pdv", true);
-    const topProd = topPorSetor(prodAgg, "nome_produto", false);
+      return Object.values(agg).map((e) => {
+        const media = e.ref / refPresentes.length;
+        const gap = media - e.atual;
+        return { ...e, media, gap_hl: gap, gap_pct: media > 0 ? (gap / media) * 100 : 0 };
+      });
+    }
 
-    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "antes", label: rotMes(m1) }, { key: "agora", label: rotMes(m0) }, { key: "queda", label: "Queda" }];
-    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "antes", label: rotMes(m1) }, { key: "agora", label: rotMes(m0) }, { key: "queda", label: "Queda" }];
+    const linhasPdv = agregar(vdPdv, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim());
+    const linhasProd = agregar(vdProd, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => String(r.nome_produto || "").trim());
 
+    const fmtLinha = (e, campoNome) => ({
+      ...(e.cod_pdv ? { cod_pdv: e.cod_pdv } : {}),
+      [campoNome]: e[campoNome], setor: e.setor,
+      media: hl(e.media), atual: hl(e.atual), gap_hl: hl(e.gap_hl), gap_pct: pct(e.gap_pct),
+    });
+    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Méd 3M" }, { key: "atual", label: "Atual" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
+    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "media", label: "Méd 3M" }, { key: "atual", label: "Atual" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
+
+    const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
+    const refLabel = refPresentes.map(rotMes).join("·");
     const textoBloco = (titulo, linhas, campoNome) => {
       if (!linhas.length) return `${titulo}: nenhum 👍`;
-      const corpo = linhas.slice(0, CAP_TXT).map((l) => `• ${l.cod_pdv ? l.cod_pdv + " " : ""}${l[campoNome]} — ${l.antes}→${l.agora} (−${l.queda})`).join("\n");
+      const corpo = linhas.slice(0, CAP_TXT).map((l) => `• ${l.cod_pdv ? l.cod_pdv + " " : ""}${l[campoNome]} — méd ${l.media} → ${l.atual} (−${l.gap_hl} HL / −${l.gap_pct})`).join("\n");
       return `${titulo} (${linhas.length}):\n${corpo}${linhas.length > CAP_TXT ? `\n… e mais ${linhas.length - CAP_TXT}` : ""}`;
     };
-    const cabecalho = (linha2) => [`📉 *Queda de Volume* ${hoje.dataBR}`, linha2, `Comparativo ${rotMes(m1)} → ${rotMes(m0)}`, ""];
+    const cabecalho = (linha2) => [`📉 *Queda de Volume* ${hoje.dataBR}`, linha2, `Período ${periodo} · vs média 3M (${refLabel}) no mesmo período`, ""];
+
+    // Top por setor (queda_hl > 0). PDVs: só visita hoje. Produtos: todos.
+    const topSetor = (linhas, soDia) => {
+      const out = {};
+      linhas.forEach((e) => {
+        if (e.gap_hl <= 0.001) return;
+        if (soDia && normDia(diaMap[e.cod_pdv] || "") !== hoje.diaKey) return;
+        (out[e.setor] = out[e.setor] || []).push(e);
+      });
+      Object.keys(out).forEach((s) => { out[s].sort((a, b) => b.gap_hl - a.gap_hl); out[s] = out[s].slice(0, TOP); });
+      return out;
+    };
+    const topPdv = topSetor(linhasPdv, true);
+    const topProd = topSetor(linhasProd, false);
 
     // ── Mensagens por RN ──
     const setores = [...new Set([...Object.keys(topPdv), ...Object.keys(topProd)])].sort();
     const rn = setores.map((s) => {
-      const pdvs = topPdv[s] || [], prods = topProd[s] || [];
+      const pdvs = (topPdv[s] || []).map((e) => fmtLinha(e, "nome_pdv"));
+      const prods = (topProd[s] || []).map((e) => fmtLinha(e, "nome_produto"));
       const texto = [
         ...cabecalho(`Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · Dia ${hoje.diaLabel}`),
         textoBloco("Top PDVs (visita hoje)", pdvs, "nome_pdv"), "",
@@ -122,28 +150,25 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    // ── Mensagens por GV (agrega a sala; PDVs do dia; recalcula top) ──
-    const gvTop = (setoresGV, agg, keyNome, soDia) => {
-      const arr = Object.values(agg).filter((e) => setoresGV.includes(e.setor)).map((e) => ({ ...e, queda: e.v1 - e.v0 }))
-        .filter((e) => e.queda > 0.001 && (!soDia || normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey))
-        .sort((a, b) => b.queda - a.queda).slice(0, TOP)
-        .map((e) => ({ ...(e.cod_pdv ? { cod_pdv: e.cod_pdv } : {}), [keyNome]: e[keyNome], setor: e.setor, antes: hl(e.v1), agora: hl(e.v0), queda: hl(e.queda) }));
-      return arr;
-    };
+    // ── Mensagens por GV (agrega a sala; recalcula o top) ──
+    const topSala = (linhas, setoresGV, soDia) => linhas
+      .filter((e) => setoresGV.includes(e.setor) && e.gap_hl > 0.001 && (!soDia || normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey))
+      .sort((a, b) => b.gap_hl - a.gap_hl).slice(0, TOP);
     const gruposGV = {};
     setores.forEach((s) => { const p = String(s)[0]; (gruposGV[p] = gruposGV[p] || []).push(s); });
     const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
+    const colPdvGV = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
+    const colProdGV = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
     const gv = Object.entries(gruposGV).map(([prefixo, sets]) => {
       const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilDoPrefixo[prefixo] && String(u.telefone || "").trim());
       const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
-      const pdvs = gvTop(sets, pdvAgg, "nome_pdv", true), prods = gvTop(sets, prodAgg, "nome_produto", false);
+      const pdvs = topSala(linhasPdv, sets, true).map((e) => fmtLinha(e, "nome_pdv"));
+      const prods = topSala(linhasProd, sets, false).map((e) => fmtLinha(e, "nome_produto"));
       const texto = [
         ...cabecalho(`Consolidado ${nomeGV} · Dia ${hoje.diaLabel}`),
         textoBloco("Top PDVs (visita hoje)", pdvs, "nome_pdv"), "",
         textoBloco("Top Produtos", prods, "nome_produto"),
       ].join("\n");
-      const colPdvGV = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "queda", label: "Queda" }];
-      const colProdGV = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "queda", label: "Queda" }];
       return {
         grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto,
         blocos: [

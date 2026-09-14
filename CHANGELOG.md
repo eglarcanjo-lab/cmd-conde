@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.53.0** — Novo farol de WhatsApp: **Queda de Volume** — Top 20 PDVs (com visita hoje) + Top 20 produtos que caíram de volume, **na mesma foto**. O robô passou a suportar **múltiplas tabelas por mensagem** (blocos).
+Versão atual: **v3.53.1** — Farol Queda de Volume: régua nova — compara o **mês atual no período 01→D-1** (ex.: hoje 14 → 01–13) com a **média dos 3 meses anteriores no mesmo período**, com **gap em HL e em %** (fonte diária vd_pdv/vd_produto).
+
+## v3.53.1 — Queda de Volume: média 3M do mesmo período + gap HL e %
+- Deixou de comparar mês anterior × atual (cheio). Agora: **atual (01→ontem)** vs **média dos 3 meses anteriores no mesmo intervalo de dias**; ordena por queda em HL; mostra **Méd 3M · Atual · Gap HL · Gap %**. Usa `vd_pdv`/`vd_produto` (volume diário). Divide a média pelos meses de referência que existem nos dados.
+
+## v3.53.0 — Novo farol de WhatsApp: **Queda de Volume** — Top 20 PDVs (com visita hoje) + Top 20 produtos que caíram de volume, **na mesma foto**. O robô passou a suportar **múltiplas tabelas por mensagem** (blocos).
 
 ## v3.53.0 — Farol "Queda de Volume" (PDVs do dia + produtos, mesma foto)
 - **Backend:** `GET /api/farol-queda/mensagens?dia=` — por RN/GV, dois blocos: Top 20 **PDVs** com queda (só os com visita no dia) e Top 20 **produtos** com queda. Queda = volume do mês anterior − mês atual (os 2 meses mais recentes de `vendas_cliente_produto`), só quedas > 0; mostra antes → agora. Respeita o perfil.
