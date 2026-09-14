@@ -133,11 +133,38 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
+    // ── Diretoria: consolidado (operação + por RN + detalhe). Vai p/ perfil=director. ──
+    const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
+    let director = null;
+    if (diretores.length && doDia.length) {
+      const totalOp = doDia.length;
+      const resumoRn = setores
+        .map((s) => ({ setor: s, rn: nomeSetor[s] || "", qtd: (porSetor[s] || []).length }))
+        .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
+      const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
+      const detalhe = doDia.map((f) => ({ setor: f.setor, cod_pdv: f.cod_pdv, nome_pdv: f.nome_pdv, situacao: f.situacao }));
+      const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PDVs s/ visita" }];
+      const colDetalhe = [{ key: "setor", label: "Setor" }, { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "situacao", label: "Situação" }];
+      director = {
+        texto: [
+          `🚦 *PDVs sem visita registrada* ${hoje.dataBR}`,
+          `Consolidado Diretoria · ${hoje.diaLabel}`,
+          `Total sem visita hoje: *${totalOp}*`, "", "Por RN:",
+          resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
+        ].join("\n"),
+        blocos: [
+          { titulo: "Sem visita · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo },
+          { titulo: "Sem visita · detalhe", subtitulo: `PDVs sem visita hoje (${totalOp})`, colunas: colDetalhe, linhas: detalhe },
+        ],
+        destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
+      };
+    }
+
     return res.json({
       data: hoje.dataBR, dia: hoje.diaLabel,
       titulo: "PDVs sem visita registrada", emoji: "🚦",
       colunas: [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "situacao", label: "Situação" }],
-      rn, gv,
+      rn, gv, director,
     });
   } catch (e) {
     console.error("farol-visita/mensagens:", e);

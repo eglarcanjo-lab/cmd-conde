@@ -217,11 +217,38 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
+    // ── Diretoria: consolidado (operação + por RN + detalhe). Vai p/ perfil=director. ──
+    const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
+    let director = null;
+    if (diretores.length && pgHoje.length) {
+      const totalOp = pgHoje.length;
+      const resumoRn = setores
+        .map((s) => ({ setor: s, rn: nomePorSetor[s] || "", qtd: pgHoje.filter((p) => p.setor === s).length }))
+        .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
+      const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
+      const detalhe = pgHoje.map((p) => ({ setor: p.setor, cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, ultima_compra: p.ultima_compra }));
+      const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PG600" }];
+      const colDetalhe = [{ key: "setor", label: "Setor" }, { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }];
+      director = {
+        texto: [
+          `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
+          `Consolidado Diretoria · ${hoje.diaLabel}`,
+          `Total foco hoje: *PG600 ${totalOp}*`, "", "Por RN:",
+          resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
+        ].join("\n"),
+        blocos: [
+          { titulo: "Pure Gold · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo },
+          { titulo: "Pure Gold · detalhe", subtitulo: `PDVs foco hoje (${totalOp})`, colunas: colDetalhe, linhas: detalhe },
+        ],
+        destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
+      };
+    }
+
     return res.json({
       data: hoje.dataBR, dia: hoje.diaLabel,
       titulo: "Base foco Stella Pure Gold", emoji: "🍺",
       colunas: [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }],
-      rn, gv,
+      rn, gv, director,
     });
   } catch (e) {
     console.error("conversao-pg/mensagens:", e);

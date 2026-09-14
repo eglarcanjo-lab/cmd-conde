@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.5** — Home / Volumes: grid por RN usa `auto-fit` (era `auto-fill`), então os cards esticam e preenchem o canto vazio à direita.
+Versão atual: **v3.58.6** — Faróis **Pure Gold** e **Sem Visita** ganham consolidado para a **Diretoria** (operação + por RN + detalhe), enviado aos perfis director — como o queda/volumes já faziam.
+
+## v3.58.6 — Faróis Pure Gold e Sem Visita: consolidado da Diretoria
+- `conversao-pg/mensagens` e `farol-visita/mensagens` passam a devolver `director` (objeto único `{ texto, blocos, destinatarios }`): 2 fotos — **por RN** (Setor · RN · Qtd + linha OPERAÇÃO) e **detalhe** dos PDVs. Vai para os usuários perfil=director com telefone.
+- Motivo: os RNs/GV desses faróis não têm telefone cadastrado, então nada era enviado; agora a diretoria recebe o consolidado.
+- Robô (local): coluna `situacao` alinhada à esquerda.
 
 ## v3.58.5 — Home / Volumes: grid por RN preenche o canto (auto-fit)
 - Troca `auto-fill` → `auto-fit` (min 150px) no grid por RN: a coluna fantasma vazia some e os cards esticam pra ocupar a largura toda.
