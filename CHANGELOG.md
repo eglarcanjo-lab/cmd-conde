@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.54.1** — Top 20 Produtos (Home): coluna de **Estoque** (saldo da grade), GAP/Δ coloridos (▲ verde sobe · ▼ vermelho cai). "Média 3M" = mês cheio (tamanho); GAP/Δ = ritmo do período 01→D-1. Escopo por perfil (RN = setor; diretor = consolidado geral).
+Versão atual: **v3.54.2** — Farol Queda: destinatário **Diretoria** — mensagem consolidada (clientes **AS 101–103 × ROTA demais** + produtos gerais). O robô envia pros diretores quando `ALVO=ambos`.
+
+## v3.54.2 — Farol Queda: consolidado para a Diretoria (AS × ROTA)
+- **Backend:** `/api/farol-queda/mensagens` passou a devolver também `director[]` (um por usuário perfil=director com telefone): 3 blocos — Top clientes **AS (101–103)**, Top clientes **ROTA (demais)** (ambos com visita hoje) e Top **produtos gerais**.
+- **Robô:** novo tipo de destinatário **DIR** (renderiza foto/texto consolidado); entra no `ALVO=ambos` (ou `diretor`). Legenda/caption com "Diretoria".
+
+## v3.54.1 — Top 20 Produtos (Home): coluna de **Estoque** (saldo da grade), GAP/Δ coloridos (▲ verde sobe · ▼ vermelho cai). "Média 3M" = mês cheio (tamanho); GAP/Δ = ritmo do período 01→D-1. Escopo por perfil (RN = setor; diretor = consolidado geral).
 
 ## v3.54.1 — Top 20 Produtos Home: Estoque + cores + média cheia × ritmo
 - Coluna **Estoque** (saldo em unidades da `grade_estoque`, por produto).

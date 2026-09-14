@@ -178,7 +178,33 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    return res.json({ ...base, rn, gv });
+    // ── Mensagem consolidada para a DIRETORIA (tudo junto: clientes AS × ROTA + produtos gerais) ──
+    // AS = setores 101–103 · ROTA = os demais.
+    const AS_SET = new Set(["101", "102", "103"]);
+    const topClientes = (soAS) => linhasPdv
+      .filter((e) => (soAS ? AS_SET.has(e.setor) : !AS_SET.has(e.setor)) && e.gap_hl > 0.001 && normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey)
+      .sort((a, b) => b.media - a.media).slice(0, TOP).map((e) => fmtLinha(e, "nome_pdv"));
+    const topProdGeral = linhasProd.filter((e) => e.gap_hl > 0.001).sort((a, b) => b.media - a.media).slice(0, TOP).map((e) => fmtLinha(e, "nome_produto"));
+    const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
+    const director = diretores.map((u) => {
+      const as = topClientes(true), rota = topClientes(false);
+      const texto = [
+        ...cabecalho(`Consolidado Diretoria · Dia ${hoje.diaLabel}`),
+        textoBloco("Top clientes AS (101–103) · visita hoje", as, "nome_pdv"), "",
+        textoBloco("Top clientes ROTA · visita hoje", rota, "nome_pdv"), "",
+        textoBloco("Top Produtos (geral)", topProdGeral, "nome_produto"),
+      ].join("\n");
+      return {
+        nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim(), texto,
+        blocos: [
+          { subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvGV, linhas: as },
+          { subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvGV, linhas: rota },
+          { subtitulo: `Top Produtos geral (${topProdGeral.length})`, colunas: colProdGV, linhas: topProdGeral },
+        ],
+      };
+    });
+
+    return res.json({ ...base, rn, gv, director });
   } catch (e) {
     console.error("farol-queda/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar farol de queda." });
