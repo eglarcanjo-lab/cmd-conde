@@ -54,6 +54,7 @@ app.use("/api/conversao-pg", require("./routes/conversao-pg")); // acompanhament
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/farol-visita", require("./routes/farol-visita")); // farol WhatsApp: PDVs sem visita registrada
 app.use("/api/farol-queda", require("./routes/farol-queda"));   // farol WhatsApp: queda de volume (PDVs + produtos)
+app.use("/api/farol-volumes", require("./routes/farol-volumes")); // farol WhatsApp: volumes meta×real×tendência (por RN + operação)
 app.use("/api/popups", require("./routes/popups"));
 app.use("/api/hop", require("./routes/hop"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));
