@@ -68,6 +68,24 @@ router.get("/produtos", async (req, res) => {
   } catch (e) { console.error("input-tasks/produtos:", e); return res.status(500).json({ error: "Erro na busca." }); }
 });
 
+// GET /api/input-tasks/textos — textos de tarefa DISTINTOS do relatório de tasks (aba
+// `tasks`, campo `descricao` = "Texto da Tarefa"). Servem de sugestão ao digitar.
+router.get("/textos", async (req, res) => {
+  try {
+    const tasks = await readSheet("tasks").catch(() => []);
+    const vistos = new Set(), out = [];
+    tasks.forEach((t) => {
+      const d = String(t.descricao || "").trim();
+      if (!d) return;
+      const k = d.toLowerCase();
+      if (vistos.has(k)) return;
+      vistos.add(k); out.push(d);
+    });
+    out.sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return res.json(out);
+  } catch (e) { console.error("input-tasks/textos:", e); return res.status(500).json({ error: "Erro ao buscar textos." }); }
+});
+
 // GET /api/input-tasks — lista as definições cadastradas (com nomes dos produtos).
 router.get("/", async (req, res) => {
   try {

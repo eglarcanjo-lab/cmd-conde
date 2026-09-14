@@ -25,6 +25,7 @@ export default function InputTasks() {
   const timer = useRef(null);
   // dados
   const [defs, setDefs] = useState([]);
+  const [textosRel, setTextosRel] = useState([]); // textos do relatório de tasks (sugestão)
   const [saida, setSaida] = useState(null); // {linhas, resumo, janela, total_base}
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -37,6 +38,7 @@ export default function InputTasks() {
     } catch (e) { setErro(e?.response?.data?.error || "Falha ao carregar."); }
   };
   useEffect(() => { carregar(); }, []);
+  useEffect(() => { api.get("/api/input-tasks/textos").then((r) => setTextosRel(r.data || [])).catch(() => {}); }, []);
 
   useEffect(() => {
     if (busca.trim().length < 2) { setSugestoes([]); return; }
@@ -106,12 +108,13 @@ export default function InputTasks() {
   const linhas = saida?.linhas || [];
   const MOSTRAR = 200;
 
-  // Sugestões de texto: os textos já lançados (distintos), filtrados pelo que se digita.
-  // Casa sem acento e sem diferenciar maiúsc./minúsc. (ex.: "florestal" acha "Florestal").
+  // Sugestões de texto: os textos de tarefa do RELATÓRIO de tasks (aba `tasks`), filtrados
+  // pelo que se digita. Casa sem acento e sem diferenciar caixa ("florestal" acha "Florestal").
   const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const textosUnicos = [...new Set(defs.map((d) => (d.texto || "").trim()).filter(Boolean))];
   const alvo = norm(texto.trim());
-  const sugTexto = textosUnicos.filter((t) => t.trim() !== texto.trim() && (!alvo || norm(t).includes(alvo)));
+  const sugTexto = textosRel
+    .filter((t) => t.trim() !== texto.trim() && (!alvo || norm(t).includes(alvo)))
+    .slice(0, 30);
 
   return (
     <div style={S.root}>
@@ -174,7 +177,7 @@ export default function InputTasks() {
             placeholder="Ex.: Ofertar o portfólio de NAB e garantir gôndola…" />
           {textoFoco && sugTexto.length > 0 && (
             <div style={S.dropdown}>
-              <div style={S.dropHead}>💡 Reaproveitar texto já lançado</div>
+              <div style={S.dropHead}>💡 Texto do relatório de tasks</div>
               {sugTexto.map((t, i) => (
                 <div key={i} style={S.optTxt} onMouseDown={() => { setTexto(t); setTextoFoco(false); }}>{t}</div>
               ))}

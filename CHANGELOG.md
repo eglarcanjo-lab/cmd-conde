@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.2** — Imput de Tasks: produtos vêm da **grade de estoque** (com saldo), campo de texto de **uma linha só**, sugestão de texto agora casa **sem acento/caixa** (digitar "florestal" acha "Florestal"), e o nome virou **Imput**.
+Versão atual: **v3.58.3** — Imput de Tasks: a sugestão de texto agora vem do **relatório de tasks** (aba `tasks`, campo `descricao` = "Texto da Tarefa"), não mais dos textos que você lançou aqui.
+
+## v3.58.3 — Imput de Tasks: sugestão de texto vem do relatório de tasks
+- Novo `GET /api/input-tasks/textos` — textos de tarefa **distintos** do relatório real (aba `tasks`, campo `descricao`).
+- O dropdown de sugestão no campo de texto passou a usar essa relação (antes usava os textos das definições criadas aqui). Continua casando sem acento/caixa.
 
 ## v3.58.2 — Imput de Tasks: produtos da grade, texto 1 linha, sugestão sem acento
 - **Produtos** passam a vir da **grade de estoque** (`grade_estoque`, ordenado por saldo, mostra o saldo no dropdown) em vez de todo o `produtos_full`.
