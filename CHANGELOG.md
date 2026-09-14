@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.3** — Imput de Tasks: a sugestão de texto agora vem do **relatório de tasks** (aba `tasks`, campo `descricao` = "Texto da Tarefa"), não mais dos textos que você lançou aqui.
+Versão atual: **v3.58.4** — Home / Volumes: o expandido "por RN" virou um **grid de ~5 mini-cards por fileira** (antes empilhava barras de largura total e alongava demais a home).
+
+## v3.58.4 — Home / Volumes: "por RN" em grid de mini-cards
+- O detalhado por RN passou de barras empilhadas (uma seção por RN, muito longo) para um **grid compacto** (~5 cards por fileira), cada card com as 6 categorias em mini-barras + % (mesmas cores). Encurta bastante a home.
 
 ## v3.58.3 — Imput de Tasks: sugestão de texto vem do relatório de tasks
 - Novo `GET /api/input-tasks/textos` — textos de tarefa **distintos** do relatório real (aba `tasks`, campo `descricao`).

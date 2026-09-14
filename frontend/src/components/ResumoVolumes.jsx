@@ -47,6 +47,25 @@ export default function ResumoVolumes() {
     );
   };
 
+  // Versão compacta (para o grid por RN): label curto + mini-barra + %.
+  const renderMiniBar = (b, key) => {
+    const w = b.pct == null ? 0 : Math.min(b.pct, 100);
+    const wTend = b.pctTend == null ? 0 : Math.min(b.pctTend, 100);
+    const c = cor(b.pct);
+    const tit = `${b.label}: ${fmt(b.real)} / ${fmt(b.meta)} (${b.pct == null ? "—" : b.pct + "%"})`
+      + (b.tend != null && b.pctTend != null ? ` · Tend ${b.pctTend}%` : "");
+    return (
+      <div key={key} style={S.miniRow} title={tit}>
+        <div style={S.miniLbl}>{b.label}</div>
+        <div style={S.miniTrack}>
+          <div style={{ ...S.fill, width: `${wTend}%`, background: corClara(b.pctTend) }} />
+          <div style={{ ...S.fill, width: `${w}%`, background: c }} />
+        </div>
+        <div style={{ ...S.miniPc, color: c }}>{b.pct == null ? "—" : `${b.pct}%`}</div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     let cancel = false;
     let tentativas = 0;
@@ -97,12 +116,18 @@ export default function ResumoVolumes() {
               <button style={S.toggle} onClick={() => setPorRnAberto((v) => !v)}>
                 {porRnAberto ? "▾" : "▸"} {porRnAberto ? "Ocultar por RN" : `Ver por RN (${data.porRn.length})`}
               </button>
-              {porRnAberto && data.porRn.map((rn) => (
-                <div key={rn.setor} style={S.rnBloco}>
-                  <div style={S.rnHead}>Setor {rn.setor}{rn.nome ? ` · ${rn.nome}` : ""}</div>
-                  {rn.bars.map((b) => renderBar(b, `${rn.setor}-${b.label}`))}
+              {porRnAberto && (
+                <div style={S.rnGrid}>
+                  {data.porRn.map((rn) => (
+                    <div key={rn.setor} style={S.rnBox}>
+                      <div style={S.rnBoxHead} title={`Setor ${rn.setor}${rn.nome ? " · " + rn.nome : ""}`}>
+                        {rn.setor}{rn.nome ? ` · ${rn.nome.split(" ")[0]}` : ""}
+                      </div>
+                      {rn.bars.map((b) => renderMiniBar(b, `${rn.setor}-${b.label}`))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </>
           )}
         </>
@@ -123,6 +148,12 @@ const S = {
   pc: { width: "50px", flexShrink: 0, fontSize: "0.92rem", fontWeight: "600", textAlign: "right" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "8px 0" },
   toggle: { marginTop: "6px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", width: "100%" },
-  rnBloco: { marginTop: "10px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" },
-  rnHead: { color: "#7DBA3D", fontSize: "0.82rem", fontWeight: "600", margin: "0 0 6px 2px" },
+  // Grid por RN — ~5 mini-cards por fileira (compacto pra não alongar a home).
+  rnGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" },
+  rnBox: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "9px 10px" },
+  rnBoxHead: { color: "#7DBA3D", fontSize: "0.78rem", fontWeight: "700", marginBottom: "7px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  miniRow: { display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" },
+  miniLbl: { width: "52px", flexShrink: 0, fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  miniTrack: { flex: 1, height: "8px", background: "rgba(255,255,255,0.06)", borderRadius: "4px", overflow: "hidden", position: "relative" },
+  miniPc: { width: "34px", flexShrink: 0, fontSize: "0.7rem", fontWeight: "600", textAlign: "right" },
 };
