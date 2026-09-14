@@ -173,7 +173,9 @@ router.get("/mensagens", async (req, res) => {
     // ── Diretoria: consolidado AS (101–103) × ROTA (demais) + produtos gerais ──
     const AS_SET = new Set(["101", "102", "103"]);
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
-    const director = diretores.map((u) => {
+    let director = null;
+    if (diretores.length) {
+      // Conteúdo consolidado ÚNICO — o robô gera as imagens 1x e distribui a todos.
       const as = topPdv((e) => AS_SET.has(e.setor)).map(fmtPdv);
       const rota = topPdv((e) => !AS_SET.has(e.setor)).map(fmtPdv);
       const prods = topProd(() => true).map(fmtProd);
@@ -183,15 +185,16 @@ router.get("/mensagens", async (req, res) => {
         textoBloco("Top clientes ROTA · visita hoje", rota, "nome_pdv"), "",
         textoBloco("Top produtos (geral)", prods, "nome_produto"),
       ].join("\n");
-      return {
-        nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim(), texto,
+      director = {
+        texto,
         blocos: [
           { subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvS, linhas: as },
           { subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvS, linhas: rota },
           { subtitulo: `Top produtos geral (${prods.length})`, colunas: colProdS, linhas: prods },
         ],
+        destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
-    });
+    }
 
     return res.json({ ...base, rn, gv, director });
   } catch (e) {

@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.55.0** — Home ganha a tabela **Top 20 PDVs — média 3M** (abas Todos / AS / Rota), no mesmo formato da de produtos: Cod · PDV · Setor · Média 3M · Mês atual · GAP (HL) · Δ, com cores (▲ sobe · ▼ cai). Empilhada acima da de produtos.
+Versão atual: **v3.55.4** — Farol Queda (WhatsApp): diretoria consolidada é **gerada 1x** e distribuída a todos os diretores cadastrados, e cada tabela vira uma **foto separada** (imagem menor, sem cortar a coluna Δ/GAP).
+
+## v3.55.4 — Farol Queda: 1 foto por tabela + diretoria gerada uma vez
+- **Backend** (`/api/farol-queda/mensagens`): `director` deixou de ser um array por usuário e passou a ser um objeto único `{ texto, blocos, destinatarios[] }` — o conteúdo consolidado é montado uma vez só.
+- **Robô** (local): render por "grupos" — cada tabela (bloco) é fotografada **uma vez por grupo** e enviada como **imagem separada** a todos os destinatários (evita imagem gigante). Card alargado (760px, viewport 800) p/ não cortar a coluna Δ/GAP.
 
 ## v3.55.0 — Top 20 PDVs na Home (abas Todos/AS/Rota)
 - **Backend:** `GET /api/farol-queda/top-pdvs` — top 20 PDVs por média 3M (mês cheio) com GAP/Δ do período 01→D-1, em 3 recortes: **todos**, **AS (101–103)** e **rota (demais)**.
