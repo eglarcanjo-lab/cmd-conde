@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.57.0** — Home: Volumes ganha **expandir/recolher "por RN"** (consolidado segue igual); Foco NE troca **+RGB** por **+LN** (resultado do trimestre, direto da aba do +LN), junto de Fat Score 5 e Portfólio Score 5.
+Versão atual: **v3.57.1** — Foco NE / +LN: corrige a fonte. O relatório de task não tem retroativo, então o +LN passou a usar o **mesmo mecanismo** dos outros (linha OPERACAO ao vivo no mês + snapshot do fechamento em `spo_metas` para jul/ago), em vez de somar `tasks_total` da aba (que dava `5 / 789`).
+
+## v3.57.1 — Foco NE: +LN pela mesma fonte de Fat/Portfólio (fix)
+- O +LN vinha lendo `tasks_validas`/`tasks_total` direto de `spo_tasks_ln_resumo` — mas esse relatório só tem o mês vivo (sem retroativo), então o trimestre saía errado (`real 5 / meta 789`). Agora usa `realMes`/`metaMes` como Fat Score 5 e Portfólio Score 5: mês corrente ao vivo (OPERACAO → `tasks_validas`) e jul/ago pelo snapshot do fechamento manual em `spo_metas` (meta e real).
 
 ## v3.57.0 — Home: Volumes por RN + Foco NE com +LN
 - **Volumes (Home):** `/api/resumo/volumes` agora devolve `porRn` (as 6 barras por setor). O card ganhou um botão **Ver por RN / Ocultar por RN** que abre a quebra por setor (aparece só quando o escopo tem mais de um RN — admin/diretor/GV). RN continua vendo só o consolidado dele.

@@ -113,7 +113,7 @@ router.get("/foco-ne", async (req, res) => {
       readSheet("spo_portfolio_ideal_resumo").catch(() => []),
     ]);
     const ITENS = {
-      27: { label: "+LN", aba: tasksLn, campo: "tasks_validas", totalCampo: "tasks_total" },
+      27: { label: "+LN", aba: tasksLn, campo: "tasks_validas" },
       12: { label: "Fat. Score 5", aba: score5, campo: "pdvs_ok" },
       24: { label: "Portfólio Score 5", aba: portf, campo: "pdvs_ideais" },
     };
@@ -125,16 +125,10 @@ router.get("/foco-ne", async (req, res) => {
       const r = metaRow(item, m); return r ? num(r.real) : 0; // snapshot do mês fechado
     };
     const metaMes = (item, m) => { const r = metaRow(item, m); return r ? num(r.meta) : 0; };
-    // +LN: real e meta saem direto da aba (rows mensais OPERACAO), sem depender de spo_metas.
-    const lnMes = (m, campo) => { const r = opRow(tasksLn, m); return r ? num(r[campo]) : 0; };
 
+    // +LN, Fat e Portfólio: mesmo mecanismo. O relatório de task não tem retroativo,
+    // então mês vivo = linha OPERACAO ao vivo; jul/ago = snapshot do fechamento (spo_metas).
     const items = [27, 12, 24].map((item) => {
-      const soma = (fn) => (ehTerceiro ? meses.reduce((s, m) => s + fn(m), 0) : fn(mes));
-      if (item === 27) {
-        const real = soma((m) => lnMes(m, "tasks_validas"));
-        const meta = soma((m) => lnMes(m, "tasks_total"));
-        return { item, label: ITENS[item].label, real: Math.round(real * 10) / 10, meta: Math.round(meta * 10) / 10, pct: meta > 0 ? Math.round((real / meta) * 100) : null, escopo: ehTerceiro ? "tri" : "mês" };
-      }
       const real = ehTerceiro ? meses.reduce((s, m) => s + realMes(item, m), 0) : realMes(item, mes);
       const meta = ehTerceiro ? meses.reduce((s, m) => s + metaMes(item, m), 0) : metaMes(item, mes);
       return {
