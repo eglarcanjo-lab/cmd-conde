@@ -133,6 +133,13 @@ router.get("/mensagens", async (req, res) => {
     const ehHoje = (cod) => normDia(diaMap[cod] || "") === hoje.diaKey;
     const topPdv = (filtro) => linhasPdv.filter((e) => filtro(e) && ehHoje(e.cod_pdv)).sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
     const topProd = (filtro) => linhasProd.filter(filtro).sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
+    // Consolidado (GV/Diretoria): produtos agregados POR PRODUTO (soma os setores), não
+    // por setor — os mais vendidos no geral. filtroSetor limita o escopo (região do GV).
+    const topProdGeralDe = (filtroSetor) => {
+      const rows = filtroSetor ? vdProd.filter((r) => filtroSetor(String(r.setor || "").trim())) : vdProd;
+      return agregar(rows, refPresentes, mesAtual, diaCorte, (r) => normCod(r.cod_produto), "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true)
+        .sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
+    };
 
     const setores = [...new Set([...linhasPdv, ...linhasProd].map((e) => e.setor).filter(Boolean))].sort();
 
@@ -163,17 +170,17 @@ router.get("/mensagens", async (req, res) => {
       const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
       const setSet = new Set(sets);
       const pdvs = topPdv((e) => setSet.has(e.setor)).map(fmtPdv);
-      const prods = topProd((e) => setSet.has(e.setor)).map(fmtProd);
+      const prods = topProdGeralDe((s) => setSet.has(s)).map(fmtProd);
       const texto = [
         ...cabecalho(`Consolidado ${nomeGV} · ${hoje.diaLabel}`),
         textoBloco("Top 20 PDVs (visita hoje)", pdvs, "nome_pdv"), "",
-        textoBloco("Top 20 produtos", prods, "nome_produto"),
+        textoBloco("Top 20 produtos (geral)", prods, "nome_produto"),
       ].join("\n");
       return {
         grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto,
         blocos: [
           { subtitulo: `Top 20 PDVs · visita hoje (${pdvs.length})`, colunas: colPdvS, linhas: pdvs },
-          { subtitulo: `Top 20 produtos (${prods.length})`, colunas: colProdS, linhas: prods },
+          { subtitulo: `Top 20 produtos · geral (${prods.length})`, colunas: colProd, linhas: prods },
         ],
       };
     });
@@ -186,7 +193,7 @@ router.get("/mensagens", async (req, res) => {
       // Conteúdo consolidado ÚNICO — o robô gera as imagens 1x e distribui a todos.
       const as = topPdv((e) => AS_SET.has(e.setor)).map(fmtPdv);
       const rota = topPdv((e) => !AS_SET.has(e.setor)).map(fmtPdv);
-      const prods = topProd(() => true).map(fmtProd);
+      const prods = topProdGeralDe(null).map(fmtProd);
       const texto = [
         ...cabecalho(`Consolidado Diretoria · ${hoje.diaLabel}`),
         textoBloco("Top clientes AS (101–103) · visita hoje", as, "nome_pdv"), "",
@@ -198,7 +205,7 @@ router.get("/mensagens", async (req, res) => {
         blocos: [
           { titulo: "Top 20 PDVs AS", subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvS, linhas: as },
           { titulo: "Top 20 PDVs ROTA", subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvS, linhas: rota },
-          { titulo: "Top 20 Produtos", subtitulo: `Produtos gerais (${prods.length})`, colunas: colProdS, linhas: prods },
+          { titulo: "Top 20 Produtos", subtitulo: `Mais vendidos · geral (${prods.length})`, colunas: colProd, linhas: prods },
         ],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };

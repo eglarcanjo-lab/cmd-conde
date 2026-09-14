@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.7** — Faróis Pure Gold e Sem Visita (Diretoria): o detalhe deixou de ser uma foto única e virou **uma foto por RN** (a base de cada setor), após a foto de resumo por RN.
+Versão atual: **v3.58.8** — Top 20 Volume: no consolidado (Diretoria e GV) os **produtos** passam a ser agregados **por produto** (os mais vendidos no geral), sem a coluna Setor. O individual (RN) segue com os produtos do próprio setor.
+
+## v3.58.8 — Top 20 Volume: produtos do consolidado por produto (não por RN)
+- Antes o Top produtos era agregado por `setor|produto`, então no consolidado o mesmo produto repetia por RN. Agora **GV** e **Diretoria** agregam **por produto** (soma dos setores do escopo) → os mais vendidos no geral, e a coluna **Setor** saiu dessas tabelas. RN continua com os produtos do seu setor.
 
 ## v3.58.7 — Faróis Pure Gold e Sem Visita: detalhe da diretoria por RN
 - No consolidado do diretor, em vez de uma foto de "detalhe" com todos os PDVs, agora sai a foto de **resumo por RN** (+ OPERAÇÃO) seguida de **uma foto por setor** com a base daquele RN (Cód · PDV · Situação/Última compra).
