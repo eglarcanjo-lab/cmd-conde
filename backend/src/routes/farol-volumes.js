@@ -11,7 +11,7 @@ const { authMiddleware } = require("../middleware/auth");
 const { filtrarPorPerfil } = require("../utils/perfil");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
-const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toFixed(1).replace(".", ",");
+const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const pad = (n) => String(n).padStart(2, "0");
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];

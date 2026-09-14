@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.56.0** — Novo **Farol Volumes** (WhatsApp): Meta × Real × Tendência por categoria (Cerveja/NAB/Match/Mktp). Diretor recebe 1 foto por categoria com linhas por RN + **OPERAÇÃO**; RN recebe 1 foto com as categorias do seu setor + **TOTAL**. % Meta e % Tend coloridos.
+Versão atual: **v3.56.1** — Farol Volumes: números de HL com separador de milhar (`1.128,7`) pra não ficarem grudados.
+
+## v3.56.1 — Farol Volumes: separador de milhar nos HL
+- `hl()` passou a formatar em pt-BR com agrupamento de milhar (`toLocaleString`), então valores grandes (Meta/Real/Tend) saem legíveis (`1.128,7` em vez de `1128,7`).
 
 ## v3.56.0 — Farol Volumes: Meta × Real × Tendência (por RN + Operação)
 - **Backend:** nova rota `GET /api/farol-volumes/mensagens` (fonte `rv_resultado`, mês corrente, escopo por perfil). Tendência = real projetado pelo ritmo de dias úteis (seg–sex). Diretor: 4 fotos (1/categoria) com linhas por RN + OPERAÇÃO; GV: idem escopo da sala + REGIÃO; RN: 1 foto com Cerveja/NAB/Match/Mktp + TOTAL. `director` no shape objeto-único (gera 1x, distribui).
