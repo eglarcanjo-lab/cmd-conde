@@ -149,7 +149,7 @@ const S = {
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "8px 0" },
   toggle: { marginTop: "6px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", width: "100%" },
   // Grid por RN — ~5 mini-cards por fileira (compacto pra não alongar a home).
-  rnGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px", marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" },
+  rnGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px", marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" },
   rnBox: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "9px 10px" },
   rnBoxHead: { color: "#7DBA3D", fontSize: "0.78rem", fontWeight: "700", marginBottom: "7px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   miniRow: { display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" },

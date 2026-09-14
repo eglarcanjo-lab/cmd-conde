@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.4** — Home / Volumes: o expandido "por RN" virou um **grid de ~5 mini-cards por fileira** (antes empilhava barras de largura total e alongava demais a home).
+Versão atual: **v3.58.5** — Home / Volumes: grid por RN usa `auto-fit` (era `auto-fill`), então os cards esticam e preenchem o canto vazio à direita.
+
+## v3.58.5 — Home / Volumes: grid por RN preenche o canto (auto-fit)
+- Troca `auto-fill` → `auto-fit` (min 150px) no grid por RN: a coluna fantasma vazia some e os cards esticam pra ocupar a largura toda.
 
 ## v3.58.4 — Home / Volumes: "por RN" em grid de mini-cards
 - O detalhado por RN passou de barras empilhadas (uma seção por RN, muito longo) para um **grid compacto** (~5 cards por fileira), cada card com as 6 categorias em mini-barras + % (mesmas cores). Encurta bastante a home.
