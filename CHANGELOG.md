@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.52.0** — Novo farol de WhatsApp: **PDVs sem visita registrada** (`/api/farol-visita/mensagens`), no mesmo padrão do Pure Gold. O robô ganhou `FAROL=pg|visita` e ficou genérico (título/colunas vêm do endpoint).
+Versão atual: **v3.53.0** — Novo farol de WhatsApp: **Queda de Volume** — Top 20 PDVs (com visita hoje) + Top 20 produtos que caíram de volume, **na mesma foto**. O robô passou a suportar **múltiplas tabelas por mensagem** (blocos).
+
+## v3.53.0 — Farol "Queda de Volume" (PDVs do dia + produtos, mesma foto)
+- **Backend:** `GET /api/farol-queda/mensagens?dia=` — por RN/GV, dois blocos: Top 20 **PDVs** com queda (só os com visita no dia) e Top 20 **produtos** com queda. Queda = volume do mês anterior − mês atual (os 2 meses mais recentes de `vendas_cliente_produto`), só quedas > 0; mostra antes → agora. Respeita o perfil.
+- **Robô WhatsApp:** renderização por **blocos** — uma mensagem/foto pode ter mais de uma tabela (subtítulo + colunas próprias). Faróis antigos (pg/visita) seguem com um bloco. Novo `FAROL=queda`.
+- **MOTOR.bat:** opções 5 (prévia) e 6 (enviar) da Queda de Volume.
+
+## v3.52.0 — Novo farol de WhatsApp: **PDVs sem visita registrada** (`/api/farol-visita/mensagens`), no mesmo padrão do Pure Gold. O robô ganhou `FAROL=pg|visita` e ficou genérico (título/colunas vêm do endpoint).
 
 ## v3.52.0 — Farol "PDVs sem visita registrada" no motor de WhatsApp
 - **Backend:** `GET /api/farol-visita/mensagens?dia=` — por RN/GV, lista os PDVs ativos **sem visita efetiva no mês** (fonte: pdv_base × rota_efetiva_pdv) com visita prevista para o dia (hoje por padrão), com texto pronto + dados estruturados. Respeita o perfil.
