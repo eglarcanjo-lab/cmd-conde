@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.53.1** — Farol Queda de Volume: régua nova — compara o **mês atual no período 01→D-1** (ex.: hoje 14 → 01–13) com a **média dos 3 meses anteriores no mesmo período**, com **gap em HL e em %** (fonte diária vd_pdv/vd_produto).
+Versão atual: **v3.53.2** — Queda de Volume: lista ordenada pela **maior média 3M** (maior volume primeiro), em PDVs e produtos, RN e GV.
+
+## v3.53.2 — Queda de Volume ordena por maior média (volume)
+- A ordenacao passou de "maior queda em HL" para "maior media dos 3 meses" (prioriza quem tem mais volume). Filtro segue so quem caiu (gap > 0).
 
 ## v3.53.1 — Queda de Volume: média 3M do mesmo período + gap HL e %
 - Deixou de comparar mês anterior × atual (cheio). Agora: **atual (01→ontem)** vs **média dos 3 meses anteriores no mesmo intervalo de dias**; ordena por queda em HL; mostra **Méd 3M · Atual · Gap HL · Gap %**. Usa `vd_pdv`/`vd_produto` (volume diário). Divide a média pelos meses de referência que existem nos dados.

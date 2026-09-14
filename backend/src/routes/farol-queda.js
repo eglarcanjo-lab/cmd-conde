@@ -125,7 +125,7 @@ router.get("/mensagens", async (req, res) => {
         if (soDia && normDia(diaMap[e.cod_pdv] || "") !== hoje.diaKey) return;
         (out[e.setor] = out[e.setor] || []).push(e);
       });
-      Object.keys(out).forEach((s) => { out[s].sort((a, b) => b.gap_hl - a.gap_hl); out[s] = out[s].slice(0, TOP); });
+      Object.keys(out).forEach((s) => { out[s].sort((a, b) => b.media - a.media); out[s] = out[s].slice(0, TOP); });
       return out;
     };
     const topPdv = topSetor(linhasPdv, true);
@@ -153,7 +153,7 @@ router.get("/mensagens", async (req, res) => {
     // ── Mensagens por GV (agrega a sala; recalcula o top) ──
     const topSala = (linhas, setoresGV, soDia) => linhas
       .filter((e) => setoresGV.includes(e.setor) && e.gap_hl > 0.001 && (!soDia || normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey))
-      .sort((a, b) => b.gap_hl - a.gap_hl).slice(0, TOP);
+      .sort((a, b) => b.media - a.media).slice(0, TOP);
     const gruposGV = {};
     setores.forEach((s) => { const p = String(s)[0]; (gruposGV[p] = gruposGV[p] || []).push(s); });
     const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
