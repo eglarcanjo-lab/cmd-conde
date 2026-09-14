@@ -1,8 +1,7 @@
-// Farol "Queda de Volume" — Top 20 PDVs (com visita hoje) + Top 20 produtos que
-// caíram de volume, na MESMA mensagem/foto.
-// Regra: compara o volume do MÊS ATUAL no período 01..D-1 (hoje 14 → 01..13) com a
-// MÉDIA dos 3 meses anteriores no MESMO período (01..D-1). Gap em HL e em %.
-// Fonte: vd_pdv / vd_produto (volume diário). Só quedas > 0.
+// Farol "Top 20 Volume" (envio WhatsApp) + tabelas da Home.
+// Regra: "Média 3M (HL)" = média do MÊS CHEIO dos 3 meses anteriores (tamanho/ordem).
+// GAP/Δ = ritmo do período 01..D-1 (atual − média do MESMO período). Sobe (▲) e cai (▼).
+// PDVs no envio: só os com visita hoje. Produtos: gerais. Estoque = saldo da grade.
 const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
@@ -14,7 +13,6 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const rotMes = (m) => ROT[(Number(String(m).split("-")[1]) || 1) - 1];
 const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toFixed(1).replace(".", ",");
-const pct = (n) => `${Math.round(Number(n) || 0)}%`;
 const TOP = 20, CAP_TXT = 10;
 
 const DIA_NORM = {
@@ -37,11 +35,31 @@ function resolverDia(diaParam) {
   const mesAtual = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   return { dataBR, diaKey, diaLabel: DIA_LABEL[diaKey] || diaKey, mesAtual, diaNum: d.getDate() };
 }
-// 3 meses anteriores a "YYYY-MM" → [m-1, m-2, m-3]
 function mesesAnteriores(ym, n = 3) {
   const [y, m] = ym.split("-").map(Number); const out = [];
   for (let k = 1; k <= n; k++) { const d = new Date(y, m - 1 - k, 1); out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }
   return out;
+}
+
+// Agrega volume por chave: full = mês cheio (média 3M "tamanho"); periodoRef/atual = dias 01..D-1.
+function agregar(rows, refPresentes, mesAtual, diaCorte, chaveFn, nomeKey, nomeVal, ehProduto) {
+  const agg = {};
+  rows.forEach((r) => {
+    const data = String(r.data || "").slice(0, 10);
+    const day = Number(data.slice(8, 10)); if (!day) return;
+    const mes = data.slice(0, 7);
+    const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
+    if (!ehAtual && !ehRef) return;
+    const v = num(r.volume_hl); if (!v) return;
+    const k = chaveFn(r);
+    const e = agg[k] || (agg[k] = { setor: String(r.setor || "").trim(), [nomeKey]: nomeVal(r), cod_pdv: ehProduto ? undefined : normCod(r.cod_pdv), cod_produto: ehProduto ? normCod(r.cod_produto) : undefined, full: 0, periodoRef: 0, atual: 0 });
+    if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
+    else if (day < diaCorte) e.atual += v;
+  });
+  return Object.values(agg).map((e) => {
+    const mediaFull = e.full / refPresentes.length, mediaPer = e.periodoRef / refPresentes.length, gap = e.atual - mediaPer;
+    return { ...e, mediaFull, gap_hl: gap, gap_pct: mediaPer > 0 ? (gap / mediaPer) * 100 : 0 };
+  });
 }
 
 router.use(authMiddleware);
@@ -50,156 +68,127 @@ router.use(authMiddleware);
 router.get("/mensagens", async (req, res) => {
   try {
     const hoje = resolverDia(req.query.dia);
-    const diaCorte = hoje.diaNum;                 // hoje 14 → considera dias 01..13
-    const mesAtual = hoje.mesAtual;
+    const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
     const mesesRef = mesesAnteriores(mesAtual, 3);
 
-    const [vdPdvRaw, vdProdRaw, pdvBaseRaw, usuarios] = await Promise.all([
+    const [vdPdvRaw, vdProdRaw, gradeRaw, pdvBaseRaw, usuarios] = await Promise.all([
       readSheet("vd_pdv").catch(() => []),
       readSheet("vd_produto").catch(() => []),
+      readSheet("grade_estoque").catch(() => []),
       readSheet("pdv_base").catch(() => []),
       readSheet("usuarios").catch(() => []),
     ]);
     const vdPdv = filtrarPorPerfil(vdPdvRaw, req.user, "setor");
     const vdProd = filtrarPorPerfil(vdProdRaw, req.user, "setor");
+    const saldoMap = {};
+    gradeRaw.forEach((g) => { const c = normCod(g.cod); if (c) saldoMap[c] = (saldoMap[c] || 0) + (parseInt(g.saldo) || 0); });
 
     const diaMap = {};
     pdvBaseRaw.forEach((p) => { const c = normCod(p.cod_pdv || p.cod); if (c) diaMap[c] = String(p.dia_visita || "").trim(); });
     const nomeSetor = {}, telSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) { nomeSetor[c] = String(u.nome || "").trim(); telSetor[c] = String(u.telefone || "").trim(); } });
 
-    // Quais meses de referência realmente existem nos dados (p/ dividir a média certo).
     const mesesData = new Set();
     [...vdPdv, ...vdProd].forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
     const refPresentes = mesesRef.filter((m) => mesesData.has(m));
-
-    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Queda de Volume", emoji: "📉", colunas: [], rn: [], gv: [] };
-    if (!refPresentes.length) return res.json(base); // sem histórico p/ comparar
-
-    // Agrega atual e refs por chave, só nos dias 01..diaCorte-1.
-    function agregar(rows, chaveFn, nomeKey, nomeVal) {
-      const agg = {};
-      rows.forEach((r) => {
-        const data = String(r.data || "").slice(0, 10);
-        const day = Number(data.slice(8, 10)); if (!day || day >= diaCorte) return;
-        const mes = data.slice(0, 7);
-        const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
-        if (!ehAtual && !ehRef) return;
-        const v = num(r.volume_hl); if (!v) return;
-        const k = chaveFn(r);
-        const e = agg[k] || (agg[k] = { setor: String(r.setor || "").trim(), chave: k, [nomeKey]: nomeVal(r), cod_pdv: r.cod_pdv ? normCod(r.cod_pdv) : undefined, atual: 0, ref: 0 });
-        if (ehAtual) e.atual += v; else e.ref += v;
-      });
-      return Object.values(agg).map((e) => {
-        const media = e.ref / refPresentes.length;
-        const gap = media - e.atual;
-        return { ...e, media, gap_hl: gap, gap_pct: media > 0 ? (gap / media) * 100 : 0 };
-      });
-    }
-
-    const linhasPdv = agregar(vdPdv, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim());
-    const linhasProd = agregar(vdProd, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => String(r.nome_produto || "").trim());
-
-    const fmtLinha = (e, campoNome) => ({
-      ...(e.cod_pdv ? { cod_pdv: e.cod_pdv } : {}),
-      [campoNome]: e[campoNome], setor: e.setor,
-      media: hl(e.media), atual: hl(e.atual), gap_hl: hl(e.gap_hl), gap_pct: pct(e.gap_pct),
-    });
-    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Méd 3M" }, { key: "atual", label: "Atual" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
-    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "media", label: "Méd 3M" }, { key: "atual", label: "Atual" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
-
     const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
-    const refLabel = refPresentes.map(rotMes).join("·");
+    const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
+
+    const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Top 20 Volume", emoji: "📊", colunas: [], rn: [], gv: [], director: [] };
+    if (!refPresentes.length) return res.json(base);
+
+    const linhasPdv = agregar(vdPdv, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim(), false);
+    const linhasProd = agregar(vdProd, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => String(r.nome_produto || "").trim(), true);
+
+    // Formatação com cores: _cor up/down/flat · GAP com sinal · Δ com seta.
+    const sinal = (n) => (n > 0.001 ? "up" : n < -0.001 ? "down" : "flat");
+    const gapStr = (n) => `${n > 0 ? "+" : ""}${hl(n)}`;
+    const deltaStr = (n, p) => `${n > 0.001 ? "▲" : n < -0.001 ? "▼" : "—"} ${Math.abs(Math.round(p))}%`;
+    const fmtBase = (e) => ({ setor: e.setor, media: hl(e.mediaFull), atual: hl(e.atual), gap: gapStr(e.gap_hl), delta: deltaStr(e.gap_hl, e.gap_pct), _cor: sinal(e.gap_hl) });
+    const fmtPdv = (e) => ({ cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, ...fmtBase(e) });
+    const fmtProd = (e) => ({ nome_produto: e.nome_produto, estoque: saldoMap[e.cod_produto] == null ? "—" : saldoMap[e.cod_produto].toLocaleString("pt-BR"), ...fmtBase(e) });
+
+    // Colunas (formato do painel). *S = com Setor (GV/Diretoria).
+    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
+    const colPdvS = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
+    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
+    const colProdS = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
+
     const textoBloco = (titulo, linhas, campoNome) => {
-      if (!linhas.length) return `${titulo}: nenhum 👍`;
-      const corpo = linhas.slice(0, CAP_TXT).map((l) => `• ${l.cod_pdv ? l.cod_pdv + " " : ""}${l[campoNome]} — méd ${l.media} → ${l.atual} (−${l.gap_hl} HL / −${l.gap_pct})`).join("\n");
+      if (!linhas.length) return `${titulo}: —`;
+      const corpo = linhas.slice(0, CAP_TXT).map((l) => `• ${l.cod_pdv ? l.cod_pdv + " " : ""}${l[campoNome]} — ${l.media}→${l.atual} (${l.gap} · ${l.delta})`).join("\n");
       return `${titulo} (${linhas.length}):\n${corpo}${linhas.length > CAP_TXT ? `\n… e mais ${linhas.length - CAP_TXT}` : ""}`;
     };
-    const cabecalho = (linha2) => [`📉 *Queda de Volume* ${hoje.dataBR}`, linha2, `Período ${periodo} · vs média 3M (${refLabel}) no mesmo período`, ""];
+    const cabecalho = (l2) => [`📊 *Top 20 Volume* ${hoje.dataBR}`, l2, `média ${refLabel} · GAP ${periodo}`, ""];
 
-    // Top por setor (queda_hl > 0). PDVs: só visita hoje. Produtos: todos.
-    const topSetor = (linhas, soDia) => {
-      const out = {};
-      linhas.forEach((e) => {
-        if (e.gap_hl <= 0.001) return;
-        if (soDia && normDia(diaMap[e.cod_pdv] || "") !== hoje.diaKey) return;
-        (out[e.setor] = out[e.setor] || []).push(e);
-      });
-      Object.keys(out).forEach((s) => { out[s].sort((a, b) => b.media - a.media); out[s] = out[s].slice(0, TOP); });
-      return out;
-    };
-    const topPdv = topSetor(linhasPdv, true);
-    const topProd = topSetor(linhasProd, false);
+    // Ordena por MÉDIA cheia; inclui quem subiu e caiu. PDVs: só visita hoje.
+    const ehHoje = (cod) => normDia(diaMap[cod] || "") === hoje.diaKey;
+    const topPdv = (filtro) => linhasPdv.filter((e) => filtro(e) && ehHoje(e.cod_pdv)).sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
+    const topProd = (filtro) => linhasProd.filter(filtro).sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
 
-    // ── Mensagens por RN ──
-    const setores = [...new Set([...Object.keys(topPdv), ...Object.keys(topProd)])].sort();
+    const setores = [...new Set([...linhasPdv, ...linhasProd].map((e) => e.setor).filter(Boolean))].sort();
+
+    // ── Por RN ──
     const rn = setores.map((s) => {
-      const pdvs = (topPdv[s] || []).map((e) => fmtLinha(e, "nome_pdv"));
-      const prods = (topProd[s] || []).map((e) => fmtLinha(e, "nome_produto"));
+      const pdvs = topPdv((e) => e.setor === s).map(fmtPdv);
+      const prods = topProd((e) => e.setor === s).map(fmtProd);
       const texto = [
-        ...cabecalho(`Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · Dia ${hoje.diaLabel}`),
-        textoBloco("Top PDVs (visita hoje)", pdvs, "nome_pdv"), "",
-        textoBloco("Top Produtos", prods, "nome_produto"),
+        ...cabecalho(`Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · ${hoje.diaLabel}`),
+        textoBloco("Top 20 PDVs (visita hoje)", pdvs, "nome_pdv"), "",
+        textoBloco("Top 20 produtos", prods, "nome_produto"),
       ].join("\n");
       return {
         setor: s, nome: nomeSetor[s] || "", telefone: telSetor[s] || "", texto,
         blocos: [
-          { subtitulo: `Top PDVs com queda · visita hoje (${pdvs.length})`, colunas: colPdv, linhas: pdvs },
-          { subtitulo: `Top Produtos com queda (${prods.length})`, colunas: colProd, linhas: prods },
+          { subtitulo: `Top 20 PDVs · visita hoje (${pdvs.length})`, colunas: colPdv, linhas: pdvs },
+          { subtitulo: `Top 20 produtos (${prods.length})`, colunas: colProd, linhas: prods },
         ],
       };
     });
 
-    // ── Mensagens por GV (agrega a sala; recalcula o top) ──
-    const topSala = (linhas, setoresGV, soDia) => linhas
-      .filter((e) => setoresGV.includes(e.setor) && e.gap_hl > 0.001 && (!soDia || normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey))
-      .sort((a, b) => b.media - a.media).slice(0, TOP);
+    // ── Por GV (sala) ──
     const gruposGV = {};
     setores.forEach((s) => { const p = String(s)[0]; (gruposGV[p] = gruposGV[p] || []).push(s); });
     const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
-    const colPdvGV = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
-    const colProdGV = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "gap_hl", label: "Gap HL" }, { key: "gap_pct", label: "Gap %" }];
     const gv = Object.entries(gruposGV).map(([prefixo, sets]) => {
       const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilDoPrefixo[prefixo] && String(u.telefone || "").trim());
       const nomeGV = uGV ? `GV ${uGV.nome}` : `GV ${prefixo}xx`;
-      const pdvs = topSala(linhasPdv, sets, true).map((e) => fmtLinha(e, "nome_pdv"));
-      const prods = topSala(linhasProd, sets, false).map((e) => fmtLinha(e, "nome_produto"));
+      const setSet = new Set(sets);
+      const pdvs = topPdv((e) => setSet.has(e.setor)).map(fmtPdv);
+      const prods = topProd((e) => setSet.has(e.setor)).map(fmtProd);
       const texto = [
-        ...cabecalho(`Consolidado ${nomeGV} · Dia ${hoje.diaLabel}`),
-        textoBloco("Top PDVs (visita hoje)", pdvs, "nome_pdv"), "",
-        textoBloco("Top Produtos", prods, "nome_produto"),
+        ...cabecalho(`Consolidado ${nomeGV} · ${hoje.diaLabel}`),
+        textoBloco("Top 20 PDVs (visita hoje)", pdvs, "nome_pdv"), "",
+        textoBloco("Top 20 produtos", prods, "nome_produto"),
       ].join("\n");
       return {
         grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(), texto,
         blocos: [
-          { subtitulo: `Top PDVs com queda · visita hoje (${pdvs.length})`, colunas: colPdvGV, linhas: pdvs },
-          { subtitulo: `Top Produtos com queda (${prods.length})`, colunas: colProdGV, linhas: prods },
+          { subtitulo: `Top 20 PDVs · visita hoje (${pdvs.length})`, colunas: colPdvS, linhas: pdvs },
+          { subtitulo: `Top 20 produtos (${prods.length})`, colunas: colProdS, linhas: prods },
         ],
       };
     });
 
-    // ── Mensagem consolidada para a DIRETORIA (tudo junto: clientes AS × ROTA + produtos gerais) ──
-    // AS = setores 101–103 · ROTA = os demais.
+    // ── Diretoria: consolidado AS (101–103) × ROTA (demais) + produtos gerais ──
     const AS_SET = new Set(["101", "102", "103"]);
-    const topClientes = (soAS) => linhasPdv
-      .filter((e) => (soAS ? AS_SET.has(e.setor) : !AS_SET.has(e.setor)) && e.gap_hl > 0.001 && normDia(diaMap[e.cod_pdv] || "") === hoje.diaKey)
-      .sort((a, b) => b.media - a.media).slice(0, TOP).map((e) => fmtLinha(e, "nome_pdv"));
-    const topProdGeral = linhasProd.filter((e) => e.gap_hl > 0.001).sort((a, b) => b.media - a.media).slice(0, TOP).map((e) => fmtLinha(e, "nome_produto"));
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
     const director = diretores.map((u) => {
-      const as = topClientes(true), rota = topClientes(false);
+      const as = topPdv((e) => AS_SET.has(e.setor)).map(fmtPdv);
+      const rota = topPdv((e) => !AS_SET.has(e.setor)).map(fmtPdv);
+      const prods = topProd(() => true).map(fmtProd);
       const texto = [
-        ...cabecalho(`Consolidado Diretoria · Dia ${hoje.diaLabel}`),
+        ...cabecalho(`Consolidado Diretoria · ${hoje.diaLabel}`),
         textoBloco("Top clientes AS (101–103) · visita hoje", as, "nome_pdv"), "",
         textoBloco("Top clientes ROTA · visita hoje", rota, "nome_pdv"), "",
-        textoBloco("Top Produtos (geral)", topProdGeral, "nome_produto"),
+        textoBloco("Top produtos (geral)", prods, "nome_produto"),
       ].join("\n");
       return {
         nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim(), texto,
         blocos: [
-          { subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvGV, linhas: as },
-          { subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvGV, linhas: rota },
-          { subtitulo: `Top Produtos geral (${topProdGeral.length})`, colunas: colProdGV, linhas: topProdGeral },
+          { subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvS, linhas: as },
+          { subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvS, linhas: rota },
+          { subtitulo: `Top produtos geral (${prods.length})`, colunas: colProdS, linhas: prods },
         ],
       };
     });
@@ -211,110 +200,37 @@ router.get("/mensagens", async (req, res) => {
   }
 });
 
-// GET /api/farol-queda/top-produtos — Top 20 produtos por volume (média 3M) com a
-// variação vs o mês atual no mesmo período (01..D-1). INCLUI quem SUBIU (para a Home).
+// GET /api/farol-queda/top-produtos — Top 20 produtos por média 3M (sobe e cai). Home.
+// Agrega por produto ACROSS os setores do escopo. Média 3M = mês cheio; GAP = período.
 router.get("/top-produtos", async (req, res) => {
   try {
     const hoje = resolverDia();
     const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
     const mesesRef = mesesAnteriores(mesAtual, 3);
-    const [vdProdRaw, gradeRaw] = await Promise.all([
-      readSheet("vd_produto").catch(() => []),
-      readSheet("grade_estoque").catch(() => []),
-    ]);
+    const [vdProdRaw, gradeRaw] = await Promise.all([readSheet("vd_produto").catch(() => []), readSheet("grade_estoque").catch(() => [])]);
     const vdProd = filtrarPorPerfil(vdProdRaw, req.user, "setor");
-    // Estoque (saldo em unidades) por produto — grade_estoque é o saldo do CDD (não por setor).
-    const saldoMap = {};
-    gradeRaw.forEach((g) => { const c = normCod(g.cod); if (c) saldoMap[c] = (saldoMap[c] || 0) + (parseInt(g.saldo) || 0); });
-
-    const mesesData = new Set();
-    vdProd.forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
-    const refPresentes = mesesRef.filter((m) => mesesData.has(m));
+    const saldoMap = {}; gradeRaw.forEach((g) => { const c = normCod(g.cod); if (c) saldoMap[c] = (saldoMap[c] || 0) + (parseInt(g.saldo) || 0); });
+    const refPresentes = mesesRef.filter((m) => new Set(vdProd.map((r) => String(r.data || "").slice(0, 7))).has(m));
     const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
     const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
     if (!refPresentes.length) return res.json({ periodo, ref_label: refLabel, produtos: [] });
 
-    // full = volume do MÊS CHEIO (média 3M "tamanho"); periodoRef/atual = dias 01..D-1.
     const agg = {};
     vdProd.forEach((r) => {
-      const data = String(r.data || "").slice(0, 10);
-      const day = Number(data.slice(8, 10)); if (!day) return;
-      const mes = data.slice(0, 7);
-      const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
-      if (!ehAtual && !ehRef) return;
+      const data = String(r.data || "").slice(0, 10); const day = Number(data.slice(8, 10)); if (!day) return;
+      const mes = data.slice(0, 7); const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes); if (!ehAtual && !ehRef) return;
       const v = num(r.volume_hl); if (!v) return;
       const cod = normCod(r.cod_produto);
       const e = agg[cod] || (agg[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), full: 0, periodoRef: 0, atual: 0 });
-      if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
-      else if (day < diaCorte) e.atual += v;
+      if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; } else if (day < diaCorte) e.atual += v;
     });
     const r1 = (n) => Math.round(n * 10) / 10;
     const produtos = Object.values(agg).map((e) => {
-      const mediaFull = e.full / refPresentes.length;    // média cheia (ranking/tamanho)
-      const mediaPer = e.periodoRef / refPresentes.length; // média no mesmo período
-      const gap = e.atual - mediaPer;                     // + subiu · − caiu
-      return {
-        cod_produto: e.cod_produto, nome_produto: e.nome_produto,
-        media: r1(mediaFull), atual: r1(e.atual),
-        estoque: saldoMap[e.cod_produto] ?? null,
-        gap_hl: r1(gap), gap_pct: mediaPer > 0 ? Math.round((gap / mediaPer) * 100) : 0,
-      };
-    }).sort((a, b) => b.media - a.media).slice(0, 20);
-
-    return res.json({ periodo, ref_label: refLabel, produtos });
-  } catch (e) {
-    console.error("farol-queda/top-produtos:", e);
-    return res.status(500).json({ error: "Erro ao montar top produtos." });
-  }
-});
-
-// GET /api/farol-queda/top-pdvs — Top 20 PDVs por volume (média 3M) com variação
-// vs o mês atual no mesmo período (01..D-1). Três recortes: todos / AS (101–103) / rota.
-router.get("/top-pdvs", async (req, res) => {
-  try {
-    const hoje = resolverDia();
-    const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
-    const mesesRef = mesesAnteriores(mesAtual, 3);
-    const vdPdv = filtrarPorPerfil(await readSheet("vd_pdv").catch(() => []), req.user, "setor");
-
-    const mesesData = new Set();
-    vdPdv.forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
-    const refPresentes = mesesRef.filter((m) => mesesData.has(m));
-    const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
-    const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
-    if (!refPresentes.length) return res.json({ periodo, ref_label: refLabel, todos: [], as: [], rota: [] });
-
-    const agg = {};
-    vdPdv.forEach((r) => {
-      const data = String(r.data || "").slice(0, 10);
-      const day = Number(data.slice(8, 10)); if (!day) return;
-      const mes = data.slice(0, 7);
-      const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
-      if (!ehAtual && !ehRef) return;
-      const v = num(r.volume_hl); if (!v) return;
-      const setor = String(r.setor || "").trim(), cod = normCod(r.cod_pdv);
-      const k = `${setor}|${cod}`;
-      const e = agg[k] || (agg[k] = { setor, cod_pdv: cod, nome_pdv: String(r.nome_pdv || "").trim(), full: 0, periodoRef: 0, atual: 0 });
-      if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
-      else if (day < diaCorte) e.atual += v;
-    });
-    const r1 = (n) => Math.round(n * 10) / 10;
-    const linhas = Object.values(agg).map((e) => {
       const mediaFull = e.full / refPresentes.length, mediaPer = e.periodoRef / refPresentes.length, gap = e.atual - mediaPer;
-      return { cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor, media: r1(mediaFull), atual: r1(e.atual), gap_hl: r1(gap), gap_pct: mediaPer > 0 ? Math.round((gap / mediaPer) * 100) : 0 };
-    });
-    const AS = new Set(["101", "102", "103"]);
-    const top = (arr) => [...arr].sort((a, b) => b.media - a.media).slice(0, 20);
-    return res.json({
-      periodo, ref_label: refLabel,
-      todos: top(linhas),
-      as: top(linhas.filter((x) => AS.has(x.setor))),
-      rota: top(linhas.filter((x) => !AS.has(x.setor))),
-    });
-  } catch (e) {
-    console.error("farol-queda/top-pdvs:", e);
-    return res.status(500).json({ error: "Erro ao montar top PDVs." });
-  }
+      return { cod_produto: e.cod_produto, nome_produto: e.nome_produto, media: r1(mediaFull), atual: r1(e.atual), estoque: saldoMap[e.cod_produto] ?? null, gap_hl: r1(gap), gap_pct: mediaPer > 0 ? Math.round((gap / mediaPer) * 100) : 0 };
+    }).sort((a, b) => b.media - a.media).slice(0, 20);
+    return res.json({ periodo, ref_label: refLabel, produtos });
+  } catch (e) { console.error("farol-queda/top-produtos:", e); return res.status(500).json({ error: "Erro ao montar top produtos." }); }
 });
 
 module.exports = router;
