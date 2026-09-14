@@ -1,5 +1,6 @@
 // Bloco "Volumes" da home — meta × realizado por categoria (% da meta).
 // Dado: GET /api/resumo/volumes (escopo automático por perfil no backend).
+// Consolidado + expandir "por RN" (data.porRn) quando há mais de um setor no escopo.
 import { useState, useEffect } from "react";
 import api from "../services/api";
 
@@ -22,6 +23,29 @@ export default function ResumoVolumes() {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
+  const [porRnAberto, setPorRnAberto] = useState(false);
+
+  // Renderiza uma barra (realizado escuro + tendência clara atrás + %).
+  const renderBar = (b, key) => {
+    const w = b.pct == null ? 0 : Math.min(b.pct, 100);
+    const wTend = b.pctTend == null ? 0 : Math.min(b.pctTend, 100);
+    const c = cor(b.pct);
+    const tit = `Realizado ${fmt(b.real)} / ${fmt(b.meta)} (${b.pct == null ? "—" : b.pct + "%"})`
+      + (b.tend != null && b.pctTend != null ? ` · Tendência ${fmt(b.tend)} (${b.pctTend}%)` : "");
+    return (
+      <div key={key} style={S.row} title={tit}>
+        <div style={S.lbl}>
+          {b.label}
+          {b.monitoramento && <span style={S.monit} title="Sem meta oficial — monitoramento (15%)">·</span>}
+        </div>
+        <div style={S.track}>
+          <div style={{ ...S.fill, width: `${wTend}%`, background: corClara(b.pctTend) }} />
+          <div style={{ ...S.fill, width: `${w}%`, background: c }} />
+        </div>
+        <div style={{ ...S.pc, color: c }}>{b.pct == null ? "—" : `${b.pct}%`}</div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     let cancel = false;
@@ -64,28 +88,24 @@ export default function ResumoVolumes() {
       {!data ? (
         <div style={S.skel}>Carregando…</div>
       ) : (
-        data.bars.map((b) => {
-          const w = b.pct == null ? 0 : Math.min(b.pct, 100);
-          const wTend = b.pctTend == null ? 0 : Math.min(b.pctTend, 100);
-          const c = cor(b.pct);
-          const tit = `Realizado ${fmt(b.real)} / ${fmt(b.meta)} HL (${b.pct == null ? "—" : b.pct + "%"})`
-            + (b.tend != null && b.pctTend != null ? ` · Tendência ${fmt(b.tend)} HL (${b.pctTend}%)` : "");
-          return (
-            <div key={b.label} style={S.row} title={tit}>
-              <div style={S.lbl}>
-                {b.label}
-                {b.monitoramento && <span style={S.monit} title="Sem meta oficial — monitoramento (15%)">·</span>}
-              </div>
-              <div style={S.track}>
-                {/* tendência (projeção do mês) — mais clara, atrás */}
-                <div style={{ ...S.fill, width: `${wTend}%`, background: corClara(b.pctTend) }} />
-                {/* realizado — escuro, na frente */}
-                <div style={{ ...S.fill, width: `${w}%`, background: c }} />
-              </div>
-              <div style={{ ...S.pc, color: c }}>{b.pct == null ? "—" : `${b.pct}%`}</div>
-            </div>
-          );
-        })
+        <>
+          {data.bars.map((b) => renderBar(b, b.label))}
+
+          {/* Expandir por RN — só quando há mais de um setor no escopo (admin/diretor/GV). */}
+          {data.porRn && data.porRn.length > 1 && (
+            <>
+              <button style={S.toggle} onClick={() => setPorRnAberto((v) => !v)}>
+                {porRnAberto ? "▾" : "▸"} {porRnAberto ? "Ocultar por RN" : `Ver por RN (${data.porRn.length})`}
+              </button>
+              {porRnAberto && data.porRn.map((rn) => (
+                <div key={rn.setor} style={S.rnBloco}>
+                  <div style={S.rnHead}>Setor {rn.setor}{rn.nome ? ` · ${rn.nome}` : ""}</div>
+                  {rn.bars.map((b) => renderBar(b, `${rn.setor}-${b.label}`))}
+                </div>
+              ))}
+            </>
+          )}
+        </>
       )}
     </div>
   );
@@ -102,4 +122,7 @@ const S = {
   fill: { position: "absolute", left: 0, top: 0, height: "100%", borderRadius: "7px", transition: "width 0.4s" },
   pc: { width: "50px", flexShrink: 0, fontSize: "0.92rem", fontWeight: "600", textAlign: "right" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "8px 0" },
+  toggle: { marginTop: "6px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontSize: "0.82rem", fontFamily: "inherit", width: "100%" },
+  rnBloco: { marginTop: "10px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" },
+  rnHead: { color: "#7DBA3D", fontSize: "0.82rem", fontWeight: "600", margin: "0 0 6px 2px" },
 };

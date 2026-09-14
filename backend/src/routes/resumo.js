@@ -28,26 +28,17 @@ function trimestre(mesStr) {
 router.get("/volumes", async (req, res) => {
   try {
     const mes = req.query.mes || new Date().toISOString().slice(0, 7);
-    const [rvResultAll, rvVolAll] = await Promise.all([
+    const [rvResultAll, rvVolAll, usuarios] = await Promise.all([
       readSheet("rv_resultado").catch(() => []),
       readSheet("rv_volume").catch(() => []),
+      readSheet("usuarios").catch(() => []),
     ]);
     // rv_resultado acumula meses — usa só o mês pedido (linhas antigas sem mês contam).
     const rv = filtrarPorPerfil(rvResultAll, req.user, "setor")
       .filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
     const vol = filtrarPorPerfil(rvVolAll, req.user, "setor");
 
-    const soma = (campo) => rv.reduce((s, r) => s + num(r[campo]), 0);
     const mref = (r) => String(r.mes_ref || r.mes_referencia || "");
-    const volCat = (cat) => {
-      const c = cat.toUpperCase();
-      const sel = vol.filter((r) => String(r.categoria || "").trim().toUpperCase() === c);
-      const doMes = sel.filter((r) => mref(r).startsWith(mes));
-      return (doMes.length ? doMes : sel).reduce((s, r) => s + num(r.volume), 0);
-    };
-
-    const realCerveja = soma("real_cerveja");
-    const realNab = soma("real_nab");
     const r1 = (n) => Math.round(n * 10) / 10;
     const pct = (r, m) => (m > 0 ? Math.round((r / m) * 100) : null);
 
@@ -59,28 +50,46 @@ router.get("/volumes", async (req, res) => {
     if (mes === mesAtualStr) {
       const yy = brNow.getFullYear(), mm = brNow.getMonth(), hoje = brNow.getDate();
       const uteis = (ate) => { let c = 0; const d = new Date(yy, mm, 1); while (d.getMonth() === mm && d.getDate() <= ate) { const w = d.getDay(); if (w >= 1 && w <= 5) c++; d.setDate(d.getDate() + 1); } return c; };
-      const totalMes = uteis(31);
-      const decorridos = Math.max(1, uteis(hoje));
-      fator = totalMes / decorridos;
+      fator = uteis(31) / Math.max(1, uteis(hoje));
     }
 
-    const mk = (label, real, meta, monit) => {
-      const tend = real * fator;
-      return {
-        label, real: r1(real), meta: r1(meta), pct: pct(real, meta),
-        tend: r1(tend), pctTend: pct(tend, meta), monitoramento: !!monit,
+    // Monta as 6 barras (meta × real × tendência) para um recorte de linhas rv/vol.
+    const catBars = (rvRows, volRows) => {
+      const soma = (campo) => rvRows.reduce((s, r) => s + num(r[campo]), 0);
+      const volCat = (cat) => {
+        const c = cat.toUpperCase();
+        const sel = volRows.filter((r) => String(r.categoria || "").trim().toUpperCase() === c);
+        const doMes = sel.filter((r) => mref(r).startsWith(mes));
+        return (doMes.length ? doMes : sel).reduce((s, r) => s + num(r.volume), 0);
       };
+      const mk = (label, real, meta, monit) => {
+        const tend = real * fator;
+        return { label, real: r1(real), meta: r1(meta), pct: pct(real, meta), tend: r1(tend), pctTend: pct(tend, meta), monitoramento: !!monit };
+      };
+      const realCerveja = soma("real_cerveja"), realNab = soma("real_nab");
+      return [
+        mk("Cerveja", realCerveja, soma("meta_cerveja")),
+        mk("NAB", realNab, soma("meta_nab")),
+        mk("Match", soma("real_match"), soma("meta_match")),
+        mk("Mktp", soma("real_marketplace"), soma("meta_marketplace")),
+        mk("Cerveja Zero", volCat("CERVEJA ZERO"), 0.15 * realCerveja, true),
+        mk("NAB Zero", volCat("NAB ZERO"), 0.15 * realNab, true),
+      ];
     };
 
-    const bars = [
-      mk("Cerveja", realCerveja, soma("meta_cerveja")),
-      mk("NAB", realNab, soma("meta_nab")),
-      mk("Match", soma("real_match"), soma("meta_match")),
-      mk("Mktp", soma("real_marketplace"), soma("meta_marketplace")),
-      mk("Cerveja Zero", volCat("CERVEJA ZERO"), 0.15 * realCerveja, true),
-      mk("NAB Zero", volCat("NAB ZERO"), 0.15 * realNab, true),
-    ];
-    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100 });
+    const bars = catBars(rv, vol);
+
+    // Quebra por RN (setor) — pra expandir na home. RN vê só o próprio (1 item).
+    const nomeSetor = {};
+    usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
+    const setSetor = (r) => String(r.setor || "").trim();
+    const setores = [...new Set([...rv.map(setSetor), ...vol.map(setSetor)].filter(Boolean))].sort();
+    const porRn = setores.map((s) => ({
+      setor: s, nome: nomeSetor[s] || "",
+      bars: catBars(rv.filter((r) => setSetor(r) === s), vol.filter((r) => setSetor(r) === s)),
+    }));
+
+    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn });
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });
@@ -88,22 +97,23 @@ router.get("/volumes", async (req, res) => {
 });
 
 // GET /api/resumo/foco-ne?mes=YYYY-MM — bloco "Foco NE" (nível operação).
-// +RGB (SPO 20), Faturamento Score 5 (12), Portfólio Score 5 (24).
-// Realizado: mês corrente = ao vivo (linha OPERACAO do resumo SPO); meses anteriores =
-// snapshot em spo_metas.real. Meta = spo_metas.meta (operação). No 3º mês do trimestre,
-// soma os 3 meses (acumulado); nos demais, mostra só o mês.
+// +LN (SPO 27), Faturamento Score 5 (12), Portfólio Score 5 (24).
+// +LN vem DIRETO da aba do +LN (tasks_validas/tasks_total por mês, linha OPERACAO).
+// Fat/Portfólio: realizado mês corrente = ao vivo (linha OPERACAO do resumo SPO); meses
+// anteriores = snapshot em spo_metas.real; meta = spo_metas.meta. No 3º mês do trimestre,
+// soma os 3 meses (resultado do trimestre); nos demais, mostra só o mês.
 router.get("/foco-ne", async (req, res) => {
   try {
     const mes = req.query.mes || new Date().toISOString().slice(0, 7);
     const { meses, ehTerceiro } = trimestre(mes);
-    const [metas, rgb, score5, portf] = await Promise.all([
+    const [metas, tasksLn, score5, portf] = await Promise.all([
       readSheet("spo_metas").catch(() => []),
-      readSheet("spo_rgb_total").catch(() => []),
+      readSheet("spo_tasks_ln_resumo").catch(() => []),
       readSheet("spo_score5_resumo").catch(() => []),
       readSheet("spo_portfolio_ideal_resumo").catch(() => []),
     ]);
     const ITENS = {
-      20: { label: "+RGB", aba: rgb, campo: "pdvs_bateu_meta" },
+      27: { label: "+LN", aba: tasksLn, campo: "tasks_validas", totalCampo: "tasks_total" },
       12: { label: "Fat. Score 5", aba: score5, campo: "pdvs_ok" },
       24: { label: "Portfólio Score 5", aba: portf, campo: "pdvs_ideais" },
     };
@@ -115,8 +125,16 @@ router.get("/foco-ne", async (req, res) => {
       const r = metaRow(item, m); return r ? num(r.real) : 0; // snapshot do mês fechado
     };
     const metaMes = (item, m) => { const r = metaRow(item, m); return r ? num(r.meta) : 0; };
+    // +LN: real e meta saem direto da aba (rows mensais OPERACAO), sem depender de spo_metas.
+    const lnMes = (m, campo) => { const r = opRow(tasksLn, m); return r ? num(r[campo]) : 0; };
 
-    const items = [20, 12, 24].map((item) => {
+    const items = [27, 12, 24].map((item) => {
+      const soma = (fn) => (ehTerceiro ? meses.reduce((s, m) => s + fn(m), 0) : fn(mes));
+      if (item === 27) {
+        const real = soma((m) => lnMes(m, "tasks_validas"));
+        const meta = soma((m) => lnMes(m, "tasks_total"));
+        return { item, label: ITENS[item].label, real: Math.round(real * 10) / 10, meta: Math.round(meta * 10) / 10, pct: meta > 0 ? Math.round((real / meta) * 100) : null, escopo: ehTerceiro ? "tri" : "mês" };
+      }
       const real = ehTerceiro ? meses.reduce((s, m) => s + realMes(item, m), 0) : realMes(item, mes);
       const meta = ehTerceiro ? meses.reduce((s, m) => s + metaMes(item, m), 0) : metaMes(item, mes);
       return {

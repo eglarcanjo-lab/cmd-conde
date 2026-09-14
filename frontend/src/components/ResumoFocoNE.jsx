@@ -1,5 +1,5 @@
-// Bloco "Foco NE" da home — +RGB / Faturamento Score 5 / Portfólio Score 5.
-// Dado: GET /api/resumo/foco-ne (nível operação; meta = spo_metas; tri = acumula no 3º mês).
+// Bloco "Foco NE" da home — +LN / Faturamento Score 5 / Portfólio Score 5.
+// Dado: GET /api/resumo/foco-ne (nível operação; +LN direto da aba; tri = acumula no 3º mês).
 import { useState, useEffect } from "react";
 import api from "../services/api";
 

@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.56.2** — Farol Volumes: **Mktp é R$** (faturamento), não HL. Foto do Mktp com colunas `(R$)` e valores `R$ …`; na foto do RN o Mktp vira linha em R$ e o `TOTAL (HL)` soma só as categorias de volume.
+Versão atual: **v3.57.0** — Home: Volumes ganha **expandir/recolher "por RN"** (consolidado segue igual); Foco NE troca **+RGB** por **+LN** (resultado do trimestre, direto da aba do +LN), junto de Fat Score 5 e Portfólio Score 5.
+
+## v3.57.0 — Home: Volumes por RN + Foco NE com +LN
+- **Volumes (Home):** `/api/resumo/volumes` agora devolve `porRn` (as 6 barras por setor). O card ganhou um botão **Ver por RN / Ocultar por RN** que abre a quebra por setor (aparece só quando o escopo tem mais de um RN — admin/diretor/GV). RN continua vendo só o consolidado dele.
+- **Foco NE:** saiu o **+RGB**, entrou o **+LN** (SPO 27) — real=`tasks_validas` e meta=`tasks_total`, direto da aba `spo_tasks_ln_resumo` (rows mensais OPERACAO), acumulando o trimestre no 3º mês igual aos outros. Fat Score 5 e Portfólio Score 5 seguem como resultado do trimestre.
 
 ## v3.56.2 — Farol Volumes: Mktp em R$ (faturamento), não HL
 - Cada categoria tem `unit`: Cerveja/NAB/Match = **HL**, Mktp = **R$**. Formatação e rótulos de coluna seguem a unidade (`Meta (HL)` vs `Meta (R$)`, valor `318,4` vs `R$ 9.100,00`).
