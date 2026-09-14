@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.57.1** — Foco NE / +LN: corrige a fonte. O relatório de task não tem retroativo, então o +LN passou a usar o **mesmo mecanismo** dos outros (linha OPERACAO ao vivo no mês + snapshot do fechamento em `spo_metas` para jul/ago), em vez de somar `tasks_total` da aba (que dava `5 / 789`).
+Versão atual: **v3.58.0** — Nova aba **Input de Tasks** (grupo Ações de Preço, admin): gerador de tarefas. Monta definições (tipo · base total/não-compradora · produtos · texto), lista/edita as lançadas e gera a tabela de saída `UNB_PDV (1035185_cod) · cod_produto · texto · tipo` — exporta Excel/copia.
+
+## v3.58.0 — Input de Tasks (gerador de tarefas)
+- **Backend:** rota `/api/input-tasks` (admin) — CRUD de definições na tabela `input_tasks` (regravada inteira) + `GET /gerar` que monta 1 linha por PDV × task. Base **total** = todo o `pdv_base`; **não compradora** = PDVs que não compraram nenhum dos SKUs no tri anterior (3 meses completos, mesmo critério das Ações de Preço). Busca de produto em `produtos_full`.
+- **Frontend:** página `/input-tasks` — form (tipo com sugestões, base, picker de produtos, texto), lista de tasks lançadas (clique edita, 🗑 remove) e tabela de saída com contagem de PDVs por task, export Excel e copiar (TSV). Item no menu (Home dashboard + clássica, só admin).
 
 ## v3.57.1 — Foco NE: +LN pela mesma fonte de Fat/Portfólio (fix)
 - O +LN vinha lendo `tasks_validas`/`tasks_total` direto de `spo_tasks_ln_resumo` — mas esse relatório só tem o mês vivo (sem retroativo), então o trimestre saía errado (`real 5 / meta 789`). Agora usa `realMes`/`metaMes` como Fat Score 5 e Portfólio Score 5: mês corrente ao vivo (OPERACAO → `tasks_validas`) e jul/ago pelo snapshot do fechamento manual em `spo_metas` (meta e real).
