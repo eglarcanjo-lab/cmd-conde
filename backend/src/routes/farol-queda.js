@@ -188,9 +188,9 @@ router.get("/mensagens", async (req, res) => {
       director = {
         texto,
         blocos: [
-          { subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvS, linhas: as },
-          { subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvS, linhas: rota },
-          { subtitulo: `Top produtos geral (${prods.length})`, colunas: colProdS, linhas: prods },
+          { titulo: "Top 20 PDVs AS", subtitulo: `AS (101–103) · visita hoje (${as.length})`, colunas: colPdvS, linhas: as },
+          { titulo: "Top 20 PDVs ROTA", subtitulo: `ROTA (demais) · visita hoje (${rota.length})`, colunas: colPdvS, linhas: rota },
+          { titulo: "Top 20 Produtos", subtitulo: `Produtos gerais (${prods.length})`, colunas: colProdS, linhas: prods },
         ],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };

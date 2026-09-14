@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.55.4** — Farol Queda (WhatsApp): diretoria consolidada é **gerada 1x** e distribuída a todos os diretores cadastrados, e cada tabela vira uma **foto separada** (imagem menor, sem cortar a coluna Δ/GAP).
+Versão atual: **v3.55.5** — Farol Queda (WhatsApp): cada foto da diretoria ganha seu próprio título — **Top 20 PDVs AS**, **Top 20 PDVs ROTA** e **Top 20 Produtos** (antes as 3 vinham como "Top 20 Volume").
+
+## v3.55.5 — Farol Queda: título por foto (AS / ROTA / Produtos)
+- **Backend:** blocos do `director` ganham `titulo` próprio (`Top 20 PDVs AS`, `Top 20 PDVs ROTA`, `Top 20 Produtos`).
+- **Robô:** `cardHTML` e o caption usam `bloco.titulo` quando existir (fallback no título global), então cada foto sai com o cabeçalho certo.
 
 ## v3.55.4 — Farol Queda: 1 foto por tabela + diretoria gerada uma vez
 - **Backend** (`/api/farol-queda/mensagens`): `director` deixou de ser um array por usuário e passou a ser um objeto único `{ texto, blocos, destinatarios[] }` — o conteúdo consolidado é montado uma vez só.
