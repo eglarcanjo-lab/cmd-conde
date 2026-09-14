@@ -192,32 +192,47 @@ router.get("/top-produtos", async (req, res) => {
     const hoje = resolverDia();
     const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
     const mesesRef = mesesAnteriores(mesAtual, 3);
-    const vdProd = filtrarPorPerfil(await readSheet("vd_produto").catch(() => []), req.user, "setor");
+    const [vdProdRaw, gradeRaw] = await Promise.all([
+      readSheet("vd_produto").catch(() => []),
+      readSheet("grade_estoque").catch(() => []),
+    ]);
+    const vdProd = filtrarPorPerfil(vdProdRaw, req.user, "setor");
+    // Estoque (saldo em unidades) por produto — grade_estoque é o saldo do CDD (não por setor).
+    const saldoMap = {};
+    gradeRaw.forEach((g) => { const c = normCod(g.cod); if (c) saldoMap[c] = (saldoMap[c] || 0) + (parseInt(g.saldo) || 0); });
 
     const mesesData = new Set();
     vdProd.forEach((r) => { const m = String(r.data || "").slice(0, 7); if (m) mesesData.add(m); });
     const refPresentes = mesesRef.filter((m) => mesesData.has(m));
     const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
-    const refLabel = refPresentes.map(rotMes).join("·");
+    const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
     if (!refPresentes.length) return res.json({ periodo, ref_label: refLabel, produtos: [] });
 
+    // full = volume do MÊS CHEIO (média 3M "tamanho"); periodoRef/atual = dias 01..D-1.
     const agg = {};
     vdProd.forEach((r) => {
       const data = String(r.data || "").slice(0, 10);
-      const day = Number(data.slice(8, 10)); if (!day || day >= diaCorte) return;
+      const day = Number(data.slice(8, 10)); if (!day) return;
       const mes = data.slice(0, 7);
       const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
       if (!ehAtual && !ehRef) return;
       const v = num(r.volume_hl); if (!v) return;
       const cod = normCod(r.cod_produto);
-      const e = agg[cod] || (agg[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), atual: 0, ref: 0 });
-      if (ehAtual) e.atual += v; else e.ref += v;
+      const e = agg[cod] || (agg[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), full: 0, periodoRef: 0, atual: 0 });
+      if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
+      else if (day < diaCorte) e.atual += v;
     });
     const r1 = (n) => Math.round(n * 10) / 10;
     const produtos = Object.values(agg).map((e) => {
-      const media = e.ref / refPresentes.length;
-      const varHl = e.atual - media; // positivo = subiu
-      return { cod_produto: e.cod_produto, nome_produto: e.nome_produto, media: r1(media), atual: r1(e.atual), var_hl: r1(varHl), var_pct: media > 0 ? Math.round((varHl / media) * 100) : 0 };
+      const mediaFull = e.full / refPresentes.length;    // média cheia (ranking/tamanho)
+      const mediaPer = e.periodoRef / refPresentes.length; // média no mesmo período
+      const gap = e.atual - mediaPer;                     // + subiu · − caiu
+      return {
+        cod_produto: e.cod_produto, nome_produto: e.nome_produto,
+        media: r1(mediaFull), atual: r1(e.atual),
+        estoque: saldoMap[e.cod_produto] ?? null,
+        gap_hl: r1(gap), gap_pct: mediaPer > 0 ? Math.round((gap / mediaPer) * 100) : 0,
+      };
     }).sort((a, b) => b.media - a.media).slice(0, 20);
 
     return res.json({ periodo, ref_label: refLabel, produtos });

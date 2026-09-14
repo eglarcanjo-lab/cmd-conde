@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.54.0** — Home (dashboard admin/diretoria): nova tabela **Top 20 Produtos · Volume** — os 20 de maior média 3M, com a variação vs o mês atual (mesmo período 01→D-1), mostrando quem caiu (▼) e quem subiu (▲), em HL e %.
+Versão atual: **v3.54.1** — Top 20 Produtos (Home): coluna de **Estoque** (saldo da grade), GAP/Δ coloridos (▲ verde sobe · ▼ vermelho cai). "Média 3M" = mês cheio (tamanho); GAP/Δ = ritmo do período 01→D-1. Escopo por perfil (RN = setor; diretor = consolidado geral).
+
+## v3.54.1 — Top 20 Produtos Home: Estoque + cores + média cheia × ritmo
+- Coluna **Estoque** (saldo em unidades da `grade_estoque`, por produto).
+- **GAP (HL)** e **Δ%** coloridos: verde ▲ quando o produto sobe, vermelho ▼ quando cai.
+- "Média 3M (HL)" passou a ser a **média do mês cheio** (ordena por tamanho), enquanto GAP/Δ comparam o **período 01→D-1** (atual vs média do mesmo período). Escopo por perfil mantido (RN=setor · GV=sala · diretor/admin=consolidado geral).
+
+## v3.54.0 — Home (dashboard admin/diretoria): nova tabela **Top 20 Produtos · Volume** — os 20 de maior média 3M, com a variação vs o mês atual (mesmo período 01→D-1), mostrando quem caiu (▼) e quem subiu (▲), em HL e %.
 
 ## v3.54.0 — Top 20 Produtos por volume na Home (sobe e desce)
 - Novo componente ResumoTopProdutos na HomeDashboard + rota GET /api/farol-queda/top-produtos: Top 20 produtos por media 3M no periodo 01..D-1, com variacao (HL e %) vs o mes atual, incluindo os que subiram. Respeita o perfil.

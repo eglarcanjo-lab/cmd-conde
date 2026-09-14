@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmtInt = (n) => (Number(n) || 0).toLocaleString("pt-BR");
 
 export default function ResumoTopProdutos() {
   const [data, setData] = useState(null);
@@ -34,8 +35,8 @@ export default function ResumoTopProdutos() {
   return (
     <div style={S.card}>
       <div style={S.head}>
-        <span style={S.title}><span style={{ color: "#7DBA3D" }}>📦</span> Top 20 Produtos · Volume</span>
-        {data && <span style={S.sub}>{data.periodo} · vs média 3M ({data.ref_label})</span>}
+        <span style={S.title}><span style={{ color: "#7DBA3D" }}>📦</span> Top 20 produtos — <span style={{ color: "#7DBA3D" }}>média 3M</span></span>
+        {data && <span style={S.sub}>média {data.ref_label} · GAP dia {data.periodo}</span>}
       </div>
 
       {!data ? (
@@ -47,25 +48,26 @@ export default function ResumoTopProdutos() {
           <table style={S.table}>
             <thead>
               <tr>
-                {["#", "Produto", "Méd 3M", "Atual", "Var (HL)", "Var (%)"].map((h, i) => (
+                {["#", "Produto", "Média 3M (HL)", "Mês atual (HL)", "Estoque", "GAP (HL)", "Δ"].map((h, i) => (
                   <th key={h} style={{ ...S.th, textAlign: i <= 1 ? "left" : "right" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {prods.map((p, i) => {
-                const sobe = p.var_hl > 0.001;
-                const desce = p.var_hl < -0.001;
+                const sobe = p.gap_hl > 0.001;
+                const desce = p.gap_hl < -0.001;
                 const cor = sobe ? "#4ade80" : desce ? "#ef6f6f" : "rgba(255,255,255,0.55)";
                 const seta = sobe ? "▲" : desce ? "▼" : "—";
                 return (
                   <tr key={p.cod_produto} style={i % 2 ? S.trAlt : undefined}>
                     <td style={{ ...S.td, color: "rgba(255,255,255,0.35)" }}>{i + 1}</td>
-                    <td style={{ ...S.td, color: "#fff", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${p.nome_produto} (${p.cod_produto})`}>{p.nome_produto}</td>
+                    <td style={{ ...S.td, color: "#fff", maxWidth: 210, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${p.nome_produto} (${p.cod_produto})`}>{p.nome_produto}</td>
                     <td style={{ ...S.td, textAlign: "right" }}>{fmt(p.media)}</td>
                     <td style={{ ...S.td, textAlign: "right", fontWeight: 600 }}>{fmt(p.atual)}</td>
-                    <td style={{ ...S.td, textAlign: "right", color: cor }}>{seta} {fmt(Math.abs(p.var_hl))}</td>
-                    <td style={{ ...S.td, textAlign: "right", color: cor, fontWeight: 700 }}>{p.var_pct > 0 ? "+" : ""}{p.var_pct}%</td>
+                    <td style={{ ...S.td, textAlign: "right", color: "rgba(255,255,255,0.55)" }}>{p.estoque == null ? "—" : fmtInt(p.estoque)}</td>
+                    <td style={{ ...S.td, textAlign: "right", color: cor, fontWeight: 600 }}>{p.gap_hl > 0 ? "+" : ""}{fmt(p.gap_hl)}</td>
+                    <td style={{ ...S.td, textAlign: "right", color: cor, fontWeight: 700, whiteSpace: "nowrap" }}>{seta} {Math.abs(p.gap_pct)}%</td>
                   </tr>
                 );
               })}
