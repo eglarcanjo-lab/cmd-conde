@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.58.8** — Top 20 Volume: no consolidado (Diretoria e GV) os **produtos** passam a ser agregados **por produto** (os mais vendidos no geral), sem a coluna Setor. O individual (RN) segue com os produtos do próprio setor.
+Versão atual: **v3.59.0** — Farol Volumes vira **Report Volumes**: relatório único estilo planilha (Consolidado Operação → GV1/GV3 → todos os RNs por primeiro nome), 6 categorias (Cerveja, Cerveja Zero, NAB, NAB Zero, Match, Mktp) × Meta/Real/%/Tend, com heatmap no %. Todos os cadastrados recebem o PDF inteiro (`Report_Volumes_{data}`).
+
+## v3.59.0 — Report Volumes (planilha consolidada)
+- **Backend** (`/api/farol-volumes/mensagens`): resposta reformulada para `report` (seções Operação/GV/RN × categorias × Meta·Real·%·Tend). Zeros (Cerveja/NAB Zero) usam volume da `rv_volume` e meta de monitoramento (15% da base). `destinatarios` = todos com telefone (perfis director/gv1/gv3/rn) — recebem o relatório inteiro.
+- **Robô** (local): novo renderer de planilha densa (2 níveis de cabeçalho, heatmap no %, página larga) → PDF `Report_Volumes_{data}`. Os demais faróis seguem com PDF por destinatário escopado.
 
 ## v3.58.8 — Top 20 Volume: produtos do consolidado por produto (não por RN)
 - Antes o Top produtos era agregado por `setor|produto`, então no consolidado o mesmo produto repetia por RN. Agora **GV** e **Diretoria** agregam **por produto** (soma dos setores do escopo) → os mais vendidos no geral, e a coluna **Setor** saiu dessas tabelas. RN continua com os produtos do seu setor.

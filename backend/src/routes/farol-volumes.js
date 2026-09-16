@@ -1,62 +1,34 @@
-// Farol "Volumes — Meta × Real × Tendência" (envio WhatsApp).
-// Fonte: rv_resultado (meta/real por setor, por categoria: Cerveja/NAB/Match/Mktp).
-// Tendência = realizado do mês projetado pelo ritmo de dias úteis (seg–sex).
-//   • Diretor: 1 foto por categoria — linhas por RN + linha OPERAÇÃO (total).
-//   • GV: idem, escopo da sala + linha REGIÃO.
-//   • RN: 1 foto — as categorias do seu setor + linha TOTAL.
+// Farol "Report Volumes" (envio WhatsApp) — relatório único estilo planilha.
+// Ordem: Consolidado Operação → Por GV (GV1/GV3) → Por RN (primeiro nome).
+// Categorias: Cerveja, Cerveja Zero, NAB, NAB Zero, Match, Mktp. Sub-colunas por
+// categoria: Meta · Real · % · Tend. Tendência = real projetado pelo ritmo de dias úteis.
+// Fonte: rv_resultado (metas/real das 4 principais) + rv_volume (volume das "zero").
+// Todo mundo com telefone recebe o relatório INTEIRO (não é escopado por RN).
 const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
-const { filtrarPorPerfil } = require("../utils/perfil");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
-const hl = (n) => (Math.round((Number(n) || 0) * 10) / 10).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const brl = (n) => "R$ " + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-// Formata conforme a unidade da categoria: HL (volume) ou R$ (marketplace = faturamento).
-const fmtU = (n, unit) => (unit === "R$" ? brl(n) : hl(n));
 const pad = (n) => String(n).padStart(2, "0");
-const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const fmtN = (n) => String(Math.round(Number(n) || 0)); // inteiro, sem separador (denso)
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
-// Mktp (marketplace) é FATURAMENTO em R$; as demais são VOLUME em HL.
+// tipo "rv" = meta/real vêm do rv_resultado; "zero" = real do rv_volume, meta = 15% da base.
 const CATS = [
-  { key: "cerveja", label: "Cerveja", real: "real_cerveja", meta: "meta_cerveja", unit: "HL" },
-  { key: "nab", label: "NAB", real: "real_nab", meta: "meta_nab", unit: "HL" },
-  { key: "match", label: "Match", real: "real_match", meta: "meta_match", unit: "HL" },
-  { key: "mktp", label: "Mktp", real: "real_marketplace", meta: "meta_marketplace", unit: "R$" },
+  { key: "cerveja", label: "Cerveja", tipo: "rv", real: "real_cerveja", meta: "meta_cerveja" },
+  { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
+  { key: "nab", label: "NAB", tipo: "rv", real: "real_nab", meta: "meta_nab" },
+  { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
+  { key: "match", label: "Match", tipo: "rv", real: "real_match", meta: "meta_match" },
+  { key: "mktp", label: "Mktp", tipo: "rv", real: "real_marketplace", meta: "meta_marketplace" },
 ];
-
-// % da meta → cor: ≥100 verde (up) · 70–99 âmbar (mid) · <70 vermelho (down).
-const sinalPct = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
-
-// Formata um trio meta/real/tendência (na unidade dada) com os % já coloridos.
-function vol(meta, real, tend, unit = "HL") {
-  const pctR = meta > 0 ? Math.round((real / meta) * 100) : null;
-  const pctT = meta > 0 ? Math.round((tend / meta) * 100) : null;
-  return {
-    meta: fmtU(meta, unit), real: fmtU(real, unit), tend: fmtU(tend, unit),
-    pctReal: pctR == null ? "—" : `${pctR}%`, pctTend: pctT == null ? "—" : `${pctT}%`,
-    _cores: { pctReal: sinalPct(pctR), pctTend: sinalPct(pctT) },
-  };
-}
-
-// Colunas do painel. Por RN (diretor/GV) — unidade da categoria no rótulo.
-const colPorRn = (unit) => [
-  { key: "setor", label: "Setor" }, { key: "rn", label: "RN" },
-  { key: "meta", label: `Meta (${unit})` }, { key: "real", label: `Real (${unit})` }, { key: "pctReal", label: "% Meta" },
-  { key: "tend", label: `Tend (${unit})` }, { key: "pctTend", label: "% Tend" },
-];
-// Por categoria (RN) — cada linha traz a unidade no nome; cabeçalho fica genérico.
-const colPorCat = [
-  { key: "categoria", label: "Categoria" },
-  { key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pctReal", label: "% Meta" },
-  { key: "tend", label: "Tend" }, { key: "pctTend", label: "% Tend" },
-];
+const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pct", label: "%" }, { key: "tend", label: "Tend" }];
+const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 
 router.use(authMiddleware);
 
-// GET /api/farol-volumes/mensagens  (mês corrente; escopo por perfil do requisitante)
+// GET /api/farol-volumes/mensagens  (mês corrente; relatório consolidado p/ todos)
 router.get("/mensagens", async (req, res) => {
   try {
     const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -68,100 +40,86 @@ router.get("/mensagens", async (req, res) => {
     const uteis = (ate) => { let c = 0; const x = new Date(d.getFullYear(), d.getMonth(), 1); while (x.getMonth() === d.getMonth() && x.getDate() <= ate) { const w = x.getDay(); if (w >= 1 && w <= 5) c++; x.setDate(x.getDate() + 1); } return c; };
     const fator = uteis(31) / Math.max(1, uteis(d.getDate()));
 
-    const [rvAll, usuarios] = await Promise.all([
+    const [rvAll, volAll, usuarios] = await Promise.all([
       readSheet("rv_resultado").catch(() => []),
+      readSheet("rv_volume").catch(() => []),
       readSheet("usuarios").catch(() => []),
     ]);
-    // rv_resultado acumula meses — usa só o mês corrente (linhas antigas sem mês contam).
-    const rv = filtrarPorPerfil(rvAll, req.user, "setor").filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
+    const doMes = (r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes);
+    const rv = rvAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
 
-    const aggBySetor = {};
+    // raw[setor][catKey] = { meta, real } (valores brutos por setor).
+    const raw = {};
+    const initSetor = (s) => { if (!raw[s]) { raw[s] = {}; CATS.forEach((c) => raw[s][c.key] = { meta: 0, real: 0 }); } };
     rv.forEach((r) => {
+      const s = String(r.setor || "").trim(); if (!s) return; initSetor(s);
+      CATS.filter((c) => c.tipo === "rv").forEach((c) => { raw[s][c.key].meta += num(r[c.meta]); raw[s][c.key].real += num(r[c.real]); });
+    });
+    // "zero": real do rv_volume por setor+categoria; meta = 15% do real da base (monitoramento).
+    const volSetor = {};
+    volAll.filter(doMes).forEach((r) => {
       const s = String(r.setor || "").trim(); if (!s) return;
-      const e = aggBySetor[s] || (aggBySetor[s] = {});
-      CATS.forEach((c) => { e[c.meta] = (e[c.meta] || 0) + num(r[c.meta]); e[c.real] = (e[c.real] || 0) + num(r[c.real]); });
+      const cat = String(r.categoria || "").trim().toUpperCase();
+      (volSetor[s] = volSetor[s] || {})[cat] = (volSetor[s]?.[cat] || 0) + num(r.volume);
     });
-    const setoresTodos = Object.keys(aggBySetor).sort();
-
-    const nomeSetor = {}, telSetor = {};
-    usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) { nomeSetor[c] = String(u.nome || "").trim(); telSetor[c] = String(u.telefone || "").trim(); } });
-
-    const mesLabel = `${ROT[d.getMonth()]}/${d.getFullYear()}`;
-    const legenda = `Meta × Real × Tendência · ${mesLabel} · Tend = projeção dias úteis`;
-    const base = { data: dataBR, dia: diaLabel, titulo: "Volumes", emoji: "📊", legenda, colunas: [], rn: [], gv: [], director: null };
-    if (!setoresTodos.length) return res.json(base);
-
-    // Uma tabela "por RN" de UMA categoria (uma unidade só), para um conjunto de setores + total.
-    const tabelaCat = (cat, setores, totalLabel) => {
-      let tm = 0, tr = 0;
-      const linhas = setores.map((s) => {
-        const a = aggBySetor[s] || {};
-        const meta = num(a[cat.meta]), real = num(a[cat.real]);
-        tm += meta; tr += real;
-        return { setor: s, rn: nomeSetor[s] || "", ...vol(meta, real, real * fator, cat.unit) };
+    Object.keys(raw).forEach((s) => {
+      CATS.filter((c) => c.tipo === "zero").forEach((c) => {
+        raw[s][c.key] = { meta: 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
       });
-      return [...linhas, { setor: "", rn: totalLabel, ...vol(tm, tr, tr * fator, cat.unit) }];
-    };
-    // Uma tabela "por categoria" de um setor (RN). Cada linha na sua unidade; o TOTAL
-    // soma só as categorias em HL (Mktp é R$, não entra no volume total).
-    const tabelaSetor = (s) => {
-      const a = aggBySetor[s] || {};
-      const linhas = CATS.map((cat) => {
-        const meta = num(a[cat.meta]), real = num(a[cat.real]);
-        return { categoria: `${cat.label} (${cat.unit})`, ...vol(meta, real, real * fator, cat.unit) };
-      });
-      let tm = 0, tr = 0;
-      CATS.filter((c) => c.unit === "HL").forEach((c) => { tm += num(a[c.meta]); tr += num(a[c.real]); });
-      return [...linhas, { categoria: "TOTAL (HL)", ...vol(tm, tr, tr * fator, "HL") }];
-    };
-
-    // Texto (fallback quando não é foto).
-    const txtCat = (cat, setores, totalLabel) => {
-      const l = setores.map((s) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${s} ${nomeSetor[s] || ""}: ${fmtU(r, cat.unit)}/${fmtU(m, cat.unit)} (${p}%)`; });
-      const tm = setores.reduce((x, s) => x + num((aggBySetor[s] || {})[cat.meta]), 0);
-      const tr = setores.reduce((x, s) => x + num((aggBySetor[s] || {})[cat.real]), 0);
-      const tp = tm > 0 ? Math.round(tr / tm * 100) : "—";
-      return `*${cat.label}*\n${l.join("\n")}\n▸ ${totalLabel}: ${fmtU(tr, cat.unit)}/${fmtU(tm, cat.unit)} (${tp}%)`;
-    };
-    const cab = (l2) => [`📊 *Volumes* ${dataBR}`, l2, legenda, ""].join("\n");
-
-    // ── Por RN ── (1 foto: as categorias do seu setor)
-    const rn = setoresTodos.map((s) => ({
-      setor: s, nome: nomeSetor[s] || "", telefone: telSetor[s] || "",
-      texto: [cab(`Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · ${diaLabel}`),
-        ...CATS.map((cat) => { const a = aggBySetor[s] || {}; const m = num(a[cat.meta]), r = num(a[cat.real]); const p = m > 0 ? Math.round(r / m * 100) : "—"; return `• ${cat.label}: ${fmtU(r, cat.unit)}/${fmtU(m, cat.unit)} (${p}%) · tend ${fmtU(r * fator, cat.unit)}`; })].join("\n"),
-      blocos: [{ titulo: "Volumes", subtitulo: `Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""} · ${diaLabel}`, colunas: colPorCat, linhas: tabelaSetor(s) }],
-    }));
-
-    // ── Por GV (sala) ── (4 fotos: 1 por categoria, escopo da região + linha REGIÃO)
-    const gruposGV = {};
-    setoresTodos.forEach((s) => { const p = String(s)[0]; (gruposGV[p] = gruposGV[p] || []).push(s); });
-    const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
-    const gv = Object.entries(gruposGV).map(([prefixo, sets]) => {
-      const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilDoPrefixo[prefixo] && String(u.telefone || "").trim());
-      const regLabel = `REGIÃO ${prefixo}xx`;
-      return {
-        grupo: `${prefixo}xx`, nome: uGV?.nome || "", telefone: String(uGV?.telefone || "").trim(),
-        texto: [cab(`Consolidado GV ${uGV?.nome || prefixo + "xx"} · ${diaLabel}`), ...CATS.map((cat) => txtCat(cat, sets, regLabel))].join("\n\n"),
-        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · GV ${prefixo}xx · ${diaLabel}`, colunas: colPorRn(cat.unit), linhas: tabelaCat(cat, sets, regLabel) })),
-      };
     });
 
-    // ── Diretoria ── (4 fotos: 1 por categoria, todos os RNs + linha OPERAÇÃO)
-    const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
-    let director = null;
-    if (diretores.length) {
-      director = {
-        texto: [cab(`Consolidado Diretoria · ${diaLabel}`), ...CATS.map((cat) => txtCat(cat, setoresTodos, "OPERAÇÃO"))].join("\n\n"),
-        blocos: CATS.map((cat) => ({ titulo: `Volumes · ${cat.label}`, subtitulo: `Por RN · Operação · ${diaLabel}`, colunas: colPorRn(cat.unit), linhas: tabelaCat(cat, setoresTodos, "OPERAÇÃO") })),
-        destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
-      };
-    }
+    const setores = Object.keys(raw).sort();
+    if (!setores.length) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
 
-    return res.json({ ...base, rn, gv, director });
+    const nomeSetor = {};
+    usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
+
+    // Agrega um conjunto de setores → { catKey: {meta,real,pct,tend,_cor} } formatado.
+    const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
+    const aggCats = (lista) => {
+      const out = {};
+      CATS.forEach((c) => {
+        let m = 0, r = 0;
+        lista.forEach((s) => { const cel = raw[s]?.[c.key]; if (cel) { m += cel.meta; r += cel.real; } });
+        const p = m > 0 ? Math.round((r / m) * 100) : null;
+        out[c.key] = { meta: fmtN(m), real: fmtN(r), pct: p == null ? "—" : `${p}%`, tend: fmtN(r * fator), _cor: sinal(p) };
+      });
+      return out;
+    };
+
+    const gvPrefixos = [["1", "GV 1"], ["3", "GV 3"]];
+    const gvLinhas = gvPrefixos
+      .map(([px, lbl]) => ({ px, lbl, sets: setores.filter((s) => String(s)[0] === px) }))
+      .filter((g) => g.sets.length)
+      .map((g) => ({ rotulo: g.lbl, cats: aggCats(g.sets) }));
+
+    const rnLinhas = setores.map((s) => ({ setor: s, rotulo: primeiroNome(nomeSetor[s]) || s, cats: aggCats([s]) }));
+
+    const report = {
+      categorias: CATS.map((c) => ({ key: c.key, label: c.label })),
+      subcols: SUBCOLS,
+      secoes: [
+        { titulo: "Consolidado Operação", colLabel: "Operação", linhas: [{ rotulo: "Operação", cats: aggCats(setores) }] },
+        { titulo: "Por GV", colLabel: "GV", linhas: gvLinhas },
+        { titulo: "Por RN", colLabel: "RN", setorCol: true, linhas: rnLinhas },
+      ],
+    };
+
+    // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.
+    const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);
+    const vistos = new Set();
+    const destinatarios = [];
+    usuarios.forEach((u) => {
+      const tel = String(u.telefone || "").replace(/\D/g, "");
+      if (!tel || !perfisEnvio.has(String(u.perfil || "").toLowerCase())) return;
+      if (vistos.has(tel)) return; vistos.add(tel);
+      destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
+    });
+
+    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, destinatarios, rn: [], gv: [], director: null });
   } catch (e) {
     console.error("farol-volumes/mensagens:", e);
-    return res.status(500).json({ error: "Erro ao gerar farol de volumes." });
+    return res.status(500).json({ error: "Erro ao gerar o Report Volumes." });
   }
 });
 
