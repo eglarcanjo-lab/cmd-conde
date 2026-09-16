@@ -41,24 +41,26 @@ function mesesAnteriores(ym, n = 3) {
   return out;
 }
 
-// Agrega volume por chave: full = mês cheio (média 3M "tamanho"); periodoRef/atual = dias 01..D-1.
-function agregar(rows, refPresentes, mesAtual, diaCorte, chaveFn, nomeKey, nomeVal, ehProduto) {
+// Agrega volume por chave: full = mês cheio (média 3M "tamanho"); atual = dias 01..D-1 do
+// mês atual; anoAnt = MESMO período (01..D-1) do mesmo mês do ANO PASSADO (Y-1).
+function agregar(rows, refPresentes, mesAtual, mesY1, diaCorte, chaveFn, nomeKey, nomeVal, ehProduto) {
   const agg = {};
   rows.forEach((r) => {
     const data = String(r.data || "").slice(0, 10);
     const day = Number(data.slice(8, 10)); if (!day) return;
     const mes = data.slice(0, 7);
-    const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes);
-    if (!ehAtual && !ehRef) return;
+    const ehAtual = mes === mesAtual, ehRef = refPresentes.includes(mes), ehY1 = mes === mesY1;
+    if (!ehAtual && !ehRef && !ehY1) return;
     const v = num(r.volume_hl); if (!v) return;
     const k = chaveFn(r);
-    const e = agg[k] || (agg[k] = { setor: String(r.setor || "").trim(), [nomeKey]: nomeVal(r), cod_pdv: ehProduto ? undefined : normCod(r.cod_pdv), cod_produto: ehProduto ? normCod(r.cod_produto) : undefined, full: 0, periodoRef: 0, atual: 0 });
-    if (ehRef) { e.full += v; if (day < diaCorte) e.periodoRef += v; }
-    else if (day < diaCorte) e.atual += v;
+    const e = agg[k] || (agg[k] = { setor: String(r.setor || "").trim(), [nomeKey]: nomeVal(r), cod_pdv: ehProduto ? undefined : normCod(r.cod_pdv), cod_produto: ehProduto ? normCod(r.cod_produto) : undefined, full: 0, atual: 0, anoAnt: 0 });
+    if (ehRef) e.full += v;
+    else if (ehAtual && day < diaCorte) e.atual += v;
+    else if (ehY1 && day < diaCorte) e.anoAnt += v;
   });
   return Object.values(agg).map((e) => {
-    const mediaFull = e.full / refPresentes.length, mediaPer = e.periodoRef / refPresentes.length, gap = e.atual - mediaPer;
-    return { ...e, mediaFull, gap_hl: gap, gap_pct: mediaPer > 0 ? (gap / mediaPer) * 100 : 0 };
+    const mediaFull = e.full / refPresentes.length, gap = e.atual - e.anoAnt;
+    return { ...e, mediaFull, gap_hl: gap, gap_pct: e.anoAnt > 0 ? (gap / e.anoAnt) * 100 : null };
   });
 }
 
@@ -69,6 +71,7 @@ router.get("/mensagens", async (req, res) => {
   try {
     const hoje = resolverDia(req.query.dia);
     const diaCorte = hoje.diaNum, mesAtual = hoje.mesAtual;
+    const mesY1 = `${Number(mesAtual.slice(0, 4)) - 1}-${mesAtual.slice(5, 7)}`; // mesmo mês, ano passado
     const mesesRef = mesesAnteriores(mesAtual, 3);
 
     const [vdPdvRaw, vdProdRaw, gradeRaw, pdvBaseRaw, usuarios, produtosFull] = await Promise.all([
@@ -98,29 +101,30 @@ router.get("/mensagens", async (req, res) => {
     const periodo = `01–${String(diaCorte - 1).padStart(2, "0")}/${mesAtual.split("-")[1]}`;
     const refLabel = refPresentes.length ? `${rotMes(refPresentes[refPresentes.length - 1])}–${rotMes(refPresentes[0])}` : "";
     // Legenda (topo-direita da foto): períodos usados. Ex. hoje 14/09:
-    // "Média jun–ago · GAP dia 01–13 · set vs média 3M".
+    // "Média jun–ago · período 01–13/09 · set/26 vs set/25 (mesmo período)".
     const mesAtualAbrev = rotMes(mesAtual);
-    const legenda = refLabel ? `Média ${refLabel} · GAP dia ${periodo} · ${mesAtualAbrev} vs média 3M` : "";
+    const y1Abrev = `${mesAtualAbrev}/${mesY1.slice(2, 4)}`; // ex. set/25
+    const legenda = `Média ${refLabel || "—"} · período ${periodo} · ${mesAtualAbrev}/${mesAtual.slice(2, 4)} vs ${y1Abrev} (mesmo período)`;
 
     const base = { data: hoje.dataBR, dia: hoje.diaLabel, titulo: "Top 20 Volume", emoji: "📊", legenda, colunas: [], rn: [], gv: [], director: [] };
     if (!refPresentes.length) return res.json(base);
 
-    const linhasPdv = agregar(vdPdv, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim(), false);
-    const linhasProd = agregar(vdProd, refPresentes, mesAtual, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true);
+    const linhasPdv = agregar(vdPdv, refPresentes, mesAtual, mesY1, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_pdv)}`, "nome_pdv", (r) => String(r.nome_pdv || "").trim(), false);
+    const linhasProd = agregar(vdProd, refPresentes, mesAtual, mesY1, diaCorte, (r) => `${String(r.setor).trim()}|${normCod(r.cod_produto)}`, "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true);
 
-    // Formatação com cores: _cor up/down/flat · GAP com sinal · Δ com seta.
+    // Formatação com cores: _cor up/down/flat · GAP com sinal · Δ com seta. GAP/Δ = vs Y-1.
     const sinal = (n) => (n > 0.001 ? "up" : n < -0.001 ? "down" : "flat");
     const gapStr = (n) => `${n > 0 ? "+" : ""}${hl(n)}`;
-    const deltaStr = (n, p) => `${n > 0.001 ? "▲" : n < -0.001 ? "▼" : "—"} ${Math.abs(Math.round(p))}%`;
-    const fmtBase = (e) => ({ setor: e.setor, media: hl(e.mediaFull), atual: hl(e.atual), gap: gapStr(e.gap_hl), delta: deltaStr(e.gap_hl, e.gap_pct), _cor: sinal(e.gap_hl) });
+    const deltaStr = (n, p) => (p == null ? "novo" : `${n > 0.001 ? "▲" : n < -0.001 ? "▼" : "—"} ${Math.abs(Math.round(p))}%`);
+    const fmtBase = (e) => ({ setor: e.setor, media: hl(e.mediaFull), atual: hl(e.atual), ano_ant: hl(e.anoAnt), gap: gapStr(e.gap_hl), delta: deltaStr(e.gap_hl, e.gap_pct), _cor: sinal(e.gap_hl) });
     const fmtPdv = (e) => ({ cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, ...fmtBase(e) });
     const fmtProd = (e) => ({ nome_produto: e.nome_produto, estoque: saldoMap[e.cod_produto] == null ? "—" : saldoMap[e.cod_produto].toLocaleString("pt-BR"), ...fmtBase(e) });
 
-    // Colunas (formato do painel). *S = com Setor (GV/Diretoria).
-    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
-    const colPdvS = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
-    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
-    const colProdS = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP (HL)" }, { key: "delta", label: "Δ" }];
+    // Colunas (formato do painel). *S = com Setor (GV/Diretoria). GAP/Δ = vs ano passado (Y-1).
+    const colPdv = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "ano_ant", label: `${y1Abrev} (HL)` }, { key: "gap", label: "GAP Y-1" }, { key: "delta", label: "Δ" }];
+    const colPdvS = [{ key: "cod_pdv", label: "Cód" }, { key: "setor", label: "Setor" }, { key: "nome_pdv", label: "PDV" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "ano_ant", label: `${y1Abrev} (HL)` }, { key: "gap", label: "GAP Y-1" }, { key: "delta", label: "Δ" }];
+    const colProd = [{ key: "nome_produto", label: "Produto" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "ano_ant", label: `${y1Abrev} (HL)` }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP Y-1" }, { key: "delta", label: "Δ" }];
+    const colProdS = [{ key: "nome_produto", label: "Produto" }, { key: "setor", label: "Setor" }, { key: "media", label: "Média 3M (HL)" }, { key: "atual", label: "Mês atual (HL)" }, { key: "ano_ant", label: `${y1Abrev} (HL)` }, { key: "estoque", label: "Estoque" }, { key: "gap", label: "GAP Y-1" }, { key: "delta", label: "Δ" }];
 
     const textoBloco = (titulo, linhas, campoNome) => {
       if (!linhas.length) return `${titulo}: —`;
@@ -137,7 +141,7 @@ router.get("/mensagens", async (req, res) => {
     // por setor — os mais vendidos no geral. filtroSetor limita o escopo (região do GV).
     const topProdGeralDe = (filtroSetor) => {
       const rows = filtroSetor ? vdProd.filter((r) => filtroSetor(String(r.setor || "").trim())) : vdProd;
-      return agregar(rows, refPresentes, mesAtual, diaCorte, (r) => normCod(r.cod_produto), "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true)
+      return agregar(rows, refPresentes, mesAtual, mesY1, diaCorte, (r) => normCod(r.cod_produto), "nome_produto", (r) => nomeProd[normCod(r.cod_produto)] || String(r.nome_produto || "").trim(), true)
         .sort((a, b) => b.mediaFull - a.mediaFull).slice(0, TOP);
     };
 

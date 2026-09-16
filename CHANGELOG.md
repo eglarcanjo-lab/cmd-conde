@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.59.4** — Pure Gold (diretoria) passa a **sempre aparecer** no relatório (mostra 0 quando não há foco no dia), como o Sem Visita — antes era omitido nos dias sem foco.
+Versão atual: **v3.60.0** — Top 20 PDVs/Produtos (Home + farol WhatsApp) passam a comparar com o **ano passado**: colunas Média 3M · Mês atual · **Ano Anterior (mesmo período)** · **GAP vs Y-1** · Δ. GAP/Δ deixam de ser vs mês/média e passam a ser vs o mesmo mês do ano passado.
+
+## v3.60.0 — Top 20 PDVs/Produtos: comparação vs ano passado (Y-1)
+- **Backend `resumo/rankings` (Home) e `farol-queda/mensagens` (WhatsApp):** nova coluna **Ano Anterior (HL)** = mesmo período (01→D-1) do mesmo mês do ano passado (usa `vd_pdv`/`vd_produto`, que têm o histórico de 2025). **GAP** e **Δ** passam a ser **mês atual vs Y-1** (antes eram vs média 3M / vs mês anterior). Ranking segue pela **Média 3M**. "Mês atual" no Home alinhado ao período 01→D-1.
+- **Frontend (ResumoRankings):** coluna Ano Anterior + rótulos `set/26 vs set/25`. **Robô:** sem mudança (renderiza as colunas novas).
+- ⚠️ Depende do histórico de 2025 estar carregado em `vd_pdv`/`vd_produto`; onde faltar, a linha mostra `novo` (sem base do ano anterior).
 
 ## v3.59.4 — Pure Gold (diretoria) sempre no relatório
 - A tabela Pure Gold do diretor era montada só quando havia PDV foco no dia (`pgHoje.length`), então em dias sem foco o bloco sumia do relatório consolidado. Agora sempre aparece (OPERAÇÃO 0 quando não há foco), igual ao Sem Visita.

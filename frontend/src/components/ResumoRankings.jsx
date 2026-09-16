@@ -20,12 +20,12 @@ function Gap({ g }) {
   return <span style={{ color: up ? "#4ade80" : "#f0997b", fontWeight: 600, fontSize: "0.88rem" }}>{up ? "+" : "−"}{fmt(Math.abs(g))}</span>;
 }
 
-function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, limiteBaixo, mostrarEstoque, mostrarRN, acao }) {
+function Tabela({ titulo, colNome, linhas, periodo, atualLabel, y1Label, mediaLabel, limiteBaixo, mostrarEstoque, mostrarRN, acao }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
         <span style={S.titulo}>{titulo}</span>
-        <span style={S.sub}>média {mediaLabel} · GAP dia {periodo} · {rotMes(mAtual)} vs {rotMes(mAnt)}</span>
+        <span style={S.sub}>média {mediaLabel} · período {periodo} · {atualLabel} vs {y1Label}</span>
       </div>
       {acao}
       <table style={S.table}>
@@ -36,10 +36,11 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             <th style={S.th}>{colNome}</th>
             {mostrarRN && <th style={{ ...S.th, textAlign: "right", width: 52 }} title="Setor = RN responsável">Setor</th>}
             <th style={{ ...S.th, textAlign: "right" }} title={`Média dos 3 meses anteriores (${mediaLabel}) — exclui o mês atual`}>Média 3M (HL)</th>
-            <th style={{ ...S.th, textAlign: "right", width: 88 }}>Mês atual (HL)</th>
+            <th style={{ ...S.th, textAlign: "right", width: 84 }} title={`Mês atual acumulado no período ${periodo}`}>Mês atual (HL)</th>
+            <th style={{ ...S.th, textAlign: "right", width: 84 }} title={`Mesmo período (${periodo}) do ano passado (${y1Label})`}>{y1Label} (HL)</th>
             {mostrarEstoque && <th style={{ ...S.th, textAlign: "right", width: 74 }} title="Estoque disponível (Grade de Estoque)">Estoque</th>}
-            <th style={{ ...S.th, textAlign: "right", width: 92 }}>GAP (HL)</th>
-            <th style={{ ...S.th, textAlign: "right", width: 78 }}>Δ</th>
+            <th style={{ ...S.th, textAlign: "right", width: 92 }} title="Mês atual − ano passado (mesmo período)">GAP Y-1</th>
+            <th style={{ ...S.th, textAlign: "right", width: 78 }} title="Variação % vs ano passado">Δ</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +55,8 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
               <td style={{ ...S.tdNome, ...corBaixo }} title={`${r.nome} (cod ${r.cod})`}>{r.nome || r.cod}</td>
               {mostrarRN && <td style={S.tdPlain} title={r.rn ? `${r.rn} · setor ${r.setor}` : `setor ${r.setor}`}>{r.setor}</td>}
               <td style={{ ...S.tdVol, ...corBaixo }}>{fmt(r.media3m)}</td>
-              <td style={{ ...S.tdVol, color: baixo ? "#f87171" : "#fff" }}>{fmt(r.mesAtualTotal)}</td>
+              <td style={{ ...S.tdVol, color: baixo ? "#f87171" : "#fff" }}>{fmt(r.mesAtual)}</td>
+              <td style={S.tdVol}>{fmt(r.anoAnterior)}</td>
               {mostrarEstoque && (
                 <td style={{ ...S.tdVol, color: r.estoque === 0 ? "#f87171" : "rgba(255,255,255,0.75)" }}>
                   {r.estoque == null ? "—" : fmt(r.estoque)}
@@ -65,7 +67,7 @@ function Tabela({ titulo, colNome, linhas, periodo, mAtual, mAnt, mediaLabel, li
             </tr>
             );
           })}
-          {!linhas.length && <tr><td colSpan={6 + (mostrarEstoque ? 1 : 0) + (mostrarRN ? 2 : 0)} style={S.vazio}>Sem dados.</td></tr>}
+          {!linhas.length && <tr><td colSpan={7 + (mostrarEstoque ? 1 : 0) + (mostrarRN ? 2 : 0)} style={S.vazio}>Sem dados.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -111,8 +113,8 @@ export default function ResumoRankings() {
     <div>
       {!data.temDiario && <div style={S.aviso}>⚠️ Comparação D-1 ainda vazia — reimporte os <b>Pedidos</b> pra gerar o volume diário (vd_pdv/vd_produto).</div>}
       <div style={S.grid}>
-        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={linhasPdv} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} acao={togglePdv} mostrarRN />
-        <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} mAtual={data.mesAtual} mAnt={data.mesAnterior} mediaLabel={data.mediaLabel} limiteBaixo={50} mostrarEstoque />
+        <Tabela titulo="🏪 Top 20 PDVs — média 3M" colNome="PDV" linhas={linhasPdv} periodo={data.periodo} atualLabel={data.atualLabel} y1Label={data.y1Label} mediaLabel={data.mediaLabel} acao={togglePdv} mostrarRN />
+        <Tabela titulo="📦 Top 20 produtos — média 3M" colNome="Produto" linhas={data.produtos} periodo={data.periodo} atualLabel={data.atualLabel} y1Label={data.y1Label} mediaLabel={data.mediaLabel} limiteBaixo={50} mostrarEstoque />
       </div>
     </div>
   );

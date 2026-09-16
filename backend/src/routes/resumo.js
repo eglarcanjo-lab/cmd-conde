@@ -159,15 +159,16 @@ router.get("/rankings", async (req, res) => {
     const ym = (yy, mm0) => { const d = new Date(yy, mm0, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
     const mesAtual = ym(y, m0);
     const mesAnterior = ym(y, m0 - 1);
+    const mesY1 = ym(y - 1, m0); // mesmo mês, ano passado (Y-1)
     // Média = 3 meses COMPLETOS anteriores (EXCLUI o mês atual). Ex.: julho → abr/mai/jun.
     const media3Meses = [3, 2, 1].map((k) => ym(y, m0 - k));
     const media3Set = new Set(media3Meses);
 
-    // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual (p/ o total).
+    // Lê SÓ os meses necessários (filtro no SQL): 3 meses da média + o mês atual + o Y-1.
     const [vendas, vdPdv, vdProd, prodBase, gradeEstoque, usuarios] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", [...media3Meses, mesAtual]).catch(() => []),
-      readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
-      readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesAnterior]).catch(() => []),
+      readSheetMonths("vd_pdv", "mes_referencia", [mesAtual, mesY1]).catch(() => []),
+      readSheetMonths("vd_produto", "mes_referencia", [mesAtual, mesY1]).catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("grade_estoque").catch(() => []),
       readSheet("usuarios").catch(() => []),
@@ -189,6 +190,7 @@ router.get("/rankings", async (req, res) => {
       }
       return t;
     };
+    // Mesmo período (01..D-1) do mês atual e do mesmo mês do ANO PASSADO (Y-1).
     const d1De = (rows, codF) => {
       const d = {};
       for (const r of rows) {
@@ -197,23 +199,24 @@ router.get("/rankings", async (req, res) => {
         if (!(cutoffDia >= 1 && dia >= 1 && dia <= cutoffDia)) continue;
         const mes = data.slice(0, 7);
         const cod = String(r[codF] || "").trim(); if (!cod) continue;
-        const e = d[cod] || (d[cod] = { atual: 0, anterior: 0 });
+        const e = d[cod] || (d[cod] = { atual: 0, anoAnt: 0 });
         const vol = num(r.volume_hl);
-        if (mes === mesAtual) e.atual += vol; else if (mes === mesAnterior) e.anterior += vol;
+        if (mes === mesAtual) e.atual += vol; else if (mes === mesY1) e.anoAnt += vol;
       }
       return d;
     };
-    // Rank pela MÉDIA 3M (representa o volume "de base" do PDV/produto).
+    // Rank pela MÉDIA 3M (volume "de base"). GAP/Δ = mês atual vs mesmo período do ano passado.
     const montar = (aggMap, d1Map, n) => Object.values(aggMap)
       .map((t) => ({ ...t, media3m: t.soma3 / 3 }))
       .sort((a, b) => b.media3m - a.media3m).slice(0, n).map((t) => {
-        const d = d1Map[t.cod] || { atual: 0, anterior: 0 };
+        const d = d1Map[t.cod] || { atual: 0, anoAnt: 0 };
         return {
           cod: t.cod, nome: t.nome, setor: t.setor,
           media3m: Math.round(t.media3m * 10) / 10,
-          mesAtualTotal: Math.round(t.atualTotal * 10) / 10,
-          gap: Math.round((d.atual - d.anterior) * 10) / 10,
-          delta: d.anterior > 0 ? Math.round(((d.atual - d.anterior) / d.anterior) * 1000) / 10 : (d.atual > 0 ? null : 0),
+          mesAtual: Math.round(d.atual * 10) / 10,
+          anoAnterior: Math.round(d.anoAnt * 10) / 10,
+          gap: Math.round((d.atual - d.anoAnt) * 10) / 10,
+          delta: d.anoAnt > 0 ? Math.round(((d.atual - d.anoAnt) / d.anoAnt) * 1000) / 10 : (d.atual > 0 ? null : 0),
         };
       });
 
@@ -252,9 +255,11 @@ router.get("/rankings", async (req, res) => {
     });
 
     const rot = (m) => { const [, mo] = String(m).split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(Number(mo) || 1) - 1]; };
+    const anoLabel = (m) => `${rot(m)}/${String(m).slice(2, 4)}`; // ex. "set/25"
     return res.json({
-      mesAtual, mesAnterior, cutoffDia,
+      mesAtual, mesAnterior, mesY1, cutoffDia,
       mediaLabel: `${rot(media3Meses[0])}–${rot(media3Meses[2])}`, // ex.: "abr–jun"
+      atualLabel: anoLabel(mesAtual), y1Label: anoLabel(mesY1),   // "set/26" vs "set/25"
       periodo: cutoffDia >= 1 ? `01–${String(cutoffDia).padStart(2, "0")}` : "—",
       temDiario: vdPdvF.length > 0,
       pdvs, pdvsAS, pdvsRota, produtos,
