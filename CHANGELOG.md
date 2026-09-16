@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.59.0** — Farol Volumes vira **Report Volumes**: relatório único estilo planilha (Consolidado Operação → GV1/GV3 → todos os RNs por primeiro nome), 6 categorias (Cerveja, Cerveja Zero, NAB, NAB Zero, Match, Mktp) × Meta/Real/%/Tend, com heatmap no %. Todos os cadastrados recebem o PDF inteiro (`Report_Volumes_{data}`).
+Versão atual: **v3.59.1** — Report Volumes: números com **separador de milhar** e nova coluna **%T** (tendência ÷ meta) por categoria, com heatmap.
+
+## v3.59.1 — Report Volumes: separador de milhar + %T (Tend/Meta)
+- Meta/Real/Tend agora com separador de milhar (`5.700`, `121.500`).
+- Cada categoria ganhou a sub-coluna **%T** = Tend ÷ Meta (mesmo heatmap do %), ao lado da Tend — mostra se a tendência do mês bate a meta. (real÷tend seria constante em todas as linhas, então o % útil da tendência é vs a meta.)
 
 ## v3.59.0 — Report Volumes (planilha consolidada)
 - **Backend** (`/api/farol-volumes/mensagens`): resposta reformulada para `report` (seções Operação/GV/RN × categorias × Meta·Real·%·Tend). Zeros (Cerveja/NAB Zero) usam volume da `rv_volume` e meta de monitoramento (15% da base). `destinatarios` = todos com telefone (perfis director/gv1/gv3/rn) — recebem o relatório inteiro.

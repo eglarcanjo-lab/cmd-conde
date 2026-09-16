@@ -11,7 +11,7 @@ const { authMiddleware } = require("../middleware/auth");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const pad = (n) => String(n).padStart(2, "0");
-const fmtN = (n) => String(Math.round(Number(n) || 0)); // inteiro, sem separador (denso)
+const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 // tipo "rv" = meta/real vêm do rv_resultado; "zero" = real do rv_volume, meta = 15% da base.
@@ -23,7 +23,7 @@ const CATS = [
   { key: "match", label: "Match", tipo: "rv", real: "real_match", meta: "meta_match" },
   { key: "mktp", label: "Mktp", tipo: "rv", real: "real_marketplace", meta: "meta_marketplace" },
 ];
-const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pct", label: "%" }, { key: "tend", label: "Tend" }];
+const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pct", label: "%" }, { key: "tend", label: "Tend" }, { key: "pctT", label: "%T" }];
 const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 
 router.use(authMiddleware);
@@ -81,8 +81,10 @@ router.get("/mensagens", async (req, res) => {
       CATS.forEach((c) => {
         let m = 0, r = 0;
         lista.forEach((s) => { const cel = raw[s]?.[c.key]; if (cel) { m += cel.meta; r += cel.real; } });
+        const tend = r * fator;
         const p = m > 0 ? Math.round((r / m) * 100) : null;
-        out[c.key] = { meta: fmtN(m), real: fmtN(r), pct: p == null ? "—" : `${p}%`, tend: fmtN(r * fator), _cor: sinal(p) };
+        const pT = m > 0 ? Math.round((tend / m) * 100) : null;
+        out[c.key] = { meta: fmtN(m), real: fmtN(r), pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`, _cor: sinal(p), _corT: sinal(pT) };
       });
       return out;
     };
