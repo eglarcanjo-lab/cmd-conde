@@ -8,23 +8,10 @@ const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
+const { montarReport } = require("../utils/volumesReport");
 
-const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const pad = (n) => String(n).padStart(2, "0");
-const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
-
-// tipo "rv" = meta/real vêm do rv_resultado; "zero" = real do rv_volume, meta = 15% da base.
-const CATS = [
-  { key: "cerveja", label: "Cerveja", tipo: "rv", real: "real_cerveja", meta: "meta_cerveja" },
-  { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
-  { key: "nab", label: "NAB", tipo: "rv", real: "real_nab", meta: "meta_nab" },
-  { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
-  { key: "match", label: "Match", tipo: "rv", real: "real_match", meta: "meta_match" },
-  { key: "mktp", label: "Mktp", tipo: "rv", real: "real_marketplace", meta: "meta_marketplace" },
-];
-const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pct", label: "%" }, { key: "tend", label: "Tend" }, { key: "pctT", label: "%T" }];
-const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 
 router.use(authMiddleware);
 
@@ -45,67 +32,14 @@ router.get("/mensagens", async (req, res) => {
       readSheet("rv_volume").catch(() => []),
       readSheet("usuarios").catch(() => []),
     ]);
-    const doMes = (r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes);
     const rv = rvAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
-
-    // raw[setor][catKey] = { meta, real } (valores brutos por setor).
-    const raw = {};
-    const initSetor = (s) => { if (!raw[s]) { raw[s] = {}; CATS.forEach((c) => raw[s][c.key] = { meta: 0, real: 0 }); } };
-    rv.forEach((r) => {
-      const s = String(r.setor || "").trim(); if (!s) return; initSetor(s);
-      CATS.filter((c) => c.tipo === "rv").forEach((c) => { raw[s][c.key].meta += num(r[c.meta]); raw[s][c.key].real += num(r[c.real]); });
-    });
-    // "zero": real do rv_volume por setor+categoria; meta = 15% do real da base (monitoramento).
-    const volSetor = {};
-    volAll.filter(doMes).forEach((r) => {
-      const s = String(r.setor || "").trim(); if (!s) return;
-      const cat = String(r.categoria || "").trim().toUpperCase();
-      (volSetor[s] = volSetor[s] || {})[cat] = (volSetor[s]?.[cat] || 0) + num(r.volume);
-    });
-    Object.keys(raw).forEach((s) => {
-      CATS.filter((c) => c.tipo === "zero").forEach((c) => {
-        raw[s][c.key] = { meta: 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
-      });
-    });
-
-    const setores = Object.keys(raw).sort();
-    if (!setores.length) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
+    const vol = volAll.filter((r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes));
 
     const nomeSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
 
-    // Agrega um conjunto de setores → { catKey: {meta,real,pct,tend,_cor} } formatado.
-    const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
-    const aggCats = (lista) => {
-      const out = {};
-      CATS.forEach((c) => {
-        let m = 0, r = 0;
-        lista.forEach((s) => { const cel = raw[s]?.[c.key]; if (cel) { m += cel.meta; r += cel.real; } });
-        const tend = r * fator;
-        const p = m > 0 ? Math.round((r / m) * 100) : null;
-        const pT = m > 0 ? Math.round((tend / m) * 100) : null;
-        out[c.key] = { meta: fmtN(m), real: fmtN(r), pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`, _cor: sinal(p), _corT: sinal(pT) };
-      });
-      return out;
-    };
-
-    const gvPrefixos = [["1", "GV 1"], ["3", "GV 3"]];
-    const gvLinhas = gvPrefixos
-      .map(([px, lbl]) => ({ px, lbl, sets: setores.filter((s) => String(s)[0] === px) }))
-      .filter((g) => g.sets.length)
-      .map((g) => ({ rotulo: g.lbl, cats: aggCats(g.sets) }));
-
-    const rnLinhas = setores.map((s) => ({ setor: s, rotulo: primeiroNome(nomeSetor[s]) || s, cats: aggCats([s]) }));
-
-    const report = {
-      categorias: CATS.map((c) => ({ key: c.key, label: c.label })),
-      subcols: SUBCOLS,
-      secoes: [
-        { titulo: "Consolidado Operação", colLabel: "Operação", linhas: [{ rotulo: "Operação", cats: aggCats(setores) }] },
-        { titulo: "Por GV", colLabel: "GV", linhas: gvLinhas },
-        { titulo: "Por RN", colLabel: "RN", setorCol: true, linhas: rnLinhas },
-      ],
-    };
+    const report = montarReport(rv, vol, nomeSetor, fator);
+    if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.
     const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);

@@ -24,6 +24,51 @@ export default function ResumoVolumes() {
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
   const [porRnAberto, setPorRnAberto] = useState(false);
+  const [modo, setModo] = useState("sintetico"); // sintetico (barras) | analitico (planilha)
+
+  // Célula de % colorida (heatmap) no dark theme.
+  const corCel = (c) => c === "up" ? { background: "rgba(74,222,128,0.16)", color: "#7ee6a0", fontWeight: 700 }
+    : c === "mid" ? { background: "rgba(232,196,104,0.16)", color: "#e8c468", fontWeight: 700 }
+    : c === "down" ? { background: "rgba(240,153,123,0.16)", color: "#f0997b", fontWeight: 700 } : {};
+
+  // Tabela analítica (planilha): Operação → GV → RN × categorias × Meta/Real/%/Tend/%T.
+  const renderAnalitico = (report) => {
+    const cats = report.categorias || [], sub = report.subcols || [];
+    return (report.secoes || []).map((sec) => (
+      <div key={sec.titulo} style={{ marginBottom: 12 }}>
+        <div style={S.mtxSecTit}>{sec.titulo}</div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={S.mtx}>
+            <thead>
+              <tr>
+                <th style={S.mtxLbl} colSpan={sec.setorCol ? 2 : 1}></th>
+                {cats.map((c) => <th key={c.key} colSpan={sub.length} style={S.mtxCat}>{c.label}</th>)}
+              </tr>
+              <tr>
+                {sec.setorCol
+                  ? <><th style={S.mtxLbl}>Setor</th><th style={S.mtxLbl}>{sec.colLabel}</th></>
+                  : <th style={S.mtxLbl}>{sec.colLabel}</th>}
+                {cats.map((c) => sub.map((sc) => <th key={c.key + sc.key} style={S.mtxSc}>{sc.label}</th>))}
+              </tr>
+            </thead>
+            <tbody>
+              {(sec.linhas || []).map((l, i) => (
+                <tr key={i}>
+                  {sec.setorCol
+                    ? <><td style={S.mtxLblTd}>{l.setor || ""}</td><td style={S.mtxLblTd}>{l.rotulo}</td></>
+                    : <td style={{ ...S.mtxLblTd, fontWeight: 700 }}>{l.rotulo}</td>}
+                  {cats.map((c) => { const d = l.cats?.[c.key] || {}; return sub.map((sc) => {
+                    const cor = sc.key === "pct" ? d._cor : sc.key === "pctT" ? d._corT : null;
+                    return <td key={c.key + sc.key} style={{ ...S.mtxTd, ...(cor ? corCel(cor) : {}) }}>{d[sc.key] ?? "—"}</td>;
+                  }); })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ));
+  };
 
   // Renderiza uma barra (realizado escuro + tendência clara atrás + %).
   const renderBar = (b, key) => {
@@ -100,12 +145,27 @@ export default function ResumoVolumes() {
     return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Sem dados de volume ainda — importe pedidos.</div></div>;
   }
 
+  const analitico = modo === "analitico" && data?.report;
+
   return (
     <div style={S.card}>
-      <div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes — % da meta</div>
-      <div style={S.sub}>Barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)</div>
+      <div style={S.title}>
+        <span style={{ color: "#7DBA3D" }}>📊</span> Volumes{analitico ? "" : " — % da meta"}
+        {data?.report && (
+          <div style={S.seg}>
+            {[["sintetico", "Sintético"], ["analitico", "Analítico"]].map(([k, l]) => (
+              <button key={k} onClick={() => setModo(k)} style={modo === k ? { ...S.segBtn, ...S.segOn } : S.segBtn}>{l}</button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={S.sub}>{analitico
+        ? "Planilha por Operação · GV · RN — Meta · Real · % · Tendência · %T (heatmap no %)"
+        : "Barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)"}</div>
       {!data ? (
         <div style={S.skel}>Carregando…</div>
+      ) : analitico ? (
+        renderAnalitico(data.report)
       ) : (
         <>
           {data.bars.map((b) => renderBar(b, b.label))}
@@ -139,6 +199,16 @@ export default function ResumoVolumes() {
 const S = {
   card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px 16px", marginBottom: "16px" },
   title: { color: "#fff", fontWeight: "600", fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "8px" },
+  seg: { display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px", marginLeft: "auto" },
+  segBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit" },
+  segOn: { background: "rgba(125,186,61,0.2)", color: "#7DBA3D", fontWeight: "700" },
+  mtxSecTit: { color: "#7DBA3D", fontWeight: "700", fontSize: "0.85rem", margin: "10px 0 4px" },
+  mtx: { borderCollapse: "collapse", fontSize: "0.72rem", width: "100%" },
+  mtxCat: { background: "rgba(125,186,61,0.18)", color: "#cfe8b0", textAlign: "center", padding: "3px 6px", border: "1px solid rgba(255,255,255,0.06)", whiteSpace: "nowrap", fontWeight: "700" },
+  mtxSc: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", padding: "3px 6px", border: "1px solid rgba(255,255,255,0.06)", textAlign: "right", whiteSpace: "nowrap", fontWeight: "500" },
+  mtxLbl: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", padding: "3px 8px", border: "1px solid rgba(255,255,255,0.06)", textAlign: "left", whiteSpace: "nowrap" },
+  mtxLblTd: { color: "#fff", padding: "3px 8px", border: "1px solid rgba(255,255,255,0.05)", textAlign: "left", whiteSpace: "nowrap" },
+  mtxTd: { color: "rgba(255,255,255,0.8)", padding: "3px 6px", border: "1px solid rgba(255,255,255,0.05)", textAlign: "right", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   sub: { color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", margin: "2px 0 12px" },
   row: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" },
   lbl: { width: "108px", flexShrink: 0, fontSize: "0.92rem", color: "rgba(255,255,255,0.55)", textAlign: "right" },

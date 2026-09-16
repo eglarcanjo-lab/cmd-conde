@@ -3,6 +3,7 @@ const router = express.Router();
 const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { filtrarPorPerfil } = require("../utils/perfil");
+const { montarReport } = require("../utils/volumesReport");
 
 router.use(authMiddleware);
 
@@ -89,7 +90,10 @@ router.get("/volumes", async (req, res) => {
       bars: catBars(rv.filter((r) => setSetor(r) === s), vol.filter((r) => setSetor(r) === s)),
     }));
 
-    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn });
+    // Analítico (planilha): Operação → GV → RN × categorias. Mesmo helper do farol.
+    const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator);
+
+    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report });
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });

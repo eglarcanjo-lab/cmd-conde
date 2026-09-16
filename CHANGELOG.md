@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.60.0** — Top 20 PDVs/Produtos (Home + farol WhatsApp) passam a comparar com o **ano passado**: colunas Média 3M · Mês atual · **Ano Anterior (mesmo período)** · **GAP vs Y-1** · Δ. GAP/Δ deixam de ser vs mês/média e passam a ser vs o mesmo mês do ano passado.
+Versão atual: **v3.61.0** — Home / Volumes ganha toggle **Sintético / Analítico**: Sintético = barras % da meta (como era); Analítico = planilha (Operação → GV → RN × 6 categorias × Meta/Real/%/Tend/%T, heatmap no %), igual ao PDF do farol.
+
+## v3.61.0 — Home / Volumes: aba Sintético / Analítico
+- **Backend:** montagem do "Report Volumes" extraída para `utils/volumesReport.js` (fonte única). `GET /api/resumo/volumes` passou a devolver também `report` (scoped por perfil), e `farol-volumes` foi refatorado para usar o helper.
+- **Frontend (ResumoVolumes):** toggle Sintético/Analítico. Analítico renderiza a planilha densa (Operação/GV/RN × categorias × Meta·Real·%·Tend·%T) no tema dark, com heatmap no % e %T (verde ≥100 · âmbar 70–99 · vermelho <70) e scroll horizontal.
 
 ## v3.60.0 — Top 20 PDVs/Produtos: comparação vs ano passado (Y-1)
 - **Backend `resumo/rankings` (Home) e `farol-queda/mensagens` (WhatsApp):** nova coluna **Ano Anterior (HL)** = mesmo período (01→D-1) do mesmo mês do ano passado (usa `vd_pdv`/`vd_produto`, que têm o histórico de 2025). **GAP** e **Δ** passam a ser **mês atual vs Y-1** (antes eram vs média 3M / vs mês anterior). Ranking segue pela **Média 3M**. "Mês atual" no Home alinhado ao período 01→D-1.
