@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.59.3** — No PDF, Pure Gold e Sem Visita (diretoria) saem **lado a lado** (meia largura cada) e o Top PDVs abaixo em largura cheia, na mesma página.
+Versão atual: **v3.59.4** — Pure Gold (diretoria) passa a **sempre aparecer** no relatório (mostra 0 quando não há foco no dia), como o Sem Visita — antes era omitido nos dias sem foco.
+
+## v3.59.4 — Pure Gold (diretoria) sempre no relatório
+- A tabela Pure Gold do diretor era montada só quando havia PDV foco no dia (`pgHoje.length`), então em dias sem foco o bloco sumia do relatório consolidado. Agora sempre aparece (OPERAÇÃO 0 quando não há foco), igual ao Sem Visita.
 
 ## v3.59.3 — PDF: Pure Gold + Sem Visita lado a lado
 - As tabelas Setor|Qtd do diretor (Pure Gold e Sem Visita) recebem `_half` e o robô as dispõe **em 2 colunas** (flex), com o Top PDVs (largo) fluindo em largura cheia abaixo — aproveita melhor a folha.

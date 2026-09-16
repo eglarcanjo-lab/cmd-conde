@@ -217,10 +217,10 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    // ── Diretoria: tabela Setor | PDVs Foco (quantidade do dia). Sem detalhe por RN. ──
+    // ── Diretoria: tabela Setor | PDVs Foco (quantidade do dia). Sempre aparece (0 se não houver). ──
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
     let director = null;
-    if (diretores.length && pgHoje.length) {
+    if (diretores.length) {
       const totalOp = pgHoje.length;
       const resumoRn = setores
         .map((s) => ({ setor: s, qtd: pgHoje.filter((p) => p.setor === s).length }))
