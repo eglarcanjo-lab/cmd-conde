@@ -1,6 +1,7 @@
 // Home — bloco "Verdes" focado no SKU 33857 (Stella Pure Gold), mês a mês.
-// Flag Cobertura/Distribuição controla TUDO: a linha do RN selecionado (Todos = consolidado)
-// e a faixa de ranking dos RNs (maior→menor). Dado: GET /api/resumo/verdes.
+// Flag Cobertura/Vol HL controla TUDO: a linha do RN selecionado (Todos = consolidado)
+// e a faixa de ranking dos RNs (maior→menor). Cobertura = PDVs distintos que compraram
+// no mês (conta 1x). Vol HL = volume em HL. Dado: GET /api/resumo/verdes.
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../services/api";
@@ -14,7 +15,7 @@ export default function ResumoVerdes() {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
-  const [aba, setAba] = useState("cobertura");   // flag mestre: cobertura | distribuicao
+  const [aba, setAba] = useState("cobertura");   // flag mestre: cobertura | volhl
   const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
 
@@ -75,7 +76,7 @@ export default function ResumoVerdes() {
   const prod = data ? data.produto : { cod: "33857", nome: "Stella Pure Gold" };
 
   // Série do selecionado (Todos = consolidado; senão o RN escolhido).
-  const serieDe = (obj) => (obj ? (aba === "cobertura" ? obj.cobertura : obj.distribuicao) : []) || [];
+  const serieDe = (obj) => (obj ? (aba === "cobertura" ? obj.cobertura : obj.volHl) : []) || [];
   const rnObj = rnSel === "todos" ? null : porRn.find((r) => String(r.setor) === String(rnSel));
   const serie = rnSel === "todos" ? serieDe(data && data.consolidado) : serieDe(rnObj);
   const temDados = meses.length > 0 && serie.some((x) => x > 0);
@@ -98,7 +99,7 @@ export default function ResumoVerdes() {
   const x0 = colX(0), xN = colX(Math.max(n - 1, 0));
   const multiAno = new Set(meses.map((m) => String(m).slice(0, 4))).size > 1;
   const atual = mesSel != null ? (serie[mesSel] || 0) : (serie.length ? serie[serie.length - 1] : 0);
-  const unidade = aba === "cobertura" ? "PDVs" : "caixas";
+  const unidade = aba === "cobertura" ? "PDVs" : "HL";
 
   return (
     <div style={S.card}>
@@ -106,7 +107,7 @@ export default function ResumoVerdes() {
         <span style={S.title}><span style={{ color: "#7DBA3D" }}>🌿</span> Verdes · {prod.nome} <small style={S.cod}>({prod.cod})</small></span>
         <span style={S.tgl}>
           <button style={aba === "cobertura" ? S.btnOn : S.btn} onClick={() => setAba("cobertura")}>Cobertura</button>
-          <button style={aba === "distribuicao" ? S.btnOn : S.btn} onClick={() => setAba("distribuicao")}>Distribuição</button>
+          <button style={aba === "volhl" ? S.btnOn : S.btn} onClick={() => setAba("volhl")}>Vol HL</button>
           <button style={S.excelBtn} onClick={exportarExcel} title="Exportar linhas do pedido (Excel) — respeita o RN e o mês filtrados">⤓ Excel</button>
         </span>
       </div>
@@ -137,7 +138,7 @@ export default function ResumoVerdes() {
           {/* Faixa de ranking dos RNs pelo flag atual */}
           {ranking.length > 0 && (
             <div style={S.faixaWrap}>
-              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "distribuição"} · {mesSel != null ? rotMes(meses[mesSel]) : "trimestre"} (maior → menor) · clique num RN ou mês p/ filtrar</div>
+              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "volume (HL)"} · {mesSel != null ? rotMes(meses[mesSel]) : "trimestre"} (maior → menor) · clique num RN ou mês p/ filtrar</div>
               {ranking.map((r) => {
                 const sel = String(r.setor) === String(rnSel);
                 return (

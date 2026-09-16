@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.61.0** — Home / Volumes ganha toggle **Sintético / Analítico**: Sintético = barras % da meta (como era); Analítico = planilha (Operação → GV → RN × 6 categorias × Meta/Real/%/Tend/%T, heatmap no %), igual ao PDF do farol.
+Versão atual: **v3.62.0** — Cobertura/Distribuição: Verdes (Home) troca **Distribuição → Vol HL** (cobertura = PDVs distintos que compraram no mês, conta 1x); aba Cobertura ganha **total de SKUs da categoria + meta 90%** no topo da distribuição. Lógica de cobertura/distribuição conferida (conta 1x por PDV/SKU).
+
+## v3.62.0 — Cobertura & Distribuição: Vol HL nos Verdes + meta 90% na distribuição
+- **Verdes (Home):** o flag **Distribuição** (que era caixas) virou **Vol HL** (volume em HL). Cobertura = nº de PDVs DISTINTOS que compraram o SKU no mês (conta 1x, mais compras não aumentam). `/api/resumo/verdes` devolve `volHl` no lugar de `distribuicao`.
+- **Aba Cobertura & Distribuição:** no topo da distribuição de cada categoria agora aparece o **total de SKUs da categoria** e a **meta de 90%** (o PDV deve estar coberto em ≥90% dos SKUs).
+- **Lógica conferida:** cobertura (processador, por PDV×categoria = comprou ≥1 no mês) e distribuição (SKUs distintos por PDV) já usam conjuntos (contam 1x); mais compras do mesmo SKU não somam — só o volume, que não é medido aqui.
 
 ## v3.61.0 — Home / Volumes: aba Sintético / Analítico
 - **Backend:** montagem do "Report Volumes" extraída para `utils/volumesReport.js` (fonte única). `GET /api/resumo/volumes` passou a devolver também `report` (scoped por perfil), e `farol-volumes` foi refatorado para usar o helper.

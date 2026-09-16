@@ -217,12 +217,16 @@ export default function Cobertura() {
     });
     const total       = Object.values(pdvSkus).reduce((s, set) => s + set.size, 0);
     const pdvsComDist = Object.keys(pdvSkus).length;
+    const skusCat     = Object.keys(skuPdvs).length;          // SKUs distintos da categoria (universo)
+    const metaDist    = Math.ceil(0.9 * skusCat);             // meta: PDV coberto em 90% dos SKUs
     const sorted = Object.entries(skuPdvs)
       .map(([cod, pdvSet]) => [mapaNomeProd[cod] || cod, pdvSet.size])
       .sort((a, b) => b[1] - a[1]);
     catStats[c.key] = {
       total,
       pdvsComDist,
+      skusCat,
+      metaDist,
       top3:    sorted.slice(0, 3),
       bottom3: sorted.length > 3 ? [...sorted].reverse().slice(0, 3) : [],
     };
@@ -519,6 +523,11 @@ export default function Cobertura() {
                 <h3 style={{ ...styles.sectionTitle, color: "#7DBA3D" }}>
                   🔍 {CAT_MAIN.find((c) => c.key === catFiltro)?.label} — SKUs por distribuição
                 </h3>
+                <div style={styles.distMetaBar}>
+                  <span>Total de SKUs da categoria: <b style={{ color: "#fff" }}>{catStats[catFiltro].skusCat}</b></span>
+                  <span style={{ color: "rgba(255,255,255,0.35)" }}>·</span>
+                  <span>Meta (90%): PDV coberto em <b style={{ color: "#7DBA3D" }}>≥ {catStats[catFiltro].metaDist}</b> SKUs</span>
+                </div>
                 <div style={styles.top3Grid}>
                   {/* Top 3 mais distribuídos */}
                   <div>
@@ -764,6 +773,7 @@ const styles = {
   distCatLabel: { margin: "0 0 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em" },
   distCatNum: { margin: "0 0 4px", fontSize: "2rem", fontWeight: "800", lineHeight: 1 },
   distCatPdvs: { margin: "0 0 10px", fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" },
+  distMetaBar: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", background: "rgba(125,186,61,0.08)", border: "1px solid rgba(125,186,61,0.2)", borderRadius: "8px", padding: "8px 12px", margin: "2px 0 12px" },
   distCatAA: { display: "flex", justifyContent: "space-between", fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px" },
   top3Grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" },
   top3Titulo: { margin: "0 0 14px", fontSize: "0.82rem", fontWeight: "700" },

@@ -276,7 +276,7 @@ router.get("/rankings", async (req, res) => {
 
 // GET /api/resumo/verdes?sku=33857 — bloco "Verdes" focado num SKU (default 33857,
 // Stella Pure Gold), mês a mês, com quebra por RN (setor) + consolidado.
-// Cobertura = nº de PDVs distintos que compraram o SKU. Distribuição = CAIXAS (volume_hl ÷ hl_caixa).
+// Cobertura = nº de PDVs DISTINTOS que compraram o SKU no mês (conta 1x por PDV). Vol HL = volume_hl.
 router.get("/verdes", async (req, res) => {
   try {
     const normCod = (x) => { const s = String(x || "").trim(); return s.replace(/^0+/, "") || s; };
@@ -302,9 +302,9 @@ router.get("/verdes", async (req, res) => {
     const rnMap = {};
     usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
-    const perRn = {};   // setor -> { cob:{mes:Set pdv}, dist:{mes:caixas} }
+    const perRn = {};   // setor -> { cob:{mes:Set pdv}, vol:{mes:HL} }
     const consCob = {}; // mes -> Set pdv (global)
-    const consDist = {};
+    const consVol = {};
     v.forEach((r) => {
       if (normCod(r.cod_produto) !== SKU) return;
       const mes = String(r.mes_referencia || "").slice(0, 7);
@@ -312,12 +312,12 @@ router.get("/verdes", async (req, res) => {
       if (!nomeSku) nomeSku = String(r.nome_produto || "").trim();
       const setor = String(r.setor || "").trim();
       const pdv = String(r.cod_pdv || "").trim();
-      const cx = hlc > 0 ? num(r.volume_hl) / hlc : 0;
-      const e = perRn[setor] || (perRn[setor] = { cob: {}, dist: {} });
+      const hl = num(r.volume_hl);
+      const e = perRn[setor] || (perRn[setor] = { cob: {}, vol: {} });
       (e.cob[mes] = e.cob[mes] || new Set()).add(pdv);
-      e.dist[mes] = (e.dist[mes] || 0) + cx;
+      e.vol[mes] = (e.vol[mes] || 0) + hl;
       (consCob[mes] = consCob[mes] || new Set()).add(pdv);
-      consDist[mes] = (consDist[mes] || 0) + cx;
+      consVol[mes] = (consVol[mes] || 0) + hl;
     });
 
     const meses = janela; // sempre os 3 meses do trimestre atual (mostra Jul/Ago/Set mesmo sem dado)
@@ -326,7 +326,7 @@ router.get("/verdes", async (req, res) => {
       return {
         setor, rn: rnMap[setor] || "",
         cobertura: meses.map((m) => (e.cob[m] ? e.cob[m].size : 0)),
-        distribuicao: meses.map((m) => Math.round(e.dist[m] || 0)),
+        volHl: meses.map((m) => Math.round((e.vol[m] || 0) * 10) / 10),
       };
     });
 
@@ -335,7 +335,7 @@ router.get("/verdes", async (req, res) => {
       meses,
       consolidado: {
         cobertura: meses.map((m) => (consCob[m] ? consCob[m].size : 0)),
-        distribuicao: meses.map((m) => Math.round(consDist[m] || 0)),
+        volHl: meses.map((m) => Math.round((consVol[m] || 0) * 10) / 10),
       },
       porRn,
     });
