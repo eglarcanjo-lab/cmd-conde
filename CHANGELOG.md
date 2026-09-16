@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.59.1** — Report Volumes: números com **separador de milhar** e nova coluna **%T** (tendência ÷ meta) por categoria, com heatmap.
+Versão atual: **v3.59.2** — Diretoria dos faróis Pure Gold e Sem Visita vira tabela simples **Setor | quantidade** (sem detalhe por RN). No Sem Visita, mostra **todos os setores**, inclusive os com 0.
+
+## v3.59.2 — Diretoria: Pure Gold e Sem Visita tabelados por setor
+- **Pure Gold** (diretor): 1 tabela **Setor | PDVs Foco** (quantidade do dia) + OPERAÇÃO — sem as fotos de detalhe por RN.
+- **Sem Visita** (diretor): 1 tabela **Setor | PDVs sem visita** com **todos os setores da base** (inclusive os com **0**) + OPERAÇÃO.
+- Top PDVs AS/ROTA e produtos (farol queda) sem alteração.
 
 ## v3.59.1 — Report Volumes: separador de milhar + %T (Tend/Meta)
 - Meta/Real/Tend agora com separador de milhar (`5.700`, `121.500`).

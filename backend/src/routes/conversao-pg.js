@@ -217,37 +217,24 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    // ── Diretoria: consolidado (operação + por RN + detalhe). Vai p/ perfil=director. ──
+    // ── Diretoria: tabela Setor | PDVs Foco (quantidade do dia). Sem detalhe por RN. ──
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
     let director = null;
     if (diretores.length && pgHoje.length) {
       const totalOp = pgHoje.length;
       const resumoRn = setores
-        .map((s) => ({ setor: s, rn: nomePorSetor[s] || "", qtd: pgHoje.filter((p) => p.setor === s).length }))
+        .map((s) => ({ setor: s, qtd: pgHoje.filter((p) => p.setor === s).length }))
         .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
-      const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
-      const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PG600" }];
-      const colDetRn = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "ultima_compra", label: "Última compra" }];
-      // 1ª foto: resumo por RN + OPERAÇÃO. Depois, 1 foto por RN com a base do setor.
-      const blocos = [{ titulo: "Pure Gold · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo }];
-      setores.forEach((s) => {
-        const lista = pgHoje.filter((p) => p.setor === s);
-        if (!lista.length) return;
-        blocos.push({
-          titulo: `Pure Gold · Setor ${s}${nomePorSetor[s] ? " · " + nomePorSetor[s] : ""}`,
-          subtitulo: `${hoje.diaLabel} · ${lista.length} PDV(s) foco PG600`,
-          colunas: colDetRn,
-          linhas: lista.map((p) => ({ cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, ultima_compra: p.ultima_compra })),
-        });
-      });
+      const linhas = [...resumoRn, { setor: "OPERAÇÃO", qtd: totalOp }];
+      const colunas = [{ key: "setor", label: "Setor" }, { key: "qtd", label: "PDVs Foco" }];
       director = {
         texto: [
           `🍺 *Base foco Stella Pure Gold* ${hoje.dataBR}`,
           `Consolidado Diretoria · ${hoje.diaLabel}`,
-          `Total foco hoje: *PG600 ${totalOp}*`, "", "Por RN:",
-          resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
+          `Total foco hoje: *PG600 ${totalOp}*`, "", "Por setor:",
+          resumoRn.map((x) => `• ${x.setor} — ${x.qtd}`).join("\n"),
         ].join("\n"),
-        blocos,
+        blocos: [{ titulo: "Pure Gold · Foco por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas }],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }

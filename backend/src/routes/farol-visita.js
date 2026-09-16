@@ -64,7 +64,9 @@ async function computeSemVisita(user, mesAtual) {
     });
   });
   furos.sort((a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv));
-  return { furos, nomeSetor, telSetor };
+  // Universo de setores (base de PDVs) — p/ o consolidado mostrar até os com 0 sem visita.
+  const setoresBase = [...new Set(pdvBase.map((p) => String(p.setor || "").trim()).filter(Boolean))].sort();
+  return { furos, nomeSetor, telSetor, setoresBase };
 }
 
 function textoRN(setor, lista, hoje) {
@@ -103,7 +105,7 @@ function textoGV(setores, nomeGV, porSetor, nomePorSetor, hoje) {
 router.get("/mensagens", async (req, res) => {
   try {
     const hoje = resolverDia(req.query.dia);
-    const { furos, nomeSetor, telSetor } = await computeSemVisita(req.user, hoje.mesAtual);
+    const { furos, nomeSetor, telSetor, setoresBase } = await computeSemVisita(req.user, hoje.mesAtual);
 
     // Só os PDVs cujo dia de visita é o dia escolhido.
     const doDia = furos.filter((f) => normDia(f.dia_visita) === hoje.diaKey);
@@ -133,37 +135,22 @@ router.get("/mensagens", async (req, res) => {
       };
     });
 
-    // ── Diretoria: consolidado (operação + por RN + detalhe). Vai p/ perfil=director. ──
+    // ── Diretoria: tabela Setor | PDVs sem visita (TODOS os setores, inclusive 0). ──
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
     let director = null;
-    if (diretores.length && doDia.length) {
+    if (diretores.length && setoresBase.length) {
       const totalOp = doDia.length;
-      const resumoRn = setores
-        .map((s) => ({ setor: s, rn: nomeSetor[s] || "", qtd: (porSetor[s] || []).length }))
-        .filter((x) => x.qtd).sort((a, b) => b.qtd - a.qtd);
-      const linhasResumo = [...resumoRn, { setor: "", rn: "OPERAÇÃO", qtd: totalOp }];
-      const colResumo = [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "qtd", label: "PDVs s/ visita" }];
-      const colDetRn = [{ key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "situacao", label: "Situação" }];
-      // 1ª foto: resumo por RN + OPERAÇÃO. Depois, 1 foto por RN com a base do setor.
-      const blocos = [{ titulo: "Sem visita · por RN", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas: colResumo, linhas: linhasResumo }];
-      setores.forEach((s) => {
-        const lista = porSetor[s] || [];
-        if (!lista.length) return;
-        blocos.push({
-          titulo: `Sem visita · Setor ${s}${nomeSetor[s] ? " · " + nomeSetor[s] : ""}`,
-          subtitulo: `${hoje.diaLabel} · ${lista.length} PDV(s) sem visita`,
-          colunas: colDetRn,
-          linhas: lista.map((p) => ({ cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, situacao: p.situacao })),
-        });
-      });
+      const linhas = setoresBase.map((s) => ({ setor: s, qtd: (porSetor[s] || []).length }));
+      linhas.push({ setor: "OPERAÇÃO", qtd: totalOp });
+      const colunas = [{ key: "setor", label: "Setor" }, { key: "qtd", label: "PDVs sem visita" }];
       director = {
         texto: [
           `🚦 *PDVs sem visita registrada* ${hoje.dataBR}`,
           `Consolidado Diretoria · ${hoje.diaLabel}`,
-          `Total sem visita hoje: *${totalOp}*`, "", "Por RN:",
-          resumoRn.length ? resumoRn.map((x) => `• ${x.setor} ${x.rn} — ${x.qtd}`).join("\n") : "• (sem PDVs hoje)",
+          `Total sem visita hoje: *${totalOp}*`, "", "Por setor:",
+          setoresBase.map((s) => `• ${s} — ${(porSetor[s] || []).length}`).join("\n"),
         ].join("\n"),
-        blocos,
+        blocos: [{ titulo: "Sem visita · por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas }],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }
