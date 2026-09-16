@@ -150,7 +150,7 @@ router.get("/mensagens", async (req, res) => {
           `Total sem visita hoje: *${totalOp}*`, "", "Por setor:",
           setoresBase.map((s) => `• ${s} — ${(porSetor[s] || []).length}`).join("\n"),
         ].join("\n"),
-        blocos: [{ titulo: "Sem visita · por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas }],
+        blocos: [{ titulo: "Sem visita · por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas, _half: true }],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }

@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.59.2** — Diretoria dos faróis Pure Gold e Sem Visita vira tabela simples **Setor | quantidade** (sem detalhe por RN). No Sem Visita, mostra **todos os setores**, inclusive os com 0.
+Versão atual: **v3.59.3** — No PDF, Pure Gold e Sem Visita (diretoria) saem **lado a lado** (meia largura cada) e o Top PDVs abaixo em largura cheia, na mesma página.
+
+## v3.59.3 — PDF: Pure Gold + Sem Visita lado a lado
+- As tabelas Setor|Qtd do diretor (Pure Gold e Sem Visita) recebem `_half` e o robô as dispõe **em 2 colunas** (flex), com o Top PDVs (largo) fluindo em largura cheia abaixo — aproveita melhor a folha.
 
 ## v3.59.2 — Diretoria: Pure Gold e Sem Visita tabelados por setor
 - **Pure Gold** (diretor): 1 tabela **Setor | PDVs Foco** (quantidade do dia) + OPERAÇÃO — sem as fotos de detalhe por RN.

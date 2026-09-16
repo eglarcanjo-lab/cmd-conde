@@ -234,7 +234,7 @@ router.get("/mensagens", async (req, res) => {
           `Total foco hoje: *PG600 ${totalOp}*`, "", "Por setor:",
           resumoRn.map((x) => `• ${x.setor} — ${x.qtd}`).join("\n"),
         ].join("\n"),
-        blocos: [{ titulo: "Pure Gold · Foco por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas }],
+        blocos: [{ titulo: "Pure Gold · Foco por setor", subtitulo: `${hoje.diaLabel} · total ${totalOp}`, colunas, linhas, _half: true }],
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })),
       };
     }
