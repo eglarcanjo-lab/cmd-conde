@@ -34,9 +34,11 @@ const DIAS = [
 ];
 
 const STATUS_COLORS = {
-  OK:       { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
-  PENDENTE: { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
-  NOK:      { bg: "rgba(239,68,68,0.15)",  color: "#f87171" },
+  OK:       { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" }, // comprou no mês
+  EST:      { bg: "rgba(232,196,104,0.15)", color: "#e8c468" }, // comprou 1º+2º do tri, falta o atual
+  IST:      { bg: "rgba(251,146,60,0.15)",  color: "#fb923c" }, // comprou só algum mês anterior do tri
+  PENDENTE: { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" }, // legado
+  NOK:      { bg: "rgba(239,68,68,0.15)",  color: "#f87171" }, // não comprador no tri
   "—":      { bg: "transparent",           color: "rgba(255,255,255,0.15)" },
 };
 
@@ -101,6 +103,7 @@ export default function Cobertura() {
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useState("cobertura");
   const [catFiltro, setCatFiltro]   = useState(null);
+  const [ordDist, setOrdDist]       = useState({ col: null, dir: "desc" }); // ordenação da tabela de distribuição
   const [tabelaFull, setTabelaFull] = useState(false);
   const [drill, setDrill] = useState(null);         // { cod, nome, categoria }
   const [drillData, setDrillData] = useState(null); // null=carregando | obj | "erro"
@@ -252,16 +255,24 @@ export default function Cobertura() {
     return buscaOk && statusOk && rnOk && nokCatOk;
   });
 
-  const pdvsDistFiltrados = pdvsComDados.filter((p) =>
+  const pdvsDistFiltradosBase = pdvsComDados.filter((p) =>
     !busca
       || p.nome_fantasia?.toLowerCase().includes(busca.toLowerCase())
       || p.cod_pdv?.includes(busca)
   );
+  // Ordena por coluna clicada (Total ou uma categoria), asc/desc.
+  const valOrd = (p) => ordDist.col === "total" ? (p.distTotal || 0) : (p.distByCat?.[ordDist.col] ?? 0);
+  const pdvsDistFiltrados = ordDist.col
+    ? [...pdvsDistFiltradosBase].sort((a, b) => ordDist.dir === "asc" ? valOrd(a) - valOrd(b) : valOrd(b) - valOrd(a))
+    : pdvsDistFiltradosBase;
+  // Clique no cabeçalho: 1º clique = desc, 2º = asc, 3º = volta ao padrão.
+  const ordenarDist = (col) => setOrdDist((o) => o.col !== col ? { col, dir: "desc" } : o.dir === "desc" ? { col, dir: "asc" } : { col: null, dir: "desc" });
+  const setaOrd = (col) => ordDist.col === col ? (ordDist.dir === "asc" ? " ▲" : " ▼") : "";
 
   // ── Resumo cobertura por categoria ───────────────────────────────────────
   function calcResumo(pdvList) {
     const resumo = {};
-    CATEGORIAS.forEach((c) => { resumo[c.key] = { OK: 0, PENDENTE: 0, NOK: 0, total: 0 }; });
+    CATEGORIAS.forEach((c) => { resumo[c.key] = { OK: 0, EST: 0, IST: 0, PENDENTE: 0, NOK: 0, total: 0 }; });
     pdvList.forEach((p) => {
       CATEGORIAS.forEach((c) => {
         const st = mapaCob[p.cod_pdv]?.[c.key];
@@ -276,7 +287,8 @@ export default function Cobertura() {
 
   const resumoTotal = calcResumo(pdvSetor);
   const totalOk   = Object.values(resumoTotal).reduce((a, b) => a + b.OK, 0);
-  const totalPend = Object.values(resumoTotal).reduce((a, b) => a + b.PENDENTE, 0);
+  const totalEst  = Object.values(resumoTotal).reduce((a, b) => a + b.EST, 0);
+  const totalIst  = Object.values(resumoTotal).reduce((a, b) => a + b.IST, 0);
   const totalNok  = Object.values(resumoTotal).reduce((a, b) => a + b.NOK, 0);
 
   return (
@@ -350,11 +362,15 @@ export default function Cobertura() {
                 <p style={styles.dashLabel}>✅ OK (total base)</p>
                 <p style={{ ...styles.dashVal, color: "#4ade80" }}>{totalOk}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(125,186,61,0.3)" }}>
-                <p style={styles.dashLabel}>⏳ Pendente</p>
-                <p style={{ ...styles.dashVal, color: "#7DBA3D" }}>{totalPend}</p>
+              <div style={{ ...styles.dashCard, borderColor: "rgba(232,196,104,0.3)" }} title="Comprou 1º e 2º mês do tri, falta o atual">
+                <p style={styles.dashLabel}>🟡 EST</p>
+                <p style={{ ...styles.dashVal, color: "#e8c468" }}>{totalEst}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }}>
+              <div style={{ ...styles.dashCard, borderColor: "rgba(251,146,60,0.3)" }} title="Comprou só algum mês anterior do tri (não o atual)">
+                <p style={styles.dashLabel}>🟠 IST</p>
+                <p style={{ ...styles.dashVal, color: "#fb923c" }}>{totalIst}</p>
+              </div>
+              <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }} title="Não comprou em nenhum mês do trimestre">
                 <p style={styles.dashLabel}>❌ NOK</p>
                 <p style={{ ...styles.dashVal, color: "#f87171" }}>{totalNok}</p>
               </div>
@@ -369,7 +385,7 @@ export default function Cobertura() {
               <h3 style={styles.sectionTitle}>Resumo por Categoria — Base Total</h3>
               <div style={styles.catGrid}>
                 {CATEGORIAS.map((c) => {
-                  const r = resumoTotal[c.key] || { OK: 0, PENDENTE: 0, NOK: 0, total: 0 };
+                  const r = resumoTotal[c.key] || { OK: 0, EST: 0, IST: 0, NOK: 0, total: 0 };
                   const pct = r.total > 0 ? Math.round((r.OK / r.total) * 100) : 0;
                   return (
                     <div key={c.key} style={styles.catCard}>
@@ -378,9 +394,10 @@ export default function Cobertura() {
                       <div style={styles.catBar}>
                         <div style={{ ...styles.catBarFill, width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 40 ? "#7DBA3D" : "#f87171" }} />
                       </div>
-                      <div style={styles.catCounts}>
+                      <div style={styles.catCounts} title="OK · EST · IST · NOK">
                         <span style={{ color: "#4ade80" }}>{r.OK}</span>
-                        <span style={{ color: "#7DBA3D" }}>{r.PENDENTE}</span>
+                        <span style={{ color: "#e8c468" }}>{r.EST}</span>
+                        <span style={{ color: "#fb923c" }}>{r.IST}</span>
                         <span style={{ color: "#f87171" }}>{r.NOK}</span>
                       </div>
                     </div>
@@ -407,9 +424,10 @@ export default function Cobertura() {
                 <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
                 <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
                   <option value="">Todos os status</option>
-                  <option value="OK">OK</option>
-                  <option value="PENDENTE">Pendente</option>
-                  <option value="NOK">NOK</option>
+                  <option value="OK">OK — comprou no mês</option>
+                  <option value="EST">EST — 1º+2º do tri, falta atual</option>
+                  <option value="IST">IST — só mês anterior do tri</option>
+                  <option value="NOK">NOK — não comprou no tri</option>
                 </select>
                 <select
                   style={{ ...styles.inputFiltro, borderColor: filtroNOKCat ? "rgba(248,113,113,0.5)" : undefined }}
@@ -508,10 +526,6 @@ export default function Cobertura() {
                       {s.total}
                     </p>
                     <p style={styles.distCatPdvs}>{s.pdvsComDist} PDVs cobertos</p>
-                    <div style={styles.distCatAA} title="Total de SKUs da categoria · meta = 90% dos SKUs por PDV">
-                      <span><b style={{ color: "#fff" }}>{s.skusCat}</b> SKUs</span>
-                      <span>meta ≥ <b style={{ color: "#7DBA3D" }}>{s.metaDist}</b></span>
-                    </div>
                   </div>
                 );
               })}
@@ -615,9 +629,9 @@ export default function Cobertura() {
                       <tr>
                         <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
                         <th style={{ ...styles.th, minWidth: "160px", textAlign: "left" }}>Nome</th>
-                        <th style={{ ...styles.th, ...styles.thCat }}>Total</th>
+                        <th style={{ ...styles.th, ...styles.thCat, cursor: "pointer" }} onClick={() => ordenarDist("total")} title="Ordenar por Total">Total{setaOrd("total")}</th>
                         {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => (
-                          <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
+                          <th key={c.key} style={{ ...styles.th, ...styles.thCat, cursor: "pointer" }} onClick={() => ordenarDist(c.key)} title={`Ordenar por ${c.label}`}>{c.label}{setaOrd(c.key)}</th>
                         ))}
                       </tr>
                       {/* SKUs da categoria (universo) e meta = 90% dos SKUs por PDV */}

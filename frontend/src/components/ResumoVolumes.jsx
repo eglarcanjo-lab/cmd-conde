@@ -25,6 +25,7 @@ export default function ResumoVolumes() {
   const [esperando, setEsperando] = useState(false);
   const [porRnAberto, setPorRnAberto] = useState(false);
   const [modo, setModo] = useState("sintetico"); // sintetico (barras) | analitico (planilha)
+  const [ordAnal, setOrdAnal] = useState(null);   // ordenação do Analítico: { key, dir } | null
 
   // Célula de % colorida (heatmap) no dark theme.
   const corCel = (c) => c === "up" ? { background: "rgba(74,222,128,0.16)", color: "#7ee6a0", fontWeight: 700 }
@@ -32,42 +33,61 @@ export default function ResumoVolumes() {
     : c === "down" ? { background: "rgba(240,153,123,0.16)", color: "#f0997b", fontWeight: 700 } : {};
 
   // Tabela analítica (planilha): Operação → GV → RN × categorias × Meta/Real/%/Tend/%T.
+  // Clicar num cabeçalho (Setor/RN ou Meta/Real/%/Tend/%T de uma categoria) ordena a
+  // seção "Por RN" — 1º clique desc, 2º asc, 3º volta ao padrão.
+  const parseNum = (s) => parseFloat(String(s ?? "").replace(/\./g, "").replace(",", ".").replace("%", "")) || 0;
+  const ordenarAnal = (key) => setOrdAnal((o) => (o && o.key === key) ? (o.dir === "desc" ? { key, dir: "asc" } : null) : { key, dir: "desc" });
+  const setaAnal = (key) => ordAnal && ordAnal.key === key ? (ordAnal.dir === "asc" ? " ▲" : " ▼") : "";
   const renderAnalitico = (report) => {
     const cats = report.categorias || [], sub = report.subcols || [];
-    return (report.secoes || []).map((sec) => (
-      <div key={sec.titulo} style={{ marginBottom: 12 }}>
-        <div style={S.mtxSecTit}>{sec.titulo}</div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={S.mtx}>
-            <thead>
-              <tr>
-                <th style={S.mtxLbl} colSpan={sec.setorCol ? 2 : 1}></th>
-                {cats.map((c) => <th key={c.key} colSpan={sub.length} style={S.mtxCat}>{c.label}</th>)}
-              </tr>
-              <tr>
-                {sec.setorCol
-                  ? <><th style={S.mtxLbl}>Setor</th><th style={S.mtxLbl}>{sec.colLabel}</th></>
-                  : <th style={S.mtxLbl}>{sec.colLabel}</th>}
-                {cats.map((c) => sub.map((sc) => <th key={c.key + sc.key} style={S.mtxSc}>{sc.label}</th>))}
-              </tr>
-            </thead>
-            <tbody>
-              {(sec.linhas || []).map((l, i) => (
-                <tr key={i}>
-                  {sec.setorCol
-                    ? <><td style={S.mtxLblTd}>{l.setor || ""}</td><td style={S.mtxLblTd}>{l.rotulo}</td></>
-                    : <td style={{ ...S.mtxLblTd, fontWeight: 700 }}>{l.rotulo}</td>}
-                  {cats.map((c) => { const d = l.cats?.[c.key] || {}; return sub.map((sc) => {
-                    const cor = sc.key === "pct" ? d._cor : sc.key === "pctT" ? d._corT : null;
-                    return <td key={c.key + sc.key} style={{ ...S.mtxTd, ...(cor ? corCel(cor) : {}) }}>{d[sc.key] ?? "—"}</td>;
-                  }); })}
+    return (report.secoes || []).map((sec) => {
+      let linhas = sec.linhas || [];
+      if (sec.setorCol && ordAnal) {
+        const [cat, scol] = ordAnal.key.split("|");
+        const valNum = (l) => cat === "__setor" ? (Number(l.setor) || 0) : cat === "__rn" ? null : parseNum(l.cats?.[cat]?.[scol]);
+        linhas = [...linhas].sort((a, b) => {
+          if (cat === "__rn") { const r = String(a.rotulo || "").localeCompare(String(b.rotulo || "")); return ordAnal.dir === "asc" ? r : -r; }
+          return ordAnal.dir === "asc" ? valNum(a) - valNum(b) : valNum(b) - valNum(a);
+        });
+      }
+      const clic = (key) => sec.setorCol ? { cursor: "pointer" } : {};
+      const onOrd = (key) => sec.setorCol ? () => ordenarAnal(key) : undefined;
+      const arrow = (key) => sec.setorCol ? setaAnal(key) : "";
+      return (
+        <div key={sec.titulo} style={{ marginBottom: 12 }}>
+          <div style={S.mtxSecTit}>{sec.titulo}</div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={S.mtx}>
+              <thead>
+                <tr>
+                  <th style={S.mtxLbl} colSpan={sec.setorCol ? 2 : 1}></th>
+                  {cats.map((c) => <th key={c.key} colSpan={sub.length} style={S.mtxCat}>{c.label}</th>)}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                <tr>
+                  {sec.setorCol
+                    ? <><th style={{ ...S.mtxLbl, ...clic() }} onClick={onOrd("__setor")}>Setor{arrow("__setor")}</th><th style={{ ...S.mtxLbl, ...clic() }} onClick={onOrd("__rn")}>{sec.colLabel}{arrow("__rn")}</th></>
+                    : <th style={S.mtxLbl}>{sec.colLabel}</th>}
+                  {cats.map((c) => sub.map((sc) => { const key = `${c.key}|${sc.key}`; return <th key={key} style={{ ...S.mtxSc, ...clic() }} onClick={onOrd(key)}>{sc.label}{arrow(key)}</th>; }))}
+                </tr>
+              </thead>
+              <tbody>
+                {linhas.map((l, i) => (
+                  <tr key={i}>
+                    {sec.setorCol
+                      ? <><td style={S.mtxLblTd}>{l.setor || ""}</td><td style={S.mtxLblTd}>{l.rotulo}</td></>
+                      : <td style={{ ...S.mtxLblTd, fontWeight: 700 }}>{l.rotulo}</td>}
+                    {cats.map((c) => { const d = l.cats?.[c.key] || {}; return sub.map((sc) => {
+                      const cor = sc.key === "pct" ? d._cor : sc.key === "pctT" ? d._corT : null;
+                      return <td key={c.key + sc.key} style={{ ...S.mtxTd, ...(cor ? corCel(cor) : {}) }}>{d[sc.key] ?? "—"}</td>;
+                    }); })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    ));
+      );
+    });
   };
 
   // Renderiza uma barra (realizado escuro + tendência clara atrás + %).

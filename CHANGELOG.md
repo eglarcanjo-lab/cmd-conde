@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.62.3** — Tabela de Distribuição: linha logo abaixo do cabeçalho mostra, por categoria, o **total de SKUs** e a **meta (≥90%)** (`N · ≥M`).
+Versão atual: **v3.63.0** — Cobertura ganha status **OK/EST/IST/NOK** (baseado no trimestre); ordenação por clique nos cabeçalhos (tabela Distribuição e Analítico da Home); SKUs saíram dos cards (ficam só na tabela).
+
+## v3.63.0 — Cobertura OK/EST/IST/NOK + ordenadores
+- **Status de cobertura (processador):** por PDV × categoria, no **trimestre civil** — **OK** = comprou no mês atual · **EST** = comprou 1º+2º mês do tri, falta o atual · **IST** = comprou só algum mês anterior do tri · **NOK** = não comprou em nenhum mês do tri. (antes era OK/Pendente/NOK). Frontend com cores/legenda/dashboard e filtro atualizados; dados antigos "PENDENTE" ainda renderizam.
+- **Ordenadores:** na tabela de **Distribuição**, clicar numa categoria (ou Total) ordena os PDVs (desc → asc → padrão). No **Analítico** da Home (Volumes), clicar em Setor/RN ou em Meta/Real/%/Tend/%T de uma categoria ordena a seção "Por RN".
+- **Distribuição:** a quantidade de SKUs saiu dos cards (ficou só na linha sob o cabeçalho da tabela + na seção detalhada).
 
 ## v3.62.3 — Distribuição: SKUs + meta 90% sob o cabeçalho da tabela
 - Na tabela PDV × categoria (aba Distribuição), abaixo dos rótulos de categoria agora há uma linha `N · ≥M` (N = SKUs da categoria, M = teto de 90%). Assim o total de SKUs fica na própria tabela, alinhado a cada coluna.
