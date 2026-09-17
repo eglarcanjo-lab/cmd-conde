@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.3** — Deck: fotos dos produtos com fundo transparente.
+Versão atual: **v3.65.4** — Deck: sem rolagem horizontal — quebra em tabelas empilhadas.
+
+## v3.65.4 — Deck: quebra em linhas em vez de rolar
+- Quando a categoria tem muitos produtos, o Deck **não rola mais na horizontal**: quebra em **tabelas empilhadas**, cada uma com quantos produtos couberem na largura da tela (recalcula ao redimensionar). Na impressão, 13 produtos por tabela.
 
 ## v3.65.3 — Deck: fotos transparentes
 - Re-extração das 141 fotos do Deck **preservando a transparência** (canal alpha / smask) — antes saíam com fundo preto no tema escuro. 139 ficaram transparentes; 2 (cód 14135 e 29580) eram opacas na origem.

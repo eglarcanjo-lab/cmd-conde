@@ -1,10 +1,13 @@
 // Deck de Estoque — visão por categoria × produtos (estilo do deck em PDF).
 // Colunas = produtos (foto + nome + código); linhas = métricas.
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../../services/api";
 
 const VERDE = "#7DBA3D";
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR");
+const COL_W = 94;      // largura de cada coluna de produto
+const LABEL_W = 118;   // largura da coluna de rótulos (Grade, Agendados...)
+const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
 
 // linhas do deck (rótulo + como pega o valor + cor da célula)
 const LINHAS = [
@@ -24,6 +27,8 @@ export default function Deck() {
   const [erro, setErro] = useState("");
   const [catSel, setCatSel] = useState(0);
   const [print, setPrint] = useState(false);
+  const wrapRef = useRef(null);
+  const [cols, setCols] = useState(12);
 
   useEffect(() => {
     let vivo = true;
@@ -34,6 +39,17 @@ export default function Deck() {
       .finally(() => vivo && setLoading(false));
     return () => { vivo = false; };
   }, []);
+
+  // Mede a largura disponível → quantos produtos cabem por tabela (sem rolagem horizontal).
+  useEffect(() => {
+    const calc = () => {
+      const w = wrapRef.current?.clientWidth || 0;
+      if (w) setCols(Math.max(1, Math.floor((w - LABEL_W) / COL_W)));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, [d, catSel]);
 
   const secoes = d?.secoes || [];
   const exportarPDF = () => {
@@ -65,15 +81,17 @@ export default function Deck() {
         <button style={S.btnPdf} onClick={exportarPDF}>🖨️ Exportar PDF</button>
       </div>
 
-      {/* Tela: só a categoria selecionada */}
-      {!print && <DeckTabela sec={sec} />}
+      {/* Tela: só a categoria selecionada; quebra em tabelas empilhadas se não couber */}
+      <div ref={wrapRef}>
+        {!print && <DeckTabela sec={sec} cols={cols} />}
+      </div>
 
-      {/* Impressão: todas as categorias, uma por página */}
+      {/* Impressão: todas as categorias, uma por página (13 produtos por tabela) */}
       {print && (
         <div className="deck-print">
           {secoes.map((s) => (
             <div key={s.categoria} className="deck-page">
-              <DeckTabela sec={s} />
+              <DeckTabela sec={s} cols={13} />
             </div>
           ))}
         </div>
@@ -84,13 +102,13 @@ export default function Deck() {
   );
 }
 
-function DeckTabela({ sec }) {
-  const prods = sec.produtos;
+function DeckTabela({ sec, cols }) {
+  const grupos = chunk(sec.produtos, Math.max(1, cols));
   return (
     <div className="deck-wrap">
-      <div className="deck-titulo">{sec.categoria}</div>
-      <div style={{ overflowX: "auto" }}>
-        <table className="deck-tbl">
+      <div className="deck-titulo">{sec.categoria} <span className="deck-qtd">{sec.produtos.length}</span></div>
+      {grupos.map((prods, gi) => (
+        <table className="deck-tbl" key={gi}>
           <thead>
             <tr>
               <th className="deck-lbl deck-corner"></th>
@@ -118,7 +136,7 @@ function DeckTabela({ sec }) {
             ))}
           </tbody>
         </table>
-      </div>
+      ))}
     </div>
   );
 }
@@ -142,9 +160,12 @@ const CSS = `
 
 .deck-wrap { border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px 12px 14px; background:rgba(255,255,255,0.02); }
 .deck-titulo { color:${VERDE}; font-weight:800; font-size:1rem; margin:2px 0 10px; text-transform:uppercase; letter-spacing:.5px; }
-.deck-tbl { border-collapse:collapse; }
+.deck-qtd { font-size:0.66rem; background:rgba(125,186,61,0.18); color:${VERDE}; padding:1px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
+.deck-tbl { border-collapse:collapse; margin-bottom:16px; table-layout:fixed; }
+.deck-tbl:last-child { margin-bottom:0; }
 .deck-corner { background:transparent !important; border:none !important; }
-.deck-prodcol { width:92px; min-width:92px; max-width:92px; padding:4px 3px; vertical-align:bottom; border-bottom:2px solid rgba(255,255,255,0.1); }
+.deck-lbl.deck-corner, .deck-lbl { width:118px; min-width:118px; }
+.deck-prodcol { width:94px; min-width:94px; max-width:94px; padding:4px 3px; vertical-align:bottom; border-bottom:2px solid rgba(255,255,255,0.1); }
 .deck-foto { height:66px; display:flex; align-items:flex-end; justify-content:center; }
 .deck-foto img { max-height:66px; max-width:70px; object-fit:contain; }
 .deck-nome { font-size:0.6rem; color:rgba(255,255,255,0.85); text-align:center; line-height:1.15; margin-top:3px; height:2.3em; overflow:hidden; }
