@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.5** — Deck: produtos ordenados por marca dentro da categoria.
+Versão atual: **v3.65.6** — Deck: 3 grupos (Cerveja / NAB / Match), sem subcategorias.
+
+## v3.65.6 — Deck: consolida categorias
+- O Deck deixa de separar subcategorias: agora são **3 grupos** — **Cerveja** (junta Cerveja, Zero, Multipack, Litrinho, HE, RGB…), **NAB** (junta NAB + NAB Zero) e **Match** (separado). Mktp continua fora.
 
 ## v3.65.5 — Deck: ordenação por marca
 - Dentro de cada categoria, os produtos agora ficam **ordenados por marca** (início do nome) — assim todas as embalagens da mesma marca ficam juntas. Desempate por nome completo e depois grade.

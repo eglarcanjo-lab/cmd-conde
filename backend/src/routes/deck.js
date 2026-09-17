@@ -13,14 +13,21 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const int = (v) => Math.round(num(v));
 const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 
-// Ordem de exibição das categorias (as demais entram depois, em ordem alfabética).
-const ORDEM_CAT = [
-  "CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "NAB", "NAB ZERO",
-  "MATCH", "LITRINHO", "BALANCED CHOICE", "HE", "GIRO RGB",
-];
+// Ordem de exibição dos grupos no Deck.
+const ORDEM_CAT = ["CERVEJA", "NAB", "MATCH"];
 
 // Categorias que NÃO entram no Deck.
 const CAT_FORA = new Set(["MKTP", "MARKETPLACE"]);
+
+// Consolida as categorias da HOP em 3 grupos (sem subcategorias):
+//   • Match separado · NAB junta tudo de NAB · o resto (cervejas e formatos) vira Cerveja.
+function grupoDeCat(cat) {
+  const c = String(cat || "").toUpperCase().trim();
+  if (!c || CAT_FORA.has(c)) return null;   // Mktp fora
+  if (c.includes("MATCH")) return "MATCH";
+  if (c.includes("NAB")) return "NAB";
+  return "CERVEJA";                          // Cerveja, Zero, Multipack, Litrinho, HE, RGB… → Cerveja
+}
 
 // dias até a validade (a partir de hoje) — p/ colorir o 1º vencimento
 function diasAte(ddmmyyyy) {
@@ -47,9 +54,10 @@ router.get("/", async (req, res) => {
     const catDe = {};
     base.forEach((p) => {
       const c = normCod(p.cod);
-      const cats = String(p.categorias || p.categoria || "")
-        .split(/[,;|]/).map((x) => x.trim().toUpperCase()).filter(Boolean)
-        .filter((x) => !CAT_FORA.has(x));
+      const cats = [...new Set(
+        String(p.categorias || p.categoria || "")
+          .split(/[,;|]/).map((x) => grupoDeCat(x)).filter(Boolean)
+      )];
       if (c) catDe[c] = cats;
     });
 
