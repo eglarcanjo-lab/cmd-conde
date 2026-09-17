@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.64.0** — Importação CORA (consulta-pedidos): nova fonte do Buffer + base do Deck (Agendados D+7).
+Versão atual: **v3.64.1** — Import da Coleta (Shelf + 1º Vencimento) e remoção da box Buffer 030111.
+
+## v3.64.1 — Import Coleta + limpeza Buffer Promax [parte 2/3]
+- **Novo import "Coleta (Shelf + 1º Vencimento)"** (grupo CORA/Coleta, xlsx): guia **FAROL PZC** → tabela `shelf` (55 itens no teste); guia **BASE** → `deck_vencimento` = menor validade por código (138 produtos), que vira o "1º Vencimento" do Deck.
+- **Removida a box "Buffer (não faturados) 030111"** da aba Arquivos — não é mais usada (Buffer vem do CORA).
+- Processador: `processar_coleta` + rota `/api/processar/coleta` + despacho no `/ambos`; Node repassa o campo `coleta`.
 
 ## v3.64.0 — Import CORA (Buffer nova fonte + Deck D+7) [parte 1/3]
 - **Nova importação "CORA" na aba Arquivos** (grupo próprio): sobe a consulta-pedidos exportada do CORA (.csv, ~19 colunas). Um upload alimenta o Buffer **e** o Deck.
