@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.62.0** — Cobertura/Distribuição: Verdes (Home) troca **Distribuição → Vol HL** (cobertura = PDVs distintos que compraram no mês, conta 1x); aba Cobertura ganha **total de SKUs da categoria + meta 90%** no topo da distribuição. Lógica de cobertura/distribuição conferida (conta 1x por PDV/SKU).
+Versão atual: **v3.62.1** — Verdes (Home) ganha seletor de escopo **Todos / GV 1 / GV 3** (filtra o ranking de RNs e o consolidado do topo). Export dos Verdes passou a contar só venda efetiva (volume > 0) no processador.
+
+## v3.62.1 — Verdes: escopo por GV + export só venda efetiva
+- **Verdes (Home):** seletor **Todos / GV 1 (1xx) / GV 3 (3xx)** — o gráfico do topo mostra o consolidado do GV (soma dos RNs) e a faixa lista só os RNs daquele GV. Cobertura = venda efetiva (Volume Entrega > 0).
+- **Processador:** `verdes_pedidos` (export Excel dos Verdes) passa a exportar **só linhas com volume > 0** — antes incluía pedidos zerados/devolução, que inflavam a contagem de PDVs vs a cobertura do painel.
 
 ## v3.62.0 — Cobertura & Distribuição: Vol HL nos Verdes + meta 90% na distribuição
 - **Verdes (Home):** o flag **Distribuição** (que era caixas) virou **Vol HL** (volume em HL). Cobertura = nº de PDVs DISTINTOS que compraram o SKU no mês (conta 1x, mais compras não aumentam). `/api/resumo/verdes` devolve `volHl` no lugar de `distribuicao`.

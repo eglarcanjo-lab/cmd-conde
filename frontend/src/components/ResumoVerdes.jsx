@@ -18,6 +18,7 @@ export default function ResumoVerdes() {
   const [aba, setAba] = useState("cobertura");   // flag mestre: cobertura | volhl
   const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
+  const [gvSel, setGvSel] = useState("todos");      // todos | "1" (GV1 = 1xx) | "3" (GV3 = 3xx)
 
   useEffect(() => {
     let cancel = false, tent = 0;
@@ -75,16 +76,23 @@ export default function ResumoVerdes() {
   const porRn = data ? (data.porRn || []) : [];
   const prod = data ? data.produto : { cod: "33857", nome: "Stella Pure Gold" };
 
-  // Série do selecionado (Todos = consolidado; senão o RN escolhido).
+  // Série do selecionado. Escopo GV filtra os RNs (1xx = GV1, 3xx = GV3).
   const serieDe = (obj) => (obj ? (aba === "cobertura" ? obj.cobertura : obj.volHl) : []) || [];
+  const noGv = (setor) => gvSel === "todos" || String(setor || "")[0] === gvSel;
+  const porRnGv = porRn.filter((r) => noGv(r.setor));
   const rnObj = rnSel === "todos" ? null : porRn.find((r) => String(r.setor) === String(rnSel));
-  const serie = rnSel === "todos" ? serieDe(data && data.consolidado) : serieDe(rnObj);
+  // Consolidado da seleção: RN específico → o RN; senão GV (soma dos RNs do GV) ou global.
+  const serie = rnSel !== "todos"
+    ? serieDe(rnObj)
+    : gvSel === "todos"
+      ? serieDe(data && data.consolidado)
+      : meses.map((_, i) => porRnGv.reduce((s, r) => s + (Number(serieDe(r)[i]) || 0), 0));
   const temDados = meses.length > 0 && serie.some((x) => x > 0);
 
-  // Ranking dos RNs pelo flag atual, maior→menor. Se um mês estiver selecionado,
-  // usa o valor daquele mês; senão, a soma do trimestre.
+  // Ranking dos RNs (do GV escolhido) pelo flag atual, maior→menor. Se um mês estiver
+  // selecionado, usa o valor daquele mês; senão, a soma do trimestre.
   const valRank = (r) => { const arr = serieDe(r); return mesSel != null ? (Number(arr[mesSel]) || 0) : arr.reduce((s, x) => s + (Number(x) || 0), 0); };
-  const ranking = porRn
+  const ranking = porRnGv
     .map((r) => ({ setor: r.setor, rn: r.rn, total: valRank(r) }))
     .filter((r) => r.total > 0)
     .sort((a, b) => b.total - a.total);
@@ -112,6 +120,13 @@ export default function ResumoVerdes() {
         </span>
       </div>
 
+      <div style={S.gvRow}>
+        <span style={S.gvLbl}>Escopo:</span>
+        {[["todos", "Todos"], ["1", "GV 1"], ["3", "GV 3"]].map(([k, l]) => (
+          <button key={k} style={gvSel === k ? { ...S.gvBtn, ...S.gvOn } : S.gvBtn} onClick={() => { setGvSel(k); setRnSel("todos"); }}>{l}</button>
+        ))}
+      </div>
+
       {!data ? (
         <div style={S.skel}>Acordando o servidor…</div>
       ) : (
@@ -120,7 +135,7 @@ export default function ResumoVerdes() {
             <div style={S.skel}>Sem vendas de {prod.nome} {rnSel !== "todos" ? `no setor ${rnSel}` : ""} — importe pedidos por mês.</div>
           ) : (
             <>
-              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : ""}</small></div>
+              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : gvSel !== "todos" ? ` · GV ${gvSel}` : ""}</small></div>
               <div style={S.vlab}>{meses.map((m, i) => <span key={m} style={S.vs}>{serie[i] ? fmt(serie[i]) : ""}</span>)}</div>
               <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 2, display: "block" }} aria-hidden="true">
                 <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
@@ -167,6 +182,10 @@ const S = {
   title: { color: "#fff", fontWeight: "600", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: "7px" },
   cod: { color: "rgba(255,255,255,0.4)", fontWeight: "400", fontSize: "0.8rem" },
   tgl: { marginLeft: "auto", display: "flex", gap: "5px" },
+  gvRow: { display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" },
+  gvLbl: { color: "rgba(255,255,255,0.4)", fontSize: "0.76rem", marginRight: "2px" },
+  gvBtn: { fontSize: "0.76rem", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "3px 11px", cursor: "pointer" },
+  gvOn: { color: "#0c1410", background: "#7DBA3D", border: "1px solid #7DBA3D", fontWeight: "700" },
   btn: { fontSize: "0.82rem", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "4px 13px", cursor: "pointer" },
   btnOn: { fontSize: "0.82rem", fontFamily: "inherit", color: "#0c1410", background: "#7DBA3D", border: "1px solid #7DBA3D", borderRadius: "20px", padding: "4px 13px", cursor: "pointer", fontWeight: "600" },
   excelBtn: { fontSize: "0.8rem", fontFamily: "inherit", color: "#4ade80", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", borderRadius: "20px", padding: "4px 12px", cursor: "pointer", fontWeight: "600" },
