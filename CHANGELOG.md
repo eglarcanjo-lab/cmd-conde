@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.1** — Grade de Estoque: botão Exportar Excel.
+Versão atual: **v3.65.2** — Deck: categoria Mktp fora do Deck.
+
+## v3.65.2 — Deck sem Mktp
+- A categoria **Mktp / Marketplace** não entra mais no Deck de Estoque (todas as outras categorias com produto continuam).
 
 ## v3.65.1 — Grade de Estoque: exportar Excel
 - Botão **📥 Excel** na aba Produtos › Grade de Estoque — exporta as linhas visíveis (respeita busca e ordenação): Cód, Produto, Un, Saldo, HL, Saídas. Cabeçalho estilizado (`xlsx-js-style`).

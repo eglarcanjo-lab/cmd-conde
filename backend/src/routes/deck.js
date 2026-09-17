@@ -16,8 +16,11 @@ const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 // Ordem de exibição das categorias (as demais entram depois, em ordem alfabética).
 const ORDEM_CAT = [
   "CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "NAB", "NAB ZERO",
-  "MATCH", "LITRINHO", "MKTP", "BALANCED CHOICE", "HE", "GIRO RGB",
+  "MATCH", "LITRINHO", "BALANCED CHOICE", "HE", "GIRO RGB",
 ];
+
+// Categorias que NÃO entram no Deck.
+const CAT_FORA = new Set(["MKTP", "MARKETPLACE"]);
 
 // dias até a validade (a partir de hoje) — p/ colorir o 1º vencimento
 function diasAte(ddmmyyyy) {
@@ -45,7 +48,8 @@ router.get("/", async (req, res) => {
     base.forEach((p) => {
       const c = normCod(p.cod);
       const cats = String(p.categorias || p.categoria || "")
-        .split(/[,;|]/).map((x) => x.trim().toUpperCase()).filter(Boolean);
+        .split(/[,;|]/).map((x) => x.trim().toUpperCase()).filter(Boolean)
+        .filter((x) => !CAT_FORA.has(x));
       if (c) catDe[c] = cats;
     });
 
