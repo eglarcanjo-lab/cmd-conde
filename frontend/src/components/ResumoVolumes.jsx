@@ -40,7 +40,7 @@ export default function ResumoVolumes() {
   const setaAnal = (key) => ordAnal && ordAnal.key === key ? (ordAnal.dir === "asc" ? " ▲" : " ▼") : "";
   const renderAnalitico = (report) => {
     const cats = report.categorias || [], sub = report.subcols || [];
-    return (report.secoes || []).map((sec) => {
+    const secoes = (report.secoes || []).map((sec) => {
       let linhas = sec.linhas || [];
       if (sec.setorCol && ordAnal) {
         const [cat, scol] = ordAnal.key.split("|");
@@ -57,7 +57,7 @@ export default function ResumoVolumes() {
         <div key={sec.titulo} style={{ marginBottom: 12 }}>
           <div style={S.mtxSecTit}>{sec.titulo}</div>
           <div style={{ overflowX: "auto" }}>
-            <table style={S.mtx}>
+            <table className="mtxTbl" style={S.mtx}>
               <thead>
                 <tr>
                   <th style={S.mtxLbl} colSpan={sec.setorCol ? 2 : 1}></th>
@@ -88,6 +88,15 @@ export default function ResumoVolumes() {
         </div>
       );
     });
+    return (
+      <>
+        <style>{`
+          .mtxTbl tbody tr:hover td { background-image: linear-gradient(0deg, rgba(125,186,61,0.18), rgba(125,186,61,0.18)) !important; }
+          .mtxTbl tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 #7DBA3D; }
+        `}</style>
+        {secoes}
+      </>
+    );
   };
 
   // Renderiza uma barra (realizado escuro + tendência clara atrás + %).

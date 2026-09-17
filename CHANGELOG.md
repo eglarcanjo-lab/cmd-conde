@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.63.0** — Cobertura ganha status **OK/EST/IST/NOK** (baseado no trimestre); ordenação por clique nos cabeçalhos (tabela Distribuição e Analítico da Home); SKUs saíram dos cards (ficam só na tabela).
+Versão atual: **v3.63.1** — Analítico da Home: destaque da linha inteira ao passar o mouse (hover).
+
+## v3.63.1 — Analítico: hover destaca a linha
+- No **Analítico** da Home (Volumes tabelado), passar o mouse sobre uma linha agora **destaca a linha inteira** (tom verde sobreposto + marca na 1ª célula), sem apagar as cores do heatmap. Só melhoria de leitura.
 
 ## v3.63.0 — Cobertura OK/EST/IST/NOK + ordenadores
 - **Status de cobertura (processador):** por PDV × categoria, no **trimestre civil** — **OK** = comprou no mês atual · **EST** = comprou 1º+2º mês do tri, falta o atual · **IST** = comprou só algum mês anterior do tri · **NOK** = não comprou em nenhum mês do tri. (antes era OK/Pendente/NOK). Frontend com cores/legenda/dashboard e filtro atualizados; dados antigos "PENDENTE" ainda renderizam.
