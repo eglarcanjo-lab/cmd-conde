@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.0** — Lia, a mascote: popup diário na Home com Shelf urgente + categorias abaixo da tendência.
+Versão atual: **v3.66.1** — Lia espelhada (aponta pro balão).
+
+## v3.66.1 — Lia espelhada
+- A Lia foi espelhada (`scaleX(-1)`) pra apontar pro balão de fala à esquerda.
 
 ## v3.66.0 — Lia (mascote) na Home
 - Nova mascote **Lia**: surge deslizando (com balancinho) **1x por dia** na Home, num balão de fala informal comentando:

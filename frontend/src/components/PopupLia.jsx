@@ -93,8 +93,10 @@ const CSS = `
   animation: lia-balanca 3.2s ease-in-out infinite;
 }
 .lia-root.lia-on .lia-img { animation: lia-entra .7s ease .0s 1, lia-balanca 3.2s ease-in-out 1.2s infinite; }
-@keyframes lia-entra { 0%{transform:translateY(30px) rotate(-4deg);} 60%{transform:translateY(-6px) rotate(3deg);} 100%{transform:translateY(0) rotate(0);} }
-@keyframes lia-balanca { 0%,100%{transform:rotate(-2.5deg);} 50%{transform:rotate(2.5deg);} }
+/* scaleX(-1) espelha a Lia p/ ela apontar pro balão (à esquerda). Vai embutido em
+   cada keyframe porque a animação sobrescreveria um transform estático. */
+@keyframes lia-entra { 0%{transform:scaleX(-1) translateY(30px) rotate(-4deg);} 60%{transform:scaleX(-1) translateY(-6px) rotate(3deg);} 100%{transform:scaleX(-1) translateY(0) rotate(0);} }
+@keyframes lia-balanca { 0%,100%{transform:scaleX(-1) rotate(-2.5deg);} 50%{transform:scaleX(-1) rotate(2.5deg);} }
 
 .lia-bolha {
   position: relative; align-self: center; margin-bottom: 40px;
