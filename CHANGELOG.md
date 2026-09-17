@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.5** — Deck: lote final de fotos (178) + 13 fundos brancos corrigidos.
+Versão atual: **v3.66.6** — Corrige build do Vercel (PWA) + otimiza fotos do Deck.
+
+## v3.66.6 — Fix build Vercel + fotos otimizadas
+- **Build do Vercel falhava**: o PWA/Workbox tentava pré-cachear as fotos do Deck e uma delas (5,23 MB) estourava o limite. Correção: `globIgnores` exclui `produtos/**` do precache + `runtimeCaching` CacheFirst (cacheia sob demanda, 30 dias).
+- **Fotos otimizadas**: pasta `produtos` de **42 MB → 10,6 MB** (redimensionadas p/ 360px de altura, maior foto agora 0,16 MB) e `lia.png` de 1,74 MB → 0,38 MB. Deck e Home carregam bem mais rápido.
 
 ## v3.66.5 — Fotos de produto (lote final)
 - Pasta de imagens fechada em **178 produtos**. Última varredura: **13 com fundo branco** tornadas transparentes; 165 já ok.

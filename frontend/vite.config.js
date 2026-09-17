@@ -26,6 +26,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        // Fotos do Deck (178 imagens) NÃO entram no precache — são carregadas sob
+        // demanda e cacheadas em runtime (ver runtimeCaching). Evita SW gigante e o
+        // erro de arquivo > limite no build.
+        globIgnores: ["**/produtos/**"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // bundle passou de 2MB com @capacitor/camera
         // clientsClaim: o novo SW assume o controle assim que ativa (após o
         // skipWaiting do botão) → o reload do banner acontece na hora, sem travar.
@@ -40,6 +44,15 @@ export default defineConfig({
               cacheName: "api-cache",
               expiration: { maxEntries: 50, maxAgeSeconds: 300 },
               networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            // Fotos de produto do Deck — cacheia ao abrir (CacheFirst), 30 dias.
+            urlPattern: /\/produtos\/[^/]+\.png$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "produtos-img",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],
