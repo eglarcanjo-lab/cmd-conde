@@ -93,9 +93,15 @@ router.get("/", async (req, res) => {
       if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
       return a.localeCompare(b);
     });
+    // Dentro da categoria, ordena por MARCA (início do nome) → mesma marca fica junta;
+    // desempate por nome completo (agrupa embalagens da marca) e depois grade desc.
+    const marca = (p) => String(p.nome || "").trim().split(/\s+/)[0].toUpperCase();
     const secoes = cats.map((cat) => ({
       categoria: cat,
-      produtos: porCat[cat].sort((a, b) => b.grade - a.grade || b.agendados - a.agendados),
+      produtos: porCat[cat].sort((a, b) =>
+        marca(a).localeCompare(marca(b), "pt-BR") ||
+        String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { numeric: true }) ||
+        b.grade - a.grade),
     }));
 
     const st = statusArq.find((r) => /grade/i.test(String(r.arquivo || "")));

@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.4** — Deck: sem rolagem horizontal — quebra em tabelas empilhadas.
+Versão atual: **v3.65.5** — Deck: produtos ordenados por marca dentro da categoria.
+
+## v3.65.5 — Deck: ordenação por marca
+- Dentro de cada categoria, os produtos agora ficam **ordenados por marca** (início do nome) — assim todas as embalagens da mesma marca ficam juntas. Desempate por nome completo e depois grade.
 
 ## v3.65.4 — Deck: quebra em linhas em vez de rolar
 - Quando a categoria tem muitos produtos, o Deck **não rola mais na horizontal**: quebra em **tabelas empilhadas**, cada uma com quantos produtos couberem na largura da tela (recalcula ao redimensionar). Na impressão, 13 produtos por tabela.
