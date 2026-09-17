@@ -25,7 +25,6 @@ export default function Deck() {
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
-  const [catSel, setCatSel] = useState(0);
   const [print, setPrint] = useState(false);
   const wrapRef = useRef(null);
   const [cols, setCols] = useState(12);
@@ -49,7 +48,7 @@ export default function Deck() {
     calc();
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
-  }, [d, catSel]);
+  }, [d]);
 
   const secoes = d?.secoes || [];
   const exportarPDF = () => {
@@ -63,27 +62,22 @@ export default function Deck() {
   if (!secoes.length)
     return <div style={S.vazio}>Sem dados do Deck ainda. Importe o <b>CORA</b> (agendados D+7), a <b>Grade de Estoque</b> e a <b>Coleta</b> (1º vencimento) em Admin › Arquivos, e cadastre a <b>categoria</b> dos produtos.</div>;
 
-  const sec = secoes[Math.min(catSel, secoes.length - 1)];
-
   return (
     <>
       {d.atualizado_em && <div style={S.atualizado}>🔄 grade atualizada em {d.atualizado_em} · {d.total_produtos} produtos</div>}
 
       <div style={S.barra}>
-        <div style={S.chips}>
-          {secoes.map((s, i) => (
-            <button key={s.categoria} onClick={() => setCatSel(i)}
-              style={{ ...S.chip, ...(i === catSel ? S.chipOn : {}) }}>
-              {s.categoria} <span style={S.chipN}>{s.produtos.length}</span>
-            </button>
-          ))}
-        </div>
+        <div />
         <button style={S.btnPdf} onClick={exportarPDF}>🖨️ Exportar PDF</button>
       </div>
 
-      {/* Tela: só a categoria selecionada; quebra em tabelas empilhadas se não couber */}
-      <div ref={wrapRef}>
-        {!print && <DeckTabela sec={sec} cols={cols} />}
+      {/* Tela: todas as categorias empilhadas; cada uma quebra em tabelas se não couber */}
+      <div ref={wrapRef} style={{ display: print ? "none" : "block" }}>
+        {secoes.map((s) => (
+          <div key={s.categoria} style={{ marginBottom: 16 }}>
+            <DeckTabela sec={s} cols={cols} />
+          </div>
+        ))}
       </div>
 
       {/* Impressão: todas as categorias, uma por página (13 produtos por tabela) */}
@@ -178,14 +172,27 @@ const CSS = `
 
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
+  html, body { background:#fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body * { visibility: hidden; }
-  .deck-print, .deck-print * { visibility: visible; }
+  .deck-print, .deck-print * { visibility: visible; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .deck-print { position:absolute; left:0; top:0; width:100%; }
   .deck-page { page-break-after: always; }
-  .deck-wrap { border:none; background:#fff; }
+  .deck-page:last-child { page-break-after: auto; }
+  .deck-wrap { border:none; background:#fff; padding:0; }
   .deck-titulo { color:#1f3a1a; }
-  .deck-nome, .deck-lbl { color:#111 !important; background:#fff !important; }
-  .deck-cel { color:#111; }
-  .deck-cod { color:#2E7D32; }
+  .deck-qtd { background:#e3f0d4 !important; color:#2E7D32 !important; }
+  .deck-tbl { border:1px solid #9aa; }
+  /* Cabeçalho dos produtos com fundo suave + linhas */
+  .deck-prodcol { background:#f2f4ef; border:1px solid #b9c2b3; }
+  .deck-nome { color:#111 !important; }
+  .deck-cod { color:#2E7D32 !important; }
+  /* Rótulos das linhas: faixa cinza clara + borda */
+  .deck-lbl { color:#111 !important; background:#e9ece6 !important; border:1px solid #b9c2b3 !important; }
+  .deck-corner { background:#fff !important; border:1px solid #fff !important; }
+  /* Células com GRADE (linhas) e cores mantidas */
+  .deck-cel { color:#1a1a1a; border:1px solid #c3ccbe; background:#fff; }
+  .deck-cel.ok { background:#d6f5df !important; color:#166534 !important; }
+  .deck-cel.vazio { background:#ffdad6 !important; color:#b91c1c !important; }
+  .deck-cel.alerta { background:#fdf0c9 !important; color:#8a6d1a !important; }
 }
 `;

@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.6** — Deck: 3 grupos (Cerveja / NAB / Match), sem subcategorias.
+Versão atual: **v3.65.7** — Deck: sem botões de categoria (tudo empilhado) + PDF com grade e cores.
+
+## v3.65.7 — Deck: layout empilhado + PDF colorido
+- Removidos os **botões (chips) de categoria** — todas as categorias aparecem **empilhadas** na tela, uma abaixo da outra.
+- **PDF/impressão** com **linhas na grade** (bordas nas células) e **cores mantidas** (heatmap verde/vermelho/amarelo, cabeçalho e rótulos com fundo suave) — antes saía tudo branco. Usa `print-color-adjust: exact` p/ imprimir os fundos.
 
 ## v3.65.6 — Deck: consolida categorias
 - O Deck deixa de separar subcategorias: agora são **3 grupos** — **Cerveja** (junta Cerveja, Zero, Multipack, Litrinho, HE, RGB…), **NAB** (junta NAB + NAB Zero) e **Match** (separado). Mktp continua fora.
