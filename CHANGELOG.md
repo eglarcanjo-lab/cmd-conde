@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.6** — Corrige build do Vercel (PWA) + otimiza fotos do Deck.
+Versão atual: **v3.66.7** — Deck: fundo da foto 37450 (Budweiser 12-pack) removido via IA.
+
+## v3.66.7 — Fundo branco-no-branco (rembg)
+- Foto **37450** (Budweiser pack, lado branco em fundo claro) que o flood-fill não separava: fundo removido com **rembg (IA)**, preservando o lado branco da embalagem.
 
 ## v3.66.6 — Fix build Vercel + fotos otimizadas
 - **Build do Vercel falhava**: o PWA/Workbox tentava pré-cachear as fotos do Deck e uma delas (5,23 MB) estourava o limite. Correção: `globIgnores` exclui `produtos/**` do precache + `runtimeCaching` CacheFirst (cacheia sob demanda, 30 dias).
