@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.0** — Deck de Estoque (Produtos › Deck) com fotos + export PDF; aba Shelf ativada.
+Versão atual: **v3.65.1** — Grade de Estoque: botão Exportar Excel.
+
+## v3.65.1 — Grade de Estoque: exportar Excel
+- Botão **📥 Excel** na aba Produtos › Grade de Estoque — exporta as linhas visíveis (respeita busca e ordenação): Cód, Produto, Un, Saldo, HL, Saídas. Cabeçalho estilizado (`xlsx-js-style`).
 
 ## v3.65.0 — Deck de Estoque + Shelf [parte 3/3]
 - **Nova sub-aba "Deck"** em Produtos: visão por **categoria da HOP × produtos** no estilo do deck em PDF (colunas = produtos com **foto**; linhas = Grade de Estoque, Agendados D+7, 1º Vencimento, + Trânsito/Previsão vazias por ora). Seletor de categoria (chips) e **Exportar PDF** (uma categoria por página, paisagem).

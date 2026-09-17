@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import Deck from "./Deck";
 import Shelf from "./Shelf";
+import * as XLSX from "xlsx-js-style";
 
 const VERDE = "#7DBA3D";
 const BG = "#0c1410";
@@ -86,6 +87,24 @@ function Grade() {
 
   const clicar = (c) => setSort((s) => (s.k === c.k ? { k: c.k, dir: s.dir === "asc" ? "desc" : "asc" } : { k: c.k, dir: c.num ? "desc" : "asc" }));
 
+  const exportarExcel = () => {
+    const cab = ["Cód", "Produto", "Un", "Saldo (cx/un)", "HL em estoque", "Saídas"];
+    const aoa = [cab, ...linhas.map((l) => [
+      l.cod, l.nome || l.descricao || "", l.un || "",
+      Number(l.saldo) || 0, Number(l.hl_estoque) || 0, Number(l.saidas) || 0,
+    ])];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 10 }, { wch: 40 }, { wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 10 }];
+    // cabeçalho em negrito com fundo verde
+    cab.forEach((_, i) => {
+      const cel = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+      if (cel) cel.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2E7D32" } } };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Grade de Estoque");
+    XLSX.writeFile(wb, `grade_estoque_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   return (
     <>
       {d.atualizado_em && <div style={S.atualizado}>🔄 atualizado em {d.atualizado_em}</div>}
@@ -96,7 +115,10 @@ function Grade() {
         <Kpi label="HL em estoque" valor={fmtN(d.total_hl, 1)} cor="#f5c451" />
       </div>
 
-      <input style={S.busca} value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="🔎 Buscar produto (nome ou código)…" />
+      <div style={S.buscaLinha}>
+        <input style={S.busca} value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="🔎 Buscar produto (nome ou código)…" />
+        <button style={S.btnXls} onClick={exportarExcel} title="Exporta as linhas visíveis (respeita busca e ordenação)">📥 Excel</button>
+      </div>
 
       <div style={S.tabelaWrap}>
         <table style={S.tabela}>
@@ -157,7 +179,9 @@ const S = {
   kpiValor: { fontSize: "1.5rem", fontWeight: "800", lineHeight: 1.1 },
   kpiLabel: { color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", marginTop: "6px" },
   kpiSub: { color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", marginTop: "2px" },
-  busca: { width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "10px", color: "#fff", padding: "11px 14px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none", marginBottom: "12px", boxSizing: "border-box" },
+  buscaLinha: { display: "flex", gap: "8px", alignItems: "stretch", marginBottom: "12px" },
+  busca: { flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: "10px", color: "#fff", padding: "11px 14px", fontSize: "0.9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" },
+  btnXls: { background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "10px", padding: "0 18px", fontSize: "0.84rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
   tabelaWrap: { overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px" },
   tabela: { width: "100%", borderCollapse: "collapse", fontSize: "0.84rem" },
   th: { padding: "10px 12px", color: "rgba(255,255,255,0.5)", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap", background: "rgba(255,255,255,0.03)", userSelect: "none", position: "sticky", top: 0 },
