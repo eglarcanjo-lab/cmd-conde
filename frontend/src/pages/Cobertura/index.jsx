@@ -495,7 +495,7 @@ export default function Cobertura() {
             {/* ── Cards por categoria ─────────────────────────────────────── */}
             <div style={styles.distCatGrid}>
               {CAT_MAIN.map((c) => {
-                const s = catStats[c.key] || { total: 0, pdvsComDist: 0 };
+                const s = catStats[c.key] || { total: 0, pdvsComDist: 0, skusCat: 0, metaDist: 0 };
                 const ativo = catFiltro === c.key;
                 return (
                   <div
@@ -508,9 +508,9 @@ export default function Cobertura() {
                       {s.total}
                     </p>
                     <p style={styles.distCatPdvs}>{s.pdvsComDist} PDVs cobertos</p>
-                    <div style={styles.distCatAA}>
-                      <span>AA —</span>
-                      <span>Δ —</span>
+                    <div style={styles.distCatAA} title="Total de SKUs da categoria · meta = 90% dos SKUs por PDV">
+                      <span><b style={{ color: "#fff" }}>{s.skusCat}</b> SKUs</span>
+                      <span>meta ≥ <b style={{ color: "#7DBA3D" }}>{s.metaDist}</b></span>
                     </div>
                   </div>
                 );

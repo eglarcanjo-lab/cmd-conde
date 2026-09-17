@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.62.1** — Verdes (Home) ganha seletor de escopo **Todos / GV 1 / GV 3** (filtra o ranking de RNs e o consolidado do topo). Export dos Verdes passou a contar só venda efetiva (volume > 0) no processador.
+Versão atual: **v3.62.2** — Aba Distribuição: cada card de categoria mostra o **total de SKUs da categoria** e a **meta (≥90%)**, direto no topo (antes só aparecia ao clicar na categoria).
+
+## v3.62.2 — Distribuição: SKUs da categoria + meta 90% em cada card
+- Nos cards de categoria da aba Distribuição, o rodapé (que era placeholder "AA —/Δ —") agora mostra **N SKUs · meta ≥ M** (M = teto de 90% dos SKUs). Complementa a barra que já aparecia na seção detalhada.
 
 ## v3.62.1 — Verdes: escopo por GV + export só venda efetiva
 - **Verdes (Home):** seletor **Todos / GV 1 (1xx) / GV 3 (3xx)** — o gráfico do topo mostra o consolidado do GV (soma dos RNs) e a faixa lista só os RNs daquele GV. Cobertura = venda efetiva (Volume Entrega > 0).
