@@ -60,6 +60,8 @@ app.use("/api/popups", require("./routes/popups"));
 app.use("/api/hop", require("./routes/hop"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));
 app.use("/api/grade", require("./routes/grade"));
+app.use("/api/deck", require("./routes/deck"));
+app.use("/api/shelf", require("./routes/shelf"));
 app.use("/api/cobertura-sku", require("./routes/cobertura-sku"));
 app.use("/api/avisos", require("./routes/avisos"));
 app.use("/api/uso", require("./routes/uso"));

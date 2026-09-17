@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.64.1** — Import da Coleta (Shelf + 1º Vencimento) e remoção da box Buffer 030111.
+Versão atual: **v3.65.0** — Deck de Estoque (Produtos › Deck) com fotos + export PDF; aba Shelf ativada.
+
+## v3.65.0 — Deck de Estoque + Shelf [parte 3/3]
+- **Nova sub-aba "Deck"** em Produtos: visão por **categoria da HOP × produtos** no estilo do deck em PDF (colunas = produtos com **foto**; linhas = Grade de Estoque, Agendados D+7, 1º Vencimento, + Trânsito/Previsão vazias por ora). Seletor de categoria (chips) e **Exportar PDF** (uma categoria por página, paisagem).
+  - Fotos dos produtos extraídas do deck oficial (141 imagens, mapeadas por código, em `public/produtos/{cod}.png`). Heatmap: Grade 0 (vermelho), Agendados >0 (verde), 1º Vencimento < 15d (vermelho) / < 30d (amarelo).
+  - Backend `/api/deck`: junta grade_estoque + deck_agendados + deck_vencimento + produtos_base (categoria) + produtos_full (nome); inclui produtos com categoria presentes em alguma dessas fontes.
+- **Aba "Shelf" ativada** (era "em breve"): tabela da guia FAROL PZC (código, produto, qtd cx, validade, dias p/ vencer, valor shelf) com KPIs e ordenação. Backend `/api/shelf`.
 
 ## v3.64.1 — Import Coleta + limpeza Buffer Promax [parte 2/3]
 - **Novo import "Coleta (Shelf + 1º Vencimento)"** (grupo CORA/Coleta, xlsx): guia **FAROL PZC** → tabela `shelf` (55 itens no teste); guia **BASE** → `deck_vencimento` = menor validade por código (138 produtos), que vira o "1º Vencimento" do Deck.
