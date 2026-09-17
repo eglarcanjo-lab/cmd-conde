@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.63.1** — Analítico da Home: destaque da linha inteira ao passar o mouse (hover).
+Versão atual: **v3.64.0** — Importação CORA (consulta-pedidos): nova fonte do Buffer + base do Deck (Agendados D+7).
+
+## v3.64.0 — Import CORA (Buffer nova fonte + Deck D+7) [parte 1/3]
+- **Nova importação "CORA" na aba Arquivos** (grupo próprio): sobe a consulta-pedidos exportada do CORA (.csv, ~19 colunas). Um upload alimenta o Buffer **e** o Deck.
+- **Buffer agora vem do CORA** (era Promax 030111): `processar_cora` gera `buffer_detalhe` filtrando `Tipo buffer` ≠ vazio (Reprogramado/Preservado), volume direto em HL — sem cruzar com a base de Pedidos. O relatório Faturados × Buffer passa a ler esse buffer. **Faturados segue no Promax 030237** (troca na virada do mês).
+- **Deck — Agendados D+7:** `deck_agendados` por produto (caixas) = pedidos `ENTREGA` + `REGISTRADO` com entrega entre **hoje+2 e hoje+7** (amanhã = entrega normal, fora). Base pro Deck (partes 2/3: import da coleta p/ 1º vencimento + tela do Deck com fotos).
+- Processador: `processar_cora` + rota `/api/processar/cora` + despacho no `/ambos`; Node repassa o campo `cora`.
 
 ## v3.63.1 — Analítico: hover destaca a linha
 - No **Analítico** da Home (Volumes tabelado), passar o mouse sobre uma linha agora **destaca a linha inteira** (tom verde sobreposto + marca na 1ª célula), sem apagar as cores do heatmap. Só melhoria de leitura.

@@ -12,6 +12,8 @@ const ARQUIVOS_CONFIG = [
   { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
   { id: "faturados",        campo: "faturados",         rotulo: "Faturados (NF)",           numero: "030237", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧾" },
   { id: "buffer",           campo: "buffer",            rotulo: "Buffer (não faturados)",   numero: "030111", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "⏳" },
+  // ── CORA ────────────────────────────────────────────────
+  { id: "cora",             campo: "cora",              rotulo: "Consulta-pedidos (Buffer + Deck D+7)", numero: "CORA", extensoes: ".csv", grupo: "cora", icon: "🧊" },
   // ── SPO ─────────────────────────────────────────────────
   { id: "spo_visitacao_gv",  campo: "spo_visitacao_gv",  rotulo: "Visitação GV",          item: "1",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🗺️" },
   { id: "spo_coaching",      campo: "spo_coaching",      rotulo: "Rota Coaching",          item: "2",  link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/9705a9b1-8511-43a8-a6d1-d8e0ee054fbc/843e2cd107068aac08d0?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
@@ -32,6 +34,7 @@ const ARQUIVOS_CONFIG = [
 
 const GRUPOS = [
   { id: "promax", label: "Promax",  desc: "Rotinas do sistema (número da rotina)" },
+  { id: "cora",   label: "CORA",    desc: "Consulta-pedidos do CORA (Buffer + Deck)" },
   { id: "spo",    label: "SPO",     desc: "Arquivos do painel SPO" },
   { id: "outros", label: "Outros",  desc: "BI e diversos" },
 ];
