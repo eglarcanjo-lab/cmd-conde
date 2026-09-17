@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.62.2** — Aba Distribuição: cada card de categoria mostra o **total de SKUs da categoria** e a **meta (≥90%)**, direto no topo (antes só aparecia ao clicar na categoria).
+Versão atual: **v3.62.3** — Tabela de Distribuição: linha logo abaixo do cabeçalho mostra, por categoria, o **total de SKUs** e a **meta (≥90%)** (`N · ≥M`).
+
+## v3.62.3 — Distribuição: SKUs + meta 90% sob o cabeçalho da tabela
+- Na tabela PDV × categoria (aba Distribuição), abaixo dos rótulos de categoria agora há uma linha `N · ≥M` (N = SKUs da categoria, M = teto de 90%). Assim o total de SKUs fica na própria tabela, alinhado a cada coluna.
 
 ## v3.62.2 — Distribuição: SKUs da categoria + meta 90% em cada card
 - Nos cards de categoria da aba Distribuição, o rodapé (que era placeholder "AA —/Δ —") agora mostra **N SKUs · meta ≥ M** (M = teto de 90% dos SKUs). Complementa a barra que já aparecia na seção detalhada.

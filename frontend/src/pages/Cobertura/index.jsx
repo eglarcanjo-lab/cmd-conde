@@ -620,6 +620,20 @@ export default function Cobertura() {
                           <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
                         ))}
                       </tr>
+                      {/* SKUs da categoria (universo) e meta = 90% dos SKUs por PDV */}
+                      <tr>
+                        <th colSpan={2} style={{ ...styles.th, textAlign: "right", fontSize: "0.68rem", fontWeight: "500", color: "rgba(255,255,255,0.4)", textTransform: "none" }}>SKUs da cat. · meta 90% ▸</th>
+                        <th style={{ ...styles.th, ...styles.thCat }}></th>
+                        {(catFiltro ? CAT_MAIN.filter((c) => c.key === catFiltro) : CAT_MAIN).map((c) => {
+                          const st = catStats[c.key] || {};
+                          return (
+                            <th key={c.key} style={{ ...styles.th, ...styles.thCat, fontSize: "0.66rem", fontWeight: "500", textTransform: "none" }} title={`${st.skusCat || 0} SKUs na categoria · meta: PDV coberto em ≥ ${st.metaDist || 0} (90%)`}>
+                              <span style={{ color: "rgba(255,255,255,0.55)" }}>{st.skusCat || 0}</span>
+                              <span style={{ color: "#7DBA3D" }}> · ≥{st.metaDist || 0}</span>
+                            </th>
+                          );
+                        })}
+                      </tr>
                     </thead>
                     <tbody>
                       {pdvsDistFiltrados.map((p) => {
