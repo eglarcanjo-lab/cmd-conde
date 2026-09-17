@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.1** — Lia espelhada (aponta pro balão).
+Versão atual: **v3.66.2** — Lia: layout do popup ajustado no mobile.
+
+## v3.66.2 — Lia mobile
+- No **mobile**, o popup da Lia vira **coluna**: balão em cima (largo) e a Lia embaixo à direita apontando pra cima — antes ficava apertada no canto sobre o menu.
 
 ## v3.66.1 — Lia espelhada
 - A Lia foi espelhada (`scaleX(-1)`) pra apontar pro balão de fala à esquerda.

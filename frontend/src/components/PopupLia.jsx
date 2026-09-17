@@ -126,9 +126,12 @@ const CSS = `
 .lia-btn-v { background: linear-gradient(135deg,#7DBA3D,#2E7D32); color: #0c1410; border: none; }
 
 @media (max-width: 560px) {
-  .lia-root { right: 8px; }
-  .lia-img { width: 100px; }
-  .lia-bolha { max-width: 210px; font-size: .76rem; margin-bottom: 30px; }
+  /* Mobile: coluna — balão em cima (largo), Lia embaixo à direita apontando pra cima. */
+  .lia-root { left: 10px; right: 10px; bottom: 10px; flex-direction: column; align-items: stretch; gap: 0; }
+  .lia-bolha { max-width: none; width: auto; align-self: stretch; font-size: .8rem; margin: 0; border-radius: 16px 16px 16px 4px; }
+  .lia-bolha::after { right: 44px; left: auto; bottom: -9px; top: auto;
+    border: 9px solid transparent; border-top-color: #12211a; border-bottom: 0; }
+  .lia-img { width: 116px; align-self: flex-end; margin: -4px 4px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lia-img, .lia-root.lia-on .lia-img { animation: none; }
