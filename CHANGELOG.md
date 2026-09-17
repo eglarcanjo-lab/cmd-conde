@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.2** — Deck: categoria Mktp fora do Deck.
+Versão atual: **v3.65.3** — Deck: fotos dos produtos com fundo transparente.
+
+## v3.65.3 — Deck: fotos transparentes
+- Re-extração das 141 fotos do Deck **preservando a transparência** (canal alpha / smask) — antes saíam com fundo preto no tema escuro. 139 ficaram transparentes; 2 (cód 14135 e 29580) eram opacas na origem.
 
 ## v3.65.2 — Deck sem Mktp
 - A categoria **Mktp / Marketplace** não entra mais no Deck de Estoque (todas as outras categorias com produto continuam).
