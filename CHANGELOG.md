@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.65.7** — Deck: sem botões de categoria (tudo empilhado) + PDF com grade e cores.
+Versão atual: **v3.66.0** — Lia, a mascote: popup diário na Home com Shelf urgente + categorias abaixo da tendência.
+
+## v3.66.0 — Lia (mascote) na Home
+- Nova mascote **Lia**: surge deslizando (com balancinho) **1x por dia** na Home, num balão de fala informal comentando:
+  - **Shelf** — os itens pra girar e o mais urgente (menor prazo p/ vencer); botão "Ver Shelf".
+  - **Categorias em alerta** — as até 2 com **%T (tendência vs meta) < 70%**, no escopo do usuário (RN vê a dele; diretor/GV o consolidado).
+- Só aparece se houver algo a dizer; "1x/dia" via localStorage. Backend `/api/lia` (reaproveita o cálculo de tendência da Home + tabela `shelf`). Respeita `prefers-reduced-motion`.
 
 ## v3.65.7 — Deck: layout empilhado + PDF colorido
 - Removidos os **botões (chips) de categoria** — todas as categorias aparecem **empilhadas** na tela, uma abaixo da outra.

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import HomeClassic from "./HomeClassic";
 import HomeDashboard from "./HomeDashboard";
+import PopupLia from "../components/PopupLia";
 
 // A home-dashboard (3 blocos + barra lateral) é só para DESKTOP e perfis admin/director.
 // RN — e qualquer perfil no mobile — vê a home clássica (menu de cards), como antes.
@@ -29,5 +30,10 @@ export default function Home() {
   const desktop = useDesktop();
   const adminOuDirector = usuario?.perfil === "admin" || usuario?.perfil === "director";
 
-  return desktop && adminOuDirector ? <HomeDashboard /> : <HomeClassic />;
+  return (
+    <>
+      {desktop && adminOuDirector ? <HomeDashboard /> : <HomeClassic />}
+      <PopupLia />
+    </>
+  );
 }
