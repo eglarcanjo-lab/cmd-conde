@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.4** — Deck: novas fotos importadas (168) + 8 com fundo branco corrigidas.
+Versão atual: **v3.66.5** — Deck: lote final de fotos (178) + 13 fundos brancos corrigidos.
+
+## v3.66.5 — Fotos de produto (lote final)
+- Pasta de imagens fechada em **178 produtos**. Última varredura: **13 com fundo branco** tornadas transparentes; 165 já ok.
 
 ## v3.66.4 — Mais fotos de produto
 - Pasta de imagens agora com **168 produtos**. Novo lote revisado: **8 com fundo branco** tornadas transparentes; as demais já estavam ok.
