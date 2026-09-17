@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.3** — Deck: remove fundo branco de 47 fotos de produto.
+Versão atual: **v3.66.4** — Deck: novas fotos importadas (168) + 8 com fundo branco corrigidas.
+
+## v3.66.4 — Mais fotos de produto
+- Pasta de imagens agora com **168 produtos**. Novo lote revisado: **8 com fundo branco** tornadas transparentes; as demais já estavam ok.
 
 ## v3.66.3 — Fotos do Deck sem fundo branco
 - Revisão da pasta de imagens (84 produtos): **47 tinham fundo branco** e foram tornadas **transparentes** (remoção por flood-fill a partir das bordas, preservando o branco interno do rótulo/embalagem). 37 já estavam ok.
