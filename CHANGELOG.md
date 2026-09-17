@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.2** — Lia: layout do popup ajustado no mobile.
+Versão atual: **v3.66.3** — Deck: remove fundo branco de 47 fotos de produto.
+
+## v3.66.3 — Fotos do Deck sem fundo branco
+- Revisão da pasta de imagens (84 produtos): **47 tinham fundo branco** e foram tornadas **transparentes** (remoção por flood-fill a partir das bordas, preservando o branco interno do rótulo/embalagem). 37 já estavam ok.
 
 ## v3.66.2 — Lia mobile
 - No **mobile**, o popup da Lia vira **coluna**: balão em cima (largo) e a Lia embaixo à direita apontando pra cima — antes ficava apertada no canto sobre o menu.
