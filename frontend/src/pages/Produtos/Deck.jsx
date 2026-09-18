@@ -5,6 +5,8 @@ import api from "../../services/api";
 
 const VERDE = "#7DBA3D";
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR");
+// Encurta o nome só no Deck da HOP: remove "CHP ANTARCTICA" (fica grande demais).
+const nomeCurto = (n) => String(n || "").replace(/\bCHP\s+ANTARCTICA\b/gi, "").replace(/\s{2,}/g, " ").trim();
 const COL_W = 94;      // largura de cada coluna de produto
 const LABEL_W = 118;   // largura da coluna de rótulos (Grade, Agendados...)
 const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
@@ -112,7 +114,7 @@ function DeckTabela({ sec, cols }) {
                     <img src={p.foto} alt="" loading="lazy"
                       onError={(e) => { e.target.style.visibility = "hidden"; }} />
                   </div>
-                  <div className="deck-nome" title={p.nome}>{p.nome}</div>
+                  <div className="deck-nome" title={p.nome}>{nomeCurto(p.nome)}</div>
                   <div className="deck-cod">{p.cod}</div>
                 </th>
               ))}

@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.7** — Deck: fundo da foto 37450 (Budweiser 12-pack) removido via IA.
+Versão atual: **v3.66.8** — Deck (HOP): nome do produto sem "CHP ANTARCTICA".
+
+## v3.66.8 — Deck: encurta nome na HOP
+- No Deck da HOP, o nome do produto agora **remove "CHP ANTARCTICA"** (ficava grande demais), mantendo o resto. Só no visual do app — o PDF continua com o nome completo.
+
+## v3.66.7 — Deck: fundo da foto 37450 (Budweiser 12-pack) removido via IA.
 
 ## v3.66.7 — Fundo branco-no-branco (rembg)
 - Foto **37450** (Budweiser pack, lado branco em fundo claro) que o flood-fill não separava: fundo removido com **rembg (IA)**, preservando o lado branco da embalagem.
