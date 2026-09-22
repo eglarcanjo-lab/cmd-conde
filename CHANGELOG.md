@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.66.8** — Deck (HOP): nome do produto sem "CHP ANTARCTICA".
+Versão atual: **v3.67.0** — Home Volumes: Curva de Volumes (Real×Budget×LY) + export Excel; sai o "por RN".
+
+## v3.67.0 — Home Volumes: Curva de Volumes + Excel
+- **Exportador Excel** na aba Volumes — exporta o **Report de Volumes** (mesmo conteúdo do PDF que o motor manda: Operação·GV·RN × categorias × Meta/Real/%/Tend/%T).
+- **Curva de Volumes** (recharts) no lugar das barras de categoria: linha mensal **Volume Real × Budget × Ano passado (LY)**, com **menu suspenso de categoria** e as duas linhas de % (Real vs BGT, Real vs LY) por mês. Backend novo `/api/resumo/curva`.
+- **Removidos os gráficos de barra por RN**.
+- **Nova categoria "Giro RGB"** na visualização, somando **GIRO RGB + LITRINHO**.
 
 ## v3.66.8 — Deck: encurta nome na HOP
 - No Deck da HOP, o nome do produto agora **remove "CHP ANTARCTICA"** (ficava grande demais), mantendo o resto. Só no visual do app — o PDF continua com o nome completo.

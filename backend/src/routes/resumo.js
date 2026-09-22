@@ -100,6 +100,73 @@ router.get("/volumes", async (req, res) => {
   }
 });
 
+// GET /api/resumo/curva?ano=YYYY — Curva de Volumes (12 meses × categoria):
+// Volume Real (rv_volume, ano) · Budget (metas.meta_volume, ano) · Real LY (rv_volume, ano-1).
+// Escopo por perfil. "Giro RGB" soma GIRO RGB + LITRINHO. "Cerveja" = macro (todas as
+// variantes de cerveja). Categorias: Cerveja, Giro RGB, NAB, Match, Mktp, Cerveja Zero, NAB Zero.
+router.get("/curva", async (req, res) => {
+  try {
+    const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const ano = req.query.ano ? Number(req.query.ano) : brNow.getFullYear();
+    const anoLY = ano - 1;
+    const up = (s) => String(s || "").trim().toUpperCase();
+    const mref = (r) => String(r.mes_ref || r.mes_referencia || "");
+
+    const [rvVolAll, metasAll] = await Promise.all([
+      readSheet("rv_volume").catch(() => []),
+      readSheet("metas").catch(() => []),
+    ]);
+    const rvVol = filtrarPorPerfil(rvVolAll, req.user, "setor");
+    const metas = filtrarPorPerfil(metasAll, req.user, "setor");
+
+    // Categorias da curva → categorias brutas (rv_volume) e a categoria de meta correspondente.
+    const CERVEJA_FAM = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "HE", "HE RGB",
+      "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "LITRINHO"];
+    const CURVA_CATS = [
+      { key: "cerveja", label: "Cerveja", raws: CERVEJA_FAM, meta: "CERVEJA" },
+      { key: "giroRgb", label: "Giro RGB", raws: ["GIRO RGB", "LITRINHO"], meta: null },
+      { key: "nab", label: "NAB", raws: ["NAB"], meta: "NAB" },
+      { key: "match", label: "Match", raws: ["MATCH"], meta: "MATCH" },
+      { key: "mktp", label: "Mktp", raws: ["MKTP"], meta: "MARKETPLACE" },
+      { key: "cervejaZero", label: "Cerveja Zero", raws: ["CERVEJA ZERO"], meta: null },
+      { key: "nabZero", label: "NAB Zero", raws: ["NAB ZERO"], meta: null },
+    ];
+
+    // Índices por (categoriaUP | YYYY-MM)
+    const realIdx = {}, metaIdx = {};
+    rvVol.forEach((r) => { const k = `${up(r.categoria)}|${mref(r).slice(0, 7)}`; realIdx[k] = (realIdx[k] || 0) + num(r.volume); });
+    metas.forEach((r) => { const k = `${up(r.categoria)}|${String(r.mes_referencia || "").slice(0, 7)}`; metaIdx[k] = (metaIdx[k] || 0) + num(r.meta_volume); });
+
+    const MM = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
+    const r1 = (n) => Math.round(n * 10) / 10;
+    const somaSerie = (rawsUP, yr, idx, metaCat) => MM.map((mm) => {
+      if (metaCat) return r1(idx[`${up(metaCat)}|${yr}-${mm}`] || 0);
+      let v = 0; rawsUP.forEach((c) => { v += idx[`${c}|${yr}-${mm}`] || 0; });
+      return r1(v);
+    });
+
+    const dados = {};
+    CURVA_CATS.forEach((c) => {
+      const rawsUP = c.raws.map(up);
+      dados[c.key] = {
+        real: somaSerie(rawsUP, ano, realIdx),
+        ly: somaSerie(rawsUP, anoLY, realIdx),
+        budget: c.meta ? somaSerie(rawsUP, ano, metaIdx, c.meta) : MM.map(() => 0),
+      };
+    });
+
+    return res.json({
+      ano, anoLY,
+      meses: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+      categorias: CURVA_CATS.map((c) => ({ key: c.key, label: c.label })),
+      dados,
+    });
+  } catch (e) {
+    console.error("resumo/curva:", e);
+    return res.status(500).json({ error: "Erro ao montar a curva de volumes." });
+  }
+});
+
 // GET /api/resumo/foco-ne?mes=YYYY-MM — bloco "Foco NE" (nível operação).
 // +LN (SPO 27), Faturamento Score 5 (12), Portfólio Score 5 (24).
 // +LN vem DIRETO da aba do +LN (tasks_validas/tasks_total por mês, linha OPERACAO).

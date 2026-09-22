@@ -3,6 +3,8 @@
 // Consolidado + expandir "por RN" (data.porRn) quando há mais de um setor no escopo.
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import * as XLSX from "xlsx-js-style";
+import CurvaVolumes from "./CurvaVolumes";
 
 const cor = (pct) => {
   if (pct == null) return "rgba(255,255,255,0.25)";
@@ -21,10 +23,10 @@ const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDig
 
 export default function ResumoVolumes() {
   const [data, setData] = useState(null);
+  const [curva, setCurva] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
-  const [porRnAberto, setPorRnAberto] = useState(false);
-  const [modo, setModo] = useState("sintetico"); // sintetico (barras) | analitico (planilha)
+  const [modo, setModo] = useState("sintetico"); // sintetico (curva) | analitico (planilha)
   const [ordAnal, setOrdAnal] = useState(null);   // ordenação do Analítico: { key, dir } | null
 
   // Célula de % colorida (heatmap) no dark theme.
@@ -161,8 +163,38 @@ export default function ResumoVolumes() {
         });
     };
     buscar();
+    api.get("/api/resumo/curva", { timeout: 18000 }).then((r) => { if (!cancel) setCurva(r.data); }).catch(() => {});
     return () => { cancel = true; };
   }, []);
+
+  // Exporta o Report de Volumes (mesmo conteúdo do PDF do motor) em Excel.
+  const exportarExcel = () => {
+    const report = data?.report;
+    if (!report) return;
+    const cats = report.categorias || [], subs = report.subcols || [];
+    const aoa = [];
+    // Cabeçalho 1: categorias (cada uma ocupa nº de subcols)
+    const h1 = [""]; cats.forEach((c) => subs.forEach((s, i) => h1.push(i === 0 ? c.label : "")));
+    // Cabeçalho 2: rótulo + subcols
+    const h2 = ["Operação / GV / RN"]; cats.forEach(() => subs.forEach((s) => h2.push(s.label)));
+    aoa.push(h1, h2);
+    (report.secoes || []).forEach((sec) => {
+      aoa.push([sec.titulo]);
+      (sec.linhas || []).forEach((l) => {
+        const rot = sec.setorCol ? `${l.setor || ""} ${l.rotulo || ""}`.trim() : (l.rotulo || "");
+        const row = [rot];
+        cats.forEach((c) => { const dc = l.cats?.[c.key] || {}; subs.forEach((s) => row.push(dc[s.key] ?? "")); });
+        aoa.push(row);
+      });
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 26 }, ...cats.flatMap(() => subs.map(() => ({ wch: 9 })))];
+    // estilo: cabeçalhos verdes
+    [0, 1].forEach((r) => { for (let c = 0; c < h2.length; c++) { const cel = ws[XLSX.utils.encode_cell({ r, c })]; if (cel) cel.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2E7D32" } } }; } });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report Volumes");
+    XLSX.writeFile(wb, `Report_Volumes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
 
   if (erro) {
     return <div style={S.card}><div style={S.title}><span style={{ color: "#7DBA3D" }}>📊</span> Volumes</div><div style={S.sub}>Resumo indisponível ({erro}). Recarregue em ~1 min.</div></div>;
@@ -179,47 +211,25 @@ export default function ResumoVolumes() {
   return (
     <div style={S.card}>
       <div style={S.title}>
-        <span style={{ color: "#7DBA3D" }}>📊</span> Volumes{analitico ? "" : " — % da meta"}
+        <span style={{ color: "#7DBA3D" }}>📊</span> Volumes
         {data?.report && (
           <div style={S.seg}>
-            {[["sintetico", "Sintético"], ["analitico", "Analítico"]].map(([k, l]) => (
+            {[["sintetico", "Curva"], ["analitico", "Analítico"]].map(([k, l]) => (
               <button key={k} onClick={() => setModo(k)} style={modo === k ? { ...S.segBtn, ...S.segOn } : S.segBtn}>{l}</button>
             ))}
           </div>
         )}
+        {data?.report && <button style={S.xlsBtn} onClick={exportarExcel} title="Exporta o Report de Volumes (o mesmo do PDF do motor)">📥 Excel</button>}
       </div>
       <div style={S.sub}>{analitico
         ? "Planilha por Operação · GV · RN — Meta · Real · % · Tendência · %T (heatmap no %)"
-        : "Barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)"}</div>
+        : "Curva mensal — Real × Budget × Ano passado, por categoria"}</div>
       {!data ? (
         <div style={S.skel}>Carregando…</div>
       ) : analitico ? (
         renderAnalitico(data.report)
       ) : (
-        <>
-          {data.bars.map((b) => renderBar(b, b.label))}
-
-          {/* Expandir por RN — só quando há mais de um setor no escopo (admin/diretor/GV). */}
-          {data.porRn && data.porRn.length > 1 && (
-            <>
-              <button style={S.toggle} onClick={() => setPorRnAberto((v) => !v)}>
-                {porRnAberto ? "▾" : "▸"} {porRnAberto ? "Ocultar por RN" : `Ver por RN (${data.porRn.length})`}
-              </button>
-              {porRnAberto && (
-                <div style={S.rnGrid}>
-                  {data.porRn.map((rn) => (
-                    <div key={rn.setor} style={S.rnBox}>
-                      <div style={S.rnBoxHead} title={`Setor ${rn.setor}${rn.nome ? " · " + rn.nome : ""}`}>
-                        {rn.setor}{rn.nome ? ` · ${rn.nome.split(" ")[0]}` : ""}
-                      </div>
-                      {rn.bars.map((b) => renderMiniBar(b, `${rn.setor}-${b.label}`))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </>
+        <CurvaVolumes curva={curva} />
       )}
     </div>
   );
@@ -229,6 +239,7 @@ const S = {
   card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px 16px", marginBottom: "16px" },
   title: { color: "#fff", fontWeight: "600", fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "8px" },
   seg: { display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "2px", marginLeft: "auto" },
+  xlsBtn: { background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: "8px", padding: "6px 12px", fontSize: "0.76rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", marginLeft: "8px" },
   segBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", padding: "4px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit" },
   segOn: { background: "rgba(125,186,61,0.2)", color: "#7DBA3D", fontWeight: "700" },
   mtxSecTit: { color: "#7DBA3D", fontWeight: "700", fontSize: "0.85rem", margin: "10px 0 4px" },
