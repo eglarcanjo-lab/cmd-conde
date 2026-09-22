@@ -167,30 +167,56 @@ export default function ResumoVolumes() {
     return () => { cancel = true; };
   }, []);
 
-  // Exporta o Report de Volumes (mesmo conteúdo do PDF do motor) em Excel.
+  // Exporta o Report de Volumes formatado igual ao PDF do motor (cabeçalho verde por
+  // categoria, subcolunas, seções em negrito, heatmap nas % via _cor/_corT).
   const exportarExcel = () => {
     const report = data?.report;
     if (!report) return;
-    const cats = report.categorias || [], subs = report.subcols || [];
-    const aoa = [];
-    // Cabeçalho 1: categorias (cada uma ocupa nº de subcols)
-    const h1 = [""]; cats.forEach((c) => subs.forEach((s, i) => h1.push(i === 0 ? c.label : "")));
-    // Cabeçalho 2: rótulo + subcols
-    const h2 = ["Operação / GV / RN"]; cats.forEach(() => subs.forEach((s) => h2.push(s.label)));
-    aoa.push(h1, h2);
+    const cats = report.categorias || [], subs = report.subcols || [], nSub = subs.length;
+    const bd = { style: "thin", color: { rgb: "D9D9D9" } };
+    const bordas = { top: bd, bottom: bd, left: bd, right: bd };
+    const ST = {
+      catHead: { font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 }, fill: { fgColor: { rgb: "2E7D32" } }, alignment: { horizontal: "center", vertical: "center" }, border: bordas },
+      subHead: { font: { bold: true, color: { rgb: "2E7D32" }, sz: 9 }, fill: { fgColor: { rgb: "EEF3E8" } }, alignment: { horizontal: "center" }, border: bordas },
+      sec: { font: { bold: true, color: { rgb: "2E7D32" }, sz: 10 }, fill: { fgColor: { rgb: "F2F7EC" } } },
+      lbl: { font: { bold: true, sz: 9 }, border: bordas },
+      num: { font: { sz: 9 }, alignment: { horizontal: "right" }, border: bordas },
+      up: { font: { bold: true, sz: 9, color: { rgb: "1A7A34" } }, fill: { fgColor: { rgb: "D4EDDA" } }, alignment: { horizontal: "right" }, border: bordas },
+      mid: { font: { bold: true, sz: 9, color: { rgb: "8A6D00" } }, fill: { fgColor: { rgb: "FFF3CD" } }, alignment: { horizontal: "right" }, border: bordas },
+      down: { font: { bold: true, sz: 9, color: { rgb: "A52834" } }, fill: { fgColor: { rgb: "F8D7DA" } }, alignment: { horizontal: "right" }, border: bordas },
+    };
+    const heat = (c) => (c === "up" ? ST.up : c === "mid" ? ST.mid : c === "down" ? ST.down : ST.num);
+    const grid = []; const merges = [];
+    // linha 0: rótulos de categoria (mesclados por subcolunas)
+    const r0 = [{ v: "", s: ST.subHead }];
+    cats.forEach((c) => subs.forEach((s, si) => r0.push({ v: si === 0 ? c.label : "", s: ST.catHead })));
+    grid.push(r0);
+    cats.forEach((c, ci) => { const c0 = 1 + ci * nSub; merges.push({ s: { r: 0, c: c0 }, e: { r: 0, c: c0 + nSub - 1 } }); });
+    // linha 1: rótulo + subcolunas
+    const r1 = [{ v: "Operação / GV / RN", s: ST.subHead }];
+    cats.forEach(() => subs.forEach((s) => r1.push({ v: s.label, s: ST.subHead })));
+    grid.push(r1);
+    const nCols = r1.length;
     (report.secoes || []).forEach((sec) => {
-      aoa.push([sec.titulo]);
+      const secRow = [{ v: sec.titulo, s: ST.sec }];
+      for (let k = 1; k < nCols; k++) secRow.push({ v: "", s: ST.sec });
+      grid.push(secRow);
+      merges.push({ s: { r: grid.length - 1, c: 0 }, e: { r: grid.length - 1, c: nCols - 1 } });
       (sec.linhas || []).forEach((l) => {
         const rot = sec.setorCol ? `${l.setor || ""} ${l.rotulo || ""}`.trim() : (l.rotulo || "");
-        const row = [rot];
-        cats.forEach((c) => { const dc = l.cats?.[c.key] || {}; subs.forEach((s) => row.push(dc[s.key] ?? "")); });
-        aoa.push(row);
+        const row = [{ v: rot, s: ST.lbl }];
+        cats.forEach((c) => { const dc = l.cats?.[c.key] || {}; subs.forEach((s) => {
+          const st = s.key === "pct" ? heat(dc._cor) : s.key === "pctT" ? heat(dc._corT) : ST.num;
+          row.push({ v: dc[s.key] ?? "", s: st });
+        }); });
+        grid.push(row);
       });
     });
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"] = [{ wch: 26 }, ...cats.flatMap(() => subs.map(() => ({ wch: 9 })))];
-    // estilo: cabeçalhos verdes
-    [0, 1].forEach((r) => { for (let c = 0; c < h2.length; c++) { const cel = ws[XLSX.utils.encode_cell({ r, c })]; if (cel) cel.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2E7D32" } } }; } });
+    const ws = XLSX.utils.aoa_to_sheet(grid.map((r) => r.map((c) => c.v)));
+    grid.forEach((row, r) => row.forEach((cell, c) => { const ref = XLSX.utils.encode_cell({ r, c }); if (ws[ref]) ws[ref].s = cell.s; }));
+    ws["!merges"] = merges;
+    ws["!cols"] = [{ wch: 26 }, ...cats.flatMap(() => subs.map(() => ({ wch: 8 })))];
+    ws["!rows"] = [{ hpt: 18 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report Volumes");
     XLSX.writeFile(wb, `Report_Volumes_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -221,9 +247,12 @@ export default function ResumoVolumes() {
         )}
         {data?.report && <button style={S.xlsBtn} onClick={exportarExcel} title="Exporta o Report de Volumes (o mesmo do PDF do motor)">📥 Excel</button>}
       </div>
-      <div style={S.sub}>{analitico
-        ? "Planilha por Operação · GV · RN — Meta · Real · % · Tendência · %T (heatmap no %)"
-        : "Curva mensal — Real × Budget × Ano passado, por categoria"}</div>
+      <div style={S.sub}>
+        {analitico
+          ? "Planilha por Operação · GV · RN — Meta · Real · Tendência · %T (heatmap no %T)"
+          : "Curva mensal — Real × Budget × Meta × Ano passado, por categoria"}
+        {data?.diasUteis && <span style={{ color: "#7DBA3D", fontWeight: 700, marginLeft: 6 }}>· 📅 {data.diasUteis.feitos} de {data.diasUteis.total} dias úteis</span>}
+      </div>
       {!data ? (
         <div style={S.skel}>Carregando…</div>
       ) : analitico ? (

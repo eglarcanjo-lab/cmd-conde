@@ -1,6 +1,15 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.67.0** — Home Volumes: Curva de Volumes (Real×Budget×LY) + export Excel; sai o "por RN".
+Versão atual: **v3.67.1** — Volumes: reordena categorias, tira a coluna "%", Meta na curva, Excel formatado + contador de dias úteis.
+
+## v3.67.1 — Volumes: reordenação, %T, Meta na curva, Excel formatado, dias úteis
+- **Ordem das categorias** (Analítico, PDF do motor e Excel): **Cerveja · NAB · Match · Mktp · Cerv. Zero · NAB Zero**.
+- **Removida a coluna "%" (Real vs Meta)** — fica só **Meta · Real · Tend · %T** (heatmap no %T).
+- **Curva de Volumes** ganhou a linha de **Meta** (verde tracejada, de `rv_resultado`) além do Budget.
+- **Export Excel** do Report de Volumes sai **formatado igual ao PDF**: cabeçalho verde mesclado por categoria, subcolunas, seções e **heatmap no %T**, com bordas.
+- **Contador de dias úteis** ("18 de 22") na Home e no **PDF do WhatsApp**.
+
+## v3.67.0 — Home Volumes: Curva de Volumes + Excel
 
 ## v3.67.0 — Home Volumes: Curva de Volumes + Excel
 - **Exportador Excel** na aba Volumes — exporta o **Report de Volumes** (mesmo conteúdo do PDF que o motor manda: Operação·GV·RN × categorias × Meta/Real/%/Tend/%T).

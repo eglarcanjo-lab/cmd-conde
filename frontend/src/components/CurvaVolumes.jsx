@@ -18,11 +18,14 @@ export default function CurvaVolumes({ curva }) {
     mes: m,
     real: d.real[i] || 0,
     budget: d.budget[i] || 0,
+    meta: (d.meta || [])[i] || 0,
     ly: d.ly[i] || 0,
     vsBgt: pct(d.real[i] || 0, d.budget[i] || 0),
+    vsMeta: pct(d.real[i] || 0, (d.meta || [])[i] || 0),
     vsLy: pct(d.real[i] || 0, d.ly[i] || 0),
   }));
   const temBudget = (d.budget || []).some((v) => v > 0);
+  const temMeta = (d.meta || []).some((v) => v > 0);
   const temLy = (d.ly || []).some((v) => v > 0);
 
   return (
@@ -34,6 +37,7 @@ export default function CurvaVolumes({ curva }) {
         <div style={S.leg}>
           <span style={S.legItem}><i style={{ ...S.dot, background: "#f0a13c" }} /> Real</span>
           {temBudget && <span style={S.legItem}><i style={{ ...S.dot, background: "#3b82f6" }} /> Budget</span>}
+          {temMeta && <span style={S.legItem}><i style={{ ...S.dot, background: VERDE }} /> Meta</span>}
           {temLy && <span style={S.legItem}><i style={{ ...S.dot, background: "#9aa0a6" }} /> Ano passado</span>}
         </div>
       </div>
@@ -41,10 +45,10 @@ export default function CurvaVolumes({ curva }) {
       {/* Linhas de % — Real vs BGT e Real vs LY, alinhadas aos 12 meses */}
       <div style={{ overflowX: "auto" }}>
         <div style={{ minWidth: 760 }}>
-          <div style={S.pctGrid}>
+          {temBudget && <div style={S.pctGrid}>
             <div style={S.pctLbl}>Real vs BGT</div>
             {rows.map((r, i) => <div key={i} style={{ ...S.pctCell, color: r.vsBgt == null ? "rgba(255,255,255,0.3)" : r.vsBgt >= 0 ? "#4ade80" : "#f87171" }}>{pctTxt(r.vsBgt)}</div>)}
-          </div>
+          </div>}
           <div style={S.pctGrid}>
             <div style={S.pctLbl}>Real vs LY</div>
             {rows.map((r, i) => <div key={i} style={{ ...S.pctCell, color: r.vsLy == null ? "rgba(255,255,255,0.3)" : r.vsLy >= 0 ? "#4ade80" : "#f87171" }}>{pctTxt(r.vsLy)}</div>)}
@@ -72,6 +76,7 @@ export default function CurvaVolumes({ curva }) {
               {temBudget && <Line type="monotone" dataKey="budget" name="Budget" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2.5, fill: "#3b82f6" }}>
                 <LabelList dataKey="budget" position="top" formatter={fmt} style={{ fill: "#7fb0f5", fontSize: 9.5, fontWeight: 600 }} />
               </Line>}
+              {temMeta && <Line type="monotone" dataKey="meta" name="Meta" stroke={VERDE} strokeWidth={2} strokeDasharray="5 4" dot={{ r: 2, fill: VERDE }} />}
             </ComposedChart>
           </ResponsiveContainer>
         </div>

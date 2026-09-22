@@ -26,6 +26,7 @@ router.get("/mensagens", async (req, res) => {
     // Tendência: projeta o real do mês pelo ritmo de dias úteis (seg–sex).
     const uteis = (ate) => { let c = 0; const x = new Date(d.getFullYear(), d.getMonth(), 1); while (x.getMonth() === d.getMonth() && x.getDate() <= ate) { const w = x.getDay(); if (w >= 1 && w <= 5) c++; x.setDate(x.getDate() + 1); } return c; };
     const fator = uteis(31) / Math.max(1, uteis(d.getDate()));
+    const diasUteis = { feitos: uteis(d.getDate()), total: uteis(31) };
 
     const [rvAll, volAll, usuarios] = await Promise.all([
       readSheet("rv_resultado").catch(() => []),
@@ -52,7 +53,7 @@ router.get("/mensagens", async (req, res) => {
       destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
     });
 
-    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, destinatarios, rn: [], gv: [], director: null });
+    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, diasUteis, destinatarios, rn: [], gv: [], director: null });
   } catch (e) {
     console.error("farol-volumes/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar o Report Volumes." });

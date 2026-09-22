@@ -47,11 +47,12 @@ router.get("/volumes", async (req, res) => {
     // dias úteis (seg-sex). Mês passado/fechado → fator 1 (sem projeção).
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const mesAtualStr = `${brNow.getFullYear()}-${String(brNow.getMonth() + 1).padStart(2, "0")}`;
-    let fator = 1;
+    let fator = 1, diasUteis = null;
     if (mes === mesAtualStr) {
       const yy = brNow.getFullYear(), mm = brNow.getMonth(), hoje = brNow.getDate();
       const uteis = (ate) => { let c = 0; const d = new Date(yy, mm, 1); while (d.getMonth() === mm && d.getDate() <= ate) { const w = d.getDay(); if (w >= 1 && w <= 5) c++; d.setDate(d.getDate() + 1); } return c; };
       fator = uteis(31) / Math.max(1, uteis(hoje));
+      diasUteis = { feitos: uteis(hoje), total: uteis(31) };
     }
 
     // Monta as 6 barras (meta × real × tendência) para um recorte de linhas rv/vol.
@@ -93,7 +94,7 @@ router.get("/volumes", async (req, res) => {
     // Analítico (planilha): Operação → GV → RN × categorias. Mesmo helper do farol.
     const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator);
 
-    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report });
+    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report, diasUteis });
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });
@@ -112,46 +113,55 @@ router.get("/curva", async (req, res) => {
     const up = (s) => String(s || "").trim().toUpperCase();
     const mref = (r) => String(r.mes_ref || r.mes_referencia || "");
 
-    const [rvVolAll, metasAll] = await Promise.all([
+    const [rvVolAll, metasAll, rvResAll] = await Promise.all([
       readSheet("rv_volume").catch(() => []),
       readSheet("metas").catch(() => []),
+      readSheet("rv_resultado").catch(() => []),
     ]);
     const rvVol = filtrarPorPerfil(rvVolAll, req.user, "setor");
     const metas = filtrarPorPerfil(metasAll, req.user, "setor");
+    const rvRes = filtrarPorPerfil(rvResAll, req.user, "setor");
 
     // Categorias da curva → categorias brutas (rv_volume) e a categoria de meta correspondente.
     const CERVEJA_FAM = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "HE", "HE RGB",
       "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "LITRINHO"];
+    //   metaRv = campo de meta no rv_resultado (a mesma meta que a HOP usa nas barras/report).
     const CURVA_CATS = [
-      { key: "cerveja", label: "Cerveja", raws: CERVEJA_FAM, meta: "CERVEJA" },
-      { key: "giroRgb", label: "Giro RGB", raws: ["GIRO RGB", "LITRINHO"], meta: null },
-      { key: "nab", label: "NAB", raws: ["NAB"], meta: "NAB" },
-      { key: "match", label: "Match", raws: ["MATCH"], meta: "MATCH" },
-      { key: "mktp", label: "Mktp", raws: ["MKTP"], meta: "MARKETPLACE" },
-      { key: "cervejaZero", label: "Cerveja Zero", raws: ["CERVEJA ZERO"], meta: null },
-      { key: "nabZero", label: "NAB Zero", raws: ["NAB ZERO"], meta: null },
+      { key: "cerveja", label: "Cerveja", raws: CERVEJA_FAM, budget: "CERVEJA", metaRv: "meta_cerveja" },
+      { key: "giroRgb", label: "Giro RGB", raws: ["GIRO RGB", "LITRINHO"], budget: null, metaRv: null },
+      { key: "nab", label: "NAB", raws: ["NAB"], budget: "NAB", metaRv: "meta_nab" },
+      { key: "match", label: "Match", raws: ["MATCH"], budget: "MATCH", metaRv: "meta_match" },
+      { key: "mktp", label: "Mktp", raws: ["MKTP"], budget: "MARKETPLACE", metaRv: "meta_marketplace" },
+      { key: "cervejaZero", label: "Cerveja Zero", raws: ["CERVEJA ZERO"], budget: null, metaRv: null },
+      { key: "nabZero", label: "NAB Zero", raws: ["NAB ZERO"], budget: null, metaRv: null },
     ];
 
     // Índices por (categoriaUP | YYYY-MM)
-    const realIdx = {}, metaIdx = {};
+    const realIdx = {}, budgetIdx = {};
     rvVol.forEach((r) => { const k = `${up(r.categoria)}|${mref(r).slice(0, 7)}`; realIdx[k] = (realIdx[k] || 0) + num(r.volume); });
-    metas.forEach((r) => { const k = `${up(r.categoria)}|${String(r.mes_referencia || "").slice(0, 7)}`; metaIdx[k] = (metaIdx[k] || 0) + num(r.meta_volume); });
+    metas.forEach((r) => { const k = `${up(r.categoria)}|${String(r.mes_referencia || "").slice(0, 7)}`; budgetIdx[k] = (budgetIdx[k] || 0) + num(r.meta_volume); });
+    // Meta (rv_resultado): soma por campo × mês.
+    const metaIdx = {}; // `${campo}|YYYY-MM` -> soma
+    rvRes.forEach((r) => {
+      const m = String(r.mes_referencia || "").slice(0, 7); if (!m) return;
+      ["meta_cerveja", "meta_nab", "meta_match", "meta_marketplace"].forEach((f) => {
+        const k = `${f}|${m}`; metaIdx[k] = (metaIdx[k] || 0) + num(r[f]);
+      });
+    });
 
     const MM = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
     const r1 = (n) => Math.round(n * 10) / 10;
-    const somaSerie = (rawsUP, yr, idx, metaCat) => MM.map((mm) => {
-      if (metaCat) return r1(idx[`${up(metaCat)}|${yr}-${mm}`] || 0);
-      let v = 0; rawsUP.forEach((c) => { v += idx[`${c}|${yr}-${mm}`] || 0; });
-      return r1(v);
-    });
+    const serieRaw = (rawsUP, yr) => MM.map((mm) => { let v = 0; rawsUP.forEach((c) => { v += realIdx[`${c}|${yr}-${mm}`] || 0; }); return r1(v); });
+    const serieChave = (chave, idx) => MM.map((mm) => r1(idx[`${chave}|${ano}-${mm}`] || 0));
 
     const dados = {};
     CURVA_CATS.forEach((c) => {
       const rawsUP = c.raws.map(up);
       dados[c.key] = {
-        real: somaSerie(rawsUP, ano, realIdx),
-        ly: somaSerie(rawsUP, anoLY, realIdx),
-        budget: c.meta ? somaSerie(rawsUP, ano, metaIdx, c.meta) : MM.map(() => 0),
+        real: serieRaw(rawsUP, ano),
+        ly: serieRaw(rawsUP, anoLY),
+        budget: c.budget ? serieChave(up(c.budget), budgetIdx) : MM.map(() => 0),
+        meta: c.metaRv ? serieChave(c.metaRv, metaIdx) : MM.map(() => 0),
       };
     });
 

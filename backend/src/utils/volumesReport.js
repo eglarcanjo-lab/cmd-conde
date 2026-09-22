@@ -5,15 +5,17 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
 
 // tipo "rv" = meta/real do rv_resultado; "zero" = real do rv_volume, meta = 15% da base.
+// Ordem: Cerveja · NAB · Match · Mktp · Cerv. Zero · NAB Zero (zeros por último).
 const CATS = [
   { key: "cerveja", label: "Cerveja", tipo: "rv", real: "real_cerveja", meta: "meta_cerveja" },
-  { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
   { key: "nab", label: "NAB", tipo: "rv", real: "real_nab", meta: "meta_nab" },
-  { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
   { key: "match", label: "Match", tipo: "rv", real: "real_match", meta: "meta_match" },
   { key: "mktp", label: "Mktp", tipo: "rv", real: "real_marketplace", meta: "meta_marketplace" },
+  { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
+  { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
 ];
-const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "pct", label: "%" }, { key: "tend", label: "Tend" }, { key: "pctT", label: "%T" }];
+// Sem a coluna "%" (Real vs Meta) — fica só o "%T" (Tendência vs Meta).
+const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "tend", label: "Tend" }, { key: "pctT", label: "%T" }];
 const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
 
