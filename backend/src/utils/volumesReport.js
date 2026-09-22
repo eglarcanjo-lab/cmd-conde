@@ -4,9 +4,10 @@
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
 
-// tipo "rv" = meta/real do rv_resultado; "zero" = real do rv_volume, meta = 15% da base.
+// tipo "rv" = meta/real do rv_resultado; "zero" = real do rv_volume, meta = 15% da base;
+// "vol" = só volume (soma de categorias brutas do rv_volume), sem meta.
 // Ordem: Cerveja · NAB · Match · Mktp · Cerv. Zero · NAB Zero (zeros por último).
-const CATS = [
+const CATS_BASE = [
   { key: "cerveja", label: "Cerveja", tipo: "rv", real: "real_cerveja", meta: "meta_cerveja" },
   { key: "nab", label: "NAB", tipo: "rv", real: "real_nab", meta: "meta_nab" },
   { key: "match", label: "Match", tipo: "rv", real: "real_match", meta: "meta_match" },
@@ -14,6 +15,12 @@ const CATS = [
   { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
   { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
 ];
+// Giro RGB (= GIRO RGB + LITRINHO) — só quando opts.giroRgb (usado no motor de envio).
+const CAT_GIRO = { key: "giroRgb", label: "Giro RGB", tipo: "vol", volCats: ["GIRO RGB", "LITRINHO"], noMeta: true };
+const catsDe = (opts) => {
+  if (opts && opts.giroRgb) { const c = [...CATS_BASE]; c.splice(1, 0, CAT_GIRO); return c; } // após Cerveja
+  return CATS_BASE;
+};
 // Sem a coluna "%" (Real vs Meta) — fica só o "%T" (Tendência vs Meta).
 const SUBCOLS = [{ key: "meta", label: "Meta" }, { key: "real", label: "Real" }, { key: "tend", label: "Tend" }, { key: "pctT", label: "%T" }];
 const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
@@ -21,7 +28,9 @@ const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "
 
 // rvRows: rv_resultado (já do mês atual). volRows: rv_volume do mês atual. nomeSetor: {cod->nome}.
 // fator: projeção do mês (tend = real × fator). Retorna { categorias, subcols, secoes } ou null.
-function montarReport(rvRows, volRows, nomeSetor, fator) {
+function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
+  const CATS = catsDe(opts);
+  const noMeta = new Set(CATS.filter((c) => c.noMeta).map((c) => c.key));
   const raw = {}; // setor -> { catKey: {meta, real} }
   const initSetor = (s) => { if (!raw[s]) { raw[s] = {}; CATS.forEach((c) => raw[s][c.key] = { meta: 0, real: 0 }); } };
   rvRows.forEach((r) => {
@@ -38,6 +47,10 @@ function montarReport(rvRows, volRows, nomeSetor, fator) {
     CATS.filter((c) => c.tipo === "zero").forEach((c) => {
       raw[s][c.key] = { meta: 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
     });
+    CATS.filter((c) => c.tipo === "vol").forEach((c) => {
+      let r = 0; (c.volCats || []).forEach((vc) => { r += volSetor[s]?.[vc] || 0; });
+      raw[s][c.key] = { meta: 0, real: r };
+    });
   });
 
   const setores = Object.keys(raw).sort();
@@ -49,9 +62,14 @@ function montarReport(rvRows, volRows, nomeSetor, fator) {
       let m = 0, r = 0;
       lista.forEach((s) => { const cel = raw[s]?.[c.key]; if (cel) { m += cel.meta; r += cel.real; } });
       const tend = r * fator;
-      const p = m > 0 ? Math.round((r / m) * 100) : null;
-      const pT = m > 0 ? Math.round((tend / m) * 100) : null;
-      out[c.key] = { meta: fmtN(m), real: fmtN(r), pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`, _cor: sinal(p), _corT: sinal(pT) };
+      const semMeta = noMeta.has(c.key);
+      const p = (!semMeta && m > 0) ? Math.round((r / m) * 100) : null;
+      const pT = (!semMeta && m > 0) ? Math.round((tend / m) * 100) : null;
+      out[c.key] = {
+        meta: semMeta ? "—" : fmtN(m), real: fmtN(r),
+        pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`,
+        _cor: sinal(p), _corT: sinal(pT),
+      };
     });
     return out;
   };

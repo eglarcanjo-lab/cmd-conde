@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.67.1** — Volumes: reordena categorias, tira a coluna "%", Meta na curva, Excel formatado + contador de dias úteis.
+Versão atual: **v3.67.2** — Motor de envio (Volumes): + categoria Giro RGB (RGB+Litrinho) e setor 102 oculto (reversível).
+
+## v3.67.2 — Motor: Giro RGB + oculta 102
+- **Só no relatório de Volumes do motor (WhatsApp):** nova categoria **Giro RGB = GIRO RGB + LITRINHO** (só volume — Meta/%T em "—"), inserida após Cerveja. O **Analítico da Home segue igual** (sem Giro RGB).
+- **Setor 102 ocultado** no relatório do motor (`SETORES_OCULTOS = ["102"]` em `farol-volumes.js`) — deixe a lista vazia quando o RN do 102 for contratado pra voltar tudo.
+
+## v3.67.1 — Volumes: reordenação, %T, Meta na curva, Excel formatado, dias úteis
 
 ## v3.67.1 — Volumes: reordenação, %T, Meta na curva, Excel formatado, dias úteis
 - **Ordem das categorias** (Analítico, PDF do motor e Excel): **Cerveja · NAB · Match · Mktp · Cerv. Zero · NAB Zero**.

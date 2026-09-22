@@ -33,13 +33,24 @@ router.get("/mensagens", async (req, res) => {
       readSheet("rv_volume").catch(() => []),
       readSheet("usuarios").catch(() => []),
     ]);
-    const rv = rvAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
-    const vol = volAll.filter((r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes));
+    let rv = rvAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
+    let vol = volAll.filter((r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes));
+
+    // Setores ocultos SÓ no relatório do motor (não no app). Vazie a lista quando o RN
+    // do 102 for contratado — está tudo pronto pra voltar sem mais nada.
+    const SETORES_OCULTOS = ["102"];
+    const norm = (s) => String(s || "").trim().replace(/^0+/, "");
+    if (SETORES_OCULTOS.length) {
+      const ocultos = new Set(SETORES_OCULTOS.map(norm));
+      rv = rv.filter((r) => !ocultos.has(norm(r.setor)));
+      vol = vol.filter((r) => !ocultos.has(norm(r.setor)));
+    }
 
     const nomeSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
 
-    const report = montarReport(rv, vol, nomeSetor, fator);
+    // giroRgb: true → inclui a categoria "Giro RGB" (GIRO RGB + LITRINHO) só no motor.
+    const report = montarReport(rv, vol, nomeSetor, fator, { giroRgb: true });
     if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.
