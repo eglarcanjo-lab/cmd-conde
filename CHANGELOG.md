@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.67.2** — Motor de envio (Volumes): + categoria Giro RGB (RGB+Litrinho) e setor 102 oculto (reversível).
+Versão atual: **v3.67.3** — Shelf: dias p/ vencer corridos (ao vivo); Lia sempre visível p/ admin.
+
+## v3.67.3 — Shelf dias ao vivo + Lia sempre p/ admin
+- **Shelf:** os "dias p/ vencer" agora são **corridos**, calculados da data de validade até hoje (Brasília) — caem a cada dia, sem esperar a próxima importação (semanal). Vale na aba Shelf e no balão da Lia.
+- **Lia:** para **admin**, o balão aparece **toda vez que entra na Home** (fácil ver as alterações). Demais perfis seguem 1x/dia.
+
+## v3.67.2 — Motor: Giro RGB + oculta 102
 
 ## v3.67.2 — Motor: Giro RGB + oculta 102
 - **Só no relatório de Volumes do motor (WhatsApp):** nova categoria **Giro RGB = GIRO RGB + LITRINHO** (só volume — Meta/%T em "—"), inserida após Cerveja. O **Analítico da Home segue igual** (sem Giro RGB).

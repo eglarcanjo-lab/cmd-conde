@@ -2,6 +2,7 @@
 // comentando o Shelf (5 mais urgentes) e as categorias abaixo da tendência.
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
 const VERDE = "#7DBA3D";
@@ -16,11 +17,14 @@ const marcarVisto = () => { try { localStorage.setItem(KEY(), "1"); } catch { /*
 
 export default function PopupLia() {
   const navigate = useNavigate();
+  const { usuario } = useAuth();
   const [dados, setDados] = useState(null);
   const [aberto, setAberto] = useState(false);
+  // Admin: aparece SEMPRE que entra na Home (fácil ver as alterações). Demais: 1x/dia.
+  const sempre = usuario?.perfil === "admin";
 
   useEffect(() => {
-    if (jaViu()) return;
+    if (!sempre && jaViu()) return;
     let vivo = true;
     api.get("/api/lia")
       .then((r) => {
@@ -32,7 +36,7 @@ export default function PopupLia() {
       })
       .catch(() => {});
     return () => { vivo = false; };
-  }, []);
+  }, [sempre]);
 
   const fechar = () => { marcarVisto(); setAberto(false); };
   const irShelf = () => { marcarVisto(); navigate("/produtos"); };

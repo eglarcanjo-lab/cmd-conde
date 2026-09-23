@@ -12,6 +12,15 @@ const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const r1 = (n) => Math.round(n * 10) / 10;
 const int = (v) => Math.round(num(v));
 const pct = (r, m) => (m > 0 ? Math.round((r / m) * 100) : null);
+// Dias corridos até a validade (dd/mm/aaaa) — cai a cada dia, sem esperar o próximo import.
+function diasAte(ddmmaaaa) {
+  const m = String(ddmmaaaa || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const alvo = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  const hojeBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  hojeBR.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hojeBR) / 86400000);
+}
 
 // GET /api/lia
 router.get("/", async (req, res) => {
@@ -63,13 +72,16 @@ router.get("/", async (req, res) => {
 
     // Shelf: os 5 mais próximos do vencimento (menos dias p/ vencer).
     const shelfTop = shelf
-      .map((r) => ({
-        cod: String(r.cod_produto || "").trim(),
-        descricao: String(r.descricao || "").trim(),
-        qtd_cx: int(r.qtd_cx),
-        dias_vencer: int(r.dias_vencer),
-        valor_shelf: num(r.valor_shelf),
-      }))
+      .map((r) => {
+        const dLive = diasAte(String(r.validade || "").trim());
+        return {
+          cod: String(r.cod_produto || "").trim(),
+          descricao: String(r.descricao || "").trim(),
+          qtd_cx: int(r.qtd_cx),
+          dias_vencer: dLive != null ? dLive : int(r.dias_vencer),
+          valor_shelf: num(r.valor_shelf),
+        };
+      })
       .sort((a, b) => a.dias_vencer - b.dias_vencer)
       .slice(0, 5);
 

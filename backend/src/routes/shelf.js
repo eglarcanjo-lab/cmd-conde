@@ -8,6 +8,16 @@ router.use(authMiddleware);
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const int = (v) => Math.round(num(v));
+// Dias corridos de hoje (Brasília) até a validade dd/mm/aaaa. Assim o contador cai a
+// cada dia, sem depender da próxima importação (que é semanal).
+function diasAte(ddmmaaaa) {
+  const m = String(ddmmaaaa || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const alvo = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  const hojeBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  hojeBR.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hojeBR) / 86400000);
+}
 
 // GET /api/shelf
 router.get("/", async (req, res) => {
@@ -17,14 +27,18 @@ router.get("/", async (req, res) => {
       readSheet("status_arquivos").catch(() => []),
     ]);
 
-    const itens = shelf.map((r) => ({
-      cod: String(r.cod_produto || "").trim(),
-      descricao: String(r.descricao || "").trim(),
-      qtd_cx: int(r.qtd_cx),
-      validade: String(r.validade || "").trim(),
-      dias_vencer: int(r.dias_vencer),
-      valor_shelf: num(r.valor_shelf),
-    })).sort((a, b) => a.dias_vencer - b.dias_vencer);
+    const itens = shelf.map((r) => {
+      const validade = String(r.validade || "").trim();
+      const dLive = diasAte(validade); // corrido; cai à cada dia
+      return {
+        cod: String(r.cod_produto || "").trim(),
+        descricao: String(r.descricao || "").trim(),
+        qtd_cx: int(r.qtd_cx),
+        validade,
+        dias_vencer: dLive != null ? dLive : int(r.dias_vencer),
+        valor_shelf: num(r.valor_shelf),
+      };
+    }).sort((a, b) => a.dias_vencer - b.dias_vencer);
 
     const st = statusArq.find((r) => /coleta/i.test(String(r.arquivo || "")));
     return res.json({
