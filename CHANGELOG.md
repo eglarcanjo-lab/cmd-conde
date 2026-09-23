@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.67.4** — Shelf/Lia: itens já vencidos (dias < 0) saem da lista.
+Versão atual: **v3.68.0** — Import de Pedidos Histórico (anos/meses antigos) na aba Arquivos.
+
+## v3.68.0 — Pedidos Histórico (import de anos antigos)
+- **Novo slot "Pedidos Histórico"** na aba Arquivos: sobe pedidos de meses/anos antigos (ex.: 2025) — popula só as tabelas mensais (`rv_volume`, `vd_pdv`, `vd_produto`, `vendas_cliente_produto`), sem tocar nos snapshots do mês atual. Alimenta a linha **"Ano passado"** da Curva de Volumes.
+- O import histórico agora **registra SKUs sem categoria** (produtos novos dos arquivos antigos caem em "Produtos sem categoria" pra categorizar; ao reimportar, o volume soma na categoria).
+- Processador: `processar_pedidos_historico` no despacho `/ambos`; Node repassa o campo `pedidos_historico`.
+
+## v3.67.4 — Shelf/Lia: pula vencidos
 
 ## v3.67.4 — Shelf/Lia: pula vencidos
 - **Shelf e Lia** deixam de mostrar itens **já vencidos** (dias corridos < 0) — não são mais "perto de vencer", são perda. A Lia passa a apontar o próximo item **não vencido** e o Shelf lista só o que ainda está no prazo.

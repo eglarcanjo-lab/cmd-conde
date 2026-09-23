@@ -5,6 +5,7 @@ const ARQUIVOS_CONFIG = [
   // ── PROMAX ──────────────────────────────────────────────
   { id: "clientes",         campo: "clientes",         rotulo: "Base de Clientes",        numero: "0105070402", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🏪" },
   { id: "pedidos",          campo: "pedidos",           rotulo: "Pedidos Faturados",        numero: "03014701",   extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📦" },
+  { id: "pedidos_historico", campo: "pedidos_historico", rotulo: "Pedidos Histórico (anos/meses antigos)", numero: "03014701", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗓️" },
   { id: "produtos_base",    campo: "produtos_base",     rotulo: "Base de Produtos",         numero: "0111",       extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗂️" },
   { id: "faturamento_mktp", campo: "faturamento_mktp",  rotulo: "Faturamento Marketplace",  numero: "030509",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🛒" },
   { id: "inadimplencia",    campo: "inadimplencia",     rotulo: "Inadimplência",            numero: "120601",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "⚠️" },
