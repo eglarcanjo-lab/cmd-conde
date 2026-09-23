@@ -70,8 +70,8 @@ router.get("/", async (req, res) => {
       .slice(0, 2)
       .map((b) => ({ categoria: b.label, pctTend: b.pctTend }));
 
-    // Shelf: os 5 mais próximos do vencimento (menos dias p/ vencer).
-    const shelfTop = shelf
+    // Shelf: os 5 mais próximos do vencimento (menos dias p/ vencer), pulando os já vencidos.
+    const shelfValidos = shelf
       .map((r) => {
         const dLive = diasAte(String(r.validade || "").trim());
         return {
@@ -82,14 +82,14 @@ router.get("/", async (req, res) => {
           valor_shelf: num(r.valor_shelf),
         };
       })
-      .sort((a, b) => a.dias_vencer - b.dias_vencer)
-      .slice(0, 5);
+      .filter((r) => r.dias_vencer >= 0); // pula os já vencidos
+    const shelfTop = shelfValidos.sort((a, b) => a.dias_vencer - b.dias_vencer).slice(0, 5);
 
     return res.json({
       mes,
       categorias,
       shelf: shelfTop,
-      shelf_total: shelf.length,
+      shelf_total: shelfValidos.length,
     });
   } catch (e) {
     console.error("lia:", e);

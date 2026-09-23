@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.67.3** — Shelf: dias p/ vencer corridos (ao vivo); Lia sempre visível p/ admin.
+Versão atual: **v3.67.4** — Shelf/Lia: itens já vencidos (dias < 0) saem da lista.
+
+## v3.67.4 — Shelf/Lia: pula vencidos
+- **Shelf e Lia** deixam de mostrar itens **já vencidos** (dias corridos < 0) — não são mais "perto de vencer", são perda. A Lia passa a apontar o próximo item **não vencido** e o Shelf lista só o que ainda está no prazo.
+
+## v3.67.3 — Shelf dias ao vivo + Lia sempre p/ admin
 
 ## v3.67.3 — Shelf dias ao vivo + Lia sempre p/ admin
 - **Shelf:** os "dias p/ vencer" agora são **corridos**, calculados da data de validade até hoje (Brasília) — caem a cada dia, sem esperar a próxima importação (semanal). Vale na aba Shelf e no balão da Lia.

@@ -38,7 +38,9 @@ router.get("/", async (req, res) => {
         dias_vencer: dLive != null ? dLive : int(r.dias_vencer),
         valor_shelf: num(r.valor_shelf),
       };
-    }).sort((a, b) => a.dias_vencer - b.dias_vencer);
+    })
+      .filter((r) => r.dias_vencer >= 0) // já vencido = perda, não é "perto de vencer"
+      .sort((a, b) => a.dias_vencer - b.dias_vencer);
 
     const st = statusArq.find((r) => /coleta/i.test(String(r.arquivo || "")));
     return res.json({
