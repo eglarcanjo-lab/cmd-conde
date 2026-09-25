@@ -101,6 +101,11 @@ export default function SPO() {
   const [tasksDigit, setTasksDigit] = useState([]);
   const [tasksLn, setTasksLn] = useState([]);
   const [tasksLnDet, setTasksLnDet] = useState([]);
+  const [tasksSkuPdv, setTasksSkuPdv] = useState([]);
+  const [tasksSkuPdvDet, setTasksSkuPdvDet] = useState([]);
+  const [skuRN, setSkuRN] = useState("TODOS");
+  const [skuCat, setSkuCat] = useState("TODAS");
+  const [skuSoAbertas, setSkuSoAbertas] = useState(false);
   const [lnRN, setLnRN] = useState("TODOS");
   const [lnSoFalha, setLnSoFalha] = useState(false);
   const [alone, setAlone] = useState([]);
@@ -203,6 +208,15 @@ export default function SPO() {
       api.get("/api/spo/tasks-ln/resumo").catch(() => ({ data: [] })),
       api.get("/api/spo/tasks-ln/detalhe").catch(() => ({ data: [] })),
     ]).then(([a, b]) => { setTasksLn(a.data || []); setTasksLnDet(b.data || []); });
+  }, []);
+
+  // SKU/PDV TT (KPI 26) — tasks "SKUs distintos de CERVEJA/NAB/MATCH/MARKETPLACE",
+  // calculado a partir do import de Tasks (rota genérica spo_tasks_sku_pdv_*).
+  useEffect(() => {
+    Promise.all([
+      api.get("/api/spo/tasks-sku-pdv/resumo").catch(() => ({ data: [] })),
+      api.get("/api/spo/tasks-sku-pdv/detalhe").catch(() => ({ data: [] })),
+    ]).then(([a, b]) => { setTasksSkuPdv(a.data || []); setTasksSkuPdvDet(b.data || []); });
   }, []);
 
   // Rotina+ (KPI 25) — resumo (setor/OPERACAO) + detalhe por visita.
@@ -387,6 +401,14 @@ export default function SPO() {
       ))}
     </div>
   );
+
+  // Resumos acumulados por mês (+LN, SKU/PDV): a tabela mensal quer um mês só —
+  // o atual, ou o último importado se o atual ainda não tiver dado.
+  const soMesVivo = (arr) => {
+    const ms = [...new Set(arr.map((r) => String(r.mes_referencia || "").slice(0, 7)))].sort();
+    const alvo = ms.includes(mesAtual) ? mesAtual : ms[ms.length - 1];
+    return arr.filter((r) => String(r.mes_referencia || "").startsWith(alvo || ""));
+  };
 
   function renderTabelaTasks(dados, kpiN, opts = {}) {
     const realField = opts.realField || "tasks_validas";
@@ -1397,6 +1419,91 @@ export default function SPO() {
             )}
 
 
+            {/* TASKS SKU/PDV TT (KPI 26 / ord 13) */}
+            {(kpiAtivo === null || kpiAtivo === 26) && (
+            <div style={styles.section}>
+              <h3 style={styles.sectionTitle}>Item 13 — Tarefas de SKU/PDV TT</h3>
+              <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
+                Realizado = Σ tasks <b>validadas</b> com o texto “SKUs distintos de <b>CERVEJA / NAB / MATCH / MARKETPLACE</b>” (clusters Desenvolvimento de Portfólio e Marketplace). Cestas (600mL, Long Neck, RGB…) não contam. Tri = acumulado (soma meta e real dos 3 meses).
+              </p>
+              {renderTabelaTasks(soMesVivo(tasksSkuPdv), 26)}
+              {(() => {
+                const op = soMesVivo(tasksSkuPdv).find((r) => r.setor === "OPERACAO");
+                if (!op) return null;
+                const CATS = [["cerveja", "🍺 Cerveja"], ["nab", "🥤 NAB"], ["match", "🔗 Match"], ["marketplace", "🛒 Marketplace"]];
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8, marginTop: 12 }}>
+                    {CATS.map(([k, l]) => {
+                      const v = parseInt(op[`${k}_validas`] || 0), t = parseInt(op[`${k}_total`] || 0);
+                      return (
+                        <div key={k} style={{ ...styles.gvCard, padding: "10px 12px" }}>
+                          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)" }}>{l}</div>
+                          <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#7DBA3D" }}>{v}<span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", fontWeight: 400 }}> / {t} validadas</span></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              {tasksSkuPdvDet.length > 0 && (() => {
+                const rns = [...new Set(tasksSkuPdvDet.map((d) => d.setor))].sort();
+                let linhas = tasksSkuPdvDet;
+                if (skuRN !== "TODOS") linhas = linhas.filter((d) => d.setor === skuRN);
+                if (skuCat !== "TODAS") linhas = linhas.filter((d) => d.categoria === skuCat);
+                if (skuSoAbertas) linhas = linhas.filter((d) => String(d.status).toUpperCase() !== "VALID");
+                const corStatus = (s) => s === "VALID" ? ["rgba(34,197,94,0.15)", "#4ade80"] : s === "INVALID" ? ["rgba(239,68,68,0.15)", "#f87171"] : ["rgba(245,196,81,0.15)", "#f5c451"];
+                const th = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap", fontSize: "0.7rem" };
+                const td = { padding: "7px 10px", textAlign: "center", whiteSpace: "nowrap" };
+                const sel = { background: "#13231a", color: "#fff", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 6, padding: "4px 8px", fontSize: "0.78rem" };
+                return (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>📋 Detalhe por task</span>
+                      <select value={skuRN} onChange={(e) => setSkuRN(e.target.value)} style={sel}>
+                        <option value="TODOS">Todos os setores</option>
+                        {rns.map((s) => <option key={s} value={s}>Setor {s}</option>)}
+                      </select>
+                      <select value={skuCat} onChange={(e) => setSkuCat(e.target.value)} style={sel}>
+                        <option value="TODAS">Todas as categorias</option>
+                        {["CERVEJA", "NAB", "MATCH", "MARKETPLACE"].map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+                        <input type="checkbox" checked={skuSoAbertas} onChange={(e) => setSkuSoAbertas(e.target.checked)} /> Só não validadas
+                      </label>
+                      <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>{linhas.length} tasks</span>
+                    </div>
+                    <div style={{ overflowX: "auto", maxHeight: 460, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                        <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+                          <tr>{["Setor", "PDV", "Categoria", "Task", "Solic.", "Comprou", "Status"].map((h) => <th key={h} style={{ ...th, textAlign: h === "Task" ? "left" : "center" }}>{h}</th>)}</tr>
+                        </thead>
+                        <tbody>
+                          {linhas.slice(0, 500).map((r, i) => {
+                            const st = String(r.status || "").toUpperCase();
+                            const [bg, c] = corStatus(st);
+                            return (
+                              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.5)" }}>{r.cod_pdv}</td>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.7)" }}>{r.categoria}</td>
+                                <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.6)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis" }} title={r.descricao}>{r.descricao}</td>
+                                <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{r.qtd_solicitada || "—"}</td>
+                                <td style={{ ...td, fontWeight: 700 }}>{r.qtd_comprada || "—"}</td>
+                                <td style={td}><span style={{ padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700, background: bg, color: c }}>{st || "—"}</span></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {linhas.length > 500 && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginTop: 6 }}>Mostrando 500 de {linhas.length}. Use os filtros.</p>}
+                  </div>
+                );
+              })()}
+            </div>
+            )}
+
+
             {/* TASKS VOLUME */}
             {(kpiAtivo === null || kpiAtivo === 14) && (
             <div style={styles.section}>
@@ -1483,7 +1590,7 @@ export default function SPO() {
               <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
                 Realizado = nº de PDVs que <b>bateram</b> a task (compraram a meta de SKUs distintos de Long Neck HE). Marcas: Stella (STE), Stella Pure Gold (STE PG), Corona (COR), Corona Cero (CORZ), Spaten (SPT), Michelob (MIC).
               </p>
-              {renderTabelaTasks(tasksLn, 27)}
+              {renderTabelaTasks(soMesVivo(tasksLn), 27)}
               {tasksLnDet.length > 0 && (() => {
                 const rns = [...new Set(tasksLnDet.map((d) => d.setor))].sort();
                 let linhas = tasksLnDet;
@@ -2398,6 +2505,7 @@ export default function SPO() {
                                 spo_portfolio_ideal_resumo: portIdeal,
                                 spo_rotina_mais_resumo: rotinaMais,
                                 spo_tasks_ln_resumo: tasksLn,
+                                spo_tasks_sku_pdv_resumo: tasksSkuPdv,
                               };
 
                               switch(n) {

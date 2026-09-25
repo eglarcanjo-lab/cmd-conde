@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.68.0** — Import de Pedidos Histórico (anos/meses antigos) na aba Arquivos.
+Versão atual: **v3.69.0** — SPO: cálculo automático do KPI Tarefas de SKU/PDV TT.
+
+## v3.69.0 — SPO: Tarefas de SKU/PDV TT (cálculo automático)
+- **KPI 26 (ord 13) "SKU/PDV TT" passa a ser calculado sozinho** a partir do import de **Tasks** (BEES Force) — sem arquivo novo.
+- Regra (doc do KPI): tasks dos clusters **Desenvolvimento de Portfólio** e **Marketplace** com o texto **"SKUs distintos de CERVEJA / NAB / MATCH / MARKETPLACE"**. Cestas (600mL, Long Neck, RGB…) e tasks de cobertura/Diageo ficam de fora. **Realizado = Σ tasks validadas (VALID) na operação**; tri = acumulado (soma meta e real dos 3 meses).
+- Card novo na tela SPO: tabela por RN (meta × realizado), quebra por categoria e detalhe por task (filtros de setor, categoria e "só não validadas"). Entra no Painel SPO pelo registro (`SPO_REAL[26]`).
+- Processador: `_calcular_sku_pdv_com_df` no `calcular_todos_spo_tasks` → abas `spo_tasks_sku_pdv_resumo` (acumulada por mês) e `spo_tasks_sku_pdv_detalhe`.
+- Ajuste: a tabela mensal de +LN/SKU-PDV mostra só o mês vivo (os resumos acumulados por mês não duplicam setores).
 
 ## v3.68.0 — Pedidos Histórico (import de anos antigos)
 - **Novo slot "Pedidos Histórico"** na aba Arquivos: sobe pedidos de meses/anos antigos (ex.: 2025) — popula só as tabelas mensais (`rv_volume`, `vd_pdv`, `vd_produto`, `vendas_cliente_produto`), sem tocar nos snapshots do mês atual. Alimenta a linha **"Ano passado"** da Curva de Volumes.

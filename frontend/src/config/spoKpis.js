@@ -36,7 +36,7 @@ export const SPO_KPIS = [
   { n: 11, ord: 10, label: "Tasks Cerveja TT (Portfolio)",       pts: 20, peso: 11.11, ativo: true },
   { n: 12, ord: 11, label: "Tasks Faturamento Score 5",          pts: 6,  peso: 3.33,  ativo: true },
   { n: 13, ord: 12, label: "Tasks NAB TT (Portfolio)",           pts: 10, peso: 5.56,  ativo: true },
-  { n: 26, ord: 13, label: "SKU/PDV TT",                         pts: 8,  peso: 4.44,  ativo: true }, // novo — sem cálculo automático ainda
+  { n: 26, ord: 13, label: "SKU/PDV TT",                         pts: 8,  peso: 4.44,  ativo: true }, // Σ tasks validadas "SKUs distintos de CERVEJA/NAB/MATCH/MARKETPLACE" (import Tasks)
   { n: 15, ord: 14, label: "Tasks de Marketplace",               pts: 6,  peso: 3.33,  ativo: true },
   { n: 16, ord: 15, label: "Tasks de Match (Portfolio)",         pts: 6,  peso: 3.33,  ativo: true },
   { n: 17, ord: 16, label: "Tasks Cerveja Zero (Portfolio)",     pts: 4,  peso: 2.22,  ativo: true },

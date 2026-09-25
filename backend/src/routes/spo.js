@@ -556,7 +556,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       dtoResumo, promoResumo, politicaResumo, menuResumo,
       tasksCerveja, score5, tasksNab, tasksVolume, tasksMktp,
       tasksMatch, tasksCervZero, tasksDigit, alone, rgb,
-      cupons, lojaIdeal, scanntech, portIdeal, tasksLn,
+      cupons, lojaIdeal, scanntech, portIdeal, tasksLn, tasksSkuPdv,
     ] = await Promise.all([
       readSheet("spo_visitacao_gv_resumo"),
       readSheet("spo_coaching_resumo"),
@@ -582,6 +582,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       readSheet("spo_scanntech_resumo"),
       readSheet("spo_portfolio_ideal_resumo"),
       readSheet("spo_tasks_ln_resumo"),
+      readSheet("spo_tasks_sku_pdv_resumo"),
     ].map((p) => p.catch(() => [])));
 
     // Helper: linha OPERACAO filtrada pelo mês (normaliza seriais de data antes de comparar)
@@ -603,6 +604,7 @@ router.patch("/painel/fechar-mes", async (req, res) => {
       spo_pedido_alone_resumo: alone, spo_rgb_total: rgb, spo_cupons_resumo: cupons,
       spo_loja_ideal_resumo: lojaIdeal, spo_scanntech_resumo: scanntech,
       spo_portfolio_ideal_resumo: portIdeal, spo_tasks_ln_resumo: tasksLn,
+      spo_tasks_sku_pdv_resumo: tasksSkuPdv,
     };
 
     // ── Computa real por KPI (mesma lógica do getRealDados no frontend) ────
