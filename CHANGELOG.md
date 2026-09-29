@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.70.0** — Devolução × Ruptura: Pesquisa Pedido também por PDV.
+Versão atual: **v3.71.0** — Pesquisa Pedido mostra os produtos do pedido.
+
+## v3.71.0 — Pesquisa Pedido: produtos do pedido
+- O documento do pedido (Devolução × Ruptura › 🔎 Pesquisa Pedido) ganha a tabela **📦 Produtos**: código, nome, HL marcado, HL entregue e ruptura **por produto** (em vermelho o que faltou). Vale na busca por pedido e ao clicar num pedido da lista **Por PDV**, que ganhou a coluna **Itens**.
+- Processador: nova aba `pedido_bees_itens` (1 linha por pedido BEES × produto), gerada no import de **Pedidos**. **Precisa reimportar o arquivo de Pedidos** para os produtos aparecerem.
+- Backend: `/pedido-bees` e `/pedidos-pdv` trazem `itens`, lendo só os pedidos exibidos (filtro no SQL).
 
 ## v3.70.0 — Pesquisa Pedido por PDV
 - **Devolução × Ruptura › 🔎 Pesquisa Pedido** ganha a chave **🧾 Por pedido / 🏪 Por PDV**. Por PDV: busca pelo **código** (ignora zeros à esquerda) ou por **parte do nome** e lista **todos os pedidos** do PDV (mais recente primeiro) com data, BEES, NF, setor, valor da NF, HL marcado × entregue, ruptura e status. Totais no topo (pedidos, devolvidos, com ruptura, valor, HL). Clique numa linha abre o documento completo do pedido.

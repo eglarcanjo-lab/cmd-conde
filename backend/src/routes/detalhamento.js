@@ -1,7 +1,7 @@
 // Detalhamento HOP — relatórios admin (Entrega + Ruptura de Estoque)
 const express = require("express");
 const router = express.Router();
-const { readSheet } = require("../services/sheets");
+const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 
 router.use(authMiddleware);
@@ -297,6 +297,24 @@ const chaveData = (v) => {
   return s.slice(0, 10);
 };
 
+// Itens (produtos) dos pedidos BEES informados, agrupados por pedido. readSheetMonths
+// filtra por qualquer coluna (WHERE col = ANY) — aqui, só os pedidos que vão na tela.
+async function itensDosPedidos(bees) {
+  const lista = [...new Set(bees.map(normNota).filter(Boolean))];
+  if (!lista.length) return {};
+  const rows = await readSheetMonths("pedido_bees_itens", "bees", lista).catch(() => []);
+  const por = {};
+  for (const r of rows) {
+    const k = normNota(r.bees);
+    (por[k] = por[k] || []).push({
+      cod_produto: r.cod_produto, nome_produto: r.nome_produto,
+      hl_marcacao: r3(num(r.hl_marcacao)), hl_entrega: r3(num(r.hl_entrega)),
+    });
+  }
+  for (const k of Object.keys(por)) por[k].sort((a, b) => b.hl_marcacao - a.hl_marcacao);
+  return por;
+}
+
 const lerBasesPedido = () => Promise.all([
   readSheet("pedido_bees").catch(() => []),
   readSheet("faturado_nf").catch(() => []),
@@ -319,7 +337,9 @@ router.get("/pedido-bees", async (req, res) => {
              || pedidos.find((p) => normNota(p.pedido) === q);
     if (!ped) return res.json({ encontrado: false, q });
 
-    return res.json(montarDocPedido(ped, faturadoNf, devolucoes));
+    const doc = montarDocPedido(ped, faturadoNf, devolucoes);
+    doc.itens = (await itensDosPedidos([ped.bees]))[normNota(ped.bees)] || [];
+    return res.json(doc);
   } catch (e) {
     console.error("pedido-bees:", e);
     return res.status(500).json({ error: "Erro ao buscar o pedido." });
@@ -345,6 +365,7 @@ router.get("/pedidos-pdv", async (req, res) => {
       : String(p.nome_pdv || "").toLowerCase().includes(nome));
     if (!achados.length) return res.json({ encontrado: false, q: bruto, pedidos: [] });
 
+    const itens = await itensDosPedidos(achados.map((p) => p.bees));
     const docs = achados
       .map((p) => montarDocPedido(p, faturadoNf, devolucoes))
       .sort((a, b) => chaveData(b.pedido.data_pedido).localeCompare(chaveData(a.pedido.data_pedido)));
@@ -352,7 +373,7 @@ router.get("/pedidos-pdv", async (req, res) => {
 
     return res.json({
       encontrado: true, q: bruto, pdvs,
-      pedidos: docs.map((d) => ({ ...d.pedido, devolucao: d.devolucao })),
+      pedidos: docs.map((d) => ({ ...d.pedido, devolucao: d.devolucao, itens: itens[normNota(d.pedido.bees)] || [] })),
       totais: {
         pedidos: docs.length,
         devolvidos: docs.filter((d) => d.pedido.status === "DEVOLVIDO").length,

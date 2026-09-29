@@ -79,7 +79,7 @@ function PesquisaPedido() {
 
   const trocarModo = (m) => { setModo(m); setD(null); setLista(null); setErro(""); setQ(""); };
   // Clique numa linha da lista do PDV → abre o documento completo (já veio no payload).
-  const abrir = (p) => { const { devolucao, ...pedido } = p; setD({ encontrado: true, pedido, devolucao }); };
+  const abrir = (p) => { const { devolucao, itens, ...pedido } = p; setD({ encontrado: true, pedido, devolucao, itens }); };
 
   return (
     <div>
@@ -143,7 +143,7 @@ function ListaPdv({ lista, ativo, onAbrir }) {
       <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, maxHeight: 480, overflowY: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
-            <tr>{["Data", "Pedido BEES", "NF", ...(variosPdvs ? ["PDV"] : []), "Setor", "Valor NF", "HL marc.", "HL entr.", "Ruptura", "Status"].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+            <tr>{["Data", "Pedido BEES", "NF", ...(variosPdvs ? ["PDV"] : []), "Setor", "Itens", "Valor NF", "HL marc.", "HL entr.", "Ruptura", "Status"].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
           </thead>
           <tbody>
             {lista.pedidos.map((p, i) => {
@@ -157,6 +157,7 @@ function ListaPdv({ lista, ativo, onAbrir }) {
                   <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{p.nf || "—"}</td>
                   {variosPdvs && <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.6)" }}>{p.cod_pdv} · {p.nome_pdv}</td>}
                   <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{p.setor}</td>
+                  <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{p.itens?.length || "—"}</td>
                   <td style={td}>{p.valor_nf != null ? fmtMoeda(p.valor_nf) : "—"}</td>
                   <td style={td}>{fmt(p.hl_marcacao, 2)}</td>
                   <td style={td}>{fmt(p.hl_entrega, 2)}</td>
@@ -216,6 +217,38 @@ function DocPedido({ d }) {
         <Campo label="HL entregue" val={`${fmt(P.hl_entrega, 2)} HL`} cor={rup ? AMARELO : "#4ade80"} />
         <Campo label="Ruptura (marcado − entregue)" val={`${fmt(P.hl_diferenca, 2)} HL`} cor={rup ? VERMELHO : "rgba(255,255,255,0.5)"} />
       </div>
+
+      {/* Produtos do pedido */}
+      {d.itens?.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ ...PS.docTit, marginBottom: 8 }}>📦 Produtos ({d.itens.length})</div>
+          <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+              <thead>
+                <tr>{["Cód.", "Produto", "HL marcado", "HL entregue", "Ruptura"].map((h) => (
+                  <th key={h} style={{ padding: "7px 10px", color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", textAlign: h === "Produto" ? "left" : "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {d.itens.map((it, i) => {
+                  const dif = it.hl_marcacao - it.hl_entrega;
+                  const falta = dif > 0.001;
+                  const td = { padding: "7px 10px", textAlign: "center", whiteSpace: "nowrap" };
+                  return (
+                    <tr key={`${it.cod_produto}-${i}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <td style={{ ...td, color: "rgba(255,255,255,0.5)" }}>{it.cod_produto}</td>
+                      <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.85)", whiteSpace: "normal" }}>{it.nome_produto}</td>
+                      <td style={td}>{fmt(it.hl_marcacao, 3)}</td>
+                      <td style={{ ...td, color: falta ? AMARELO : "#4ade80" }}>{fmt(it.hl_entrega, 3)}</td>
+                      <td style={{ ...td, color: falta ? VERMELHO : "rgba(255,255,255,0.35)", fontWeight: falta ? 700 : 400 }}>{falta ? fmt(dif, 3) : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Devolução */}
       {d.devolucao ? (
