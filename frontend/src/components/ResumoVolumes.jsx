@@ -26,7 +26,7 @@ export default function ResumoVolumes() {
   const [curva, setCurva] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
-  const [modo, setModo] = useState("sintetico"); // sintetico (curva) | analitico (planilha)
+  const [modo, setModo] = useState("sintetico"); // sintetico (curva) | barras (% da meta) | analitico (planilha)
   const [ordAnal, setOrdAnal] = useState(null);   // ordenação do Analítico: { key, dir } | null
 
   // Célula de % colorida (heatmap) no dark theme.
@@ -240,7 +240,7 @@ export default function ResumoVolumes() {
         <span style={{ color: "#7DBA3D" }}>📊</span> Volumes
         {data?.report && (
           <div style={S.seg}>
-            {[["sintetico", "Curva"], ["analitico", "Analítico"]].map(([k, l]) => (
+            {[["barras", "Barras"], ["sintetico", "Curva"], ["analitico", "Analítico"]].map(([k, l]) => (
               <button key={k} onClick={() => setModo(k)} style={modo === k ? { ...S.segBtn, ...S.segOn } : S.segBtn}>{l}</button>
             ))}
           </div>
@@ -250,6 +250,8 @@ export default function ResumoVolumes() {
       <div style={S.sub}>
         {analitico
           ? "Planilha por Operação · GV · RN — Meta · Real · Tendência · %T (heatmap no %T)"
+          : modo === "barras"
+          ? "% da meta — barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)"
           : "Curva mensal — Real × Budget × Meta × Ano passado, por categoria"}
         {data?.diasUteis && <span style={{ color: "#7DBA3D", fontWeight: 700, marginLeft: 6 }}>· 📅 {data.diasUteis.feitos} de {data.diasUteis.total} dias úteis</span>}
       </div>
@@ -257,6 +259,8 @@ export default function ResumoVolumes() {
         <div style={S.skel}>Carregando…</div>
       ) : analitico ? (
         renderAnalitico(data.report)
+      ) : modo === "barras" ? (
+        data.bars.map((b) => renderBar(b, b.label))
       ) : (
         <CurvaVolumes curva={curva} />
       )}

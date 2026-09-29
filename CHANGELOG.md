@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.69.0** — SPO: cálculo automático do KPI Tarefas de SKU/PDV TT.
+Versão atual: **v3.69.1** — Home/Volumes: volta o gráfico de barras (junto com Curva e Analítico).
+
+## v3.69.1 — Home/Volumes: volta o gráfico de barras
+- O card **Volumes** da Home ganha a opção **Barras** de novo (% da meta por categoria: barra escura = realizado, clara = tendência do mês). Fica ao lado de **Curva** (segue padrão) e **Analítico** — nada foi removido.
 
 ## v3.69.0 — SPO: Tarefas de SKU/PDV TT (cálculo automático)
 - **KPI 26 (ord 13) "SKU/PDV TT" passa a ser calculado sozinho** a partir do import de **Tasks** (BEES Force) — sem arquivo novo.
