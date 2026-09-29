@@ -254,61 +254,117 @@ router.get("/ruptura", async (req, res) => {
   }
 });
 
-// GET /api/detalhamento/pedido-bees?q=<pedido BEES | NF | nº pedido>
-// Monta o "documento" de rastreabilidade do pedido: dados do pedido (pedido_bees),
+// Monta o "documento" de rastreabilidade de 1 pedido: dados do pedido (pedido_bees),
 // valor da NF (faturado_nf) e, se devolvido, os dados da devolução (entregas_frustradas).
+function montarDocPedido(ped, faturadoNf, devolucoes) {
+  const nf = normNota(ped.nf);
+  const fat = nf ? faturadoNf.find((f) => normNota(f.nf) === nf) || null : null;
+  const dev = nf ? devolucoes.find((d) => normNota(d.nota) === nf) || null : null;
+
+  const hlMarc = r3(num(ped.hl_marcacao));
+  const hlEntr = r3(num(ped.hl_entrega));
+  const devolvido = !!dev || (String(ped.motivo || "").trim() !== "");
+  const status = devolvido ? "DEVOLVIDO" : (hlEntr > 0 || ped.entrega_real ? "ENTREGUE" : "FATURADO");
+
+  return {
+    encontrado: true,
+    pedido: {
+      bees: ped.bees, pedido: ped.pedido, nf,
+      setor: ped.setor, nome_setor: ped.nome_setor,
+      cod_pdv: ped.cod_pdv, nome_pdv: ped.nome_pdv,
+      data_pedido: ped.data_pedido, mapa: ped.mapa || (fat && fat.mapa) || "",
+      entrega_real: ped.entrega_real,
+      hl_marcacao: hlMarc, hl_entrega: hlEntr,
+      hl_diferenca: r3(hlMarc - hlEntr),
+      valor_nf: fat ? r2(num(fat.valor)) : null,
+      itens_nf: fat ? parseInt(fat.itens || 0) : null,
+      status,
+      motivo: ped.motivo || (dev && dev.desc_motivo) || "",
+    },
+    devolucao: dev ? {
+      placa: dev.placa || "", desc_motivo: dev.desc_motivo || "", cod_motivo: dev.cod_motivo || "",
+      valor: r2(num(dev.valor)), volume_hl: r3(num(dev.volume_hl)),
+      data_devol: dev.data_devol || "", data: dev.data || "",
+    } : null,
+  };
+}
+
+// Data do pedido → chave ordenável (aceita dd/mm/aaaa e aaaa-mm-dd).
+const chaveData = (v) => {
+  const s = String(v || "").trim();
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2].padStart(2, "0")}-${br[1].padStart(2, "0")}`;
+  return s.slice(0, 10);
+};
+
+const lerBasesPedido = () => Promise.all([
+  readSheet("pedido_bees").catch(() => []),
+  readSheet("faturado_nf").catch(() => []),
+  readSheet("entregas_frustradas").catch(() => []),
+]);
+
+// GET /api/detalhamento/pedido-bees?q=<pedido BEES | NF | nº pedido>
 router.get("/pedido-bees", async (req, res) => {
   try {
     const q = normNota(req.query.q || "");
     if (!q) return res.status(400).json({ error: "Informe o pedido BEES, a NF ou o nº do pedido." });
 
-    const [pedidosRaw, faturadoNfRaw, devolucoesRaw] = await Promise.all([
-      readSheet("pedido_bees").catch(() => []),
-      readSheet("faturado_nf").catch(() => []),
-      readSheet("entregas_frustradas").catch(() => []),
-    ]);
+    const [pedidosRaw, faturadoNf, devolucoes] = await lerBasesPedido();
     // Escopo por perfil (setor): admin/diretor tudo; GV a sala; RN o próprio.
     const pedidos = filtrarPorPerfil(pedidosRaw, req.user, "setor");
 
     // Casa por pedido BEES, senão por NF, senão pelo nº do pedido interno.
-    let ped = pedidos.find((p) => normNota(p.bees) === q)
-           || pedidos.find((p) => normNota(p.nf) === q)
-           || pedidos.find((p) => normNota(p.pedido) === q);
+    const ped = pedidos.find((p) => normNota(p.bees) === q)
+             || pedidos.find((p) => normNota(p.nf) === q)
+             || pedidos.find((p) => normNota(p.pedido) === q);
     if (!ped) return res.json({ encontrado: false, q });
 
-    const nf = normNota(ped.nf);
-    const fat = faturadoNfRaw.find((f) => normNota(f.nf) === nf) || null;
-    const dev = nf ? devolucoesRaw.find((d) => normNota(d.nota) === nf) || null : null;
-
-    const hlMarc = r3(num(ped.hl_marcacao));
-    const hlEntr = r3(num(ped.hl_entrega));
-    const devolvido = !!dev || (String(ped.motivo || "").trim() !== "");
-    const status = devolvido ? "DEVOLVIDO" : (hlEntr > 0 || ped.entrega_real ? "ENTREGUE" : "FATURADO");
-
-    return res.json({
-      encontrado: true,
-      pedido: {
-        bees: ped.bees, pedido: ped.pedido, nf,
-        setor: ped.setor, nome_setor: ped.nome_setor,
-        cod_pdv: ped.cod_pdv, nome_pdv: ped.nome_pdv,
-        data_pedido: ped.data_pedido, mapa: ped.mapa || (fat && fat.mapa) || "",
-        entrega_real: ped.entrega_real,
-        hl_marcacao: hlMarc, hl_entrega: hlEntr,
-        hl_diferenca: r3(hlMarc - hlEntr),
-        valor_nf: fat ? r2(num(fat.valor)) : null,
-        itens_nf: fat ? parseInt(fat.itens || 0) : null,
-        status,
-        motivo: ped.motivo || (dev && dev.desc_motivo) || "",
-      },
-      devolucao: dev ? {
-        placa: dev.placa || "", desc_motivo: dev.desc_motivo || "", cod_motivo: dev.cod_motivo || "",
-        valor: r2(num(dev.valor)), volume_hl: r3(num(dev.volume_hl)),
-        data_devol: dev.data_devol || "", data: dev.data || "",
-      } : null,
-    });
+    return res.json(montarDocPedido(ped, faturadoNf, devolucoes));
   } catch (e) {
     console.error("pedido-bees:", e);
     return res.status(500).json({ error: "Erro ao buscar o pedido." });
+  }
+});
+
+// GET /api/detalhamento/pedidos-pdv?q=<código do PDV | parte do nome>
+// Lista TODOS os pedidos do PDV (mais recente primeiro), cada um com o mesmo resumo
+// do documento (status, NF, valor, HL, ruptura, devolução).
+router.get("/pedidos-pdv", async (req, res) => {
+  try {
+    const bruto = String(req.query.q || "").trim();
+    if (!bruto) return res.status(400).json({ error: "Informe o código ou o nome do PDV." });
+
+    const [pedidosRaw, faturadoNf, devolucoes] = await lerBasesPedido();
+    const pedidos = filtrarPorPerfil(pedidosRaw, req.user, "setor");
+
+    const porCodigo = /^\d+$/.test(bruto);
+    const cod = normNota(bruto);
+    const nome = bruto.toLowerCase();
+    const achados = pedidos.filter((p) => porCodigo
+      ? normNota(p.cod_pdv) === cod
+      : String(p.nome_pdv || "").toLowerCase().includes(nome));
+    if (!achados.length) return res.json({ encontrado: false, q: bruto, pedidos: [] });
+
+    const docs = achados
+      .map((p) => montarDocPedido(p, faturadoNf, devolucoes))
+      .sort((a, b) => chaveData(b.pedido.data_pedido).localeCompare(chaveData(a.pedido.data_pedido)));
+    const pdvs = [...new Set(docs.map((d) => `${d.pedido.cod_pdv} · ${d.pedido.nome_pdv}`))];
+
+    return res.json({
+      encontrado: true, q: bruto, pdvs,
+      pedidos: docs.map((d) => ({ ...d.pedido, devolucao: d.devolucao })),
+      totais: {
+        pedidos: docs.length,
+        devolvidos: docs.filter((d) => d.pedido.status === "DEVOLVIDO").length,
+        com_ruptura: docs.filter((d) => d.pedido.hl_diferenca > 0.001).length,
+        valor_nf: r2(docs.reduce((s, d) => s + (d.pedido.valor_nf || 0), 0)),
+        hl_marcacao: r3(docs.reduce((s, d) => s + d.pedido.hl_marcacao, 0)),
+        hl_entrega: r3(docs.reduce((s, d) => s + d.pedido.hl_entrega, 0)),
+      },
+    });
+  } catch (e) {
+    console.error("pedidos-pdv:", e);
+    return res.status(500).json({ error: "Erro ao buscar os pedidos do PDV." });
   }
 });
 

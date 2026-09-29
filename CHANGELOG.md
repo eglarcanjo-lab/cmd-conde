@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.69.1** — Home/Volumes: volta o gráfico de barras (junto com Curva e Analítico).
+Versão atual: **v3.70.0** — Devolução × Ruptura: Pesquisa Pedido também por PDV.
+
+## v3.70.0 — Pesquisa Pedido por PDV
+- **Devolução × Ruptura › 🔎 Pesquisa Pedido** ganha a chave **🧾 Por pedido / 🏪 Por PDV**. Por PDV: busca pelo **código** (ignora zeros à esquerda) ou por **parte do nome** e lista **todos os pedidos** do PDV (mais recente primeiro) com data, BEES, NF, setor, valor da NF, HL marcado × entregue, ruptura e status. Totais no topo (pedidos, devolvidos, com ruptura, valor, HL). Clique numa linha abre o documento completo do pedido.
+- Backend: rota nova `GET /api/detalhamento/pedidos-pdv` (mesmo escopo por perfil); montagem do documento virou helper `montarDocPedido`, compartilhado com `/pedido-bees`.
 
 ## v3.69.1 — Home/Volumes: volta o gráfico de barras
 - O card **Volumes** da Home ganha a opção **Barras** de novo (% da meta por categoria: barra escura = realizado, clara = tendência do mês). Fica ao lado de **Curva** (segue padrão) e **Analítico** — nada foi removido.

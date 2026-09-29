@@ -53,8 +53,10 @@ export default function Detalhamento() {
 // ─── PESQUISA PEDIDO — documento de rastreabilidade do pedido BEES ───────────
 const CORStatus = { ENTREGUE: "#4ade80", DEVOLVIDO: VERMELHO, FATURADO: AMARELO };
 function PesquisaPedido() {
+  const [modo, setModo] = useState("pedido"); // pedido (BEES/NF/nº) | pdv (todos os pedidos do PDV)
   const [q, setQ] = useState("");
-  const [d, setD] = useState(null);
+  const [d, setD] = useState(null);         // documento de 1 pedido
+  const [lista, setLista] = useState(null); // resultado por PDV
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -62,96 +64,180 @@ function PesquisaPedido() {
     e?.preventDefault?.();
     const termo = q.trim();
     if (!termo) return;
-    setLoading(true); setErro(""); setD(null);
+    setLoading(true); setErro(""); setD(null); setLista(null);
     try {
-      const r = await api.get("/api/detalhamento/pedido-bees", { params: { q: termo }, timeout: 60000 });
-      setD(r.data);
+      if (modo === "pdv") {
+        const r = await api.get("/api/detalhamento/pedidos-pdv", { params: { q: termo }, timeout: 60000 });
+        setLista(r.data);
+      } else {
+        const r = await api.get("/api/detalhamento/pedido-bees", { params: { q: termo }, timeout: 60000 });
+        setD(r.data);
+      }
     } catch (err) { setErro(err.response?.data?.error || "Erro ao buscar."); }
     finally { setLoading(false); }
   }
 
-  const P = d?.pedido;
-  const st = P?.status || "";
-  const rup = P && P.hl_diferenca > 0.001;
+  const trocarModo = (m) => { setModo(m); setD(null); setLista(null); setErro(""); setQ(""); };
+  // Clique numa linha da lista do PDV → abre o documento completo (já veio no payload).
+  const abrir = (p) => { const { devolucao, ...pedido } = p; setD({ encontrado: true, pedido, devolucao }); };
 
   return (
     <div>
+      <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: 3, marginBottom: 12 }}>
+        {[["pedido", "🧾 Por pedido"], ["pdv", "🏪 Por PDV"]].map(([k, l]) => (
+          <button key={k} type="button" onClick={() => trocarModo(k)} style={{ ...PS.seg, ...(modo === k ? PS.segOn : {}) }}>{l}</button>
+        ))}
+      </div>
       <form onSubmit={buscar} style={{ display: "flex", gap: 8, marginBottom: 16, maxWidth: 520 }}>
         <input style={PS.input} value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder="🔎 Pedido BEES, NF ou nº do pedido" autoComplete="off" />
+          placeholder={modo === "pdv" ? "🔎 Código do PDV ou parte do nome" : "🔎 Pedido BEES, NF ou nº do pedido"} autoComplete="off" />
         <button type="submit" style={PS.btn} disabled={loading}>{loading ? "…" : "Buscar"}</button>
       </form>
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", margin: "-6px 0 16px" }}>
-        Busca o pedido no relatório de Pedidos Faturados (Pedido Cliente = BEES), traz a NF, valor (Faturados NF) e, se devolvido, os dados da devolução (030224).
+        {modo === "pdv"
+          ? "Lista todos os pedidos do PDV (mais recente primeiro), com status, NF, valor, HL e ruptura. Clique num pedido para ver o documento completo."
+          : "Busca o pedido no relatório de Pedidos Faturados (Pedido Cliente = BEES), traz a NF, valor (Faturados NF) e, se devolvido, os dados da devolução (030224)."}
       </p>
 
       {erro && <div style={PS.erro}>{erro}</div>}
       {loading && <div style={PS.info}>Buscando…</div>}
-      {d && !d.encontrado && !loading && (
+      {modo === "pedido" && d && !d.encontrado && !loading && (
         <div style={PS.vazio}>Nenhum pedido encontrado para "<b>{d.q}</b>". Confira o número ou reimporte os relatórios (Pedidos / Faturados).</div>
       )}
+      {modo === "pdv" && lista && !lista.encontrado && !loading && (
+        <div style={PS.vazio}>Nenhum pedido encontrado para o PDV "<b>{lista.q}</b>". Confira o código/nome ou reimporte os relatórios (Pedidos / Faturados).</div>
+      )}
 
-      {P && (
-        <div style={PS.doc}>
-          {/* Cabeçalho */}
-          <div style={PS.docHead}>
-            <div>
-              <div style={PS.docTit}>Pedido BEES</div>
-              <div style={PS.docBees}>{P.bees}</div>
-            </div>
-            <span style={{ ...PS.badge, background: `${CORStatus[st] || "#888"}22`, color: CORStatus[st] || "#888", border: `1px solid ${CORStatus[st] || "#888"}` }}>
-              {st === "ENTREGUE" ? "✅ Entregue" : st === "DEVOLVIDO" ? "↩️ Devolvido" : "🧾 Faturado"}
-            </span>
-          </div>
+      {modo === "pdv" && lista?.encontrado && (
+        <ListaPdv lista={lista} ativo={d?.pedido?.bees} onAbrir={abrir} />
+      )}
 
-          {/* Linha do tempo */}
-          <div style={PS.timeline}>
-            <Passo ok label="Pedido" val={P.data_pedido} />
-            <span style={PS.tlSep}>→</span>
-            <Passo ok={!!P.nf} label="Faturado (NF)" val={P.nf ? `NF ${P.nf}` : "—"} />
-            <span style={PS.tlSep}>→</span>
-            {st === "DEVOLVIDO"
-              ? <Passo cor={VERMELHO} label="Devolvido" val={d.devolucao?.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : ""} />
-              : <Passo ok cor="#4ade80" label="Entregue" val={P.entrega_real || ""} />}
-          </div>
-
-          {/* Grid de dados */}
-          <div style={PS.grid}>
-            <Campo label="NF" val={P.nf || "—"} />
-            <Campo label="Setor / RN" val={`${P.setor}${P.nome_setor ? " · " + P.nome_setor : ""}`} />
-            <Campo label="PDV" val={`${P.cod_pdv} · ${P.nome_pdv}`} span2 />
-            <Campo label="Data do pedido" val={P.data_pedido || "—"} />
-            <Campo label="Mapa (rota)" val={P.mapa || "—"} />
-            <Campo label="Nº pedido" val={P.pedido || "—"} />
-            <Campo label="Valor da NF" val={P.valor_nf != null ? fmtMoeda(P.valor_nf) : "—"} destaque />
-            <Campo label="HL marcado" val={`${fmt(P.hl_marcacao, 2)} HL`} />
-            <Campo label="HL entregue" val={`${fmt(P.hl_entrega, 2)} HL`} cor={rup ? AMARELO : "#4ade80"} />
-            <Campo label="Ruptura (marcado − entregue)" val={`${fmt(P.hl_diferenca, 2)} HL`} cor={rup ? VERMELHO : "rgba(255,255,255,0.5)"} />
-          </div>
-
-          {/* Devolução */}
-          {d.devolucao ? (
-            <div style={PS.devBox}>
-              <div style={PS.devTit}>↩️ Dados da devolução</div>
-              <div style={PS.grid}>
-                <Campo label="Motivo" val={d.devolucao.desc_motivo || "—"} span2 cor={VERMELHO} />
-                <Campo label="Carro (placa)" val={d.devolucao.placa || "—"} />
-                <Campo label="Cód. motivo" val={d.devolucao.cod_motivo || "—"} />
-                <Campo label="Valor devolvido" val={fmtMoeda(d.devolucao.valor)} />
-                <Campo label="Volume devolvido" val={`${fmt(d.devolucao.volume_hl, 2)} HL`} />
-                <Campo label="Data devolução" val={d.devolucao.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : "—"} />
-              </div>
-              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", margin: "8px 0 0" }}>
-                ℹ️ O relatório de devoluções traz o <b>carro (placa)</b>, não o nome do motorista.
-              </p>
-            </div>
-          ) : st === "ENTREGUE" ? (
-            <div style={{ ...PS.devBox, borderColor: "rgba(74,222,128,0.25)", background: "rgba(74,222,128,0.05)" }}>
-              <div style={{ ...PS.devTit, color: "#4ade80" }}>✅ Entregue{P.entrega_real ? ` · ${P.entrega_real}` : ""}</div>
-            </div>
-          ) : null}
+      {d?.pedido && (
+        <div style={modo === "pdv" ? { marginTop: 16 } : undefined}>
+          {modo === "pdv" && <button type="button" style={PS.fechar} onClick={() => setD(null)}>✕ Fechar documento</button>}
+          <DocPedido d={d} />
         </div>
       )}
+    </div>
+  );
+}
+
+// Lista de pedidos de um PDV (modo "Por PDV").
+function ListaPdv({ lista, ativo, onAbrir }) {
+  const t = lista.totais || {};
+  const variosPdvs = lista.pdvs.length > 1;
+  const th = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
+  const td = { padding: "8px 10px", textAlign: "center", whiteSpace: "nowrap", fontSize: "0.8rem" };
+  return (
+    <div>
+      <div style={{ color: VERDE, fontWeight: 700, marginBottom: 8 }}>
+        🏪 {lista.pdvs.slice(0, 3).join(" | ")}{lista.pdvs.length > 3 ? ` (+${lista.pdvs.length - 3} PDVs)` : ""}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8, marginBottom: 12, maxWidth: 900 }}>
+        <Campo label="Pedidos" val={t.pedidos} destaque />
+        <Campo label="Devolvidos" val={t.devolvidos} cor={t.devolvidos ? VERMELHO : undefined} />
+        <Campo label="Com ruptura" val={t.com_ruptura} cor={t.com_ruptura ? AMARELO : undefined} />
+        <Campo label="Valor NF" val={fmtMoeda(t.valor_nf)} />
+        <Campo label="HL marcado × entregue" val={`${fmt(t.hl_marcacao, 2)} × ${fmt(t.hl_entrega, 2)}`} />
+      </div>
+      <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, maxHeight: 480, overflowY: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+            <tr>{["Data", "Pedido BEES", "NF", ...(variosPdvs ? ["PDV"] : []), "Setor", "Valor NF", "HL marc.", "HL entr.", "Ruptura", "Status"].map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {lista.pedidos.map((p, i) => {
+              const rup = p.hl_diferenca > 0.001;
+              const c = CORStatus[p.status] || "#888";
+              return (
+                <tr key={`${p.bees}-${i}`} onClick={() => onAbrir(p)} title={p.status === "DEVOLVIDO" ? `Motivo: ${p.motivo || "—"}` : "Ver documento"}
+                  style={{ cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", background: ativo === p.bees ? "rgba(125,186,61,0.12)" : undefined }}>
+                  <td style={{ ...td, color: "rgba(255,255,255,0.7)" }}>{p.data_pedido || "—"}</td>
+                  <td style={{ ...td, fontWeight: 700 }}>{p.bees || "—"}</td>
+                  <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{p.nf || "—"}</td>
+                  {variosPdvs && <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.6)" }}>{p.cod_pdv} · {p.nome_pdv}</td>}
+                  <td style={{ ...td, color: "rgba(255,255,255,0.6)" }}>{p.setor}</td>
+                  <td style={td}>{p.valor_nf != null ? fmtMoeda(p.valor_nf) : "—"}</td>
+                  <td style={td}>{fmt(p.hl_marcacao, 2)}</td>
+                  <td style={td}>{fmt(p.hl_entrega, 2)}</td>
+                  <td style={{ ...td, color: rup ? VERMELHO : "rgba(255,255,255,0.35)", fontWeight: rup ? 700 : 400 }}>{rup ? fmt(p.hl_diferenca, 2) : "—"}</td>
+                  <td style={td}><span style={{ ...PS.badge, padding: "2px 8px", fontSize: "0.7rem", background: `${c}22`, color: c, border: `1px solid ${c}` }}>
+                    {p.status === "ENTREGUE" ? "Entregue" : p.status === "DEVOLVIDO" ? "Devolvido" : "Faturado"}
+                  </span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// "Documento" de rastreabilidade de 1 pedido.
+function DocPedido({ d }) {
+  const P = d.pedido;
+  const st = P?.status || "";
+  const rup = P && P.hl_diferenca > 0.001;
+  return (
+    <div style={PS.doc}>
+      {/* Cabeçalho */}
+      <div style={PS.docHead}>
+        <div>
+          <div style={PS.docTit}>Pedido BEES</div>
+          <div style={PS.docBees}>{P.bees}</div>
+        </div>
+        <span style={{ ...PS.badge, background: `${CORStatus[st] || "#888"}22`, color: CORStatus[st] || "#888", border: `1px solid ${CORStatus[st] || "#888"}` }}>
+          {st === "ENTREGUE" ? "✅ Entregue" : st === "DEVOLVIDO" ? "↩️ Devolvido" : "🧾 Faturado"}
+        </span>
+      </div>
+
+      {/* Linha do tempo */}
+      <div style={PS.timeline}>
+        <Passo ok label="Pedido" val={P.data_pedido} />
+        <span style={PS.tlSep}>→</span>
+        <Passo ok={!!P.nf} label="Faturado (NF)" val={P.nf ? `NF ${P.nf}` : "—"} />
+        <span style={PS.tlSep}>→</span>
+        {st === "DEVOLVIDO"
+          ? <Passo cor={VERMELHO} label="Devolvido" val={d.devolucao?.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : ""} />
+          : <Passo ok cor="#4ade80" label="Entregue" val={P.entrega_real || ""} />}
+      </div>
+
+      {/* Grid de dados */}
+      <div style={PS.grid}>
+        <Campo label="NF" val={P.nf || "—"} />
+        <Campo label="Setor / RN" val={`${P.setor}${P.nome_setor ? " · " + P.nome_setor : ""}`} />
+        <Campo label="PDV" val={`${P.cod_pdv} · ${P.nome_pdv}`} span2 />
+        <Campo label="Data do pedido" val={P.data_pedido || "—"} />
+        <Campo label="Mapa (rota)" val={P.mapa || "—"} />
+        <Campo label="Nº pedido" val={P.pedido || "—"} />
+        <Campo label="Valor da NF" val={P.valor_nf != null ? fmtMoeda(P.valor_nf) : "—"} destaque />
+        <Campo label="HL marcado" val={`${fmt(P.hl_marcacao, 2)} HL`} />
+        <Campo label="HL entregue" val={`${fmt(P.hl_entrega, 2)} HL`} cor={rup ? AMARELO : "#4ade80"} />
+        <Campo label="Ruptura (marcado − entregue)" val={`${fmt(P.hl_diferenca, 2)} HL`} cor={rup ? VERMELHO : "rgba(255,255,255,0.5)"} />
+      </div>
+
+      {/* Devolução */}
+      {d.devolucao ? (
+        <div style={PS.devBox}>
+          <div style={PS.devTit}>↩️ Dados da devolução</div>
+          <div style={PS.grid}>
+            <Campo label="Motivo" val={d.devolucao.desc_motivo || "—"} span2 cor={VERMELHO} />
+            <Campo label="Carro (placa)" val={d.devolucao.placa || "—"} />
+            <Campo label="Cód. motivo" val={d.devolucao.cod_motivo || "—"} />
+            <Campo label="Valor devolvido" val={fmtMoeda(d.devolucao.valor)} />
+            <Campo label="Volume devolvido" val={`${fmt(d.devolucao.volume_hl, 2)} HL`} />
+            <Campo label="Data devolução" val={d.devolucao.data_devol ? String(d.devolucao.data_devol).slice(0, 10).split("-").reverse().join("/") : "—"} />
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", margin: "8px 0 0" }}>
+            ℹ️ O relatório de devoluções traz o <b>carro (placa)</b>, não o nome do motorista.
+          </p>
+        </div>
+      ) : st === "ENTREGUE" ? (
+        <div style={{ ...PS.devBox, borderColor: "rgba(74,222,128,0.25)", background: "rgba(74,222,128,0.05)" }}>
+          <div style={{ ...PS.devTit, color: "#4ade80" }}>✅ Entregue{P.entrega_real ? ` · ${P.entrega_real}` : ""}</div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -189,6 +275,9 @@ const PS = {
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: "12px 16px" },
   devBox: { marginTop: 16, background: "rgba(239,111,111,0.06)", border: `1px solid ${VERMELHO}44`, borderRadius: 12, padding: "14px 16px" },
   devTit: { color: VERMELHO, fontSize: "0.85rem", fontWeight: 700, marginBottom: 10 },
+  seg: { background: "transparent", border: "none", color: "rgba(255,255,255,0.55)", padding: "7px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 600 },
+  segOn: { background: "rgba(125,186,61,0.2)", color: VERDE },
+  fechar: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", padding: "5px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: "0.76rem", marginBottom: 8 },
 };
 
 function Kpi({ label, valor, sub, cor }) {
