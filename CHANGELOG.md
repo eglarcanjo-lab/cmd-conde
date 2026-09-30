@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.72.0** — Deck mostra todos os produtos da Grade de Estoque.
+Versão atual: **v3.72.1** — Deck volta a excluir Marketplace e sem categoria.
+
+## v3.72.1 — Deck: sem Marketplace e sem "sem categoria"
+- Ajuste da v3.72.0 a pedido: o Deck mostra os produtos da Grade **exceto Marketplace e sem categoria** (grupos Cerveja · NAB · Match). Volta a regra anterior à v3.72.0 — produto novo só entra no Deck depois de categorizado em Admin › Produtos.
 
 ## v3.72.0 — Deck: todos os produtos da Grade
 - O **Deck de Estoque** passa a mostrar **todos os produtos da Grade de Estoque**, mesmo sem categoria. Antes, só entrava produto com categoria Cerveja/NAB/Match — produto novo que ainda não tinha vendido ficava invisível.

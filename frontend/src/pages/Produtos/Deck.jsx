@@ -62,7 +62,7 @@ export default function Deck() {
   if (erro) return <div style={S.erro}>{erro}</div>;
   if (!d) return null;
   if (!secoes.length)
-    return <div style={S.vazio}>Sem dados do Deck ainda. Importe o <b>CORA</b> (agendados D+7), a <b>Grade de Estoque</b> e a <b>Coleta</b> (1º vencimento) em Admin › Arquivos. Produtos da Grade sem categoria aparecem em <b>SEM CATEGORIA</b> até serem categorizados (Admin › Produtos).</div>;
+    return <div style={S.vazio}>Sem dados do Deck ainda. Importe o <b>CORA</b> (agendados D+7), a <b>Grade de Estoque</b> e a <b>Coleta</b> (1º vencimento) em Admin › Arquivos, e cadastre a <b>categoria</b> dos produtos.</div>;
 
   return (
     <>
