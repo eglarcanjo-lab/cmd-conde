@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.71.0** — Pesquisa Pedido mostra os produtos do pedido.
+Versão atual: **v3.72.0** — Deck mostra todos os produtos da Grade de Estoque.
+
+## v3.72.0 — Deck: todos os produtos da Grade
+- O **Deck de Estoque** passa a mostrar **todos os produtos da Grade de Estoque**, mesmo sem categoria. Antes, só entrava produto com categoria Cerveja/NAB/Match — produto novo que ainda não tinha vendido ficava invisível.
+- Grupos: **Cerveja · NAB · Match · Marketplace · SEM CATEGORIA**. Marketplace deixou de ser excluído (vira grupo próprio). Os sem categoria ficam no fim até alguém categorizar em Admin › Produtos (aí migram sozinhos para o grupo certo).
+- Produtos que estão só em Agendados D+7 / 1º Vencimento (fora da Grade) continuam precisando de categoria para entrar.
 
 ## v3.71.0 — Pesquisa Pedido: produtos do pedido
 - O documento do pedido (Devolução × Ruptura › 🔎 Pesquisa Pedido) ganha a tabela **📦 Produtos**: código, nome, HL marcado, HL entregue e ruptura **por produto** (em vermelho o que faltou). Vale na busca por pedido e ao clicar num pedido da lista **Por PDV**, que ganhou a coluna **Itens**.

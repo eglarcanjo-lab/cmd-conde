@@ -14,16 +14,16 @@ const int = (v) => Math.round(num(v));
 const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 
 // Ordem de exibição dos grupos no Deck.
-const ORDEM_CAT = ["CERVEJA", "NAB", "MATCH"];
+const SEM_CAT = "SEM CATEGORIA";
+const ORDEM_CAT = ["CERVEJA", "NAB", "MATCH", "MARKETPLACE", SEM_CAT];
 
-// Categorias que NÃO entram no Deck.
-const CAT_FORA = new Set(["MKTP", "MARKETPLACE"]);
-
-// Consolida as categorias da HOP em 3 grupos (sem subcategorias):
-//   • Match separado · NAB junta tudo de NAB · o resto (cervejas e formatos) vira Cerveja.
+// Consolida as categorias da HOP em grupos (sem subcategorias):
+//   • Match e Marketplace separados · NAB junta tudo de NAB · o resto (cervejas e
+//     formatos) vira Cerveja.
 function grupoDeCat(cat) {
   const c = String(cat || "").toUpperCase().trim();
-  if (!c || CAT_FORA.has(c)) return null;   // Mktp fora
+  if (!c) return null;
+  if (c === "MKTP" || c.includes("MARKETPLACE")) return "MARKETPLACE";
   if (c.includes("MATCH")) return "MATCH";
   if (c.includes("NAB")) return "NAB";
   return "CERVEJA";                          // Cerveja, Zero, Multipack, Litrinho, HE, RGB… → Cerveja
@@ -71,9 +71,10 @@ router.get("/", async (req, res) => {
     agendados.forEach((r) => { const c = normCod(r.cod_produto); agendDe[c] = int(r.caixas); if (r.nome_produto) nomeAg[c] = String(r.nome_produto).trim(); });
     const vencDe = {}; vencimento.forEach((r) => { vencDe[normCod(r.cod_produto)] = String(r.validade || "").trim(); });
 
-    // Universo: produtos COM categoria que aparecem em alguma das 3 fontes.
-    const universo = new Set();
-    [Object.keys(gradeDe), Object.keys(agendDe), Object.keys(vencDe)].forEach((ks) =>
+    // Universo: TODOS os produtos da Grade de Estoque (sem categoria → grupo
+    // "SEM CATEGORIA") + os de Agendados/Vencimento que tenham categoria.
+    const universo = new Set(Object.keys(gradeDe));
+    [Object.keys(agendDe), Object.keys(vencDe)].forEach((ks) =>
       ks.forEach((c) => { if (catDe[c] && catDe[c].length) universo.add(c); }));
 
     // Monta produtos por categoria
@@ -90,7 +91,8 @@ router.get("/", async (req, res) => {
         transito: null,   // linhas previstas p/ preencher depois
         previsao: null,
       };
-      catDe[cod].forEach((cat) => {
+      const grupos = catDe[cod] && catDe[cod].length ? catDe[cod] : [SEM_CAT];
+      grupos.forEach((cat) => {
         (porCat[cat] = porCat[cat] || []).push(prod);
       });
     });
