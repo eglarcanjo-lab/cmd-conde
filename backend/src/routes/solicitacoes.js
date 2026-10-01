@@ -31,6 +31,11 @@ async function ensureTabelas() {
     media_tri_hl NUMERIC, status TEXT DEFAULT 'Pendente')`);
   await query(`CREATE INDEX IF NOT EXISTS idx_solic_itens_sol ON solicitacoes_itens (solicitacao_id)`);
   await query(`ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS criado_por TEXT`);
+  // Inativação de PDV (v3.75): flag + justificativa + prévia (inad/comodato) congelada no pedido
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS inativar BOOLEAN DEFAULT false`);
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS justificativa TEXT`);
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS inad_info TEXT`);
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS comodato_info TEXT`);
   _ok = true;
 }
 
@@ -65,6 +70,39 @@ async function listarSetores(base) {
     .map((s) => ({ setor: s, nome: nome[s] || "" }));
 }
 
+// Prévia de INATIVAÇÃO: inadimplência (relatório 120601 → inadimplencia_real) e comodato
+// (relatório de comodatos → comodatos; quem está na relação TEM comodato) por cod_pdv.
+const brl = (v) => "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+async function riscoPorPdv() {
+  const [inadRaw, comRaw, status] = await Promise.all([
+    readSheet("inadimplencia_real").catch(() => []),
+    readSheet("comodatos").catch(() => []),
+    readSheet("status_arquivos").catch(() => []),
+  ]);
+  const inad = {};
+  inadRaw.forEach((r) => {
+    const c = normCod(r.cod_pdv); if (!c) return;
+    const e = inad[c] || (inad[c] = { qtd_titulos: 0, valor: 0, maior_atraso: 0 });
+    e.qtd_titulos += num(r.qtd_titulos); e.valor += num(r.valor_total);
+    e.maior_atraso = Math.max(e.maior_atraso, num(r.maior_atraso));
+  });
+  const com = {};
+  comRaw.forEach((r) => {
+    const c = normCod(r.cod_pdv); if (!c) return;
+    const e = com[c] || (com[c] = { em_aberto: 0, itens: [] });
+    const ab = num(r.em_aberto);
+    e.em_aberto += ab;
+    e.itens.push({ descricao: String(r.descricao || "").trim(), comodatado: num(r.comodatado), em_aberto: ab,
+                   tipo: String(r.tipo_material || "").trim(), valor: num(r.valor) });
+  });
+  const dataDe = (re) => { const x = status.find((r) => re.test(String(r.arquivo || ""))); return x ? String(x.atualizado_em || "").trim() : ""; };
+  return { inad, com, fontes: { inad: dataDe(/inadimpl/i), comodatos: dataDe(/comodato/i), temComodatos: comRaw.length > 0 } };
+}
+const txtInad = (i) => (i ? `INADIMPLENTE: ${i.qtd_titulos} título(s) · ${brl(i.valor)} · maior atraso ${i.maior_atraso} dias` : "Sem inadimplência");
+const txtCom = (c) => (c
+  ? `TEM COMODATO: ${c.itens.map((x) => `${x.descricao} (${x.em_aberto} em aberto)`).join("; ")}`
+  : "Sem comodato");
+
 // Itens pendentes (em aprovação) por cod_pdv — trava duplicidade.
 async function pendentesPorPdv() {
   const r = await query(
@@ -81,10 +119,11 @@ router.get("/migracao/base", async (req, res) => {
     await ensureTabelas();
     const setor = setorAlvo(req, req.query.setor);
     const ms = meses3();
-    const [base, vendas, pend] = await Promise.all([
+    const [base, vendas, pend, risco] = await Promise.all([
       readSheet("pdv_base").catch(() => []),
       readSheetMonths("vendas_cliente_produto", "mes_referencia", ms).catch(() => []),
       pendentesPorPdv(),
+      riscoPorPdv(),
     ]);
     const vol = {};
     vendas.forEach((v) => {
@@ -102,16 +141,18 @@ router.get("/migracao/base", async (req, res) => {
           dia: String(p.dia_visita || "").trim().toUpperCase().slice(0, 3),
           media_tri: Math.round(((vol[c] || 0) / 3) * 10) / 10,
           pendente_desde: pend[c] || null,
+          inad: risco.inad[c] || null,          // prévia de inativação
+          comodato: risco.com[c] || null,
         };
       });
-    return res.json({ setor, meses: ms, setores: await listarSetores(base), pdvs });
+    return res.json({ setor, meses: ms, setores: await listarSetores(base), pdvs, fontes: risco.fontes });
   } catch (e) {
     console.error("solicitacoes/migracao/base:", e);
     return res.status(500).json({ error: "Erro ao carregar a base de PDVs." });
   }
 });
 
-// POST /api/solicitacoes/migracao — { setor?, motivo, itens:[{cod_pdv, setor_novo, dia_novo}] }
+// POST /api/solicitacoes/migracao — { setor?, motivo, itens:[{cod_pdv, setor_novo, dia_novo} | {cod_pdv, inativar:true, justificativa}] }
 // Snapshot (nome/setor/dia/média) é montado AQUI, a partir da base — não confia no cliente.
 router.post("/migracao", async (req, res) => {
   try {
@@ -119,10 +160,11 @@ router.post("/migracao", async (req, res) => {
     const setor = setorAlvo(req, req.body?.setor);
     const itensIn = Array.isArray(req.body?.itens) ? req.body.itens : [];
     const ms = meses3();
-    const [base, vendas, pend] = await Promise.all([
+    const [base, vendas, pend, risco] = await Promise.all([
       readSheet("pdv_base").catch(() => []),
       readSheetMonths("vendas_cliente_produto", "mes_referencia", ms).catch(() => []),
       pendentesPorPdv(),
+      riscoPorPdv(),
     ]);
     const setoresValidos = new Set(base.map((p) => String(p.setor || "").trim()).filter(Boolean));
     const doSetor = {};
@@ -138,6 +180,18 @@ router.post("/migracao", async (req, res) => {
       if (!p || vistos.has(c)) continue;
       if (pend[c]) return res.status(409).json({ error: `O PDV ${c} já está em outra solicitação aguardando aprovação.` });
       const diaAtual = String(p.dia_visita || "").trim().toUpperCase().slice(0, 3);
+      const nomePdv = String(p.nome_fantasia || p.razao_social || "").trim();
+      const media = Math.round(((vol[c] || 0) / 3) * 10) / 10;
+      if (it.inativar) {
+        // INATIVAR: justificativa obrigatória; RN/dia não se aplicam. Prévia congelada no pedido.
+        const just = String(it.justificativa || "").trim();
+        if (just.length < 5) return res.status(400).json({ error: `Escreva a justificativa para inativar o PDV ${c} (${nomePdv}).` });
+        vistos.add(c);
+        itens.push({ cod_pdv: c, nome_pdv: nomePdv, setor_atual: setor, dia_atual: diaAtual, setor_novo: "", dia_novo: "",
+                     media_tri_hl: media, inativar: true, justificativa: just.slice(0, 500),
+                     inad_info: txtInad(risco.inad[c]), comodato_info: txtCom(risco.com[c]) });
+        continue;
+      }
       let setorNovo = String(it.setor_novo || "").trim();
       let diaNovo = String(it.dia_novo || "").trim().toUpperCase();
       if (setorNovo === setor) setorNovo = "";
@@ -147,9 +201,9 @@ router.post("/migracao", async (req, res) => {
       if (!setorNovo && !diaNovo) continue; // linha sem alteração
       vistos.add(c);
       itens.push({
-        cod_pdv: c, nome_pdv: String(p.nome_fantasia || p.razao_social || "").trim(),
+        cod_pdv: c, nome_pdv: nomePdv,
         setor_atual: setor, dia_atual: diaAtual, setor_novo: setorNovo, dia_novo: diaNovo,
-        media_tri_hl: Math.round(((vol[c] || 0) / 3) * 10) / 10,
+        media_tri_hl: media, inativar: false,
       });
     }
     if (!itens.length) return res.status(400).json({ error: "Nenhuma alteração para enviar." });
@@ -165,9 +219,11 @@ router.post("/migracao", async (req, res) => {
        emNomeDe ? `ADM ${req.user.nome || ""}`.trim() : null]);
     for (const it of itens) {
       await query(
-        `INSERT INTO solicitacoes_itens (solicitacao_id, cod_pdv, nome_pdv, setor_atual, dia_atual, setor_novo, dia_novo, media_tri_hl)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [id, it.cod_pdv, it.nome_pdv, it.setor_atual, it.dia_atual, it.setor_novo || null, it.dia_novo || null, it.media_tri_hl]);
+        `INSERT INTO solicitacoes_itens (solicitacao_id, cod_pdv, nome_pdv, setor_atual, dia_atual, setor_novo, dia_novo, media_tri_hl,
+                                         inativar, justificativa, inad_info, comodato_info)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [id, it.cod_pdv, it.nome_pdv, it.setor_atual, it.dia_atual, it.setor_novo || null, it.dia_novo || null, it.media_tri_hl,
+         !!it.inativar, it.justificativa || null, it.inad_info || null, it.comodato_info || null]);
     }
     return res.json({ success: true, id, itens: itens.length });
   } catch (e) {

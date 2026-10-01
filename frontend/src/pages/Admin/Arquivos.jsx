@@ -12,6 +12,7 @@ const ARQUIVOS_CONFIG = [
   { id: "devolucoes",       campo: "devolucoes",        rotulo: "Devoluções (Entregas Frustradas)", numero: "030224", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "↩️" },
   { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
   { id: "faturados",        campo: "faturados",         rotulo: "Faturados (NF)",           numero: "030237", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧾" },
+  { id: "comodatos",        campo: "comodatos",         rotulo: "Comodatos (equipamentos no PDV)", numero: "Comodato", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧊" },
   // ── CORA ────────────────────────────────────────────────
   { id: "cora",             campo: "cora",              rotulo: "Consulta-pedidos (Buffer + Deck D+7)", numero: "CORA", extensoes: ".csv", grupo: "cora", icon: "🧊" },
   { id: "coleta",           campo: "coleta",            rotulo: "Coleta (Shelf + 1º Vencimento)", numero: "xlsx", extensoes: ".xlsx,.xls", grupo: "cora", icon: "🏷️" },

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import Migracao, { Seta } from "./Migracao";
+import Migracao, { Seta, TagInativar } from "./Migracao";
 
 const STATUS_CONFIG = {
   "Aguardando": { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 
 // Tipos de solicitação (menu do "Nova solicitação"). Novo tipo = 1 item aqui + o form.
 const TIPOS = [
-  { id: "migracao", icon: "🔀", titulo: "Migração de PDVs", desc: "Trocar o RN ou o dia de visita de PDVs da sua base" },
+  { id: "migracao", icon: "🔀", titulo: "Migração / Inativação de PDVs", desc: "Trocar o RN ou o dia de visita, ou inativar PDVs da sua base" },
   { id: "incidente", icon: "🚨", titulo: "Incidente / ocorrência", desc: "Registrar um problema com evidência (foto ou vídeo)" },
 ];
 
@@ -154,7 +154,7 @@ export default function Incidentes() {
 
         {aba === "novo" && tipo === "migracao" && (
           <div style={styles.formCard}>
-            <h3 style={styles.formTitle}>🔀 Migração de PDVs</h3>
+            <h3 style={styles.formTitle}>🔀 Migração / Inativação de PDVs</h3>
             {isAdmin && !setorAdm
               ? <p style={styles.msg}>Escolha o setor do RN na barra "Agindo como" para ver a base dele.</p>
               : <Migracao setor={isAdmin ? setorAdm : undefined} />}
@@ -264,6 +264,7 @@ export default function Incidentes() {
                             <div key={it.id} style={styles.migItem}>
                               <span style={{ flex: "1 1 180px", minWidth: 0, color: "rgba(255,255,255,0.8)", fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.cod_pdv} · {it.nome_pdv}</span>
                               <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {it.inativar && <TagInativar />}
                                 {it.dia_novo && <Seta de={it.dia_atual} para={it.dia_novo} tipo="dia" />}
                                 {it.setor_novo && <Seta de={it.setor_atual} para={it.setor_novo} tipo="rn" />}
                               </span>

@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.74.1** — Solicitações: ADM age em nome de um RN.
+Versão atual: **v3.75.0** — Solicitações: Inativação de PDV (prévia de inadimplência + comodato) e import de Comodatos.
+
+## v3.75.0 — Inativação de PDV + Comodatos
+- **Migração / Inativação de PDVs:** cada PDV ganha o botão **🚫 Inativar**. Ao marcar, abre a **prévia**: **inadimplência** (relatório 120601 — títulos, valor, maior atraso) e **comodato** (relatório de Comodatos — equipamentos e quantos em aberto), com a data de cada base. **Justificativa obrigatória.** Inativar é exclusivo (desliga troca de RN/dia) e tira o PDV do balanço por dia.
+- A prévia fica **congelada no pedido** (como estava no dia). No **Admin › Solicitações** aparece a tag 🚫 INATIVAR com justificativa, inad e comodato; o **Excel** ganhou as colunas Ação, Justificativa, Inadimplência e Comodato.
+- **Arquivos:** novo slot **Comodatos (equipamentos no PDV)** no grupo Promax. Processador `processar_comodatos` → aba `comodatos` (1 linha por equipamento: comodatado, baixado, em aberto, valor, status, recolha). Quem está na relação tem comodato.
+- Backend: colunas novas em `solicitacoes_itens` (inativar, justificativa, inad_info, comodato_info).
 
 ## v3.74.1 — Solicitações: ADM age em nome de um RN
 - Na tela **Solicitações**, o perfil **ADM** ganha a barra **"👤 Agindo como [setor]"**: vê a base de PDVs da Migração, "Minhas solicitações" e abre Migração/Incidente **como aquele RN**. Só o ADM vê a barra.

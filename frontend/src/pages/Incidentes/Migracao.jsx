@@ -21,6 +21,37 @@ export function Seta({ de, para, tipo }) {
 }
 
 // `setor` (opcional): ADM agindo em nome de um RN — o backend só aceita para admin.
+export function TagInativar() {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(248,113,113,0.15)", color: "#f87171", border: "1px solid rgba(248,113,113,0.45)", borderRadius: 20, padding: "2px 9px", fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+      🚫 INATIVAR
+    </span>
+  );
+}
+
+const brl = (v) => "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Prévia da inativação: inadimplência (relatório 120601) + comodato (relatório de comodatos).
+function PreviaInativar({ p, fontes, justificativa, onJust }) {
+  const i = p.inad, c = p.comodato;
+  return (
+    <div style={S.previa}>
+      <div style={S.previaTit}>Prévia da inativação</div>
+      <div style={{ ...S.previaLinha, color: i ? "#f87171" : "#4ade80" }}>
+        {i ? <>⚠️ <b>Inadimplente</b>: {i.qtd_titulos} título(s) · {brl(i.valor)} · maior atraso {i.maior_atraso} dias</> : <>✅ Sem inadimplência</>}
+        <span style={S.fonte}>{fontes?.inad ? ` · base de ${fontes.inad}` : " · importe a Inadimplência (120601)"}</span>
+      </div>
+      <div style={{ ...S.previaLinha, color: c ? "#f5c451" : "#4ade80" }}>
+        {c ? <>🧊 <b>Tem comodato</b>: {c.itens.map((x, k) => <span key={k}>{k ? " · " : ""}{x.descricao} <b>({x.em_aberto} em aberto)</b></span>)}</> : <>✅ Sem comodato</>}
+        <span style={S.fonte}>{fontes?.temComodatos ? (fontes.comodatos ? ` · base de ${fontes.comodatos}` : "") : " · importe o relatório de Comodatos"}</span>
+      </div>
+      <textarea style={{ ...S.just, ...(justificativa.trim().length < 5 ? S.justErro : {}) }} rows={2} maxLength={500}
+        placeholder="Justificativa da inativação (obrigatória) — ex.: PDV fechou, mudou de ramo, sem compra há 6 meses…"
+        value={justificativa} onChange={(e) => onJust(e.target.value)} />
+    </div>
+  );
+}
+
 export default function Migracao({ onEnviado, setor }) {
   const [base, setBase] = useState(null);
   const [erro, setErro] = useState("");
@@ -43,7 +74,17 @@ export default function Migracao({ onEnviado, setor }) {
   const setCampo = (cod, campo, val) =>
     setAlt((a) => {
       const n = { ...a, [cod]: { ...(a[cod] || {}), [campo]: val } };
-      if (!n[cod].setor_novo && !n[cod].dia_novo) delete n[cod];
+      if (!n[cod].setor_novo && !n[cod].dia_novo && !n[cod].inativar) delete n[cod];
+      return n;
+    });
+
+  // Inativar é exclusivo: liga → limpa RN/dia (mantém a justificativa digitada); desliga → remove.
+  const toggleInativar = (cod) =>
+    setAlt((a) => {
+      const cur = a[cod] || {};
+      const n = { ...a };
+      if (cur.inativar) delete n[cod];
+      else n[cod] = { inativar: true, justificativa: cur.justificativa || "" };
       return n;
     });
 
@@ -52,11 +93,12 @@ export default function Migracao({ onEnviado, setor }) {
     return {
       rn: a.setor_novo && a.setor_novo !== base.setor ? a.setor_novo : "",
       dia: a.dia_novo && a.dia_novo !== p.dia ? a.dia_novo : "",
+      inat: !!a.inativar,
     };
   };
 
   const pdvs = base?.pdvs || [];
-  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia; }).length;
+  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia || m.inat; }).length;
 
   // Agrupa por dia (SEG–SEX, depois "sem dia"), ordena por nome dentro do dia.
   const grupos = useMemo(() => {
@@ -64,7 +106,7 @@ export default function Migracao({ onEnviado, setor }) {
     const q = busca.trim().toLowerCase();
     const filtro = (p) => {
       if (q && !(`${p.cod_pdv} ${p.nome}`.toLowerCase().includes(q))) return false;
-      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia) return false; }
+      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia && !m.inat) return false; }
       return true;
     };
     const chave = (d) => (DIAS.includes(d) ? d : "");
@@ -75,13 +117,13 @@ export default function Migracao({ onEnviado, setor }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, busca, soAlterados, alt]);
 
-  // Balanço por dia: antes × depois (quem migra de RN sai da carteira).
+  // Balanço por dia: antes × depois (quem migra de RN ou é inativado sai da carteira).
   const balanco = useMemo(() => {
     const b = {}; DIAS.forEach((d) => { b[d] = { antes: 0, depois: 0, hlA: 0, hlD: 0 }; });
     pdvs.forEach((p) => {
       const m = mudou(p);
       if (b[p.dia]) { b[p.dia].antes++; b[p.dia].hlA += p.media_tri; }
-      if (m.rn) return;
+      if (m.rn || m.inat) return;
       const dDepois = m.dia || p.dia;
       if (b[dDepois]) { b[dDepois].depois++; b[dDepois].hlD += p.media_tri; }
     });
@@ -91,9 +133,16 @@ export default function Migracao({ onEnviado, setor }) {
 
   async function enviar() {
     setMsg(""); setErro("");
-    const itens = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia)
-      .map(({ p, m }) => ({ cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia }));
-    if (!itens.length) { setErro("Nenhuma alteração marcada."); return; }
+    const marcados = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia || m.inat);
+    if (!marcados.length) { setErro("Nenhuma alteração marcada."); return; }
+    const semJust = marcados.filter(({ p, m }) => m.inat && (alt[p.cod_pdv]?.justificativa || "").trim().length < 5);
+    if (semJust.length) {
+      setErro(`Escreva a justificativa da inativação: ${semJust.map(({ p }) => p.nome).join(", ")}.`);
+      return;
+    }
+    const itens = marcados.map(({ p, m }) => (m.inat
+      ? { cod_pdv: p.cod_pdv, inativar: true, justificativa: alt[p.cod_pdv].justificativa.trim() }
+      : { cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia }));
     setEnviando(true);
     try {
       const r = await api.post("/api/solicitacoes/migracao", { motivo, itens, ...(setor ? { setor } : {}) }, { timeout: 60000 });
@@ -119,7 +168,7 @@ export default function Migracao({ onEnviado, setor }) {
         <label style={S.chk}><input type="checkbox" checked={soAlterados} onChange={(e) => setSoAlterados(e.target.checked)} /> Só alterados</label>
         <span style={S.info}>{pdvs.length} PDVs · média {base.meses.map(rotMes).join("/")}</span>
       </div>
-      <p style={S.dica}>Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação.</p>
+      <p style={S.dica}>Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação. Para tirar o PDV da carteira, use <b style={{ color: "#f87171" }}>🚫 Inativar</b> (mostra inadimplência e comodato; justificativa obrigatória).</p>
 
       {grupos.map((g) => (
         <div key={g.dia || "sem"} style={{ marginBottom: 14 }}>
@@ -136,12 +185,15 @@ export default function Migracao({ onEnviado, setor }) {
               );
             }
             return (
-              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.rn || m.dia ? S.linhaOn : {}) }}>
+              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.inat ? S.linhaInat : m.rn || m.dia ? S.linhaOn : {}) }}>
                 <div style={S.pdv}>
                   <div style={S.nome}>{p.nome}</div>
                   <div style={S.sub}>{p.cod_pdv} · <b style={{ color: "rgba(255,255,255,0.75)" }}>{fmt(p.media_tri)} HL/mês</b>{p.cidade ? ` · ${p.cidade}` : ""}</div>
                 </div>
                 <div style={S.ctrls}>
+                  <button type="button" onClick={() => toggleInativar(p.cod_pdv)} title="Inativar este PDV"
+                    style={{ ...S.btnInat, ...(m.inat ? S.btnInatOn : {}) }}>🚫 {m.inat ? "Inativando" : "Inativar"}</button>
+                  {!m.inat && <>
                   <select style={S.sel} value={a.setor_novo || ""} onChange={(e) => setCampo(p.cod_pdv, "setor_novo", e.target.value)} title="Migrar RN">
                     <option value="">RN: manter</option>
                     {optSetores.map((s) => <option key={s.setor} value={s.setor}>{s.setor}{s.nome ? ` · ${s.nome.split(" ")[0]}` : ""}</option>)}
@@ -150,12 +202,18 @@ export default function Migracao({ onEnviado, setor }) {
                     <option value="">Dia: manter</option>
                     {DIAS.filter((d) => d !== p.dia).map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
+                  </>}
                   <div style={S.alt}>
+                    {m.inat && <TagInativar />}
                     {m.dia && <Seta de={p.dia} para={m.dia} tipo="dia" />}
                     {m.rn && <Seta de={base.setor} para={m.rn} tipo="rn" />}
-                    {!m.dia && !m.rn && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
+                    {!m.dia && !m.rn && !m.inat && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
                   </div>
                 </div>
+                {m.inat && (
+                  <PreviaInativar p={p} fontes={base.fontes} justificativa={a.justificativa || ""}
+                    onJust={(v) => setCampo(p.cod_pdv, "justificativa", v)} />
+                )}
               </div>
             );
           })}
@@ -198,6 +256,15 @@ const S = {
   dica: { color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", margin: "0 0 12px" },
   grupo: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", fontWeight: 700, fontSize: "0.8rem", padding: "6px 12px", borderRadius: 8, marginBottom: 4 },
   linha: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px", padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  linhaInat: { background: "rgba(248,113,113,0.06)", borderRadius: 8 },
+  btnInat: { background: "transparent", color: "rgba(248,113,113,0.85)", border: "1px solid rgba(248,113,113,0.35)", borderRadius: 8, padding: "6px 10px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
+  btnInatOn: { background: "rgba(248,113,113,0.18)", color: "#f87171", fontWeight: 700 },
+  previa: { flex: "1 1 100%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 },
+  previaTit: { color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" },
+  previaLinha: { fontSize: "0.82rem", lineHeight: 1.4 },
+  fonte: { color: "rgba(255,255,255,0.35)", fontSize: "0.72rem" },
+  just: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: "#fff", padding: "8px 10px", fontSize: "0.84rem", fontFamily: "inherit", outline: "none", resize: "vertical" },
+  justErro: { border: "1px solid rgba(248,113,113,0.6)" },
   linhaOn: { background: "rgba(245,196,81,0.05)", borderRadius: 8 },
   pdv: { flex: "1 1 220px", minWidth: 0 },
   nome: { color: "#fff", fontSize: "0.86rem", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
