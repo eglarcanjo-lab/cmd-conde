@@ -21,7 +21,7 @@ const corClara = (pct) => {
 };
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
-export default function ResumoVolumes() {
+export default function ResumoVolumes({ mes }) {
   const [data, setData] = useState(null);
   const [curva, setCurva] = useState(null);
   const [erro, setErro] = useState("");
@@ -146,7 +146,7 @@ export default function ResumoVolumes() {
     let cancel = false;
     let tentativas = 0;
     const buscar = () => {
-      api.get("/api/resumo/volumes", { timeout: 18000 })
+      api.get("/api/resumo/volumes", { params: mes ? { mes } : {}, timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
@@ -162,10 +162,11 @@ export default function ResumoVolumes() {
           }
         });
     };
+    setData(null); setErro("");
     buscar();
-    api.get("/api/resumo/curva", { timeout: 18000 }).then((r) => { if (!cancel) setCurva(r.data); }).catch(() => {});
+    api.get("/api/resumo/curva", { params: mes ? { ano: mes.slice(0, 4) } : {}, timeout: 18000 }).then((r) => { if (!cancel) setCurva(r.data); }).catch(() => {});
     return () => { cancel = true; };
-  }, []);
+  }, [mes]);
 
   // Exporta o Report de Volumes formatado igual ao PDF do motor (cabeçalho verde por
   // categoria, subcolunas, seções em negrito, heatmap nas % via _cor/_corT).

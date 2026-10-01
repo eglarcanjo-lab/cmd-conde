@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.72.1** — Deck volta a excluir Marketplace e sem categoria.
+Versão atual: **v3.73.0** — Home: seletor de Mês de referência (fechamento até o 5º dia útil).
+
+## v3.73.0 — Home: Mês de referência
+- **Seletor "📅 Mês de referência"** no topo da Home (dashboard admin/diretor): escolhe entre os últimos 4 meses e muda **toda** a visão — Volumes (Barras, Curva, Analítico, Excel), Foco NE, Verdes e Rankings.
+- **Padrão automático:** até o **5º dia útil** do mês a Home abre no **mês anterior** (período de fechamento, ainda alimentando dados); depois abre no mês atual. Dias úteis = seg–sex (sem feriados).
+- Corrige a Home "zerada" na virada do mês (dia 01: tudo ia para o mês novo, sem dados — sumiam Barras e Analítico).
+- Backend: `/api/resumo/rankings` e `/api/resumo/verdes` aceitam `?mes=` (mês fechado → comparação do mês inteiro; Verdes mostra o trimestre do mês escolhido). Volumes/Foco NE já aceitavam; Curva usa o ano do mês escolhido.
 
 ## v3.72.1 — Deck: sem Marketplace e sem "sem categoria"
 - Ajuste da v3.72.0 a pedido: o Deck mostra os produtos da Grade **exceto Marketplace e sem categoria** (grupos Cerveja · NAB · Match). Volta a regra anterior à v3.72.0 — produto novo só entra no Deck depois de categorizado em Admin › Produtos.

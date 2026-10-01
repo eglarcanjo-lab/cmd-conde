@@ -8,6 +8,7 @@ import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
 import { HOP_ATIVA } from "../theme";
+import { mesPadraoHome, somaMes, rotuloMes } from "../utils/mesRef";
 
 // Sub-abas do Admin (deep-link /admin?tab=id) — espelha as TABS de pages/Admin/index.jsx
 const ADMIN_TABS = [
@@ -34,6 +35,10 @@ export default function HomeDashboard() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [aberto, setAberto] = useState(true); // estilo Vercel: começa expandida
+  const [padrao] = useState(mesPadraoHome);
+  const [mes, setMes] = useState(padrao.mes);
+  // Últimos 4 meses (mais antigo → atual) para o seletor.
+  const opcoesMes = [-3, -2, -1, 0].map((k) => somaMes(padrao.atual, k));
   const [grupos, setGrupos] = useState(() => new Set());
 
   const perfil = usuario?.perfil;
@@ -124,10 +129,27 @@ export default function HomeDashboard() {
           </div>
         </div>
 
-        <ResumoVolumes />
-        <ResumoFocoNE />
-        <ResumoVerdes />
-        <ResumoRankings />
+        {/* Mês de referência: muda TODA a visão da Home (até o 5º dia útil abre no mês anterior) */}
+        <div style={styles.mesBar}>
+          <span style={styles.mesLbl}>📅 Mês de referência</span>
+          <div style={styles.mesSeg}>
+            {opcoesMes.map((m) => (
+              <button key={m} onClick={() => setMes(m)} style={{ ...styles.mesBtn, ...(mes === m ? styles.mesOn : {}) }}>
+                {rotuloMes(m)}{m === padrao.atual ? " · atual" : ""}
+              </button>
+            ))}
+          </div>
+          {padrao.fechando && (
+            <span style={styles.mesNota}>
+              Fechamento de {rotuloMes(somaMes(padrao.atual, -1))} até o 5º dia útil (dia {padrao.limite}) — a Home abre nele por padrão.
+            </span>
+          )}
+        </div>
+
+        <ResumoVolumes mes={mes} />
+        <ResumoFocoNE mes={mes} />
+        <ResumoVerdes mes={mes} />
+        <ResumoRankings mes={mes} />
       </main>
     </div>
   );
@@ -189,6 +211,12 @@ const styles = {
   subItem: { display: "flex", alignItems: "center", gap: "8px", width: "100%", minHeight: "32px", padding: "0 8px", background: "transparent", border: "none", borderRadius: "7px", color: "rgba(255,255,255,0.55)", fontFamily: "inherit", fontSize: "0.82rem", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", cursor: "pointer", transition: "background 0.12s, color 0.12s" },
   subIcon: { fontSize: "0.85rem", flexShrink: 0, width: "18px", textAlign: "center" },
   main: { flex: 1, minWidth: 0, padding: "clamp(16px,3vw,26px) clamp(14px,3vw,28px)", maxWidth: "none" },
+  mesBar: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14, padding: "10px 14px", background: "rgba(125,186,61,0.06)", border: "1px solid rgba(125,186,61,0.2)", borderRadius: 12 },
+  mesLbl: { color: "#7DBA3D", fontWeight: 700, fontSize: "0.85rem" },
+  mesSeg: { display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2 },
+  mesBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.55)", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.8rem", fontFamily: "inherit" },
+  mesOn: { background: "rgba(125,186,61,0.22)", color: "#7DBA3D", fontWeight: 700 },
+  mesNota: { color: "rgba(255,255,255,0.45)", fontSize: "0.74rem" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "clamp(16px,4vw,24px)", flexWrap: "wrap", gap: "12px" },
   headerRight: { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" },
   greeting: { color: "rgba(255,255,255,0.4)", margin: "0 0 2px", fontSize: "0.85rem" },

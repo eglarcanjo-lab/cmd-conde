@@ -11,7 +11,7 @@ const cor = (pct) => {
 };
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
-export default function ResumoFocoNE() {
+export default function ResumoFocoNE({ mes }) {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
@@ -20,7 +20,7 @@ export default function ResumoFocoNE() {
     let cancel = false;
     let tent = 0;
     const buscar = () => {
-      api.get("/api/resumo/foco-ne", { timeout: 18000 })
+      api.get("/api/resumo/foco-ne", { params: mes ? { mes } : {}, timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
@@ -30,9 +30,10 @@ export default function ResumoFocoNE() {
           else setErro(st ? `HTTP ${st}` : (e?.message || "falha"));
         });
     };
+    setData(null); setErro("");
     buscar();
     return () => { cancel = true; };
-  }, []);
+  }, [mes]);
 
   if (erro) return null; // discreto: se falhar, só não mostra (o Volumes já avisa cold-start)
   if (!data && !esperando) return null;

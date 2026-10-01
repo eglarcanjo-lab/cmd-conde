@@ -74,7 +74,7 @@ function Tabela({ titulo, colNome, linhas, periodo, atualLabel, y1Label, mediaLa
   );
 }
 
-export default function ResumoRankings() {
+export default function ResumoRankings({ mes }) {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
@@ -83,7 +83,7 @@ export default function ResumoRankings() {
   useEffect(() => {
     let cancel = false, tent = 0;
     const buscar = () => {
-      api.get("/api/resumo/rankings", { timeout: 18000 })
+      api.get("/api/resumo/rankings", { params: mes ? { mes } : {}, timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
@@ -93,9 +93,10 @@ export default function ResumoRankings() {
           else setErro(st ? `HTTP ${st}` : (e?.message || "falha"));
         });
     };
+    setData(null); setErro("");
     buscar();
     return () => { cancel = true; };
-  }, []);
+  }, [mes]);
 
   if (erro) return null;
   if (!data) return <div style={S.skel}>{esperando ? "Acordando o servidor…" : "Carregando rankings…"}</div>;

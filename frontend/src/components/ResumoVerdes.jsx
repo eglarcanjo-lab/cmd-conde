@@ -11,7 +11,7 @@ const rotMes = (m) => { const [, mo] = String(m).split("-"); return MESES_ABR[(N
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR");
 const primeiroNome = (s) => String(s || "").trim().split(/\s+/)[0] || "";
 
-export default function ResumoVerdes() {
+export default function ResumoVerdes({ mes }) {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
@@ -23,7 +23,7 @@ export default function ResumoVerdes() {
   useEffect(() => {
     let cancel = false, tent = 0;
     const buscar = () => {
-      api.get("/api/resumo/verdes", { timeout: 18000 })
+      api.get("/api/resumo/verdes", { params: mes ? { mes } : {}, timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
@@ -33,9 +33,10 @@ export default function ResumoVerdes() {
           else setErro(st ? `HTTP ${st}` : (e?.message || "falha"));
         });
     };
+    setData(null); setErro(""); setMesSel(null);
     buscar();
     return () => { cancel = true; };
-  }, []);
+  }, [mes]);
 
   // Export Excel: linha a linha dos pedidos do SKU, respeitando o filtro atual (RN + mês).
   async function exportarExcel() {

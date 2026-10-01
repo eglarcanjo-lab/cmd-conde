@@ -234,11 +234,14 @@ router.get("/rankings", async (req, res) => {
     // Janela (fuso BR): mês atual, anterior e trimestre = 3 meses de CALENDÁRIO.
     // (Antes o trimestre eram os "3 meses mais recentes das vendas"; com 2025 carregado
     //  isso obrigava a ler a tabela inteira. Agora derivamos do calendário e lemos só esses.)
+    // ?mes=YYYY-MM (seletor da Home): mês FECHADO → compara o mês inteiro (01..último dia).
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const cutoffDia = brNow.getDate() - 1;
-    const y = brNow.getFullYear(), m0 = brNow.getMonth();
     const ym = (yy, mm0) => { const d = new Date(yy, mm0, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
-    const mesAtual = ym(y, m0);
+    const mesHoje = ym(brNow.getFullYear(), brNow.getMonth());
+    const mesQ = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : mesHoje;
+    const y = Number(mesQ.slice(0, 4)), m0 = Number(mesQ.slice(5, 7)) - 1;
+    const cutoffDia = mesQ === mesHoje ? brNow.getDate() - 1 : new Date(y, m0 + 1, 0).getDate();
+    const mesAtual = mesQ;
     const mesAnterior = ym(y, m0 - 1);
     const mesY1 = ym(y - 1, m0); // mesmo mês, ano passado (Y-1)
     // Média = 3 meses COMPLETOS anteriores (EXCLUI o mês atual). Ex.: julho → abr/mai/jun.
@@ -359,9 +362,11 @@ router.get("/verdes", async (req, res) => {
     const normCod = (x) => { const s = String(x || "").trim(); return s.replace(/^0+/, "") || s; };
     const SKU = normCod(req.query.sku || "33857");
 
-    // Trimestre atual (civil): jan-mar, abr-jun, jul-set, out-dez.
+    // Trimestre (civil) do mês pedido (?mes=YYYY-MM, seletor da Home) ou do mês atual.
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const y = brNow.getFullYear(), m0 = brNow.getMonth();
+    const mesQ = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : null;
+    const y = mesQ ? Number(mesQ.slice(0, 4)) : brNow.getFullYear();
+    const m0 = mesQ ? Number(mesQ.slice(5, 7)) - 1 : brNow.getMonth();
     const triStart = Math.floor(m0 / 3) * 3;
     const janela = [0, 1, 2].map((k) => {
       const d = new Date(y, triStart + k, 1);
