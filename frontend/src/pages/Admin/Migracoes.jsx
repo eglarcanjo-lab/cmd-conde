@@ -53,23 +53,30 @@ export default function Migracoes() {
 
   const carregar = async () => {
     setLoading(true);
-    try { const r = await api.get("/api/solicitacoes", { timeout: 60000 }); setSols((r.data || []).filter((s) => s.tipo === "migracao_pdv")); }
-    catch { setSols([]); }
+    let lista = [];
+    try { const r = await api.get("/api/solicitacoes", { timeout: 60000 }); lista = (r.data || []).filter((s) => s.tipo === "migracao_pdv"); }
+    catch { lista = []; }
     finally { setLoading(false); }
+    setSols(lista);
+    return lista;
   };
   useEffect(() => { carregar(); }, []);
 
-  const abrir = (s) => {
-    setSel(s); setResposta(""); setErro("");
-    setMarcados(new Set(s.itens.filter((it) => it.status !== "Recusado").map((it) => it.id)));
-  };
+  // Só linhas PENDENTES são marcáveis; ao abrir, nenhuma vem marcada (você escolhe).
+  const pendentes = (s) => s.itens.filter((it) => it.status === "Pendente");
+  const abrir = (s) => { setSel(s); setResposta(""); setErro(""); setMarcados(new Set()); };
   const toggle = (id) => setMarcados((m) => { const n = new Set(m); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  async function decidir(aprovados) {
+  // Decide SÓ as linhas marcadas; as demais seguem pendentes (dá para decidir em etapas).
+  async function decidir(acao) {
+    if (!marcados.size) { setErro("Marque as linhas que quer " + (acao === "Aprovado" ? "aprovar." : "recusar.")); return; }
     setSalvando(true); setErro("");
     try {
-      await api.post(`/api/solicitacoes/${sel.id}/decidir`, { aprovados: [...aprovados], resposta });
-      setSel(null); await carregar();
+      await api.post(`/api/solicitacoes/${sel.id}/decidir`, { itens: [...marcados], acao, resposta });
+      const lista = await carregar();
+      const atual = lista.find((x) => x.id === sel.id);
+      if (atual && atual.status === "Em aprovação") abrir(atual);   // ainda há pendentes → continua aberto
+      else setSel(null);
     } catch (e) { setErro(e.response?.data?.error || "Erro ao salvar a decisão."); }
     finally { setSalvando(false); }
   }
@@ -134,13 +141,21 @@ export default function Migracoes() {
               <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                   <thead><tr>
-                    {sel.status === "Em aprovação" && <th style={S.th}>✔</th>}
+                    {sel.status === "Em aprovação" && (
+                      <th style={S.th}>
+                        <input type="checkbox" title="Marcar/desmarcar todas as pendentes"
+                          checked={pendentes(sel).length > 0 && marcados.size === pendentes(sel).length}
+                          onChange={(e) => setMarcados(e.target.checked ? new Set(pendentes(sel).map((it) => it.id)) : new Set())} />
+                      </th>
+                    )}
                     {["PDV", "Média tri", "Alteração", "Status"].map((h) => <th key={h} style={{ ...S.th, textAlign: h === "PDV" ? "left" : "center" }}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {sel.itens.map((it) => (
-                      <tr key={it.id} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", opacity: sel.status === "Em aprovação" && !marcados.has(it.id) ? 0.45 : 1 }}>
-                        {sel.status === "Em aprovação" && <td style={S.td}><input type="checkbox" checked={marcados.has(it.id)} onChange={() => toggle(it.id)} /></td>}
+                      <tr key={it.id} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: marcados.has(it.id) ? "rgba(125,186,61,0.08)" : undefined }}>
+                        {sel.status === "Em aprovação" && <td style={S.td}>{it.status === "Pendente"
+                          ? <input type="checkbox" checked={marcados.has(it.id)} onChange={() => toggle(it.id)} />
+                          : <span style={{ color: COR[it.status] }}>{it.status === "Aprovado" ? "✔" : "✖"}</span>}</td>}
                         <td style={{ ...S.td, textAlign: "left" }}>{it.cod_pdv} · {it.nome_pdv}</td>
                         <td style={S.td}>{fmt(it.media_tri_hl)} HL</td>
                         <td style={S.td}><span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
@@ -155,7 +170,7 @@ export default function Migracoes() {
                             <div style={{ color: /^TEM COMODATO/.test(it.comodato_info || "") ? "#f5c451" : "#4ade80" }}>{it.comodato_info}</div>
                           </div>
                         )}</td>
-                        <td style={{ ...S.td, color: COR[it.status], fontWeight: 700 }}>{it.status === "Pendente" ? (marcados.has(it.id) ? "Aprovar" : "Recusar") : it.status}</td>
+                        <td style={{ ...S.td, color: COR[it.status], fontWeight: 700 }}>{it.status === "Pendente" ? "Pendente" : it.status}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -164,13 +179,19 @@ export default function Migracoes() {
 
               {sel.status === "Em aprovação" ? (
                 <>
-                  <textarea style={S.txt} rows={2} placeholder="Comentário para o RN (opcional)" value={resposta} onChange={(e) => setResposta(e.target.value)} />
+                  <p style={{ margin: "10px 0 0", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>
+                    Marque as linhas e clique em aprovar ou recusar — só as marcadas são decididas; as outras continuam pendentes.
+                    {` ${pendentes(sel).length} pendente(s).`}
+                  </p>
+                  <textarea style={S.txt} rows={2} placeholder="Comentário para o RN (opcional — vale para as linhas desta decisão)" value={resposta} onChange={(e) => setResposta(e.target.value)} />
                   {erro && <p style={{ color: "#f87171", fontSize: "0.82rem", margin: "6px 0 0" }}>{erro}</p>}
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                    <button style={S.ok} disabled={salvando} onClick={() => decidir(marcados)}>
-                      {salvando ? "Salvando…" : marcados.size === sel.itens.length ? `✅ Aprovar tudo (${marcados.size})` : `✅ Aprovar ${marcados.size} · recusar ${sel.itens.length - marcados.size}`}
+                    <button style={{ ...S.ok, opacity: marcados.size ? 1 : 0.5 }} disabled={salvando} onClick={() => decidir("Aprovado")}>
+                      {salvando ? "Salvando…" : `✅ Aprovar marcados (${marcados.size})`}
                     </button>
-                    <button style={S.nok} disabled={salvando} onClick={() => decidir(new Set())}>✖ Recusar tudo</button>
+                    <button style={{ ...S.nok, opacity: marcados.size ? 1 : 0.5 }} disabled={salvando} onClick={() => decidir("Recusado")}>
+                      {`✖ Recusar marcados (${marcados.size})`}
+                    </button>
                   </div>
                 </>
               ) : (

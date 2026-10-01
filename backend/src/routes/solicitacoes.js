@@ -286,26 +286,37 @@ router.get("/pendentes", async (req, res) => {
   } catch { return res.json({ pendentes: 0 }); }
 });
 
-// POST /api/solicitacoes/:id/decidir — { aprovados:[itemId], resposta }
-// Itens fora de "aprovados" são recusados. Status do pedido: Aprovado / Recusado / Parcial.
+// POST /api/solicitacoes/:id/decidir — { itens:[itemId], acao:"Aprovado"|"Recusado", resposta }
+// Decide SÓ os itens marcados (ainda pendentes); os demais seguem pendentes. Dá para decidir
+// em etapas. Enquanto houver item pendente o pedido fica "Em aprovação"; quando o último é
+// decidido: Aprovado (todos aprovados) / Recusado (todos recusados) / Parcial.
 router.post("/:id/decidir", adminOnly, async (req, res) => {
   try {
     await ensureTabelas();
     const { id } = req.params;
-    const aprovados = new Set((req.body?.aprovados || []).map(Number));
+    const acao = req.body?.acao;
+    if (!["Aprovado", "Recusado"].includes(acao)) return res.status(400).json({ error: "Ação inválida." });
+    const marcados = new Set((req.body?.itens || []).map(Number));
     const sol = await carregar("WHERE id = $1", [id]);
     if (!sol.length) return res.status(404).json({ error: "Solicitação não encontrada." });
     if (sol[0].status !== "Em aprovação") return res.status(409).json({ error: "Esta solicitação já foi decidida." });
     const itens = sol[0].itens;
-    for (const it of itens) {
-      await query(`UPDATE solicitacoes_itens SET status = $1 WHERE id = $2`, [aprovados.has(it.id) ? "Aprovado" : "Recusado", it.id]);
+    const alvo = itens.filter((it) => it.status === "Pendente" && marcados.has(it.id));
+    if (!alvo.length) return res.status(400).json({ error: "Marque ao menos uma linha pendente." });
+    for (const it of alvo) {
+      await query(`UPDATE solicitacoes_itens SET status = $1 WHERE id = $2`, [acao, it.id]);
+      it.status = acao;
     }
-    const nAp = itens.filter((it) => aprovados.has(it.id)).length;
-    const status = nAp === itens.length ? "Aprovado" : nAp === 0 ? "Recusado" : "Parcial";
+    const pend = itens.filter((it) => it.status === "Pendente").length;
+    const nAp = itens.filter((it) => it.status === "Aprovado").length;
+    const status = pend > 0 ? "Em aprovação" : nAp === itens.length ? "Aprovado" : nAp === 0 ? "Recusado" : "Parcial";
+    // Comentário acumula entre as etapas (ex.: "Recusado: rota cheia | Aprovado: ok").
+    const coment = String(req.body?.resposta || "").trim().slice(0, 300);
+    const resposta = [sol[0].resposta, coment ? `${acao}: ${coment}` : ""].filter(Boolean).join(" | ").slice(0, 1000);
     await query(
       `UPDATE solicitacoes SET status = $1, resposta = $2, decidido_em = now(), decidido_por = $3 WHERE id = $4`,
-      [status, String(req.body?.resposta || "").trim().slice(0, 500), req.user.nome || "", id]);
-    return res.json({ success: true, status });
+      [status, resposta || null, req.user.nome || "", id]);
+    return res.json({ success: true, status, decididos: alvo.length, pendentes: pend });
   } catch (e) {
     console.error("solicitacoes/decidir:", e);
     return res.status(500).json({ error: "Erro ao registrar a decisão." });

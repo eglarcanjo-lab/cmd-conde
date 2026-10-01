@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.75.0** — Solicitações: Inativação de PDV (prévia de inadimplência + comodato) e import de Comodatos.
+Versão atual: **v3.75.1** — Aprovação de migrações: aprovar/recusar só as linhas marcadas.
+
+## v3.75.1 — Aprovar/recusar só o que está marcado
+- **Admin › Solicitações › Migrações:** os botões viraram **✅ Aprovar marcados** e **✖ Recusar marcados** — decidem **só as linhas marcadas**; as demais **continuam pendentes**. Dá para decidir em etapas; o pedido segue "Em aprovação" até a última linha e fecha como Aprovado / Recusado / Parcial.
+- Checkbox no cabeçalho marca/desmarca todas as pendentes; linhas já decididas mostram ✔/✖. O comentário de cada etapa é acumulado ("Aprovado: … | Recusado: …").
+- Backend: `POST /api/solicitacoes/:id/decidir` agora recebe `{ itens, acao, resposta }`.
 
 ## v3.75.0 — Inativação de PDV + Comodatos
 - **Migração / Inativação de PDVs:** cada PDV ganha o botão **🚫 Inativar**. Ao marcar, abre a **prévia**: **inadimplência** (relatório 120601 — títulos, valor, maior atraso) e **comodato** (relatório de Comodatos — equipamentos e quantos em aberto), com a data de cada base. **Justificativa obrigatória.** Inativar é exclusivo (desliga troca de RN/dia) e tira o PDV do balanço por dia.
