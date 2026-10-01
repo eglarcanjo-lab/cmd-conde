@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.73.0** — Home: seletor de Mês de referência (fechamento até o 5º dia útil).
+Versão atual: **v3.74.0** — Solicitações: Migração de PDVs (RN pede, admin aprova e baixa Excel).
+
+## v3.74.0 — Solicitações: Migração de PDVs
+- A aba **Incidentes** vira **Solicitações**. "Nova solicitação" abre um **menu de tipos**: 🔀 **Migração de PDVs** (novo) e 🚨 **Incidente** (o de antes, sem mudança). Novos tipos entram no mesmo menu.
+- **Migração de PDVs (RN):** a base do RN em tabela, agrupada por **dia de visita (SEG–SEX)**, com a **média de volume do tri** (3 meses completos anteriores). Por PDV: **Migrar RN** (todos os setores) e **Migrar dia** — em branco = mantém. Coluna de **alteração com seta** (amarela = dia, roxa = RN). Busca, filtro "Só alterados", **balanço por dia** (PDVs e HL antes ➜ depois), motivo opcional e envio **em lote**. PDV já em aprovação fica travado ("⏳ Em aprovação").
+- **Admin › Solicitações › Migrações:** aprova/recusa **linha a linha** (ou tudo), comentário para o RN; status Aprovado / Parcial / Recusado. **Excel** dos aprovados (com novo setor/dia destacados) e de cada solicitação. O app **não altera o Promax** — a mudança é feita à mão a partir do Excel.
+- RN acompanha em "Minhas solicitações" (status por PDV). Sininho do admin conta as migrações pendentes.
+- Backend: rota nova `/api/solicitacoes` (tabelas `solicitacoes` + `solicitacoes_itens`, criadas no 1º uso). Snapshot (nome, setor/dia atual, média) montado no servidor.
 
 ## v3.73.0 — Home: Mês de referência
 - **Seletor "📅 Mês de referência"** no topo da Home (dashboard admin/diretor): escolhe entre os últimos 4 meses e muda **toda** a visão — Volumes (Barras, Curva, Analítico, Excel), Foco NE, Verdes e Rankings.

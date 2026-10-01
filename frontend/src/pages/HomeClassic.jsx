@@ -22,7 +22,7 @@ export default function HomeClassic() {
     { icon: "✅", label: "Tasks",         route: "/tasks",         ativo: true,  soGestor: false, soRn: false },
     { icon: "💰", label: "Remuneração",   route: "/rv",            ativo: true,  soGestor: false, soRn: true  },
     { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: false, soRn: false },
-    { icon: "🚨", label: "Incidentes",    route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
+    { icon: "🚨", label: "Solicitações",  route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
     { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer", ativo: true, soGestor: false, soRn: false },
     { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
     { icon: "🧊", label: "Equipamentos", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false, soAdminDir: true },

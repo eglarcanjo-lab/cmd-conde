@@ -2,17 +2,31 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import Migracao, { Seta } from "./Migracao";
 
 const STATUS_CONFIG = {
   "Aguardando": { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
   "Respondido": { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
+  "Em aprovação": { bg: "rgba(245,196,81,0.15)", color: "#f5c451" },
+  "Aprovado":   { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
+  "Recusado":   { bg: "rgba(248,113,113,0.15)", color: "#f87171" },
+  "Parcial":    { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
+  "Pendente":   { bg: "rgba(245,196,81,0.15)", color: "#f5c451" },
 };
+
+// Tipos de solicitação (menu do "Nova solicitação"). Novo tipo = 1 item aqui + o form.
+const TIPOS = [
+  { id: "migracao", icon: "🔀", titulo: "Migração de PDVs", desc: "Trocar o RN ou o dia de visita de PDVs da sua base" },
+  { id: "incidente", icon: "🚨", titulo: "Incidente / ocorrência", desc: "Registrar um problema com evidência (foto ou vídeo)" },
+];
 
 export default function Incidentes() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [aba, setAba] = useState("novo");
   const [meus, setMeus] = useState([]);
+  const [minhasMig, setMinhasMig] = useState([]);
+  const [tipo, setTipo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [sucesso, setSucesso] = useState("");
@@ -29,8 +43,12 @@ export default function Incidentes() {
   async function carregarMeus() {
     setLoading(true);
     try {
-      const res = await api.get("/api/incidentes/meus");
+      const [res, mig] = await Promise.all([
+        api.get("/api/incidentes/meus").catch(() => ({ data: [] })),
+        api.get("/api/solicitacoes/minhas").catch(() => ({ data: [] })),
+      ]);
       setMeus(res.data || []);
+      setMinhasMig(mig.data || []);
     } catch { }
     finally { setLoading(false); }
   }
@@ -75,7 +93,7 @@ export default function Incidentes() {
         <div style={styles.headerLeft}>
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
-            <h1 style={styles.title}>🚨 Incidentes</h1>
+            <h1 style={styles.title}>🚨 Solicitações</h1>
             <p style={styles.subtitle}>{usuario?.nome} · Setor {usuario?.cod}</p>
           </div>
         </div>
@@ -93,8 +111,31 @@ export default function Incidentes() {
           </button>
         </div>
 
-        {/* Nova solicitação */}
-        {aba === "novo" && (
+        {/* Nova solicitação — escolha do tipo */}
+        {aba === "novo" && !tipo && (
+          <div style={styles.tipos}>
+            {TIPOS.map((t) => (
+              <button key={t.id} style={styles.tipoCard} onClick={() => setTipo(t.id)}>
+                <span style={{ fontSize: "1.6rem" }}>{t.icon}</span>
+                <span style={styles.tipoTit}>{t.titulo}</span>
+                <span style={styles.tipoDesc}>{t.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {aba === "novo" && tipo && (
+          <button style={styles.trocarTipo} onClick={() => setTipo(null)}>← Trocar tipo de solicitação</button>
+        )}
+
+        {aba === "novo" && tipo === "migracao" && (
+          <div style={styles.formCard}>
+            <h3 style={styles.formTitle}>🔀 Migração de PDVs</h3>
+            <Migracao />
+          </div>
+        )}
+
+        {/* Incidente (formulário original) */}
+        {aba === "novo" && tipo === "incidente" && (
           <div style={styles.formCard}>
             <h3 style={styles.formTitle}>Registrar Ocorrência</h3>
 
@@ -173,10 +214,46 @@ export default function Incidentes() {
           <div>
             {loading ? (
               <p style={styles.msg}>Carregando...</p>
-            ) : meus.length === 0 ? (
+            ) : meus.length === 0 && minhasMig.length === 0 ? (
               <p style={styles.msg}>Nenhuma solicitação encontrada.</p>
             ) : (
               <div style={styles.lista}>
+                {minhasMig.map((sol) => {
+                  const st = STATUS_CONFIG[sol.status] || STATUS_CONFIG["Em aprovação"];
+                  return (
+                    <div key={sol.id} style={styles.incCard}>
+                      <div style={styles.incHeader}>
+                        <div style={styles.incHeaderLeft}>
+                          <span style={{ ...styles.statusTag, background: st.bg, color: st.color }}>{sol.status}</span>
+                          <span style={styles.incData}>🔀 Migração · {sol.itens.length} PDV{sol.itens.length > 1 ? "s" : ""} · {new Date(sol.criado_em).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                        <span style={styles.incId}>#{sol.id}</span>
+                      </div>
+                      {sol.motivo && <p style={styles.incDesc}>{sol.motivo}</p>}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {sol.itens.map((it) => {
+                          const sti = STATUS_CONFIG[it.status] || STATUS_CONFIG["Pendente"];
+                          return (
+                            <div key={it.id} style={styles.migItem}>
+                              <span style={{ flex: "1 1 180px", minWidth: 0, color: "rgba(255,255,255,0.8)", fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.cod_pdv} · {it.nome_pdv}</span>
+                              <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {it.dia_novo && <Seta de={it.dia_atual} para={it.dia_novo} tipo="dia" />}
+                                {it.setor_novo && <Seta de={it.setor_atual} para={it.setor_novo} tipo="rn" />}
+                              </span>
+                              <span style={{ ...styles.statusTag, background: sti.bg, color: sti.color }}>{it.status === "Pendente" ? "Em aprovação" : it.status}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {sol.resposta && (
+                        <div style={styles.respostaBox}>
+                          <p style={styles.respostaLabel}>💬 Resposta:</p>
+                          <p style={styles.respostaTexto}>{sol.resposta}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 {meus.map((inc) => {
                   const stConf = STATUS_CONFIG[inc.status] || STATUS_CONFIG["Aguardando"];
                   return (
@@ -230,6 +307,12 @@ const styles = {
   abas: { display: "flex", gap: "4px", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)", overflowX: "auto" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "12px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", whiteSpace: "nowrap", minHeight: "44px" },
   abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
+  tipos: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" },
+  tipoCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(125,186,61,0.25)", borderRadius: "14px", padding: "18px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "#fff" },
+  tipoTit: { fontWeight: "700", fontSize: "0.95rem" },
+  tipoDesc: { color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", lineHeight: 1.4 },
+  trocarTipo: { background: "transparent", border: "none", color: "#7DBA3D", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem", padding: "0 0 12px" },
+  migItem: { display: "flex", alignItems: "center", gap: "8px 10px", flexWrap: "wrap", padding: "6px 8px", background: "rgba(255,255,255,0.03)", borderRadius: "8px" },
   formCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "clamp(16px,4vw,28px)", display: "flex", flexDirection: "column", gap: "20px" },
   formTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", color: "rgba(255,255,255,0.8)" },
   field: { display: "flex", flexDirection: "column", gap: "8px" },

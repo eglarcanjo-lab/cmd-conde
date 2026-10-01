@@ -1,12 +1,29 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import Migracoes from "./Migracoes";
 
 const STATUS_CONFIG = {
   "Aguardando": { bg: "rgba(125,186,61,0.15)", color: "#7DBA3D" },
   "Respondido": { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" },
 };
 
-export default function Incidentes() {
+export default function Solicitacoes() {
+  const [tipo, setTipo] = useState("migracoes");
+  const btn = (k, l) => (
+    <button key={k} onClick={() => setTipo(k)} style={{ background: tipo === k ? "rgba(125,186,61,0.2)" : "transparent", color: tipo === k ? "#7DBA3D" : "rgba(255,255,255,0.5)", border: "none", borderRadius: 6, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.84rem", fontWeight: tipo === k ? 700 : 400 }}>{l}</button>
+  );
+  return (
+    <div>
+      <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2, marginBottom: 16 }}>
+        {btn("migracoes", "🔀 Migrações de PDV")}
+        {btn("incidentes", "🚨 Incidentes")}
+      </div>
+      {tipo === "migracoes" ? <Migracoes /> : <Incidentes />}
+    </div>
+  );
+}
+
+function Incidentes() {
   const [incidentes, setIncidentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);

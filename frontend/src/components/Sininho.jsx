@@ -8,6 +8,7 @@ export default function Sininho() {
   const navigate = useNavigate();
   const [incidentes, setIncidentes] = useState(0);
   const [semCat, setSemCat] = useState(0);
+  const [migracoes, setMigracoes] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
 
   const isGestor = ["admin", "director", "gv1", "gv3"].includes(usuario?.perfil);
@@ -21,10 +22,12 @@ export default function Sininho() {
 
   async function buscar() {
     try {
-      const [resInc, resSem] = await Promise.all([
+      const [resInc, resSem, resMig] = await Promise.all([
         api.get("/api/incidentes/pendentes"),
         api.get("/api/admin/produtos/sem-categoria"),
+        api.get("/api/solicitacoes/pendentes").catch(() => ({ data: { pendentes: 0 } })),
       ]);
+      setMigracoes(resMig.data.pendentes || 0);
       setIncidentes(resInc.data.pendentes || 0);
       setSemCat(Array.isArray(resSem.data) ? resSem.data.filter(p => !p.categoria).length : 0);
     } catch { }
@@ -32,7 +35,7 @@ export default function Sininho() {
 
   if (!isGestor) return null;
 
-  const total = incidentes + semCat;
+  const total = incidentes + semCat + migracoes;
 
   return (
     <div style={{ position: "relative" }}
@@ -55,6 +58,11 @@ export default function Sininho() {
           {incidentes > 0 && (
             <div style={styles.tooltipItem}>
               <span>🚨 {incidentes} incidente{incidentes > 1 ? "s" : ""} pendente{incidentes > 1 ? "s" : ""}</span>
+            </div>
+          )}
+          {migracoes > 0 && (
+            <div style={styles.tooltipItem}>
+              <span>🔀 {migracoes} migraç{migracoes > 1 ? "ões" : "ão"} de PDV p/ aprovar</span>
             </div>
           )}
           {semCat > 0 && (
