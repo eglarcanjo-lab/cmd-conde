@@ -20,7 +20,8 @@ export function Seta({ de, para, tipo }) {
   );
 }
 
-export default function Migracao({ onEnviado }) {
+// `setor` (opcional): ADM agindo em nome de um RN — o backend só aceita para admin.
+export default function Migracao({ onEnviado, setor }) {
   const [base, setBase] = useState(null);
   const [erro, setErro] = useState("");
   const [alt, setAlt] = useState({});          // cod → { setor_novo, dia_novo }
@@ -32,11 +33,12 @@ export default function Migracao({ onEnviado }) {
 
   const carregar = () => {
     setErro("");
-    api.get("/api/solicitacoes/migracao/base", { timeout: 60000 })
+    api.get("/api/solicitacoes/migracao/base", { params: setor ? { setor } : {}, timeout: 60000 })
       .then((r) => setBase(r.data))
       .catch((e) => setErro(e.response?.data?.error || "Erro ao carregar sua base de PDVs."));
   };
-  useEffect(carregar, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(carregar, [setor]);
 
   const setCampo = (cod, campo, val) =>
     setAlt((a) => {
@@ -94,7 +96,7 @@ export default function Migracao({ onEnviado }) {
     if (!itens.length) { setErro("Nenhuma alteração marcada."); return; }
     setEnviando(true);
     try {
-      const r = await api.post("/api/solicitacoes/migracao", { motivo, itens }, { timeout: 60000 });
+      const r = await api.post("/api/solicitacoes/migracao", { motivo, itens, ...(setor ? { setor } : {}) }, { timeout: 60000 });
       setMsg(`Solicitação enviada (${r.data.itens} PDV${r.data.itens > 1 ? "s" : ""}). Aguardando aprovação.`);
       setAlt({}); setMotivo(""); setSoAlterados(false);
       carregar();

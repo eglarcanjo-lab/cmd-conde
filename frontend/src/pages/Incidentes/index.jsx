@@ -27,6 +27,15 @@ export default function Incidentes() {
   const [meus, setMeus] = useState([]);
   const [minhasMig, setMinhasMig] = useState([]);
   const [tipo, setTipo] = useState(null);
+  // ADM: age em nome de um setor (simula a visão do RN e abre solicitações por ele)
+  const isAdmin = usuario?.perfil === "admin";
+  const [setorAdm, setSetorAdm] = useState("");
+  const [setoresAdm, setSetoresAdm] = useState([]);
+  const paramsSetor = isAdmin && setorAdm ? { setor: setorAdm } : {};
+  useEffect(() => {
+    if (!isAdmin) return;
+    api.get("/api/solicitacoes/setores").then((r) => setSetoresAdm(r.data || [])).catch(() => {});
+  }, [isAdmin]);
   const [loading, setLoading] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [sucesso, setSucesso] = useState("");
@@ -38,14 +47,15 @@ export default function Incidentes() {
   const [arquivo, setArquivo] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  useEffect(() => { if (aba === "historico") carregarMeus(); }, [aba]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (aba === "historico") carregarMeus(); }, [aba, setorAdm]);
 
   async function carregarMeus() {
     setLoading(true);
     try {
       const [res, mig] = await Promise.all([
-        api.get("/api/incidentes/meus").catch(() => ({ data: [] })),
-        api.get("/api/solicitacoes/minhas").catch(() => ({ data: [] })),
+        api.get("/api/incidentes/meus", { params: paramsSetor }).catch(() => ({ data: [] })),
+        api.get("/api/solicitacoes/minhas", { params: paramsSetor }).catch(() => ({ data: [] })),
       ]);
       setMeus(res.data || []);
       setMinhasMig(mig.data || []);
@@ -71,6 +81,7 @@ export default function Incidentes() {
       form.append("descricao", descricao);
       form.append("data_ocorrido", dataOcorrido || new Date().toISOString().split("T")[0]);
       form.append("evidencia", arquivo);
+      if (isAdmin && setorAdm) form.append("setor", setorAdm);
 
       await api.post("/api/incidentes", form, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -101,6 +112,20 @@ export default function Incidentes() {
       </div>
 
       <div style={styles.content}>
+        {/* ADM: agir em nome de um setor */}
+        {isAdmin && (
+          <div style={styles.admBar}>
+            <span style={{ color: "#f5c451", fontWeight: 700, fontSize: "0.85rem" }}>👤 Agindo como</span>
+            <select style={styles.admSel} value={setorAdm} onChange={(e) => setSetorAdm(e.target.value)}>
+              <option value="">— escolha o setor do RN —</option>
+              {setoresAdm.map((s) => <option key={s.setor} value={s.setor}>{s.setor}{s.nome ? ` · ${s.nome}` : ""}</option>)}
+            </select>
+            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.76rem" }}>
+              {setorAdm ? "Você vê e abre solicitações como este RN. Elas ficam registradas no nome dele, com \"aberto pelo ADM\"." : "Só o perfil ADM vê esta barra."}
+            </span>
+          </div>
+        )}
+
         {/* Abas */}
         <div style={styles.abas}>
           <button style={{ ...styles.abaBtn, ...(aba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => setAba("novo")}>
@@ -130,7 +155,9 @@ export default function Incidentes() {
         {aba === "novo" && tipo === "migracao" && (
           <div style={styles.formCard}>
             <h3 style={styles.formTitle}>🔀 Migração de PDVs</h3>
-            <Migracao />
+            {isAdmin && !setorAdm
+              ? <p style={styles.msg}>Escolha o setor do RN na barra "Agindo como" para ver a base dele.</p>
+              : <Migracao setor={isAdmin ? setorAdm : undefined} />}
           </div>
         )}
 
@@ -225,7 +252,7 @@ export default function Incidentes() {
                       <div style={styles.incHeader}>
                         <div style={styles.incHeaderLeft}>
                           <span style={{ ...styles.statusTag, background: st.bg, color: st.color }}>{sol.status}</span>
-                          <span style={styles.incData}>🔀 Migração · {sol.itens.length} PDV{sol.itens.length > 1 ? "s" : ""} · {new Date(sol.criado_em).toLocaleDateString("pt-BR")}</span>
+                          <span style={styles.incData}>🔀 Migração · {sol.itens.length} PDV{sol.itens.length > 1 ? "s" : ""} · {new Date(sol.criado_em).toLocaleDateString("pt-BR")}{sol.criado_por ? ` · aberto por ${sol.criado_por}` : ""}</span>
                         </div>
                         <span style={styles.incId}>#{sol.id}</span>
                       </div>
@@ -307,6 +334,8 @@ const styles = {
   abas: { display: "flex", gap: "4px", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)", overflowX: "auto" },
   abaBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", padding: "12px 20px", cursor: "pointer", fontSize: "0.9rem", fontFamily: "inherit", borderBottom: "2px solid transparent", marginBottom: "-1px", whiteSpace: "nowrap", minHeight: "44px" },
   abaBtnAtivo: { color: "#7DBA3D", borderBottom: "2px solid #7DBA3D" },
+  admBar: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", padding: "10px 14px", marginBottom: "16px", background: "rgba(245,196,81,0.07)", border: "1px solid rgba(245,196,81,0.3)", borderRadius: "10px" },
+  admSel: { background: "#13231a", color: "#fff", border: "1px solid rgba(245,196,81,0.4)", borderRadius: "8px", padding: "8px 10px", fontSize: "0.85rem", fontFamily: "inherit", minWidth: "220px" },
   tipos: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" },
   tipoCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(125,186,61,0.25)", borderRadius: "14px", padding: "18px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "#fff" },
   tipoTit: { fontWeight: "700", fontSize: "0.95rem" },

@@ -15,6 +15,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100
 
 router.use(authMiddleware);
 
+// Só o ADMIN pode agir em nome de outro setor (simula a visão do RN e abre por ele).
+const setorAlvo = (req, pedido) =>
+  req.user.perfil === "admin" && pedido ? String(pedido).trim() : String(req.user.cod || "").trim();
+
 function gerarId() {
   return Date.now().toString(36).toUpperCase();
 }
@@ -23,6 +27,16 @@ function gerarId() {
 router.post("/", upload.single("evidencia"), async (req, res) => {
   try {
     const { descricao, data_ocorrido } = req.body;
+    const setor = setorAlvo(req, req.body.setor);
+    const emNomeDe = setor !== String(req.user.cod || "").trim();
+    let nomeRn = req.user.nome, perfilRn = req.user.perfil, texto = descricao?.trim() || "";
+    if (emNomeDe) {
+      const usuarios = await readSheet("usuarios").catch(() => []);
+      const u = usuarios.find((x) => String(x.cod || "").trim() === setor);
+      nomeRn = u ? String(u.nome || "").trim() : `Setor ${setor}`;
+      perfilRn = "rn";
+      texto = `[Aberto pelo ADM ${req.user.nome || ""}] ${texto}`;
+    }
 
     if (!descricao?.trim()) return res.status(400).json({ error: "Descrição obrigatória." });
     if (!req.file) return res.status(400).json({ error: "Evidência obrigatória." });
@@ -48,15 +62,15 @@ router.post("/", upload.single("evidencia"), async (req, res) => {
     await appendRow("incidentes", [
       id,
       criado_em,
-      req.user.cod,
-      req.user.nome,
-      descricao.trim(),
+      setor,
+      nomeRn,
+      texto,
       resultado.secure_url,
       "Aguardando",
       "",
       "",
       data,
-      req.user.perfil,
+      perfilRn,
     ]);
 
     return res.json({ success: true, message: "Solicitação registrada com sucesso." });
@@ -66,12 +80,12 @@ router.post("/", upload.single("evidencia"), async (req, res) => {
   }
 });
 
-// GET /api/incidentes/meus — RN vê seus próprios incidentes
+// GET /api/incidentes/meus?setor= — RN vê os seus (admin: os do setor escolhido)
 router.get("/meus", async (req, res) => {
   try {
     const todos = await readSheet("incidentes");
     const meus = todos
-      .filter((i) => String(i.setor) === String(req.user.cod))
+      .filter((i) => String(i.setor) === setorAlvo(req, req.query.setor))
       .sort((a, b) => String(b.data_criacao || "").localeCompare(String(a.data_criacao || "")));
     return res.json(meus);
   } catch (err) {

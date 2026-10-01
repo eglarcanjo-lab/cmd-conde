@@ -30,12 +30,21 @@ async function ensureTabelas() {
     cod_pdv TEXT, nome_pdv TEXT, setor_atual TEXT, dia_atual TEXT, setor_novo TEXT, dia_novo TEXT,
     media_tri_hl NUMERIC, status TEXT DEFAULT 'Pendente')`);
   await query(`CREATE INDEX IF NOT EXISTS idx_solic_itens_sol ON solicitacoes_itens (solicitacao_id)`);
+  await query(`ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS criado_por TEXT`);
   _ok = true;
 }
 
-// Setor sobre o qual o usuário age: RN = o próprio; gestor pode escolher (?setor=).
+// Setor sobre o qual o usuário age: RN (e demais) = o próprio; SÓ o ADMIN pode agir em
+// nome de outro setor (?setor= / body.setor) — simula a visão do RN e abre por ele.
 const setorAlvo = (req, pedido) =>
-  GESTORES.includes(req.user.perfil) && pedido ? String(pedido).trim() : String(req.user.cod || "").trim();
+  req.user.perfil === "admin" && pedido ? String(pedido).trim() : String(req.user.cod || "").trim();
+
+// Nome do RN dono do setor (usuarios.cod = setor).
+async function nomeDoSetor(setor) {
+  const usuarios = await readSheet("usuarios").catch(() => []);
+  const u = usuarios.find((x) => String(x.cod || "").trim() === String(setor));
+  return u ? String(u.nome || "").trim() : "";
+}
 
 // 3 meses COMPLETOS anteriores ao mês atual (fuso BR) — ex.: em out → jul/ago/set.
 function meses3() {
@@ -146,10 +155,14 @@ router.post("/migracao", async (req, res) => {
     if (!itens.length) return res.status(400).json({ error: "Nenhuma alteração para enviar." });
 
     const id = "M" + Date.now().toString(36).toUpperCase();
+    // ADM abrindo por outro setor: registra em nome do RN do setor + quem criou.
+    const emNomeDe = setor !== String(req.user.cod || "").trim();
+    const nomeRn = emNomeDe ? (await nomeDoSetor(setor)) || `Setor ${setor}` : req.user.nome || "";
     await query(
-      `INSERT INTO solicitacoes (id, tipo, setor, nome_rn, perfil, status, motivo)
-       VALUES ($1, 'migracao_pdv', $2, $3, $4, 'Em aprovação', $5)`,
-      [id, setor, req.user.nome || "", req.user.perfil || "", String(req.body?.motivo || "").trim().slice(0, 500)]);
+      `INSERT INTO solicitacoes (id, tipo, setor, nome_rn, perfil, status, motivo, criado_por)
+       VALUES ($1, 'migracao_pdv', $2, $3, $4, 'Em aprovação', $5, $6)`,
+      [id, setor, nomeRn, emNomeDe ? "rn" : req.user.perfil || "", String(req.body?.motivo || "").trim().slice(0, 500),
+       emNomeDe ? `ADM ${req.user.nome || ""}`.trim() : null]);
     for (const it of itens) {
       await query(
         `INSERT INTO solicitacoes_itens (solicitacao_id, cod_pdv, nome_pdv, setor_atual, dia_atual, setor_novo, dia_novo, media_tri_hl)
@@ -174,14 +187,25 @@ async function carregar(where = "", params = []) {
   return s.rows.map((r) => ({ ...r, itens: por[r.id] || [] }));
 }
 
-// GET /api/solicitacoes/minhas — as do setor do usuário
+// GET /api/solicitacoes/minhas?setor= — as do setor do usuário (admin: do setor escolhido)
 router.get("/minhas", async (req, res) => {
   try {
     await ensureTabelas();
-    return res.json(await carregar("WHERE setor = $1", [String(req.user.cod || "").trim()]));
+    return res.json(await carregar("WHERE setor = $1", [setorAlvo(req, req.query.setor)]));
   } catch (e) {
     console.error("solicitacoes/minhas:", e);
     return res.status(500).json({ error: "Erro ao buscar solicitações." });
+  }
+});
+
+// GET /api/solicitacoes/setores — (admin) setores p/ o seletor "Agindo como"
+router.get("/setores", adminOnly, async (req, res) => {
+  try {
+    const base = await readSheet("pdv_base").catch(() => []);
+    return res.json(await listarSetores(base));
+  } catch (e) {
+    console.error("solicitacoes/setores:", e);
+    return res.status(500).json({ error: "Erro ao listar setores." });
   }
 });
 

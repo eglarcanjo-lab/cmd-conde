@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.74.0** — Solicitações: Migração de PDVs (RN pede, admin aprova e baixa Excel).
+Versão atual: **v3.74.1** — Solicitações: ADM age em nome de um RN.
+
+## v3.74.1 — Solicitações: ADM age em nome de um RN
+- Na tela **Solicitações**, o perfil **ADM** ganha a barra **"👤 Agindo como [setor]"**: vê a base de PDVs da Migração, "Minhas solicitações" e abre Migração/Incidente **como aquele RN**. Só o ADM vê a barra.
+- O pedido fica registrado **no nome do RN do setor**, com **"aberto por ADM <nome>"** (coluna nova `criado_por` em migrações; no incidente, prefixo "[Aberto pelo ADM …]" na descrição). Aparece para o RN e na aprovação.
+- Segurança: só **admin** pode mandar `setor=` (antes GV/diretor também podiam na migração); RN/GV sempre ficam no próprio setor. Rota nova `GET /api/solicitacoes/setores` (admin).
 
 ## v3.74.0 — Solicitações: Migração de PDVs
 - A aba **Incidentes** vira **Solicitações**. "Nova solicitação" abre um **menu de tipos**: 🔀 **Migração de PDVs** (novo) e 🚨 **Incidente** (o de antes, sem mudança). Novos tipos entram no mesmo menu.

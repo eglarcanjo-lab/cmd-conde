@@ -105,6 +105,7 @@ export default function Migracoes() {
                   {nDia > 0 && ` · ${nDia} troca${nDia > 1 ? "s" : ""} de dia`}
                   {nRn > 0 && ` · ${nRn} troca${nRn > 1 ? "s" : ""} de RN`}
                   {s.motivo && <span style={{ color: "rgba(255,255,255,0.45)" }}> — {s.motivo}</span>}
+                  {s.criado_por && <span style={{ color: "#f5c451" }}> · aberto por {s.criado_por}</span>}
                 </div>
               </div>
             );
@@ -118,7 +119,7 @@ export default function Migracoes() {
             <div style={S.mHead}>
               <div>
                 <h3 style={{ margin: "0 0 4px", fontSize: "1rem" }}>Migração #{sel.id}</h3>
-                <span style={S.rn}>Setor {sel.setor} — {sel.nome_rn} · {dataBR(sel.criado_em)}</span>
+                <span style={S.rn}>Setor {sel.setor} — {sel.nome_rn} · {dataBR(sel.criado_em)}{sel.criado_por ? ` · aberto por ${sel.criado_por}` : ""}</span>
                 {sel.motivo && <p style={{ margin: "6px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem" }}>💬 {sel.motivo}</p>}
               </div>
               <button style={S.fechar} onClick={() => setSel(null)}>✕</button>
