@@ -26,7 +26,8 @@ const CATEGORIAS = [
   "PONTOS FORCE",
 ];
 
-const SETORES = ["101","102","103","104","105","106","301","302","303","304","305"];
+// 107–111 = ex-301–305 (renomeados em out/2026); antigos ficam no fim p/ consultar histórico.
+const SETORES = ["101","102","103","104","105","106","107","108","109","110","111","301","302","303","304","305"];
 
 const EMPTY_FORM = { setor: "101", categoria: CATEGORIAS[0], meta_volume: "", mes_referencia: "", peso: "" };
 

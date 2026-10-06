@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.76.0** — Fechamento (congelamento) da RV por mês.
+Versão atual: **v3.77.0** — Setores 301–305 renomeados para 107–111 (GV1).
+
+## v3.77.0 — Setores 301–305 → 107–111
+- **Processador:** de-para central em `normalizar_setor` / `setor_hop` (301→107, 302→108, 303→109, 304→110, 305→111). Todo import (clientes, pedidos, inadimplência, tasks, SPO, BI…) já grava os setores novos — um RN que aparece como 301 e 107 no mesmo mês (CORA de out/26) passa a somar num só setor. As 19 listas locais de setores viraram uma constante única; 107–111 entram no **On Trade** (RV) e no mapa de RNs do **GV1** (Coaching).
+- **GV:** 107–111 ficam com o **GV1** (filtro "setor começa com 1" já cobre). O GV3 mantém só o histórico 3xx.
+- **Telas com lista fixa** (Simulador RV, Atendimento Produtivo, Metas, Incentivos, SKU Foco): 107–111 adicionados; 301–305 ficam marcados "(até set/26)" p/ consultar histórico. O Simulador RV usa só os setores com RV no mês escolhido (set → 301–305; out → 107–111) — o consolidado do GV não conta 16 RNs.
+- Meses de RV **fechados** (v3.76.0) seguem com os códigos antigos. **Passo manual:** trocar o código dos 5 RNs em Admin › Usuários (301→107 … 305→111, GV = 1).
 
 ## v3.76.0 — Fechar RV do mês (congelar)
 - **Admin › Simulador RV:** botão **🔒 Fechar RV de [mês]** com caixa de confirmação (digitar o mês MM/AAAA + caixa de ciência). Ao fechar, guarda uma **foto** de `rv_resultado`, `rv_ap`, `rv_pontos_bees` e dos nomes dos RNs (tabela nova `rv_fechamentos`).

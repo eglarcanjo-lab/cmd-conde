@@ -8,11 +8,16 @@ const SETORES = [
   { cod: "104", nome: "Weferson Alexandre", tipo: "ON" },
   { cod: "105", nome: "Iger Renan", tipo: "ON" },
   { cod: "106", nome: "Claudio Henrique", tipo: "ON" },
-  { cod: "301", nome: "Luan Marques", tipo: "ON" },
-  { cod: "302", nome: "Allan Fernando", tipo: "ON" },
-  { cod: "303", nome: "Adriano Ferreira", tipo: "ON" },
-  { cod: "304", nome: "Joicilene Alves", tipo: "ON" },
-  { cod: "305", nome: "Manoel Roseno", tipo: "ON" },
+  { cod: "107", nome: "Luan Marques", tipo: "ON" },
+  { cod: "301", antigo: true, nome: "Luan Marques (até set/26)", tipo: "ON" },
+  { cod: "108", nome: "Allan Fernando", tipo: "ON" },
+  { cod: "302", antigo: true, nome: "Allan Fernando (até set/26)", tipo: "ON" },
+  { cod: "109", nome: "Adriano Ferreira", tipo: "ON" },
+  { cod: "303", antigo: true, nome: "Adriano Ferreira (até set/26)", tipo: "ON" },
+  { cod: "110", nome: "Joicilene Alves", tipo: "ON" },
+  { cod: "304", antigo: true, nome: "Joicilene Alves (até set/26)", tipo: "ON" },
+  { cod: "111", nome: "Manoel Roseno", tipo: "ON" },
+  { cod: "305", antigo: true, nome: "Manoel Roseno (até set/26)", tipo: "ON" },
 ];
 
 const KPIS = [
@@ -71,7 +76,8 @@ export default function AtendimentoProdutivo() {
     setSalvando(true);
     setSucesso("");
     try {
-      const linhas = SETORES.map((s) => {
+      // AP é lançado para o mês corrente → só setores atuais (301–305 viraram 107–111).
+      const linhas = SETORES.filter((s) => !s.antigo).map((s) => {
         const row = dados[s.cod] || EMPTY_ROW();
         const ap_ok = calcApOk(row) ? "OK" : "NOK";
         return { setor: s.cod, mes_referencia: mesRef, ...row, ap_ok };
@@ -142,7 +148,7 @@ export default function AtendimentoProdutivo() {
               </tr>
             </thead>
             <tbody>
-              {SETORES.map((s) => {
+              {SETORES.filter((s) => !s.antigo).map((s) => {
                 const row = dados[s.cod] || EMPTY_ROW();
                 const apOk = calcApOk(row);
                 return (

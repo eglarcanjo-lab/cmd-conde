@@ -21,11 +21,16 @@ const SETORES = [
   { cod: "104", nome: "Weferson Alexandre", tipo: "ON"  },
   { cod: "105", nome: "Iger Renan",         tipo: "ON"  },
   { cod: "106", nome: "Claudio Henrique",   tipo: "ON"  },
-  { cod: "301", nome: "Luan Marques",       tipo: "ON"  },
-  { cod: "302", nome: "Allan Fernando",     tipo: "ON"  },
-  { cod: "303", nome: "Adriano Ferreira",   tipo: "ON"  },
-  { cod: "304", nome: "Joicilene Alves",    tipo: "ON"  },
-  { cod: "305", nome: "Manoel Roseno",      tipo: "ON"  },
+  { cod: "107", nome: "Luan Marques", tipo: "ON" },
+  { cod: "301", antigo: true, nome: "Luan Marques (até set/26)",       tipo: "ON"  },
+  { cod: "108", nome: "Allan Fernando", tipo: "ON" },
+  { cod: "302", antigo: true, nome: "Allan Fernando (até set/26)",     tipo: "ON"  },
+  { cod: "109", nome: "Adriano Ferreira", tipo: "ON" },
+  { cod: "303", antigo: true, nome: "Adriano Ferreira (até set/26)",   tipo: "ON"  },
+  { cod: "110", nome: "Joicilene Alves", tipo: "ON" },
+  { cod: "304", antigo: true, nome: "Joicilene Alves (até set/26)",    tipo: "ON"  },
+  { cod: "111", nome: "Manoel Roseno", tipo: "ON" },
+  { cod: "305", antigo: true, nome: "Manoel Roseno (até set/26)",      tipo: "ON"  },
 ];
 
 const KPIS_AP = [
@@ -111,6 +116,10 @@ export default function RvSimulador() {
   const [recalc,   setRecalc]   = useState(false);
   const [msg,      setMsg]      = useState("");
   const { usuario } = useAuth();
+  // Setores DO MÊS: os que têm RV calculada (set/26 → 301–305; out/26 em diante → 107–111).
+  // Sem dado ainda, usa a lista atual (sem os antigos). Evita contar 16 RNs na sala.
+  const _comDado = new Set(rvData.map((r) => String(r.setor)));
+  const SETORES_MES = SETORES.filter((s) => (_comDado.size ? _comDado.has(s.cod) : !s.antigo));
 
   useEffect(() => { carregar(); }, [mesRef]);
 
@@ -235,7 +244,7 @@ export default function RvSimulador() {
     let poSum = 0, pontosReal = 0;
     let rC = 0, mC = 0, rN = 0, mN = 0, rM = 0, mM = 0, rMa = 0, mMa = 0;
     const wPO = { pontos: 0, cerveja: 0, nab: 0, mktp: 0, match: 0 };
-    SETORES.forEach(s2 => {
+    SETORES_MES.forEach(s2 => {
       const rv = getRv(s2.cod); const pontos = getPontos(s2.cod);
       const w = PESOS[s2.tipo] || PESOS.ON;
       const po = parseFloat(rv?.po_total || 1000);
@@ -251,8 +260,8 @@ export default function RvSimulador() {
     // O GV é avaliado como UM RN: PO = R$ 1.000 (média dos POs), teto R$ 1.500 (150%).
     // O que soma é o ATINGIMENTO (metas e realizados de toda a sala); o PO NÃO soma.
     // Peso de cada indicador = média ponderada pelo PO (a sala mistura OFF/ON).
-    const po = SETORES.length > 0 ? poSum / SETORES.length : 1000;
-    const metaPontos = META_PONTOS * SETORES.length; // meta de pontos da sala (agregada)
+    const po = SETORES_MES.length > 0 ? poSum / SETORES_MES.length : 1000;
+    const metaPontos = META_PONTOS * SETORES_MES.length; // meta de pontos da sala (agregada)
     const pesoPontos = poSum > 0 ? wPO.pontos / poSum : 50;
     const pesoCerv = poSum > 0 ? wPO.cerveja / poSum : 25;
     const pesoNab  = poSum > 0 ? wPO.nab / poSum : 0;
@@ -274,7 +283,7 @@ export default function RvSimulador() {
       { label: "🛒 Marketplace (GMV R$)",  real: rM,  meta: mM,  peso: pesoMktp,  rv: rvMktp  },
       { label: "🤝 Match (Vol HL)",        real: rMa, meta: mMa, peso: pesoMatch, rv: rvMatch },
     ].filter(l => l.peso > 0.001);
-    return { poGV: po, total, linhas, nRns: SETORES.length };
+    return { poGV: po, total, linhas, nRns: SETORES_MES.length };
   }
 
   const gv = computeGV();
@@ -284,7 +293,7 @@ export default function RvSimulador() {
   const apSel = getAp(setorSel);
 
   // ── totalizador (todas as RNs) ────────────────────────────────────────────
-  const linhas = SETORES.map(s => ({ ...s, ...computeTotals(s.cod), nome: nomeDe(s.cod) }));
+  const linhas = SETORES_MES.map(s => ({ ...s, ...computeTotals(s.cod), nome: nomeDe(s.cod) }));
   const somaTotal    = linhas.reduce((acc, l) => acc + l.total, 0);
 
   function exportarRelatorio() {
@@ -555,7 +564,7 @@ export default function RvSimulador() {
 
           {/* ── Seletor de RN ─────────────────────────────────────────── */}
           <div style={s.seletorWrap}>
-            {SETORES.map(s2 => {
+            {SETORES_MES.map(s2 => {
               const t = computeTotals(s2.cod);
               const ativo = s2.cod === setorSel;
               return (
