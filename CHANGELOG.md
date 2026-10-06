@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.78.1** — CORA só grava de out/2026 em diante (setembro e antes = Promax).
+Versão atual: **v3.78.2** — CORA: D+1 no volume diário + import automático (zip) reconhece CORA e Comodatos.
+
+## v3.78.2 — D+1 e import automático
+- **Volume diário D+1:** pedido ainda sem NF entra na data de **entrega − 1 dia** (a NF sai sempre na véspera). O pedido de hoje p/ entrega amanhã já conta como venda de HOJE e não muda de dia quando a NF é emitida.
+- **Import automático por e-mail (zip):** passa a reconhecer o CORA (`consulta-pedidos…` / `CORA…`) e os Comodatos (`…comodato…`) pelo nome do arquivo.
 
 ## v3.78.1 — Virada Promax → CORA em out/26
 - O CORA **nunca grava meses antes de out/2026** — o fechamento de setembro (e todo o histórico) é do Promax e fica intocado; o CORA soma a partir de outubro.
