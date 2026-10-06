@@ -123,7 +123,11 @@ export default function RvSimulador() {
   // Setores DO MÊS: os que têm RV calculada (set/26 → 301–305; out/26 em diante → 107–111).
   // Sem dado ainda, usa a lista atual (sem os antigos). Evita contar 16 RNs na sala.
   const _comDado = new Set(rvData.map((r) => String(r.setor)));
-  const SETORES_MES = SETORES.filter((s) => (_comDado.size ? _comDado.has(s.cod) : !s.antigo));
+  // Antigo (301–305) só aparece se o novo (107–111) não tem RV no mês — evita card duplicado zerado.
+  const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+  const SETORES_MES = SETORES.filter((s) => (_comDado.size
+    ? _comDado.has(s.cod) && !(s.antigo && _comDado.has(NOVO_DE[s.cod]))
+    : !s.antigo));
 
   useEffect(() => { carregar(); }, [mesRef]);
 

@@ -20,9 +20,19 @@ const mesAtualBR = () => {
 // Linhas de uma tabela de RV no mês: mês FECHADO → foto congelada; aberto → tabela viva.
 async function linhasRv(tabela, mes, doMes) {
   const congelado = await rvf.lerCongelado(mes, tabela).catch(() => null);
-  if (congelado) return congelado;
-  const dados = await readSheet(tabela);
-  return dados.filter(doMes);
+  const linhas = congelado || (await readSheet(tabela)).filter(doMes);
+  return semAntigoDuplicado(linhas);
+}
+
+// Setores 301–305 viraram 107–111: se o mês tem o código NOVO, a linha do antigo (zerada,
+// sobra de recálculo) é descartada — evita card/linha duplicada no Simulador e no Relatório.
+const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+function semAntigoDuplicado(linhas) {
+  const setores = new Set(linhas.map((r) => String(r.setor || "").trim()));
+  return linhas.filter((r) => {
+    const s = String(r.setor || "").trim();
+    return !(NOVO_DE[s] && setores.has(NOVO_DE[s]));
+  });
 }
 
 const msgFechado = (st) =>

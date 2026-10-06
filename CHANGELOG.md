@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.77.2** — RV: Pontos Force sem piso de 70% a partir de set/26.
+Versão atual: **v3.77.3** — RV: some o card duplicado zerado dos setores 301–305.
+
+## v3.77.3 — Sem setor 301–305 duplicado na RV
+- Simulador RV / Relatório / telas de RV: quando o mês tem o setor novo (107–111), a linha zerada do antigo (301–305) não aparece mais. O processador também deixou de gerar essas linhas zeradas no recálculo.
 
 ## v3.77.2 — Pontos Force sem piso desde set/26
 - Ajuste da v3.77.1: a regra sem piso vale **a partir de set/2026** (setembro ainda não foi pago). Agosto para trás mantém o piso de 70%.
