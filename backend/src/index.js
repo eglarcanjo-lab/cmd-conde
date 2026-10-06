@@ -43,6 +43,7 @@ app.use("/api/cobertura",  require("./routes/cobertura"));
 app.use("/api/pdvs",       require("./routes/pdvs"));
 app.use("/api/tasks",      require("./routes/tasks"));
 app.use("/api/admin/produtos", require("./routes/produtos"));
+app.use("/api/admin/motivos-devolucao", require("./routes/motivos"));
 // v2.6 - spo desafios
 app.use("/api/spo", require("./routes/spo"));
 app.use("/api/rv", require("./routes/rv"));

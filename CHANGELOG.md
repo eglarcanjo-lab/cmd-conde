@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.77.3** — RV: some o card duplicado zerado dos setores 301–305.
+Versão atual: **v3.78.0** — CORA como fonte única (um slot só em Arquivos).
+
+## v3.78.0 — CORA: fonte única
+- **Arquivos:** um slot só — **CORA — Consulta-pedidos (mês inteiro)** — alimenta Pedidos/Volume (todas as análises e a RV), Devoluções, Faturados (NF), Faturamento Marketplace e Buffer + Deck D+7. Saíram da tela: Pedidos Faturados, Pedidos Histórico, Faturamento Marketplace, Devoluções e Faturados (NF). Continuam do Promax: Base de Clientes, Base de Produtos, Inadimplência, Grade e Comodatos.
+- **Regra de venda:** Cód. operação = 1 · item ATENDIDO · não devolvido/cancelado (inclui pedidos em rota). Volume = Volume HL (CS) no **dia de emissão da NF** (EB); sem NF, data de entrega. Item cortado (FALTA) alimenta a **ruptura** e não marca o pedido como devolvido.
+- **Devoluções:** FATURADO_NF_DEVOLVIDA, 1 linha por NF (valor total da NF, volume, placa, data devol.), motivo pelo código (EH). Código sem cadastro aparece em **Arquivos** numa caixa para cadastrar (vale no próximo import).
+- **Faturados (NF):** nº NF (DZ) + valor total (EF). **Marketplace:** Valor sem ADF (CR) dos produtos MKTP, por setor × mês. **Buffer:** Tipo buffer = REPROGRAMADO.
+- **Proteção de mês:** só são gravados os meses que o arquivo cobre (há entregas no mês). NF de mês não coberto (ex.: NF 30/09 entregue 01/10 num arquivo só de outubro) é ignorada — não apaga o mês anterior. P/ fechar o mês M pelo CORA, puxe de 01/M até o 5º dia útil de M+1.
+- Backend: rota `/api/admin/motivos-devolucao` (tabela `motivos_devolucao`). Processador: `processar_cora_completo`.
 
 ## v3.77.3 — Sem setor 301–305 duplicado na RV
 - Simulador RV / Relatório / telas de RV: quando o mês tem o setor novo (107–111), a linha zerada do antigo (301–305) não aparece mais. O processador também deixou de gerar essas linhas zeradas no recálculo.

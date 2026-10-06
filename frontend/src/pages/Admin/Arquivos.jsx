@@ -3,18 +3,16 @@ import api from "../../services/api";
 
 const ARQUIVOS_CONFIG = [
   // ── PROMAX ──────────────────────────────────────────────
+  // Pedidos, Pedidos Histórico, Faturamento Mktp, Devoluções e Faturados (NF) agora
+  // vêm do CORA (slot único abaixo). Backend ainda aceita os campos antigos.
   { id: "clientes",         campo: "clientes",         rotulo: "Base de Clientes",        numero: "0105070402", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🏪" },
-  { id: "pedidos",          campo: "pedidos",           rotulo: "Pedidos Faturados",        numero: "03014701",   extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📦" },
-  { id: "pedidos_historico", campo: "pedidos_historico", rotulo: "Pedidos Histórico (anos/meses antigos)", numero: "03014701", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗓️" },
   { id: "produtos_base",    campo: "produtos_base",     rotulo: "Base de Produtos",         numero: "0111",       extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗂️" },
-  { id: "faturamento_mktp", campo: "faturamento_mktp",  rotulo: "Faturamento Marketplace",  numero: "030509",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🛒" },
   { id: "inadimplencia",    campo: "inadimplencia",     rotulo: "Inadimplência",            numero: "120601",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "⚠️" },
-  { id: "devolucoes",       campo: "devolucoes",        rotulo: "Devoluções (Entregas Frustradas)", numero: "030224", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "↩️" },
   { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
-  { id: "faturados",        campo: "faturados",         rotulo: "Faturados (NF)",           numero: "030237", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧾" },
   { id: "comodatos",        campo: "comodatos",         rotulo: "Comodatos (equipamentos no PDV)", numero: "Comodato", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧊" },
   // ── CORA ────────────────────────────────────────────────
-  { id: "cora",             campo: "cora",              rotulo: "Consulta-pedidos (Buffer + Deck D+7)", numero: "CORA", extensoes: ".csv", grupo: "cora", icon: "🧊" },
+  { id: "cora",             campo: "cora",              rotulo: "CORA — Consulta-pedidos (mês inteiro)", numero: "CORA", extensoes: ".csv", grupo: "cora", icon: "🧊",
+    desc: "Um arquivo só: Pedidos/Volume · Devoluções · Faturados (NF) · Faturamento Mktp · Buffer + Deck D+7" },
   { id: "coleta",           campo: "coleta",            rotulo: "Coleta (Shelf + 1º Vencimento)", numero: "xlsx", extensoes: ".xlsx,.xls", grupo: "cora", icon: "🏷️" },
   // ── SPO ─────────────────────────────────────────────────
   { id: "spo_visitacao_gv",  campo: "spo_visitacao_gv",  rotulo: "Visitação GV",          item: "1",  extensoes: ".xlsx,.xls", grupo: "spo", icon: "🗺️" },
@@ -36,7 +34,7 @@ const ARQUIVOS_CONFIG = [
 
 const GRUPOS = [
   { id: "promax", label: "Promax",  desc: "Rotinas do sistema (número da rotina)" },
-  { id: "cora",   label: "CORA / Coleta", desc: "CORA (Buffer + Deck) e Coleta (Shelf + 1º Vencimento)" },
+  { id: "cora",   label: "CORA / Coleta", desc: "CORA (vendas, devoluções, NF, Mktp, buffer e deck) e Coleta (Shelf + 1º Vencimento)" },
   { id: "spo",    label: "SPO",     desc: "Arquivos do painel SPO" },
   { id: "outros", label: "Outros",  desc: "BI e diversos" },
 ];
@@ -218,6 +216,8 @@ export default function Arquivos() {
 
       {erro && <p style={{ color: "#f87171", fontSize: "0.85rem", marginBottom: "16px" }}>{erro}</p>}
 
+      <MotivosPendentes />
+
       {/* Colunas por grupo */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
         {GRUPOS.map(grupo => (
@@ -259,6 +259,7 @@ export default function Arquivos() {
                         <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: "600", color: selecionado ? "#7DBA3D" : "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {cfg.numero ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem", marginRight: "4px" }}>{cfg.numero}</span> : cfg.item ? <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.74rem", marginRight: "4px" }}>#{cfg.item}</span> : null}
                           {selecionado ? selecionado.name : cfg.rotulo}
+                          {!selecionado && cfg.desc && <span style={{ display: "block", color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginTop: 2 }}>{cfg.desc}</span>}
                         </p>
                         {selecionado && (
                           <p style={{ margin: 0, fontSize: "0.68rem", color: "rgba(255,255,255,0.35)" }}>
@@ -338,6 +339,44 @@ export default function Arquivos() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Códigos de motivo de devolução que vieram no CORA e ainda não têm descrição.
+// Cadastrou → vale a partir do próximo import do CORA.
+function MotivosPendentes() {
+  const [pend, setPend] = useState([]);
+  const [desc, setDesc] = useState({});
+  const [msg, setMsg] = useState("");
+  const carregar = () => api.get("/api/admin/motivos-devolucao").then((r) => setPend(r.data?.pendentes || [])).catch(() => {});
+  useEffect(() => { carregar(); }, []);
+  async function salvar(cod) {
+    const d = (desc[cod] || "").trim();
+    if (!d) { setMsg(`Escreva a descrição do código ${cod}.`); return; }
+    try {
+      await api.put(`/api/admin/motivos-devolucao/${cod}`, { descricao: d });
+      setMsg(`Motivo ${cod} cadastrado — vale a partir do próximo import do CORA.`); carregar();
+    } catch (e) { setMsg(e.response?.data?.error || "Erro ao salvar."); }
+  }
+  if (!pend.length) return null;
+  return (
+    <div style={{ background: "rgba(245,196,81,0.07)", border: "1px solid rgba(245,196,81,0.35)", borderRadius: 12, padding: "12px 16px", marginBottom: 18 }}>
+      <p style={{ margin: "0 0 8px", color: "#f5c451", fontWeight: 700, fontSize: "0.9rem" }}>
+        ⚠️ Motivos de devolução sem cadastro ({pend.length}) — o CORA só manda o código
+      </p>
+      {pend.map((p) => (
+        <div key={p.cod} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+          <span style={{ color: "#fff", fontWeight: 700, minWidth: 70 }}>Cód. {p.cod}</span>
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", minWidth: 150 }}>{p.nfs} NF(s) · última {p.ultima}</span>
+          <input value={desc[p.cod] || ""} onChange={(e) => setDesc({ ...desc, [p.cod]: e.target.value })}
+            placeholder="Descrição do motivo (ex.: PDV FECHADO)" maxLength={80}
+            style={{ flex: "1 1 220px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: "#fff", padding: "7px 10px", fontFamily: "inherit", fontSize: "0.84rem" }} />
+          <button onClick={() => salvar(p.cod)}
+            style={{ background: "linear-gradient(135deg,#7DBA3D,#2E7D32)", color: "#0c1410", border: "none", borderRadius: 8, padding: "7px 14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Salvar</button>
+        </div>
+      ))}
+      {msg && <p style={{ margin: "6px 0 0", color: "rgba(255,255,255,0.7)", fontSize: "0.8rem" }}>{msg}</p>}
     </div>
   );
 }
