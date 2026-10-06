@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import RvFechamentoBar from "../../components/RvFechamentoBar";
 
 const META_PONTOS = 100000;
 
@@ -127,6 +128,7 @@ export default function RV() {
       </div>
 
       <div style={styles.content}>
+        <RvFechamentoBar mes={mesRef} />
         {loading ? <p style={styles.msg}>Carregando...</p> : (
           <>
             {/* AP */}

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import RvFechamentoBar from "../../components/RvFechamentoBar";
+import { useAuth } from "../../contexts/AuthContext";
 import * as XLSX from "xlsx-js-style";
 
 const META_PONTOS = 100000;
@@ -108,6 +110,7 @@ export default function RvSimulador() {
   const [loading,  setLoading]  = useState(true);
   const [recalc,   setRecalc]   = useState(false);
   const [msg,      setMsg]      = useState("");
+  const { usuario } = useAuth();
 
   useEffect(() => { carregar(); }, [mesRef]);
 
@@ -498,6 +501,7 @@ export default function RvSimulador() {
         </div>
       </div>
       {msg && <p style={{ color: msg.startsWith("✅") ? "#4ade80" : "#f87171", fontSize: "0.85rem", marginBottom: "12px" }}>{msg}</p>}
+      <RvFechamentoBar mes={mesRef} podeFechar={usuario?.perfil === "admin"} onMudou={carregar} />
 
       {loading ? <p style={s.msgLoad}>Carregando...</p> : (
         <>

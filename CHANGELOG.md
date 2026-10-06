@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.75.1** — Aprovação de migrações: aprovar/recusar só as linhas marcadas.
+Versão atual: **v3.76.0** — Fechamento (congelamento) da RV por mês.
+
+## v3.76.0 — Fechar RV do mês (congelar)
+- **Admin › Simulador RV:** botão **🔒 Fechar RV de [mês]** com caixa de confirmação (digitar o mês MM/AAAA + caixa de ciência). Ao fechar, guarda uma **foto** de `rv_resultado`, `rv_ap`, `rv_pontos_bees` e dos nomes dos RNs (tabela nova `rv_fechamentos`).
+- Mês fechado: as telas de RV (RN, Simulador, Relatório PDF) leem a **foto**; **Recalcular RV**, **salvar AP** e o recálculo automático do processador (após import de pedidos) ficam **bloqueados** — mudanças na base (carteira, setores renomeados, ajustes de volume) não alteram o que foi pago.
+- Aviso 🔒 "RV FECHADA em … por …" na tela de RV de todos; **Reabrir** só admin, com confirmação.
+- Motivação: setores 301–305 serão renomeados para 107–111 — os meses já pagos precisam ficar como estavam.
+- Fix: o **Relatório PDF da RV** pedia sempre o mês corrente ao servidor (ignorava o mês escolhido); agora pede o mês da tela.
 
 ## v3.75.1 — Aprovar/recusar só o que está marcado
 - **Admin › Solicitações › Migrações:** os botões viraram **✅ Aprovar marcados** e **✖ Recusar marcados** — decidem **só as linhas marcadas**; as demais **continuam pendentes**. Dá para decidir em etapas; o pedido segue "Em aprovação" até a última linha e fecha como Aprovado / Recusado / Parcial.

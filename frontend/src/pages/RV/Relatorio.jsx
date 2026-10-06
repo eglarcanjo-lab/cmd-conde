@@ -76,7 +76,8 @@ export default function RVRelatorio() {
   async function carregar() {
     setLoading(true); setErro("");
     try {
-      const res = await api.get("/api/rv/relatorio");
+      // Pede o MÊS do relatório (antes ia sem ?mes e o servidor devolvia o mês corrente).
+      const res = await api.get("/api/rv/relatorio", { params: { mes: mesRef } });
       setDados(res.data || []);
     } catch { setErro("Erro ao carregar dados de RV."); }
     finally { setLoading(false); }
