@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.77.1** — RV: Pontos Force sem piso de 70% (a partir de out/26).
+Versão atual: **v3.77.2** — RV: Pontos Force sem piso de 70% a partir de set/26.
+
+## v3.77.2 — Pontos Force sem piso desde set/26
+- Ajuste da v3.77.1: a regra sem piso vale **a partir de set/2026** (setembro ainda não foi pago). Agosto para trás mantém o piso de 70%.
 
 ## v3.77.1 — Pontos Force sem piso
 - **Pontos Force liberado sem premissa:** paga de 0% a 150% (antes zerava abaixo de 70%) — na tela de RV do RN, no Simulador (RN e consolidado do GV) e no Relatório PDF. O processador já calculava sem piso; agora as telas batem com ele.

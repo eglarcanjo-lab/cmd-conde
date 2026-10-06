@@ -53,9 +53,9 @@ function BarIndicador({ label, real, meta, peso, po_total, bloqueado, minPct = 7
   );
 }
 
-// Pontos Force: SEM piso a partir de out/2026 (liberado sem premissa). Meses anteriores
+// Pontos Force: SEM piso a partir de set/2026 (liberado sem premissa). Meses anteriores
 // mantêm o piso de 70% — o que já foi pago (RV fechada) não muda.
-const pisoPontos = (mes) => (String(mes || "") >= "2026-10" ? 0 : 70);
+const pisoPontos = (mes) => (String(mes || "") >= "2026-09" ? 0 : 70);
 
 export default function RV() {
   const { usuario, logout } = useAuth();

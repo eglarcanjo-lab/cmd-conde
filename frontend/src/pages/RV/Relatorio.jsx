@@ -18,9 +18,9 @@ const pct = (real, meta) => meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
 
 // AP não bloqueia mais a RV — cálculo independe do Atendimento Produtivo.
 // Premissas: piso 70% nos RESULTADOS (Pontos Force sem piso), cap 150%, pesos por segmento e PO.
-// Pontos Force: SEM piso a partir de out/2026 (liberado sem premissa). Meses anteriores
+// Pontos Force: SEM piso a partir de set/2026 (liberado sem premissa). Meses anteriores
 // mantêm o piso de 70% — o que já foi pago (RV fechada) não muda.
-const pisoPontos = (mes) => (String(mes || "") >= "2026-10" ? 0 : 70);
+const pisoPontos = (mes) => (String(mes || "") >= "2026-09" ? 0 : 70);
 
 function calcRv(real, meta, peso, po, minPct = 70) {
   if (!meta) return 0;
