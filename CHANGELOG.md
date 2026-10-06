@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.78.0** — CORA como fonte única (um slot só em Arquivos).
+Versão atual: **v3.78.1** — CORA só grava de out/2026 em diante (setembro e antes = Promax).
+
+## v3.78.1 — Virada Promax → CORA em out/26
+- O CORA **nunca grava meses antes de out/2026** — o fechamento de setembro (e todo o histórico) é do Promax e fica intocado; o CORA soma a partir de outubro.
+- Se o arquivo não tiver nenhum mês a gravar, só Buffer + Deck são atualizados (cobertura, mix, ruptura etc. não são refeitos vazios).
 
 ## v3.78.0 — CORA: fonte única
 - **Arquivos:** um slot só — **CORA — Consulta-pedidos (mês inteiro)** — alimenta Pedidos/Volume (todas as análises e a RV), Devoluções, Faturados (NF), Faturamento Marketplace e Buffer + Deck D+7. Saíram da tela: Pedidos Faturados, Pedidos Histórico, Faturamento Marketplace, Devoluções e Faturados (NF). Continuam do Promax: Base de Clientes, Base de Produtos, Inadimplência, Grade e Comodatos.
