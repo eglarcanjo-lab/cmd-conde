@@ -88,7 +88,7 @@ function BarRow({ label, real, meta, peso, poTotal, apOk, minPct = 70 }) {
       </div>
       <div style={s.barTrack}>
         <div style={{ ...s.barFill, width: `${Math.min(p, 100)}%`, background: cor }} />
-        <div style={s.barMark} />
+        {minPct > 0 && <div style={s.barMark} />}
       </div>
       <div style={s.barRowBot}>
         <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.76rem" }}>
@@ -101,6 +101,10 @@ function BarRow({ label, real, meta, peso, poTotal, apOk, minPct = 70 }) {
     </div>
   );
 }
+
+// Pontos Force: SEM piso a partir de out/2026 (liberado sem premissa). Meses anteriores
+// mantêm o piso de 70% — o que já foi pago (RV fechada) não muda.
+const pisoPontos = (mes) => (String(mes || "") >= "2026-10" ? 0 : 70);
 
 export default function RvSimulador() {
   const [mesRef, setMesRef] = useState(() => {
@@ -183,7 +187,7 @@ export default function RvSimulador() {
     const pontosReal = parseFloat(pontos?.pontos_real || 0);
     const pesoPontos = w.pontos;
     const pctPts = Math.min(pontosReal / META_PONTOS * 100, 150);
-    const rvPontos = pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvPontos = pctPts >= pisoPontos(mesRef) ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
 
     // ── Resultados — piso 70% ──
     const realCerv = parseFloat(rv?.real_cerveja || 0);
@@ -209,7 +213,7 @@ export default function RvSimulador() {
     const total   = rvPontos + rvCerv + rvNab + rvMktp + rvMatch;
 
     // Potencial (como se AP fosse OK)
-    const rvPontsPot = pctPts >= 70 ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvPontsPot = pctPts >= pisoPontos(mesRef) ? (poTotal * pesoPontos / 100) * (pctPts / 100) : 0;
     const rvCervPot  = calcRvPot(realCerv,  metaCerv,  pesoCerv,  poTotal);
     const rvNabPot   = calcRvPot(realNab,   metaNab,   pesoNab,   poTotal);
     const rvMktpPot  = pesoMktp  > 0 ? calcRvPot(realMktp,  metaMktp,  pesoMktp,  poTotal) : 0;
@@ -269,7 +273,7 @@ export default function RvSimulador() {
     const pesoMatch = poSum > 0 ? wPO.match / poSum : 0;
 
     const pctPts = Math.min(metaPontos > 0 ? (pontosReal / metaPontos) * 100 : 0, 150);
-    const rvPontos = pctPts >= 70 ? (po * pesoPontos / 100) * (pctPts / 100) : 0;
+    const rvPontos = pctPts >= pisoPontos(mesRef) ? (po * pesoPontos / 100) * (pctPts / 100) : 0;
     const rvCerv  = calcRvPot(rC,  mC,  pesoCerv,  po);
     const rvNab   = calcRvPot(rN,  mN,  pesoNab,   po);
     const rvMktp  = pesoMktp  > 0.001 ? calcRvPot(rM,  mM,  pesoMktp,  po) : 0;
@@ -446,7 +450,7 @@ export default function RvSimulador() {
     const gpush = (row, type) => { gvAoa.push(row); gvTypes.push(type); };
     gpush([`GV — CONSOLIDADO DA SALA — Competência ${mesRef}`, "", "", "", ""], "title");
     gvMerges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
-    gpush([`${gv.nRns} RNs · PO base R$ ${fmtBrl(gv.poGV)} · avaliado como 1 RN (teto 150%, piso 70%)`, "", "", "", ""], "po");
+    gpush([`${gv.nRns} RNs · PO base R$ ${fmtBrl(gv.poGV)} · avaliado como 1 RN (teto 150%; piso 70% só nos resultados)`, "", "", "", ""], "po");
     gvMerges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } });
     gpush(["Indicador", "Meta", "Realizado", "Atingimento %", "Parcela (R$)"], "thead");
     gv.linhas.forEach((l) => {
@@ -649,7 +653,7 @@ export default function RvSimulador() {
                 label={`⭐ Pontos Force`}
                 real={tot.pontosReal} meta={META_PONTOS}
                 peso={tot.pesoPontos} poTotal={tot.poTotal} apOk={tot.apOk}
-                minPct={0}
+                minPct={pisoPontos(mesRef)}
               />
               {/* Resultados — piso 70%, renderizados conforme peso do segmento */}
               {tot.indicadores.map(ind => (

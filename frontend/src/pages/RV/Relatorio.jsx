@@ -17,7 +17,11 @@ const brl = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximum
 const pct = (real, meta) => meta > 0 ? Math.min((real / meta) * 100, 150) : 0;
 
 // AP não bloqueia mais a RV — cálculo independe do Atendimento Produtivo.
-// Premissas mantidas: piso 70%, cap 150%, pesos por segmento e PO.
+// Premissas: piso 70% nos RESULTADOS (Pontos Force sem piso), cap 150%, pesos por segmento e PO.
+// Pontos Force: SEM piso a partir de out/2026 (liberado sem premissa). Meses anteriores
+// mantêm o piso de 70% — o que já foi pago (RV fechada) não muda.
+const pisoPontos = (mes) => (String(mes || "") >= "2026-10" ? 0 : 70);
+
 function calcRv(real, meta, peso, po, minPct = 70) {
   if (!meta) return 0;
   const p = pct(real, meta);
@@ -25,16 +29,16 @@ function calcRv(real, meta, peso, po, minPct = 70) {
   return (po * peso / 100) * (p / 100);
 }
 
-function rvRN(r) {
+function rvRN(r, mes) {
   const apOk = r.ap_ok === "OK"; // informativo apenas
   const po   = n(r.po_total);
   const seg  = r.segmento || "OFF";
   const w    = PESOS[seg] || PESOS.ON;
 
-  // Pontos Force — piso 70%
+  // Pontos Force — SEM piso (paga de 0% a 150%)
   const pesoPt = w.pontos;
   const pctPt  = pct(n(r.pontos_real), META_PONTOS);
-  const rvPt   = pctPt >= 70 ? (po * pesoPt / 100) * (pctPt / 100) : 0;
+  const rvPt   = pctPt >= pisoPontos(mes) ? (po * pesoPt / 100) * (pctPt / 100) : 0;
 
   // Resultados — piso 70%, conforme peso do segmento (peso 0 = não entra)
   const defs = [
@@ -90,7 +94,7 @@ export default function RVRelatorio() {
 
   // totais consolidados
   const totais = dados.reduce((acc, r) => {
-    const c = rvRN(r);
+    const c = rvRN(r, mesRef);
     acc.po    += c.po;
     acc.total += c.total;
     return acc;
@@ -193,7 +197,7 @@ export default function RVRelatorio() {
                 </thead>
                 <tbody>
                   {dados.map((r, i) => {
-                    const c = rvRN(r);
+                    const c = rvRN(r, mesRef);
                     const pctCv = pct(n(r.real_cerveja), n(r.meta_cerveja));
                     const pctNb = pct(n(r.real_nab), n(r.meta_nab));
                     const pctVr = c.pctVar;
@@ -248,13 +252,13 @@ export default function RVRelatorio() {
 
             <div className="rv-cards" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
               {dados.map((r) => {
-                const c = rvRN(r);
+                const c = rvRN(r, mesRef);
                 const ap = r.ap_detalhe;
                 const fmtVal = (v, unit) => unit === "R$"
                   ? `R$ ${brl(v)}`
                   : `${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} HL`;
                 const rows = [
-                  { label: "Pontos Force", peso: c.pesoPt, real: n(r.pontos_real).toLocaleString("pt-BR"), meta: META_PONTOS.toLocaleString("pt-BR"), pctVal: c.pctPt, rv: c.rvPt, unit: "pts", minPct: 70 },
+                  { label: "Pontos Force", peso: c.pesoPt, real: n(r.pontos_real).toLocaleString("pt-BR"), meta: META_PONTOS.toLocaleString("pt-BR"), pctVal: c.pctPt, rv: c.rvPt, unit: "pts", minPct: pisoPontos(mesRef) },
                   ...c.indicadores.map(ind => ({
                     label: ind.nome,
                     peso:  ind.peso,

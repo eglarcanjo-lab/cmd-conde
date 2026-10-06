@@ -53,6 +53,10 @@ function BarIndicador({ label, real, meta, peso, po_total, bloqueado, minPct = 7
   );
 }
 
+// Pontos Force: SEM piso a partir de out/2026 (liberado sem premissa). Meses anteriores
+// mantêm o piso de 70% — o que já foi pago (RV fechada) não muda.
+const pisoPontos = (mes) => (String(mes || "") >= "2026-10" ? 0 : 70);
+
 export default function RV() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -91,7 +95,7 @@ export default function RV() {
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
   const pesoPontos = w.pontos;
   // AP não bloqueia mais a RV — o cálculo independe do Atendimento Produtivo.
-  const rvPontos = pctPontos >= 70 ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
+  const rvPontos = pctPontos >= pisoPontos(mesRef) ? (poTotal * pesoPontos / 100) * (pctPontos / 100) : 0;
 
   // Resultados: piso 70%, cap 150%, pesos e PO do regulamento (premissas mantidas).
   const calcRv = (real, meta, peso, minPct = 70) => {
@@ -199,7 +203,6 @@ export default function RV() {
               </div>
               <div style={styles.barTrack}>
                 <div style={{ ...styles.barFill, width: `${Math.min(pctPontos, 100)}%`, background: pctPontos >= 100 ? "#4ade80" : pctPontos >= 70 ? "#7DBA3D" : "#f87171" }} />
-                <div style={styles.barMark70}/>
               </div>
             </div>
 

@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.77.0** — Setores 301–305 renomeados para 107–111 (GV1).
+Versão atual: **v3.77.1** — RV: Pontos Force sem piso de 70% (a partir de out/26).
+
+## v3.77.1 — Pontos Force sem piso
+- **Pontos Force liberado sem premissa:** paga de 0% a 150% (antes zerava abaixo de 70%) — na tela de RV do RN, no Simulador (RN e consolidado do GV) e no Relatório PDF. O processador já calculava sem piso; agora as telas batem com ele.
+- Vale **a partir de out/2026**. Meses anteriores seguem com o piso de 70% — a RV já paga/fechada não muda.
+- O **piso de 70% dos resultados** (volumes/faturamento) continua.
 
 ## v3.77.0 — Setores 301–305 → 107–111
 - **Processador:** de-para central em `normalizar_setor` / `setor_hop` (301→107, 302→108, 303→109, 304→110, 305→111). Todo import (clientes, pedidos, inadimplência, tasks, SPO, BI…) já grava os setores novos — um RN que aparece como 301 e 107 no mesmo mês (CORA de out/26) passa a somar num só setor. As 19 listas locais de setores viraram uma constante única; 107–111 entram no **On Trade** (RV) e no mapa de RNs do **GV1** (Coaching).
