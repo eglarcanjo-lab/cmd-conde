@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
-import { Seta, TagInativar } from "../Incidentes/Migracao";
+import { Seta, TagInativar, TagCoord } from "../Incidentes/Migracao";
 
 const COR = {
   "Em aprovação": "#f5c451", Aprovado: "#4ade80", Recusado: "#f87171", Parcial: "#60a5fa", Pendente: "#f5c451",
@@ -14,14 +14,17 @@ const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDig
 function exportar(sols, nomeArq, soAprovados) {
   const cab = ["Solicitação", "Data pedido", "RN solicitante", "Cód PDV", "PDV", "Média tri (HL/mês)",
     "Setor atual", "Novo setor", "Dia atual", "Novo dia", "Status", "Decidido em", "Motivo",
-    "Ação", "Justificativa (inativação)", "Inadimplência", "Comodato"];
+    "Ação", "Justificativa (inativação)", "Inadimplência", "Comodato", "Latitude nova", "Longitude nova", "Endereço (coordenada nova)", "Mapa"];
   const linhas = [];
   sols.forEach((s) => s.itens.forEach((it) => {
     if (soAprovados && it.status !== "Aprovado") return;
     linhas.push([s.id, dataBR(s.criado_em), `${s.setor} · ${s.nome_rn || ""}`, it.cod_pdv, it.nome_pdv, it.media_tri_hl,
       it.setor_atual, it.setor_novo || it.setor_atual, it.dia_atual, it.dia_novo || it.dia_atual,
       it.status === "Pendente" ? "Em aprovação" : it.status, dataBR(s.decidido_em), s.motivo || "",
-      it.inativar ? "INATIVAR" : "MIGRAR", it.justificativa || "", it.inad_info || "", it.comodato_info || ""]);
+      it.inativar ? "INATIVAR" : (it.setor_novo || it.dia_novo) ? (it.lat_nova != null ? "MIGRAR + COORDENADA" : "MIGRAR") : "COORDENADA",
+      it.justificativa || "", it.inad_info || "", it.comodato_info || "",
+      it.lat_nova ?? "", it.lng_nova ?? "", it.endereco_novo || "",
+      it.lat_nova != null ? `https://www.google.com/maps?q=${it.lat_nova},${it.lng_nova}` : ""]);
   }));
   if (!linhas.length) { alert("Nenhuma linha para exportar."); return; }
   const ws = XLSX.utils.aoa_to_sheet([cab, ...linhas]);
@@ -34,7 +37,7 @@ function exportar(sols, nomeArq, soAprovados) {
     if (l[7] !== l[6]) ws[XLSX.utils.encode_cell({ r: i + 1, c: 7 })].s = muda;  // novo setor ≠ atual
     if (l[9] !== l[8]) ws[XLSX.utils.encode_cell({ r: i + 1, c: 9 })].s = muda;  // novo dia ≠ atual
   });
-  ws["!cols"] = [10, 11, 22, 10, 30, 10, 9, 9, 8, 8, 12, 11, 30, 10, 40, 45, 55].map((wch) => ({ wch }));
+  ws["!cols"] = [10, 11, 22, 10, 30, 10, 9, 9, 8, 8, 12, 11, 30, 14, 40, 45, 55, 12, 12, 45, 40].map((wch) => ({ wch }));
   ws["!rows"] = [{ hpt: 30 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Migrações");
@@ -103,6 +106,7 @@ export default function Migracoes() {
           {lista.map((s) => {
             const nDia = s.itens.filter((it) => it.dia_novo).length, nRn = s.itens.filter((it) => it.setor_novo).length;
             const nInat = s.itens.filter((it) => it.inativar).length;
+            const nCoord = s.itens.filter((it) => it.lat_nova != null).length;
             return (
               <div key={s.id} style={S.card} onClick={() => abrir(s)}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -117,6 +121,7 @@ export default function Migracoes() {
                   {nDia > 0 && ` · ${nDia} troca${nDia > 1 ? "s" : ""} de dia`}
                   {nRn > 0 && ` · ${nRn} troca${nRn > 1 ? "s" : ""} de RN`}
                   {nInat > 0 && <span style={{ color: "#f87171", fontWeight: 700 }}>{` · ${nInat} inativaç${nInat > 1 ? "ões" : "ão"}`}</span>}
+                  {nCoord > 0 && <span style={{ color: "#60a5fa", fontWeight: 700 }}>{` · ${nCoord} coordenada${nCoord > 1 ? "s" : ""}`}</span>}
                   {s.motivo && <span style={{ color: "rgba(255,255,255,0.45)" }}> — {s.motivo}</span>}
                   {s.criado_por && <span style={{ color: "#f5c451" }}> · aberto por {s.criado_por}</span>}
                 </div>
@@ -162,7 +167,14 @@ export default function Migracoes() {
                           {it.inativar && <TagInativar />}
                           {it.dia_novo && <Seta de={it.dia_atual} para={it.dia_novo} tipo="dia" />}
                           {it.setor_novo && <Seta de={it.setor_atual} para={it.setor_novo} tipo="rn" />}
+                          {it.lat_nova != null && <TagCoord />}
                         </span>
+                        {it.lat_nova != null && (
+                          <div style={{ textAlign: "left", marginTop: 6, fontSize: "0.74rem", lineHeight: 1.45, maxWidth: 380, color: "rgba(255,255,255,0.8)" }}>
+                            📍 {it.lat_nova}, {it.lng_nova}{it.endereco_novo ? ` · ${it.endereco_novo}` : ""}{" · "}
+                            <a href={`https://www.google.com/maps?q=${it.lat_nova},${it.lng_nova}`} target="_blank" rel="noreferrer" style={{ color: "#60a5fa" }}>ver no mapa ↗</a>
+                          </div>
+                        )}
                         {it.inativar && (
                           <div style={{ textAlign: "left", marginTop: 6, fontSize: "0.74rem", lineHeight: 1.45, maxWidth: 380 }}>
                             <div style={{ color: "rgba(255,255,255,0.8)" }}>📝 {it.justificativa}</div>

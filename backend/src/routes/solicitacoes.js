@@ -10,6 +10,7 @@ const router = express.Router();
 const { query } = require("../services/db");
 const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
+const geo = require("../services/geo");
 
 router.use(authMiddleware);
 
@@ -36,6 +37,10 @@ async function ensureTabelas() {
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS justificativa TEXT`);
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS inad_info TEXT`);
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS comodato_info TEXT`);
+  // Coordenadas (v3.79): nova lat/lng colada pelo RN + endereço (OpenStreetMap) congelado no pedido
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS lat_nova NUMERIC`);
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS lng_nova NUMERIC`);
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS endereco_novo TEXT`);
   _ok = true;
 }
 
@@ -152,6 +157,17 @@ router.get("/migracao/base", async (req, res) => {
   }
 });
 
+// GET /api/solicitacoes/coordenada?texto= — lê o que o RN colou (coordenada ou link do Maps,
+// inclusive link curto) e devolve { lat, lng, endereco, link } p/ a prévia na tela.
+router.get("/coordenada", async (req, res) => {
+  try {
+    const c = await geo.resolverCoordenada(req.query.texto);
+    return res.json({ ...c, endereco: await geo.enderecoDe(c.lat, c.lng), link: geo.linkMapa(c.lat, c.lng) });
+  } catch (e) {
+    return res.status(e.http || 500).json({ error: e.http ? e.message : "Erro ao ler a coordenada." });
+  }
+});
+
 // POST /api/solicitacoes/migracao — { setor?, motivo, itens:[{cod_pdv, setor_novo, dia_novo} | {cod_pdv, inativar:true, justificativa}] }
 // Snapshot (nome/setor/dia/média) é montado AQUI, a partir da base — não confia no cliente.
 router.post("/migracao", async (req, res) => {
@@ -198,12 +214,23 @@ router.post("/migracao", async (req, res) => {
       if (diaNovo === diaAtual) diaNovo = "";
       if (setorNovo && !setoresValidos.has(setorNovo)) return res.status(400).json({ error: `Setor ${setorNovo} inválido.` });
       if (diaNovo && !DIAS.includes(diaNovo)) return res.status(400).json({ error: `Dia ${diaNovo} inválido.` });
-      if (!setorNovo && !diaNovo) continue; // linha sem alteração
+      // Nova coordenada (opcional): validada e com endereço congelado no pedido
+      let coord = null;
+      if (String(it.coordenadas || "").trim()) {
+        try {
+          coord = await geo.resolverCoordenada(it.coordenadas);
+          coord.endereco = await geo.enderecoDe(coord.lat, coord.lng);
+        } catch (e) {
+          return res.status(400).json({ error: `PDV ${c} (${nomePdv}): ${e.message}` });
+        }
+      }
+      if (!setorNovo && !diaNovo && !coord) continue; // linha sem alteração
       vistos.add(c);
       itens.push({
         cod_pdv: c, nome_pdv: nomePdv,
         setor_atual: setor, dia_atual: diaAtual, setor_novo: setorNovo, dia_novo: diaNovo,
         media_tri_hl: media, inativar: false,
+        lat_nova: coord?.lat ?? null, lng_nova: coord?.lng ?? null, endereco_novo: coord?.endereco || null,
       });
     }
     if (!itens.length) return res.status(400).json({ error: "Nenhuma alteração para enviar." });
@@ -220,10 +247,11 @@ router.post("/migracao", async (req, res) => {
     for (const it of itens) {
       await query(
         `INSERT INTO solicitacoes_itens (solicitacao_id, cod_pdv, nome_pdv, setor_atual, dia_atual, setor_novo, dia_novo, media_tri_hl,
-                                         inativar, justificativa, inad_info, comodato_info)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                                         inativar, justificativa, inad_info, comodato_info, lat_nova, lng_nova, endereco_novo)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
         [id, it.cod_pdv, it.nome_pdv, it.setor_atual, it.dia_atual, it.setor_novo || null, it.dia_novo || null, it.media_tri_hl,
-         !!it.inativar, it.justificativa || null, it.inad_info || null, it.comodato_info || null]);
+         !!it.inativar, it.justificativa || null, it.inad_info || null, it.comodato_info || null,
+         it.lat_nova ?? null, it.lng_nova ?? null, it.endereco_novo || null]);
     }
     return res.json({ success: true, id, itens: itens.length });
   } catch (e) {
@@ -239,7 +267,8 @@ async function carregar(where = "", params = []) {
   const ids = s.rows.map((r) => r.id);
   const it = await query(`SELECT * FROM solicitacoes_itens WHERE solicitacao_id = ANY($1) ORDER BY id`, [ids]);
   const por = {};
-  it.rows.forEach((r) => { (por[r.solicitacao_id] = por[r.solicitacao_id] || []).push({ ...r, media_tri_hl: num(r.media_tri_hl) }); });
+  it.rows.forEach((r) => { (por[r.solicitacao_id] = por[r.solicitacao_id] || []).push({ ...r, media_tri_hl: num(r.media_tri_hl),
+    lat_nova: r.lat_nova == null ? null : Number(r.lat_nova), lng_nova: r.lng_nova == null ? null : Number(r.lng_nova) }); });
   return s.rows.map((r) => ({ ...r, itens: por[r.id] || [] }));
 }
 

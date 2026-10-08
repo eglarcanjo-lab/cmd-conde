@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import Migracao, { Seta, TagInativar } from "./Migracao";
+import Migracao, { Seta, TagInativar, TagCoord } from "./Migracao";
 
 const STATUS_CONFIG = {
   "Aguardando": { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
@@ -266,6 +266,7 @@ export default function Incidentes() {
                               <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                                 {it.inativar && <TagInativar />}
                                 {it.dia_novo && <Seta de={it.dia_atual} para={it.dia_novo} tipo="dia" />}
+                                {it.lat_nova != null && <TagCoord />}
                                 {it.setor_novo && <Seta de={it.setor_atual} para={it.setor_novo} tipo="rn" />}
                               </span>
                               <span style={{ ...styles.statusTag, background: sti.bg, color: sti.color }}>{it.status === "Pendente" ? "Em aprovação" : it.status}</span>

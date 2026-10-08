@@ -21,6 +21,46 @@ export function Seta({ de, para, tipo }) {
 }
 
 // `setor` (opcional): ADM agindo em nome de um RN — o backend só aceita para admin.
+export function TagCoord() {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(96,165,250,0.15)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.45)", borderRadius: 20, padding: "2px 9px", fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+      📍 COORDENADA
+    </span>
+  );
+}
+
+// Caixa p/ colar a nova coordenada (ou link do Google Maps) + prévia do endereço.
+function CaixaCoord({ texto, onTexto }) {
+  const [prev, setPrev] = useState({ estado: "vazio" });   // vazio | lendo | ok | erro
+  useEffect(() => {
+    const t = (texto || "").trim();
+    if (!t) { setPrev({ estado: "vazio" }); return; }
+    setPrev({ estado: "lendo" });
+    const h = setTimeout(() => {
+      api.get("/api/solicitacoes/coordenada", { params: { texto: t }, timeout: 20000 })
+        .then((r) => setPrev({ estado: "ok", ...r.data }))
+        .catch((e) => setPrev({ estado: "erro", msg: e.response?.data?.error || "Não consegui ler a coordenada." }));
+    }, 700);
+    return () => clearTimeout(h);
+  }, [texto]);
+  return (
+    <div style={{ ...S.previa, borderColor: "rgba(96,165,250,0.35)" }}>
+      <div style={S.previaTit}>Nova coordenada do PDV</div>
+      <input style={S.coordIn} value={texto || ""} onChange={(e) => onTexto(e.target.value)}
+        placeholder="Cole aqui: -7.0234, -37.2711 ou o link do Google Maps (compartilhar → copiar link)" />
+      {prev.estado === "lendo" && <div style={S.fonte}>Lendo coordenada…</div>}
+      {prev.estado === "erro" && <div style={{ ...S.previaLinha, color: "#f87171" }}>⚠️ {prev.msg}</div>}
+      {prev.estado === "ok" && (
+        <div style={{ ...S.previaLinha, color: "#4ade80" }}>
+          ✅ {prev.lat}, {prev.lng}
+          {prev.endereco ? <> · <span style={{ color: "rgba(255,255,255,0.8)" }}>{prev.endereco}</span></> : null}
+          {" · "}<a href={prev.link} target="_blank" rel="noreferrer" style={{ color: "#60a5fa" }}>ver no mapa ↗</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TagInativar() {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(248,113,113,0.15)", color: "#f87171", border: "1px solid rgba(248,113,113,0.45)", borderRadius: 20, padding: "2px 9px", fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap" }}>
@@ -74,7 +114,7 @@ export default function Migracao({ onEnviado, setor }) {
   const setCampo = (cod, campo, val) =>
     setAlt((a) => {
       const n = { ...a, [cod]: { ...(a[cod] || {}), [campo]: val } };
-      if (!n[cod].setor_novo && !n[cod].dia_novo && !n[cod].inativar) delete n[cod];
+      if (!n[cod].setor_novo && !n[cod].dia_novo && !n[cod].inativar && !n[cod].abrirCoord && !(n[cod].coordenadas || "").trim()) delete n[cod];
       return n;
     });
 
@@ -94,11 +134,12 @@ export default function Migracao({ onEnviado, setor }) {
       rn: a.setor_novo && a.setor_novo !== base.setor ? a.setor_novo : "",
       dia: a.dia_novo && a.dia_novo !== p.dia ? a.dia_novo : "",
       inat: !!a.inativar,
+      coord: !a.inativar && !!(a.coordenadas || "").trim(),
     };
   };
 
   const pdvs = base?.pdvs || [];
-  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia || m.inat; }).length;
+  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia || m.inat || m.coord; }).length;
 
   // Agrupa por dia (SEG–SEX, depois "sem dia"), ordena por nome dentro do dia.
   const grupos = useMemo(() => {
@@ -106,7 +147,7 @@ export default function Migracao({ onEnviado, setor }) {
     const q = busca.trim().toLowerCase();
     const filtro = (p) => {
       if (q && !(`${p.cod_pdv} ${p.nome}`.toLowerCase().includes(q))) return false;
-      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia && !m.inat) return false; }
+      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia && !m.inat && !m.coord) return false; }
       return true;
     };
     const chave = (d) => (DIAS.includes(d) ? d : "");
@@ -133,7 +174,7 @@ export default function Migracao({ onEnviado, setor }) {
 
   async function enviar() {
     setMsg(""); setErro("");
-    const marcados = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia || m.inat);
+    const marcados = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia || m.inat || m.coord);
     if (!marcados.length) { setErro("Nenhuma alteração marcada."); return; }
     const semJust = marcados.filter(({ p, m }) => m.inat && (alt[p.cod_pdv]?.justificativa || "").trim().length < 5);
     if (semJust.length) {
@@ -142,7 +183,7 @@ export default function Migracao({ onEnviado, setor }) {
     }
     const itens = marcados.map(({ p, m }) => (m.inat
       ? { cod_pdv: p.cod_pdv, inativar: true, justificativa: alt[p.cod_pdv].justificativa.trim() }
-      : { cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia }));
+      : { cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia, coordenadas: m.coord ? alt[p.cod_pdv].coordenadas.trim() : "" }));
     setEnviando(true);
     try {
       const r = await api.post("/api/solicitacoes/migracao", { motivo, itens, ...(setor ? { setor } : {}) }, { timeout: 60000 });
@@ -168,7 +209,7 @@ export default function Migracao({ onEnviado, setor }) {
         <label style={S.chk}><input type="checkbox" checked={soAlterados} onChange={(e) => setSoAlterados(e.target.checked)} /> Só alterados</label>
         <span style={S.info}>{pdvs.length} PDVs · média {base.meses.map(rotMes).join("/")}</span>
       </div>
-      <p style={S.dica}>Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação. Para tirar o PDV da carteira, use <b style={{ color: "#f87171" }}>🚫 Inativar</b> (mostra inadimplência e comodato; justificativa obrigatória).</p>
+      <p style={S.dica}>Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação. Para tirar o PDV da carteira, use <b style={{ color: "#f87171" }}>🚫 Inativar</b> (mostra inadimplência e comodato; justificativa obrigatória). Para corrigir a localização, use <b style={{ color: "#60a5fa" }}>📍 Coordenada</b> e cole o link do Google Maps.</p>
 
       {grupos.map((g) => (
         <div key={g.dia || "sem"} style={{ marginBottom: 14 }}>
@@ -185,7 +226,7 @@ export default function Migracao({ onEnviado, setor }) {
               );
             }
             return (
-              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.inat ? S.linhaInat : m.rn || m.dia ? S.linhaOn : {}) }}>
+              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.inat ? S.linhaInat : m.rn || m.dia || m.coord ? S.linhaOn : {}) }}>
                 <div style={S.pdv}>
                   <div style={S.nome}>{p.nome}</div>
                   <div style={S.sub}>{p.cod_pdv} · <b style={{ color: "rgba(255,255,255,0.75)" }}>{fmt(p.media_tri)} HL/mês</b>{p.cidade ? ` · ${p.cidade}` : ""}</div>
@@ -202,14 +243,21 @@ export default function Migracao({ onEnviado, setor }) {
                     <option value="">Dia: manter</option>
                     {DIAS.filter((d) => d !== p.dia).map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
+                  <button type="button" title="Alterar a coordenada (localização) do PDV"
+                    onClick={() => setCampo(p.cod_pdv, "abrirCoord", !a.abrirCoord)}
+                    style={{ ...S.btnCoord, ...(a.abrirCoord || m.coord ? S.btnCoordOn : {}) }}>📍 Coordenada</button>
                   </>}
                   <div style={S.alt}>
                     {m.inat && <TagInativar />}
                     {m.dia && <Seta de={p.dia} para={m.dia} tipo="dia" />}
                     {m.rn && <Seta de={base.setor} para={m.rn} tipo="rn" />}
-                    {!m.dia && !m.rn && !m.inat && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
+                    {m.coord && <TagCoord />}
+                    {!m.dia && !m.rn && !m.inat && !m.coord && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
                   </div>
                 </div>
+                {!m.inat && (a.abrirCoord || m.coord) && (
+                  <CaixaCoord texto={a.coordenadas || ""} onTexto={(v) => setCampo(p.cod_pdv, "coordenadas", v)} />
+                )}
                 {m.inat && (
                   <PreviaInativar p={p} fontes={base.fontes} justificativa={a.justificativa || ""}
                     onJust={(v) => setCampo(p.cod_pdv, "justificativa", v)} />
@@ -256,6 +304,9 @@ const S = {
   dica: { color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", margin: "0 0 12px" },
   grupo: { background: "rgba(125,186,61,0.12)", color: "#7DBA3D", fontWeight: 700, fontSize: "0.8rem", padding: "6px 12px", borderRadius: 8, marginBottom: 4 },
   linha: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px", padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  btnCoord: { background: "transparent", color: "rgba(96,165,250,0.85)", border: "1px solid rgba(96,165,250,0.35)", borderRadius: 8, padding: "6px 10px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
+  btnCoordOn: { background: "rgba(96,165,250,0.15)", color: "#60a5fa", fontWeight: 700 },
+  coordIn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: "#fff", padding: "9px 10px", fontSize: "0.84rem", fontFamily: "inherit", outline: "none" },
   linhaInat: { background: "rgba(248,113,113,0.06)", borderRadius: 8 },
   btnInat: { background: "transparent", color: "rgba(248,113,113,0.85)", border: "1px solid rgba(248,113,113,0.35)", borderRadius: 8, padding: "6px 10px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
   btnInatOn: { background: "rgba(248,113,113,0.18)", color: "#f87171", fontWeight: 700 },

@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.78.2** — CORA: D+1 no volume diário + import automático (zip) reconhece CORA e Comodatos.
+Versão atual: **v3.79.0** — Migração de PDVs: alterar coordenada (com endereço automático).
+
+## v3.79.0 — Coordenada do PDV na Migração
+- **Migração / Inativação de PDVs:** botão **📍 Coordenada** por PDV — o RN cola a coordenada (`-7.0234, -37.2711` ou `-7,0234 -37,2711`) ou o **link do Google Maps**, inclusive o link curto de compartilhar (`maps.app.goo.gl`, seguido no servidor). Prévia na hora: coordenada lida + **endereço** + "ver no mapa". Coordenada fora do Brasil (lat/lng trocadas) é barrada.
+- Endereço via **OpenStreetMap (Nominatim)** — gratuito, sem chave, ≤ 1 consulta/s, com cache. Fica **congelado no pedido** (`lat_nova`, `lng_nova`, `endereco_novo`).
+- Pode vir sozinha ou junto com troca de RN/dia (não com inativação). Admin vê 📍 + endereço + link do mapa; **Excel** ganhou Latitude, Longitude, Endereço e link do Mapa (Ação = COORDENADA / MIGRAR + COORDENADA).
 
 ## v3.78.2 — D+1 e import automático
 - **Volume diário D+1:** pedido ainda sem NF entra na data de **entrega − 1 dia** (a NF sai sempre na véspera). O pedido de hoje p/ entrega amanhã já conta como venda de HOJE e não muda de dia quando a NF é emitida.
