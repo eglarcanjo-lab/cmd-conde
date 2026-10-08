@@ -44,6 +44,22 @@ router.get("/aberto/opcoes", async (req, res) => {
   return res.json({ grupos: GRUPOS.map(({ id, label }) => ({ id, label })), subcategorias: subs, indicadores: INDICADORES });
 });
 
+// GET /api/relatorios/aberto/produtos → produtos da BASE DE PRODUTOS com categoria
+// ({cod, nome, categorias}) p/ a busca do "SKU específico" (não usa a Grade).
+router.get("/aberto/produtos", async (req, res) => {
+  const [base, full] = await Promise.all([readSheet("produtos_base").catch(() => []), readSheet("produtos_full").catch(() => [])]);
+  const nomeFull = {};
+  full.forEach((p) => { const c = normCod(p.cod); if (c) nomeFull[c] = String(p.nome || "").trim(); });
+  const porCod = new Map();   // 1 por código (prefere a linha com nome)
+  base.forEach((p) => {
+    const cod = normCod(p.cod), categorias = catsDe(p).join(" | ");
+    if (!cod || !categorias) return;
+    const nome = String(p.nome || "").trim() || nomeFull[cod] || "";
+    if (!porCod.has(cod) || (!porCod.get(cod).nome && nome)) porCod.set(cod, { cod, nome, categorias });
+  });
+  return res.json([...porCod.values()].sort((a, b) => (a.nome || "~").localeCompare(b.nome || "~", "pt-BR")));
+});
+
 // GET /api/relatorios/aberto/sku/:cod → nome do produto (p/ o campo "SKU específico")
 router.get("/aberto/sku/:cod", async (req, res) => {
   const cod = normCod(req.params.cod);

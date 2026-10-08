@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.81.0** — Relatório aberto: todas as categorias (grupos + subcategorias) e SKU específico.
+Versão atual: **v3.81.1** — Relatório aberto: busca de produto por nome ou código.
+
+## v3.81.1 — Busca de produto no relatório aberto
+- "SKU específico" virou **busca**: digita parte do **nome ou o código** e escolhe na lista (mostra código · nome · categorias). Lista vem da **base de produtos com categoria** (não da Grade), 1 por código.
 
 ## v3.81.0 — Relatório aberto: categorias e SKU
 - O seletor de item traz **Grupos** (somam as subcategorias, mesma regra da Home: **Cerveja** = Cerveja + Zero + Multipack + Giro RGB + HE + HE RGB + Trimarcas + Balanced Choice + Litrinho · **NAB** = NAB + NAB Zero · Match · Marketplace), **todas as subcategorias** do cadastro de produtos da HOP e **🔎 SKU específico** (digita o código e aparece o nome). Saiu o item fixo "Stella Pure Gold 600" — use o SKU 33857.

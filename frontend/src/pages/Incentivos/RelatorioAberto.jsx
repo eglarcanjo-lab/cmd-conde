@@ -25,12 +25,40 @@ function mesesDisponiveis() {
   return out;
 }
 
+// Busca de produto por NOME ou CÓDIGO (base de produtos com categoria — não a Grade).
+function BuscaProduto({ produtos, valor, onEscolher }) {
+  const [q, setQ] = useState(valor ? `${valor.cod} · ${valor.nome}` : "");
+  const [abrir, setAbrir] = useState(false);
+  const norm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termos = norm(q).split(/\s+/).filter(Boolean);
+  const achados = !termos.length ? produtos.slice(0, 30)
+    : produtos.filter((p) => { const alvo = norm(`${p.cod} ${p.nome}`); return termos.every((t) => alvo.includes(t)); }).slice(0, 30);
+  return (
+    <div style={{ position: "relative" }}>
+      <input style={{ ...S.select, width: 300 }} value={q} placeholder="🔎 Digite o nome ou o código do produto"
+        onChange={(e) => { setQ(e.target.value); setAbrir(true); onEscolher(null); }}
+        onFocus={() => setAbrir(true)} onBlur={() => setTimeout(() => setAbrir(false), 150)} />
+      {abrir && (
+        <div style={S.lista}>
+          {achados.map((p) => (
+            <div key={p.cod} style={S.opc} onMouseDown={() => { onEscolher(p); setQ(`${p.cod} · ${p.nome}`); setAbrir(false); }}>
+              <b style={{ color: "#fff" }}>{p.cod}</b> · {p.nome}
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.7rem" }}> — {p.categorias}</span>
+            </div>
+          ))}
+          {!achados.length && <div style={{ ...S.opc, cursor: "default", color: "rgba(255,255,255,0.4)" }}>Nenhum produto com categoria encontrado.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RelatorioAberto() {
   const [aberto, setAberto] = useState(false);
   const [opc, setOpc] = useState(null);               // { grupos, subcategorias }
   const [item, setItem] = useState("grupo:cerveja");  // grupo:… | cat:… | "sku"
-  const [sku, setSku] = useState("");
-  const [skuNome, setSkuNome] = useState("");
+  const [produtos, setProdutos] = useState([]);       // base de produtos com categoria
+  const [prodSel, setProdSel] = useState(null);       // { cod, nome, categorias }
   const [ind, setInd] = useState("cobertura");
   const opcoesMes = mesesDisponiveis();
   const [meses, setMeses] = useState(() => opcoesMes.slice(1, 5));
@@ -44,24 +72,20 @@ export default function RelatorioAberto() {
     api.get("/api/relatorios/aberto/opcoes").then((r) => setOpc(r.data)).catch(() => {});
   }, [aberto, opc]);
 
-  // SKU específico: mostra o nome do produto enquanto digita
+  // SKU específico: carrega a base de produtos (com categoria) 1x ao escolher a opção
   useEffect(() => {
-    if (item !== "sku" || !/^\d{2,}$/.test(sku.trim())) { setSkuNome(""); return; }
-    const h = setTimeout(() => {
-      api.get(`/api/relatorios/aberto/sku/${sku.trim()}`).then((r) => setSkuNome(r.data?.nome || ""))
-        .catch(() => setSkuNome("⚠️ não encontrado no cadastro"));
-    }, 500);
-    return () => clearTimeout(h);
-  }, [item, sku]);
+    if (item !== "sku" || produtos.length) return;
+    api.get("/api/relatorios/aberto/produtos").then((r) => setProdutos(r.data || [])).catch(() => {});
+  }, [item, produtos.length]);
 
   const toggleMes = (m) => setMeses((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
 
   async function gerar() {
     if (!meses.length) { setErro("Marque ao menos um mês."); return; }
-    if (item === "sku" && !/^\d+$/.test(sku.trim())) { setErro("Digite o código do SKU."); return; }
+    if (item === "sku" && !prodSel) { setErro("Escolha o produto na lista (digite o nome ou o código)."); return; }
     setLoading(true); setErro(""); setD(null);
     try {
-      const r = await api.get("/api/relatorios/aberto", { params: { item: item === "sku" ? `sku:${sku.trim()}` : item, indicador: ind, meses: [...meses].sort().join(",") }, timeout: 60000 });
+      const r = await api.get("/api/relatorios/aberto", { params: { item: item === "sku" ? `sku:${prodSel.cod}` : item, indicador: ind, meses: [...meses].sort().join(",") }, timeout: 60000 });
       setD(r.data);
     } catch (e) { setErro(e.response?.data?.error || "Erro ao gerar o relatório."); }
     finally { setLoading(false); }
@@ -123,8 +147,8 @@ export default function RelatorioAberto() {
             </select>
             {item === "sku" && (
               <>
-                <input style={{ ...S.select, width: 110 }} value={sku} onChange={(e) => setSku(e.target.value.replace(/\D/g, ""))} placeholder="Código" inputMode="numeric" />
-                {skuNome && <span style={{ color: skuNome.startsWith("⚠️") ? "#f87171" : "rgba(255,255,255,0.7)", fontSize: "0.8rem" }}>{skuNome}</span>}
+                <BuscaProduto produtos={produtos} valor={prodSel} onEscolher={setProdSel} />
+                {!produtos.length && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" }}>carregando produtos…</span>}
               </>
             )}
             <div style={S.seg}>
@@ -209,5 +233,7 @@ const S = {
   td: { padding: "7px 10px", color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap" },
   tdC: { padding: "7px 10px", color: "#fff", textAlign: "right", whiteSpace: "nowrap" },
   media: { color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 400 },
+  lista: { position: "absolute", top: "100%", left: 0, zIndex: 20, marginTop: 4, width: 460, maxWidth: "80vw", maxHeight: 300, overflowY: "auto", background: "#13231a", border: "1px solid rgba(125,186,61,0.35)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" },
+  opc: { padding: "7px 10px", fontSize: "0.8rem", color: "rgba(255,255,255,0.75)", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)" },
   vazio: { padding: 18, textAlign: "center", color: "rgba(255,255,255,0.4)" },
 };
