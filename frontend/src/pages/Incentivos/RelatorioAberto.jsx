@@ -1,5 +1,5 @@
 // Relatório aberto configurável (dentro de "Outros relatórios"):
-// item (SPG 600 · Cerveja Zero · NAB Zero · MKTP) × indicador (cobertura · volume · distribuição)
+// item (grupo · subcategoria · SKU específico) × indicador (cobertura · volume · distribuição)
 // × meses escolhidos × aberto por setor (ou só a operação). Dados: GET /api/relatorios/aberto.
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
@@ -27,8 +27,10 @@ function mesesDisponiveis() {
 
 export default function RelatorioAberto() {
   const [aberto, setAberto] = useState(false);
-  const [itens, setItens] = useState([]);
-  const [item, setItem] = useState("spg600");
+  const [opc, setOpc] = useState(null);               // { grupos, subcategorias }
+  const [item, setItem] = useState("grupo:cerveja");  // grupo:… | cat:… | "sku"
+  const [sku, setSku] = useState("");
+  const [skuNome, setSkuNome] = useState("");
   const [ind, setInd] = useState("cobertura");
   const opcoesMes = mesesDisponiveis();
   const [meses, setMeses] = useState(() => opcoesMes.slice(1, 5));
@@ -38,17 +40,28 @@ export default function RelatorioAberto() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    if (!aberto || itens.length) return;
-    api.get("/api/relatorios/aberto/opcoes").then((r) => setItens(r.data?.itens || [])).catch(() => {});
-  }, [aberto, itens.length]);
+    if (!aberto || opc) return;
+    api.get("/api/relatorios/aberto/opcoes").then((r) => setOpc(r.data)).catch(() => {});
+  }, [aberto, opc]);
+
+  // SKU específico: mostra o nome do produto enquanto digita
+  useEffect(() => {
+    if (item !== "sku" || !/^\d{2,}$/.test(sku.trim())) { setSkuNome(""); return; }
+    const h = setTimeout(() => {
+      api.get(`/api/relatorios/aberto/sku/${sku.trim()}`).then((r) => setSkuNome(r.data?.nome || ""))
+        .catch(() => setSkuNome("⚠️ não encontrado no cadastro"));
+    }, 500);
+    return () => clearTimeout(h);
+  }, [item, sku]);
 
   const toggleMes = (m) => setMeses((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
 
   async function gerar() {
     if (!meses.length) { setErro("Marque ao menos um mês."); return; }
+    if (item === "sku" && !/^\d+$/.test(sku.trim())) { setErro("Digite o código do SKU."); return; }
     setLoading(true); setErro(""); setD(null);
     try {
-      const r = await api.get("/api/relatorios/aberto", { params: { item, indicador: ind, meses: [...meses].sort().join(",") }, timeout: 60000 });
+      const r = await api.get("/api/relatorios/aberto", { params: { item: item === "sku" ? `sku:${sku.trim()}` : item, indicador: ind, meses: [...meses].sort().join(",") }, timeout: 60000 });
       setD(r.data);
     } catch (e) { setErro(e.response?.data?.error || "Erro ao gerar o relatório."); }
     finally { setLoading(false); }
@@ -74,12 +87,15 @@ export default function RelatorioAberto() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Relatório");
     // Nome com TODAS as escolhas: indicador, item, por setor/operação e cada mês marcado.
-    const ITEM_ARQ = { spg600: "SPG600", cerveja_zero: "CervejaZero", nab_zero: "NABZero", mktp: "MKTP" };
+    // grupo:cerveja → Cerveja · cat:CERVEJA ZERO → CervejaZero · sku:33857 → SKU33857
+    const ITEM_ARQ = (id) => id.startsWith("sku:") ? `SKU${id.slice(4)}`
+      : id.split(":")[1].toLowerCase().replace(/[()]/g, "").split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("")
+          .replace(/^Nab/, "NAB").replace(/^Mktp$/, "MKTP").replace(/Rgb/g, "RGB").replace(/^He/, "HE");
     const anos = [...new Set(d.meses.map((m) => m.slice(2, 4)))];
     const mesesArq = anos.length === 1
       ? `${d.meses.map((m) => NOMES_MES[Number(m.slice(5, 7)) - 1]).join("-")}-${anos[0]}`
       : d.meses.map((m) => rot(m).replace("/", "")).join("-");
-    XLSX.writeFile(wb, `${IND[d.indicador].label.normalize("NFD").replace(/[̀-ͯ]/g, "")}_${ITEM_ARQ[d.item.id] || d.item.id}_${porSetor ? "PorSetor" : "Operacao"}_${mesesArq}.xlsx`);
+    XLSX.writeFile(wb, `${IND[d.indicador].label.normalize("NFD").replace(/[̀-ͯ]/g, "")}_${ITEM_ARQ(d.item.id)}_${porSetor ? "PorSetor" : "Operacao"}_${mesesArq}.xlsx`);
   }
 
   const dist = d?.indicador === "distribuicao";
@@ -92,9 +108,25 @@ export default function RelatorioAberto() {
       {aberto && (
         <div style={{ padding: "4px 14px 14px" }}>
           <div style={S.linhaCtrl}>
-            <select style={S.select} value={item} onChange={(e) => setItem(e.target.value)}>
-              {(itens.length ? itens : [{ id: "spg600", label: "Stella Pure Gold 600 (SPG 600)" }]).map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}
+            <select style={{ ...S.select, maxWidth: 340 }} value={item} onChange={(e) => setItem(e.target.value)}>
+              <optgroup label="Grupos (somam as subcategorias)">
+                {(opc?.grupos || [{ id: "grupo:cerveja", label: "Cerveja (todas)" }]).map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}
+              </optgroup>
+              {opc?.subcategorias?.length > 0 && (
+                <optgroup label="Subcategorias">
+                  {opc.subcategorias.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}
+                </optgroup>
+              )}
+              <optgroup label="Outro">
+                <option value="sku">🔎 SKU específico…</option>
+              </optgroup>
             </select>
+            {item === "sku" && (
+              <>
+                <input style={{ ...S.select, width: 110 }} value={sku} onChange={(e) => setSku(e.target.value.replace(/\D/g, ""))} placeholder="Código" inputMode="numeric" />
+                {skuNome && <span style={{ color: skuNome.startsWith("⚠️") ? "#f87171" : "rgba(255,255,255,0.7)", fontSize: "0.8rem" }}>{skuNome}</span>}
+              </>
+            )}
             <div style={S.seg}>
               {Object.entries(IND).map(([k, v]) => (
                 <button key={k} type="button" onClick={() => setInd(k)} style={ind === k ? S.segOn : S.segBtn}>{v.label}</button>

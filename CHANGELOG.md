@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.80.1** — Relatório aberto: nome do Excel com todas as escolhas.
+Versão atual: **v3.81.0** — Relatório aberto: todas as categorias (grupos + subcategorias) e SKU específico.
+
+## v3.81.0 — Relatório aberto: categorias e SKU
+- O seletor de item traz **Grupos** (somam as subcategorias, mesma regra da Home: **Cerveja** = Cerveja + Zero + Multipack + Giro RGB + HE + HE RGB + Trimarcas + Balanced Choice + Litrinho · **NAB** = NAB + NAB Zero · Match · Marketplace), **todas as subcategorias** do cadastro de produtos da HOP e **🔎 SKU específico** (digita o código e aparece o nome). Saiu o item fixo "Stella Pure Gold 600" — use o SKU 33857.
+- Produto com mais de uma categoria conta 1x no grupo.
 
 ## v3.80.1 — Nome do Excel do relatório aberto
 - O arquivo agora leva indicador, item, por setor/operação e cada mês marcado (ex.: `Cobertura_SPG600_PorSetor_Jun-Jul-Ago-Set-26.xlsx`) — exports com flags diferentes não ficam mais com o mesmo nome.

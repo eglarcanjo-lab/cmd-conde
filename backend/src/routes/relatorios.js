@@ -4,7 +4,8 @@
 //   • Volume       = soma de HL do item no mês.
 //   • Distribuição = Σ, por PDV, dos SKUs DISTINTOS do item que ele comprou (+ média por PDV).
 // Setores 301–305 entram como 107–111 (renomeados) p/ a série do RN não quebrar.
-// Novo item = 1 linha em ITENS.
+// Itens: GRUPOS (somam as subcategorias, mesma regra da Home) · cada SUBCATEGORIA do cadastro
+// de produtos da HOP · ou um SKU específico (item = "sku:<código>").
 const express = require("express");
 const router = express.Router();
 const { readSheet, readSheetMonths } = require("../services/sheets");
@@ -13,47 +14,79 @@ const { filtrarPorPerfil } = require("../utils/perfil");
 
 router.use(authMiddleware);
 
-const ITENS = [
-  { id: "spg600",       label: "Stella Pure Gold 600 (SPG 600)", sku: "33857" },
-  { id: "cerveja_zero", label: "Cerveja Zero",                    categoria: "CERVEJA ZERO" },
-  { id: "nab_zero",     label: "NAB Zero",                        categoria: "NAB ZERO" },
-  { id: "mktp",         label: "Marketplace (MKTP)",              categoria: "MKTP" },
+// Grupos = macro (produto entra se tiver QUALQUER uma das categorias; conta 1x).
+const CERVEJA_FAM = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "HE", "HE RGB",
+  "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "LITRINHO"];
+const GRUPOS = [
+  { id: "grupo:cerveja", label: "Cerveja (todas: Zero, Multipack, Giro RGB, HE, Trimarcas, BC, Litrinho)", cats: CERVEJA_FAM },
+  { id: "grupo:nab",     label: "NAB (inclui NAB Zero)", cats: ["NAB", "NAB ZERO"] },
+  { id: "grupo:match",   label: "Match", cats: ["MATCH"] },
+  { id: "grupo:mktp",    label: "Marketplace (MKTP)", cats: ["MKTP"] },
 ];
+const ORDEM_SUB = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "LITRINHO", "HE", "HE RGB",
+  "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "NAB", "NAB ZERO", "MATCH", "MKTP"];
+const catsDe = (p) => String(p.categorias || p.categoria || "").toUpperCase().split(/\s*[|,;]\s*/).map((c) => c.trim()).filter(Boolean);
+const titulo = (c) => c.toLowerCase().replace(/(^|\s|\()\S/g, (x) => x.toUpperCase()).replace(/\bHe\b/g, "HE").replace(/\bRgb\b/g, "RGB").replace(/\bNab\b/g, "NAB").replace(/\bMktp\b/g, "MKTP").replace(/\bBc\b/g, "BC");
 const INDICADORES = ["cobertura", "volume", "distribuicao"];
 const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const normCod = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
 const setorHop = (s) => { const x = String(s || "").trim(); return NOVO_DE[x] || x; };
 
-// GET /api/relatorios/aberto/opcoes → itens e indicadores disponíveis
-router.get("/aberto/opcoes", (req, res) =>
-  res.json({ itens: ITENS.map(({ id, label }) => ({ id, label })), indicadores: INDICADORES }));
+// GET /api/relatorios/aberto/opcoes → grupos + subcategorias existentes no cadastro + indicadores
+router.get("/aberto/opcoes", async (req, res) => {
+  const base = await readSheet("produtos_base").catch(() => []);
+  const existentes = new Set(base.flatMap(catsDe));
+  const subs = [...existentes].sort((a, b) => {
+    const ia = ORDEM_SUB.indexOf(a), ib = ORDEM_SUB.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
+  }).map((c) => ({ id: `cat:${c}`, label: c === "CERVEJA" ? "Cerveja (só a categoria CERVEJA)" : c === "NAB" ? "NAB (sem o NAB Zero)" : titulo(c) }));
+  return res.json({ grupos: GRUPOS.map(({ id, label }) => ({ id, label })), subcategorias: subs, indicadores: INDICADORES });
+});
+
+// GET /api/relatorios/aberto/sku/:cod → nome do produto (p/ o campo "SKU específico")
+router.get("/aberto/sku/:cod", async (req, res) => {
+  const cod = normCod(req.params.cod);
+  const [full, base] = await Promise.all([readSheet("produtos_full").catch(() => []), readSheet("produtos_base").catch(() => [])]);
+  const p = full.find((x) => normCod(x.cod) === cod) || base.find((x) => normCod(x.cod) === cod);
+  return p ? res.json({ cod, nome: String(p.nome || "").trim() }) : res.status(404).json({ error: `SKU ${cod} não encontrado no cadastro.` });
+});
+
+// Resolve o item pedido → { id, label, skus:Set }
+async function resolverItem(id) {
+  const raw = String(id || "");
+  if (raw.startsWith("sku:")) {
+    const cod = normCod(raw.slice(4));
+    if (!/^\d+$/.test(cod)) return null;
+    const full = await readSheet("produtos_full").catch(() => []);
+    const p = full.find((x) => normCod(x.cod) === cod);
+    return { id: raw, label: `SKU ${cod}${p ? ` · ${String(p.nome || "").trim()}` : ""}`, skus: new Set([cod]) };
+  }
+  const base = await readSheet("produtos_base").catch(() => []);
+  let cats, label;
+  const g = GRUPOS.find((x) => x.id === raw);
+  if (g) { cats = g.cats; label = g.label.split(" (")[0]; }
+  else if (raw.startsWith("cat:")) { cats = [raw.slice(4).toUpperCase()]; label = titulo(cats[0]); }
+  else return null;
+  const alvo = new Set(cats);
+  return { id: raw, label, skus: new Set(base.filter((p) => catsDe(p).some((c) => alvo.has(c))).map((p) => normCod(p.cod))) };
+}
 
 // GET /api/relatorios/aberto?item=&indicador=&meses=2026-06,2026-07&porSetor=1
 router.get("/aberto", async (req, res) => {
   try {
-    const item = ITENS.find((i) => i.id === req.query.item);
+    const item = await resolverItem(req.query.item);
     const indicador = String(req.query.indicador || "");
     const meses = String(req.query.meses || "").split(",").map((m) => m.trim()).filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();
     if (!item) return res.status(400).json({ error: "Item inválido." });
     if (!INDICADORES.includes(indicador)) return res.status(400).json({ error: "Indicador inválido." });
     if (!meses.length) return res.status(400).json({ error: "Escolha ao menos um mês." });
 
-    const [vendasAll, prodBase, usuarios] = await Promise.all([
+    const [vendasAll, usuarios] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
-      item.categoria ? readSheet("produtos_base").catch(() => []) : Promise.resolve([]),
       readSheet("usuarios").catch(() => []),
     ]);
-
-    // Produtos do item (SKU fixo ou todos da categoria cadastrada na HOP)
-    let doItem;
-    if (item.sku) doItem = new Set([item.sku]);
-    else {
-      const alvo = item.categoria.toUpperCase();
-      doItem = new Set(prodBase
-        .filter((p) => String(p.categorias || p.categoria || "").toUpperCase().split(/\s*[|,;]\s*/).includes(alvo))
-        .map((p) => normCod(p.cod)));
-    }
+    const doItem = item.skus;
 
     const vendas = filtrarPorPerfil(
       vendasAll.map((v) => ({ ...v, setor: setorHop(v.setor) })), req.user, "setor");
