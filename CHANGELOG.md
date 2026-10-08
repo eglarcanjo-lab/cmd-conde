@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.80.0** — "Incentivos" vira "Outros relatórios" + relatório aberto por setor (cobertura · volume · distribuição).
+Versão atual: **v3.80.1** — Relatório aberto: nome do Excel com todas as escolhas.
+
+## v3.80.1 — Nome do Excel do relatório aberto
+- O arquivo agora leva indicador, item, por setor/operação e cada mês marcado (ex.: `Cobertura_SPG600_PorSetor_Jun-Jul-Ago-Set-26.xlsx`) — exports com flags diferentes não ficam mais com o mesmo nome.
 
 ## v3.80.0 — Outros relatórios
 - **Incentivos → "Outros relatórios"** (menu, Home e atalhos; no admin a aba virou **Campanhas**). Tudo o que existia continua lá (campanhas e Conversão PG).

@@ -73,7 +73,13 @@ export default function RelatorioAberto() {
     ws["!cols"] = cab.map((h, i) => ({ wch: i === 1 ? 22 : Math.max(10, String(h).length + 2) }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Relatório");
-    XLSX.writeFile(wb, `${d.item.id}_${d.indicador}_${d.meses[0]}_a_${d.meses[d.meses.length - 1]}.xlsx`);
+    // Nome com TODAS as escolhas: indicador, item, por setor/operação e cada mês marcado.
+    const ITEM_ARQ = { spg600: "SPG600", cerveja_zero: "CervejaZero", nab_zero: "NABZero", mktp: "MKTP" };
+    const anos = [...new Set(d.meses.map((m) => m.slice(2, 4)))];
+    const mesesArq = anos.length === 1
+      ? `${d.meses.map((m) => NOMES_MES[Number(m.slice(5, 7)) - 1]).join("-")}-${anos[0]}`
+      : d.meses.map((m) => rot(m).replace("/", "")).join("-");
+    XLSX.writeFile(wb, `${IND[d.indicador].label.normalize("NFD").replace(/[̀-ͯ]/g, "")}_${ITEM_ARQ[d.item.id] || d.item.id}_${porSetor ? "PorSetor" : "Operacao"}_${mesesArq}.xlsx`);
   }
 
   const dist = d?.indicador === "distribuicao";
