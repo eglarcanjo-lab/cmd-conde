@@ -8,7 +8,7 @@ const ALVOS = [
   { v: "on",    label: "ON (demais)" },
 ];
 const ROTAS = [
-  { v: "/incentivos",    label: "🏆 Incentivos" },
+  { v: "/incentivos",    label: "📊 Outros relatórios" },
   { v: "/volume-diario", label: "📈 Volume Diário" },
   { v: "/rv",            label: "💰 Remuneração" },
   { v: "/spo",           label: "📊 SPO" },

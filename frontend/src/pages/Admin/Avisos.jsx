@@ -12,7 +12,7 @@ const TELAS = [
   { v: "/spo", l: "📊 SPO" },
   { v: "/rv", l: "💰 Remuneração" },
   { v: "/incidentes", l: "🚨 Incidentes" },
-  { v: "/incentivos", l: "🏆 Incentivos" },
+  { v: "/incentivos", l: "📊 Outros relatórios" },
   { v: "/produtos", l: "📦 Produtos" },
   { v: "/detalhamento", l: "🌿 Devolução × Ruptura" },
 ];

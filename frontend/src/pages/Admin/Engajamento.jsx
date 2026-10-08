@@ -9,7 +9,7 @@ function mesAtual() {
 const TELA_LABEL = {
   "/": "🏠 Início", "/volume-diario": "📈 Volume Diário", "/cobertura": "📊 Cobertura & Distribuição",
   "/pdvs": "🗺️ PDVs", "/tasks": "✅ Tasks", "/spo": "📊 SPO", "/rv": "💰 Remuneração",
-  "/incidentes": "🚨 Incidentes", "/incentivos": "🏆 Incentivos", "/produtos": "📦 Produtos",
+  "/incidentes": "🚨 Incidentes", "/incentivos": "📊 Outros relatórios", "/produtos": "📦 Produtos",
   "/detalhamento": "🌿 Devolução × Ruptura", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
   "/rv-admin": "💰 RV Simulador",
 };

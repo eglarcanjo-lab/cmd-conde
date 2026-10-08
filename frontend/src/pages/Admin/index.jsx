@@ -30,7 +30,7 @@ const TABS = [
   { id: "rv_simulador", label: "💰 RV Simulador" },
   { id: "spo_desafios", label: "📋 SPO Desafios" },
   { id: "spo_metas", label: "📊 SPO Metas" },
-  { id: "incentivos", label: "🏆 Incentivos" },
+  { id: "incentivos", label: "🏆 Campanhas" },
   { id: "popups", label: "🖼️ Popups" },
   { id: "avisos", label: "❔ Avisos" },
   { id: "engajamento", label: "📊 Engajamento" },

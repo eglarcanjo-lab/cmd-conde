@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
+import RelatorioAberto from "./RelatorioAberto"; // cobertura/volume/distribuição por setor × mês
 
 function fmtData(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
@@ -56,10 +57,12 @@ export default function Incentivos() {
       <div style={S.header}>
         <button style={S.backBtn} onClick={() => navigate("/")}>← Voltar</button>
         <div>
-          <h1 style={S.title}>🏆 Incentivos</h1>
-          <p style={S.subtitle}>Campanhas e ações em andamento</p>
+          <h1 style={S.title}>📊 Outros relatórios</h1>
+          <p style={S.subtitle}>Relatórios de acompanhamento, campanhas e ações em andamento</p>
         </div>
       </div>
+
+      <RelatorioAberto />
 
       <ConversaoPG />
 

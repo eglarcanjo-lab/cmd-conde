@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.79.0** — Migração de PDVs: alterar coordenada (com endereço automático).
+Versão atual: **v3.80.0** — "Incentivos" vira "Outros relatórios" + relatório aberto por setor (cobertura · volume · distribuição).
+
+## v3.80.0 — Outros relatórios
+- **Incentivos → "Outros relatórios"** (menu, Home e atalhos; no admin a aba virou **Campanhas**). Tudo o que existia continua lá (campanhas e Conversão PG).
+- Novo **Relatório aberto por setor**: escolhe o **item** (SPG 600 · Cerveja Zero · NAB Zero · Marketplace), o **indicador** (Cobertura · Volume · Distribuição), os **meses** (padrão: os 4 completos antes do atual) e liga/desliga **abrir por setor** (senão só a operação). Tabela + **Excel**.
+- Definições: **Cobertura** = PDVs distintos que compraram no mês · **Volume** = HL · **Distribuição** = Σ por PDV dos SKUs distintos comprados (+ média por PDV). Período: volume soma; cobertura/distribuição = média mensal. Setores 301–305 entram como 107–111.
+- Backend: `GET /api/relatorios/aberto` (fonte `vendas_cliente_produto`, escopo por perfil). Novo item = 1 linha em `ITENS`.
 
 ## v3.79.0 — Coordenada do PDV na Migração
 - **Migração / Inativação de PDVs:** botão **📍 Coordenada** por PDV — o RN cola a coordenada (`-7.0234, -37.2711` ou `-7,0234 -37,2711`) ou o **link do Google Maps**, inclusive o link curto de compartilhar (`maps.app.goo.gl`, seguido no servidor). Prévia na hora: coordenada lida + **endereço** + "ver no mapa". Coordenada fora do Brasil (lat/lng trocadas) é barrada.

@@ -21,7 +21,7 @@ const ADMIN_TABS = [
   { id: "rv_simulador",  icon: "💰", label: "RV Simulador" },
   { id: "spo_desafios",  icon: "📋", label: "SPO Desafios" },
   { id: "spo_metas",     icon: "📊", label: "SPO Metas" },
-  { id: "incentivos",    icon: "🏆", label: "Incentivos" },
+  { id: "incentivos",    icon: "🏆", label: "Campanhas" },
   { id: "popups",        icon: "🖼️", label: "Popups" },
   { id: "avisos",        icon: "❔", label: "Avisos" },
   { id: "engajamento",   icon: "📊", label: "Engajamento" },
@@ -45,7 +45,7 @@ export default function HomeDashboard() {
   const isAdminOuDirector = perfil === "admin" || perfil === "director";
 
   const modulos = [
-    { icon: "🏆", label: "Incentivos",    route: "/incentivos" },
+    { icon: "📊", label: "Outros relatórios", route: "/incentivos" },
     { icon: "📈", label: "Volume Diário", route: "/volume-diario" },
     { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura" },
     { icon: "🗺️", label: "PDVs",          route: "/pdvs" },

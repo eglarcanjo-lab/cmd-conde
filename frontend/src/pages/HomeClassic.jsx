@@ -14,7 +14,7 @@ export default function HomeClassic() {
   const isAdminOuDirector = perfil === "admin" || perfil === "director";
 
   const modulos = [
-    { icon: "🏆", label: "Incentivos",    route: "/incentivos",    ativo: true,  soGestor: false, soRn: false },
+    { icon: "📊", label: "Outros relatórios",    route: "/incentivos",    ativo: true,  soGestor: false, soRn: false },
     { icon: "📈", label: "Volume Diário", route: "/volume-diario", ativo: true,  soGestor: false, soRn: false },
     { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura", ativo: true, soGestor: false, soRn: false },
     { icon: "🗺️", label: "PDVs",          route: "/pdvs",          ativo: true,  soGestor: false, soRn: false },

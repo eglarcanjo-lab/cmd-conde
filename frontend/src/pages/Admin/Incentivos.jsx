@@ -118,7 +118,7 @@ export default function IncentivosAdmin() {
 
   return (
     <div>
-      <h2 style={ST.titulo}>🏆 Incentivos</h2>
+      <h2 style={ST.titulo}>🏆 Campanhas (Outros relatórios)</h2>
       <p style={ST.desc}>
         Cadastre campanhas e ações. Tipo <strong>Volume de SKU</strong> calcula o ranking automático;
         tipo <strong>Manual</strong> você preenche os números. Tudo aparece na aba Incentivos do app.
