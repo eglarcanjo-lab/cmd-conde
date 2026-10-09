@@ -23,7 +23,7 @@ const CAT_FORA = new Set(["MKTP", "MARKETPLACE"]);
 //   • Match separado · NAB junta tudo de NAB · o resto (cervejas e formatos) vira Cerveja.
 function grupoDeCat(cat) {
   const c = String(cat || "").toUpperCase().trim();
-  if (!c || CAT_FORA.has(c)) return null;   // Mktp fora
+  if (!c || CAT_FORA.has(c) || ["NAN", "NONE", "NULL"].includes(c)) return null;   // Mktp fora; "nan" = sem categoria
   if (c.includes("MATCH")) return "MATCH";
   if (c.includes("NAB")) return "NAB";
   return "CERVEJA";                          // Cerveja, Zero, Multipack, Litrinho, HE, RGB… → Cerveja

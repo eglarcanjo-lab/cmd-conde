@@ -25,7 +25,10 @@ const GRUPOS = [
 ];
 const ORDEM_SUB = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "LITRINHO", "HE", "HE RGB",
   "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "NAB", "NAB ZERO", "MATCH", "MKTP"];
-const catsDe = (p) => String(p.categorias || p.categoria || "").toUpperCase().split(/\s*[|,;]\s*/).map((c) => c.trim()).filter(Boolean);
+// "nan"/"none" = valor vazio salvo como texto (sobra do pandas) — não é nome nem categoria
+const LIXO = new Set(["NAN", "NONE", "NULL", "NAT"]);
+const limpo = (v) => { const t = String(v ?? "").trim(); return LIXO.has(t.toUpperCase()) ? "" : t; };
+const catsDe = (p) => limpo(p.categorias || p.categoria).toUpperCase().split(/\s*[|,;]\s*/).map((c) => c.trim()).filter((c) => c && !LIXO.has(c));
 const titulo = (c) => c.toLowerCase().replace(/(^|\s|\()\S/g, (x) => x.toUpperCase()).replace(/\bHe\b/g, "HE").replace(/\bRgb\b/g, "RGB").replace(/\bNab\b/g, "NAB").replace(/\bMktp\b/g, "MKTP").replace(/\bBc\b/g, "BC");
 const INDICADORES = ["cobertura", "volume", "distribuicao"];
 const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
@@ -49,14 +52,22 @@ router.get("/aberto/opcoes", async (req, res) => {
 router.get("/aberto/produtos", async (req, res) => {
   const [base, full] = await Promise.all([readSheet("produtos_base").catch(() => []), readSheet("produtos_full").catch(() => [])]);
   const nomeFull = {};
-  full.forEach((p) => { const c = normCod(p.cod); if (c) nomeFull[c] = String(p.nome || "").trim(); });
+  full.forEach((p) => { const c = normCod(p.cod); if (c && limpo(p.nome)) nomeFull[c] = limpo(p.nome); });
   const porCod = new Map();   // 1 por código (prefere a linha com nome)
   base.forEach((p) => {
     const cod = normCod(p.cod), categorias = catsDe(p).join(" | ");
     if (!cod || !categorias) return;
-    const nome = String(p.nome || "").trim() || nomeFull[cod] || "";
+    const nome = limpo(p.nome) || nomeFull[cod] || "";
     if (!porCod.has(cod) || (!porCod.get(cod).nome && nome)) porCod.set(cod, { cod, nome, categorias });
   });
+  const semNome = [...porCod.values()].filter((p) => !p.nome);
+  if (semNome.length) {
+    const d = new Date(); const ms = [0, 1, 2].map((k) => { const x = new Date(d.getFullYear(), d.getMonth() - k, 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`; });
+    const vd = await readSheetMonths("vd_produto", "mes_referencia", ms).catch(() => []);
+    const nomeVenda = {};
+    vd.forEach((r) => { const c = normCod(r.cod_produto); if (c && limpo(r.nome_produto) && !nomeVenda[c]) nomeVenda[c] = limpo(r.nome_produto); });
+    semNome.forEach((p) => { p.nome = nomeVenda[p.cod] || ""; });
+  }
   return res.json([...porCod.values()].sort((a, b) => (a.nome || "~").localeCompare(b.nome || "~", "pt-BR")));
 });
 
@@ -65,7 +76,7 @@ router.get("/aberto/sku/:cod", async (req, res) => {
   const cod = normCod(req.params.cod);
   const [full, base] = await Promise.all([readSheet("produtos_full").catch(() => []), readSheet("produtos_base").catch(() => [])]);
   const p = full.find((x) => normCod(x.cod) === cod) || base.find((x) => normCod(x.cod) === cod);
-  return p ? res.json({ cod, nome: String(p.nome || "").trim() }) : res.status(404).json({ error: `SKU ${cod} não encontrado no cadastro.` });
+  return p ? res.json({ cod, nome: limpo(p.nome) }) : res.status(404).json({ error: `SKU ${cod} não encontrado no cadastro.` });
 });
 
 // Resolve o item pedido → { id, label, skus:Set }
@@ -76,7 +87,7 @@ async function resolverItem(id) {
     if (!/^\d+$/.test(cod)) return null;
     const full = await readSheet("produtos_full").catch(() => []);
     const p = full.find((x) => normCod(x.cod) === cod);
-    return { id: raw, label: `SKU ${cod}${p ? ` · ${String(p.nome || "").trim()}` : ""}`, skus: new Set([cod]) };
+    return { id: raw, label: `SKU ${cod}${p && limpo(p.nome) ? ` · ${limpo(p.nome)}` : ""}`, skus: new Set([cod]) };
   }
   const base = await readSheet("produtos_base").catch(() => []);
   let cats, label;

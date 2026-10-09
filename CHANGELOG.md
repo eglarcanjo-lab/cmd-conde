@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.81.1** — Relatório aberto: busca de produto por nome ou código.
+Versão atual: **v3.81.2** — Corrige produtos com nome "nan"/"None".
 
 ## v3.81.1 — Busca de produto no relatório aberto
 - "SKU específico" virou **busca**: digita parte do **nome ou o código** e escolhe na lista (mostra código · nome · categorias). Lista vem da **base de produtos com categoria** (não da Grade), 1 por código.

@@ -5,11 +5,33 @@ const { authMiddleware, adminOnly } = require("../middleware/auth");
 
 router.use(authMiddleware, adminOnly);
 
-// GET /api/admin/produtos — lista todos os produtos da base
+// "nan"/"None" = valor vazio salvo como texto (sobra do pandas no processador) — não é nome.
+const LIXO = new Set(["NAN", "NONE", "NULL", "NAT"]);
+const limpo = (v) => { const t = String(v ?? "").trim(); return LIXO.has(t.toUpperCase()) ? "" : t; };
+const normCod = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
+
+// Nome do produto quando a produtos_base não tem: cadastro completo (0111) → lista de
+// sem-categoria (nome que veio do pedido).
+async function nomesReserva() {
+  const [full, semCat] = await Promise.all([
+    readSheet("produtos_full").catch(() => []),
+    readSheet("produtos_sem_categoria").catch(() => []),
+  ]);
+  const m = {};
+  semCat.forEach((s) => { const c = normCod(s.cod_prod); if (c && limpo(s.nome_prod)) m[c] = limpo(s.nome_prod); });
+  full.forEach((p) => { const c = normCod(p.cod); if (c && limpo(p.nome)) m[c] = limpo(p.nome); });
+  return m;
+}
+
+// GET /api/admin/produtos — lista todos os produtos da base (nome/categoria sem "nan"/"None")
 router.get("/", async (req, res) => {
   try {
-    const dados = await readSheet("produtos_base");
-    return res.json(dados);
+    const [dados, reserva] = await Promise.all([readSheet("produtos_base"), nomesReserva()]);
+    return res.json(dados.map((p) => ({
+      ...p,
+      nome: limpo(p.nome) || reserva[normCod(p.cod)] || "",
+      categorias: limpo(p.categorias),
+    })));
   } catch {
     return res.json([]);
   }
@@ -33,15 +55,18 @@ router.put("/:cod", async (req, res) => {
 
     const produtos = await readSheet("produtos_base");
     const idx = produtos.findIndex((p) => String(p.cod) === String(cod));
+    const reserva = await nomesReserva();
 
     if (idx === -1) {
-      // Produto não está na base ainda — adiciona
-      await appendRow("produtos_base", [cod, "", categoria, new Date().toLocaleDateString("pt-BR")]);
+      // Produto não está na base ainda (ex.: ainda não vendeu) — adiciona JÁ COM O NOME
+      // (antes ia em branco e o processador gravava "None", que travava p/ sempre).
+      await appendRow("produtos_base", [cod, reserva[normCod(cod)] || "", categoria, new Date().toLocaleDateString("pt-BR")]);
       return res.json({ success: true, message: "Produto adicionado à base." });
     }
 
     const p = produtos[idx];
-    const updated = [p.cod, p.nome || p.descricao || "", categoria, p.atualizado_em || ""];
+    const nome = limpo(p.nome) || limpo(p.descricao) || reserva[normCod(cod)] || "";
+    const updated = [p.cod, nome, categoria, p.atualizado_em || ""];
     await updateRow("produtos_base", idx + 1, updated);
 
     // Remove da lista de sem_categoria se foi categorizado
