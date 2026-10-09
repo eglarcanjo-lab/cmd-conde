@@ -2,6 +2,11 @@
 
 Versão atual: **v3.81.2** — Corrige produtos com nome "nan"/"None".
 
+## v3.81.2 — Produtos com nome "nan"/"None"
+- Nome/categoria vazios viravam o **texto** "nan"/"None" na base de produtos (o import convertia vazio em texto) e isso travava o nome real para sempre. O import agora grava vazio e **preenche o nome** na próxima importação de Pedidos/CORA.
+- Admin › Produtos: categorizar um produto que ainda não está na base (ex.: sem venda) agora já grava **com o nome** (vinha em branco). A lista mostra o nome do cadastro completo quando a base não tem.
+- Busca do relatório aberto e Deck ignoram "nan"/"None".
+
 ## v3.81.1 — Busca de produto no relatório aberto
 - "SKU específico" virou **busca**: digita parte do **nome ou o código** e escolhe na lista (mostra código · nome · categorias). Lista vem da **base de produtos com categoria** (não da Grade), 1 por código.
 
