@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
 import RelatorioAberto from "./RelatorioAberto"; // cobertura/volume/distribuição por setor × mês
+import BaseVisita from "./BaseVisita"; // base de PDVs × dia de visita (estudo de rota)
 
 function fmtData(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
@@ -63,6 +64,8 @@ export default function Incentivos() {
       </div>
 
       <RelatorioAberto />
+
+      <BaseVisita />
 
       <ConversaoPG />
 

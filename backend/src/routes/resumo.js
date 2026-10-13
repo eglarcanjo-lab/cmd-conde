@@ -119,7 +119,13 @@ router.get("/curva", async (req, res) => {
       readSheet("rv_resultado").catch(() => []),
     ]);
     const rvVol = filtrarPorPerfil(rvVolAll, req.user, "setor");
-    const metas = filtrarPorPerfil(metasAll, req.user, "setor");
+    // metas é cadastro (não passa pela conversão 301→107 da leitura): converte aqui p/ o
+    // budget de set/26 p/ trás do 301 somar no 107 (mesmo RN, código novo).
+    const NOVO = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+    const metas = filtrarPorPerfil(metasAll.map((m) => {
+      const s = String(m.setor || "").trim();
+      return NOVO[s] ? { ...m, setor: NOVO[s] } : m;
+    }), req.user, "setor");
     const rvRes = filtrarPorPerfil(rvResAll, req.user, "setor");
 
     // Categorias da curva → categorias brutas (rv_volume) e a categoria de meta correspondente.

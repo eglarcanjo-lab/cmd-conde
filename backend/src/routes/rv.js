@@ -27,11 +27,13 @@ async function linhasRv(tabela, mes, doMes) {
 // Setores 301–305 viraram 107–111: se o mês tem o código NOVO, a linha do antigo (zerada,
 // sobra de recálculo) é descartada — evita card/linha duplicada no Simulador e no Relatório.
 const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+// (a leitura do banco já converte 301→107 e marca a linha com _setorAntigo)
 function semAntigoDuplicado(linhas) {
-  const setores = new Set(linhas.map((r) => String(r.setor || "").trim()));
+  const setores = new Set(linhas.filter((r) => !r._setorAntigo).map((r) => String(r.setor || "").trim()));
   return linhas.filter((r) => {
     const s = String(r.setor || "").trim();
-    return !(NOVO_DE[s] && setores.has(NOVO_DE[s]));
+    if (r._setorAntigo) return !setores.has(s);              // mês já tem o código novo
+    return !(NOVO_DE[s] && setores.has(NOVO_DE[s]));          // foto congelada (301 cru)
   });
 }
 

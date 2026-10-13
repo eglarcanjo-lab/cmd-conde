@@ -172,4 +172,65 @@ router.get("/aberto", async (req, res) => {
   }
 });
 
+// ── Base de PDVs × dia de visita (estudo de rota) ───────────────────────────────
+// GET /api/relatorios/base-visita?meses=2026-01,...,2026-09
+// 1 linha por PDV ATIVO da base de clientes (0105070402): cidade, bairro, categoria, setor,
+// dia de visita + volume (HL) do período (vendas_cliente_produto, venda efetiva) e média
+// mensal. Os resumos (dia × cidade, cidade/bairro, maiores PDVs, cidade × setor) são
+// montados na tela a partir destas linhas.
+const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+router.get("/base-visita", async (req, res) => {
+  try {
+    const meses = String(req.query.meses || "").split(",").map((m) => m.trim()).filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();
+    if (!meses.length) return res.status(400).json({ error: "Escolha ao menos um mês." });
+    const [baseAll, vendas, usuarios] = await Promise.all([
+      readSheet("pdv_base").catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
+      readSheet("usuarios").catch(() => []),
+    ]);
+    const base = filtrarPorPerfil(baseAll.map((p) => ({ ...p, setor: setorHop(p.setor) })), req.user, "setor");
+
+    const vol = {};
+    vendas.forEach((v) => {
+      if (!meses.includes(String(v.mes_referencia || "").slice(0, 7))) return;
+      const c = normCod(v.cod_pdv), hl = num(v.volume_hl);
+      if (c && hl) vol[c] = (vol[c] || 0) + hl;
+    });
+    const nomeDe = {};
+    usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeDe[c] = String(u.nome || "").trim(); });
+
+    const vistos = new Set();
+    const linhas = [];
+    base.forEach((p) => {
+      const cod = normCod(p.cod_pdv || p.cod);
+      if (!cod || vistos.has(cod)) return;
+      vistos.add(cod);
+      const d = String(p.dia_visita || "").trim().toUpperCase().slice(0, 3);
+      const v = Math.round((vol[cod] || 0) * 10000) / 10000;
+      linhas.push({
+        cod_pdv: cod,
+        nome: limpo(p.nome_fantasia) || limpo(p.razao_social),
+        cidade: limpo(p.cidade).toUpperCase(),
+        bairro: limpo(p.bairro),
+        categoria: limpo(p.categoria) || limpo(p.segmento),
+        setor: String(p.setor || "").trim(),
+        dia: DIAS.includes(d) ? d : "",
+        volume: v,
+        media: Math.round((v / meses.length) * 10000) / 10000,
+      });
+    });
+    linhas.sort((a, b) => b.volume - a.volume);
+    return res.json({
+      meses,
+      tem_bairro: linhas.some((l) => l.bairro),
+      setores: [...new Set(linhas.map((l) => l.setor))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .map((s) => ({ setor: s, nome: nomeDe[s] || "" })),
+      linhas,
+    });
+  } catch (e) {
+    console.error("relatorios/base-visita:", e);
+    return res.status(500).json({ error: "Erro ao montar a base de PDVs." });
+  }
+});
+
 module.exports = router;

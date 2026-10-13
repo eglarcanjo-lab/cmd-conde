@@ -54,10 +54,22 @@ async function colunas(tab) {
   return cols;
 }
 
-function _rowsToObjs(rows) {
+// Setores 301–305 foram RENOMEADOS p/ 107–111 (out/2026, mesmos RNs). Na leitura das
+// tabelas do ETL o histórico antigo entra com o código novo → toda tela SOMA antigo + novo.
+// A linha convertida ganha a marca (não enumerável) _setorAntigo p/ quem precisa descartar
+// duplicata do mesmo mês (ex.: RV recalculada com 301 zerado). Cadastros (metas, usuários…)
+// ficam como estão p/ não quebrar as telas de edição.
+const NOVO_SETOR = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+
+function _rowsToObjs(rows, tab) {
+  const mapear = tab && !CADASTRO.has(tab);
   return rows.map((row) => {
     const o = {};
     for (const k of Object.keys(row)) o[k] = toStr(row[k]);
+    if (mapear && o.setor !== undefined) {
+      const novo = NOVO_SETOR[String(o.setor).trim()];
+      if (novo) { o.setor = novo; Object.defineProperty(o, "_setorAntigo", { value: true, enumerable: false }); }
+    }
     return o;
   });
 }
@@ -80,7 +92,7 @@ async function readSheet(tab) {
     if (e && e.code === "42P01") { _dataCache.set(tab, { data: [], ts: Date.now() }); return []; }
     throw e;
   }
-  const out = _rowsToObjs(r.rows);
+  const out = _rowsToObjs(r.rows, tab);
   _dataCache.set(tab, { data: out, ts: Date.now() });
   return out;
 }
@@ -98,7 +110,7 @@ async function readSheetMonths(tab, monthCol, months) {
     if (e && e.code === "42P01") return [];
     throw e;
   }
-  return _rowsToObjs(r.rows);
+  return _rowsToObjs(r.rows, tab);
 }
 
 // Insere uma linha (valores posicionais na ordem das colunas da tabela)

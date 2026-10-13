@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.81.2** — Corrige produtos com nome "nan"/"None".
+Versão atual: **v3.82.0** — Base de PDVs × dia de visita + 301–305 somados em 107–111.
+
+## v3.82.0 — Base de PDVs × dia de visita · 301–305 somados em 107–111
+- **Outros relatórios → 🗺️ Base de PDVs × dia de visita** (substitui a planilha "BASE DEFINITIVA" montada à mão): PDVs ativos da base de clientes com cidade, bairro, categoria, setor, dia de visita e volume (HL) dos meses marcados (padrão: jan até o último mês completo) + média mensal. Abas: **Dia × Cidade por setor** · **Cidade / Bairro** (PDVs e volume por dia, dia de maior volume e de mais PDVs) · **Maiores PDVs** (top N com dia sugerido p/ equilibrar o volume na semana + balanceamento/amplitude) · **Cidade × Setor** (e × dia, quantos RNs atendem) · **Base total**. Filtro por setor e **Excel com todas as abas**.
+- Processador: a base de clientes (0105070402) passa a guardar **bairro** e **categoria** do PDV (acha a coluna pelo nome) — o bairro aparece a partir da próxima importação.
+- **Setores 301–305 → 107–111 no sistema todo:** a leitura do banco converte o histórico antigo para o código novo, então toda tela/relatório soma o que era do 301 no 107 (e assim por diante). RV descarta a linha antiga só quando o mês já tem o código novo. Budget da Home (metas) também soma. Cadastros (metas, usuários) não são alterados.
 
 ## v3.81.2 — Produtos com nome "nan"/"None"
 - Nome/categoria vazios viravam o **texto** "nan"/"None" na base de produtos (o import convertia vazio em texto) e isso travava o nome real para sempre. O import agora grava vazio e **preenche o nome** na próxima importação de Pedidos/CORA.
