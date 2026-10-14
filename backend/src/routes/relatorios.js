@@ -83,11 +83,13 @@ router.get("/aberto/sku/:cod", async (req, res) => {
 async function resolverItem(id) {
   const raw = String(id || "");
   if (raw.startsWith("sku:")) {
-    const cod = normCod(raw.slice(4));
-    if (!/^\d+$/.test(cod)) return null;
+    // 1 ou mais SKUs: "sku:33857" ou "sku:33857,25065,…" (cesta — ex.: incentivo de um fornecedor)
+    const cods = [...new Set(raw.slice(4).split(",").map(normCod).filter((c) => /^\d+$/.test(c)))];
+    if (!cods.length) return null;
     const full = await readSheet("produtos_full").catch(() => []);
-    const p = full.find((x) => normCod(x.cod) === cod);
-    return { id: raw, label: `SKU ${cod}${p && limpo(p.nome) ? ` · ${limpo(p.nome)}` : ""}`, skus: new Set([cod]) };
+    const nome = (cod) => { const p = full.find((x) => normCod(x.cod) === cod); return p && limpo(p.nome) ? limpo(p.nome) : ""; };
+    const label = cods.length === 1 ? `SKU ${cods[0]}${nome(cods[0]) ? ` · ${nome(cods[0])}` : ""}` : `${cods.length} SKUs (${cods.join(", ")})`;
+    return { id: `sku:${cods.join(",")}`, label, skus: new Set(cods) };
   }
   const base = await readSheet("produtos_base").catch(() => []);
   let cats, label;
@@ -109,11 +111,22 @@ router.get("/aberto", async (req, res) => {
     if (!INDICADORES.includes(indicador)) return res.status(400).json({ error: "Indicador inválido." });
     if (!meses.length) return res.status(400).json({ error: "Escolha ao menos um mês." });
 
-    const [vendasAll, usuarios] = await Promise.all([
+    const [vendasAll, usuarios, pdvBase] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
       readSheet("usuarios").catch(() => []),
+      readSheet("pdv_base").catch(() => []),
     ]);
     const doItem = item.skus;
+
+    // Base de PDVs ATIVOS (base de clientes atual) por setor → % de cobertura (PDVs que
+    // compraram ÷ base do setor). Mesma base p/ todos os meses (não há foto mensal da base).
+    const baseDe = {}; let baseOp = 0; const vistos = new Set();
+    filtrarPorPerfil(pdvBase.map((p) => ({ ...p, setor: setorHop(p.setor) })), req.user, "setor").forEach((p) => {
+      const c = normCod(p.cod_pdv || p.cod); if (!c || vistos.has(c)) return; vistos.add(c);
+      const s = String(p.setor || "").trim(); if (!s) return;
+      baseDe[s] = (baseDe[s] || 0) + 1; baseOp++;
+    });
+    const pct = (n, b) => (b ? Math.round((n / b) * 1000) / 10 : null);
 
     const vendas = filtrarPorPerfil(
       vendasAll.map((v) => ({ ...v, setor: setorHop(v.setor) })), req.user, "setor");
@@ -138,9 +151,9 @@ router.get("/aberto", async (req, res) => {
       }
     }
 
-    const valor = (c) => {
-      if (!c) return { v: 0, pdvs: 0 };
-      if (indicador === "cobertura") return { v: c.pdvs.size, pdvs: c.pdvs.size };
+    const valor = (c, base) => {
+      if (!c) return { v: 0, pdvs: 0, ...(indicador === "cobertura" ? { pct: pct(0, base) } : {}) };
+      if (indicador === "cobertura") return { v: c.pdvs.size, pdvs: c.pdvs.size, pct: pct(c.pdvs.size, base) };
       if (indicador === "volume") return { v: Math.round(c.hl * 10) / 10, pdvs: c.pdvs.size };
       let soma = 0; c.sk.forEach((s) => { soma += s.size; });
       return { v: soma, pdvs: c.pdvs.size, media: c.pdvs.size ? Math.round((soma / c.pdvs.size) * 10) / 10 : 0 };
@@ -153,18 +166,23 @@ router.get("/aberto", async (req, res) => {
 
     const nomeDe = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeDe[c] = String(u.nome || "").trim(); });
-    const linhas = Object.keys(agg).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map((setor) => {
-      const vals = meses.map((m) => valor(agg[setor][m]));
-      return { setor, nome: nomeDe[setor] || "", valores: vals, total: fechar(vals) };
+    // Todos os setores da base aparecem (inclusive quem não vendeu = 0%), + quem vendeu fora da base.
+    const cob = indicador === "cobertura";
+    const setores = [...new Set([...Object.keys(baseDe), ...Object.keys(agg)])];
+    const linhas = setores.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map((setor) => {
+      const vals = meses.map((m) => valor((agg[setor] || {})[m], baseDe[setor]));
+      const total = fechar(vals);
+      return { setor, nome: nomeDe[setor] || "", base: baseDe[setor] || 0, valores: vals, total, totalPct: cob ? pct(total, baseDe[setor]) : null };
     });
-    const valsOp = meses.map((m) => valor(op[m]));
+    const valsOp = meses.map((m) => valor(op[m], baseOp));
+    const totalOp = fechar(valsOp);
 
     return res.json({
       item: { id: item.id, label: item.label, skus: doItem.size },
       indicador, meses,
       totalLabel: indicador === "volume" ? "Total" : "Média mensal",
       linhas,
-      operacao: { valores: valsOp, total: fechar(valsOp) },
+      operacao: { base: baseOp, valores: valsOp, total: totalOp, totalPct: cob ? pct(totalOp, baseOp) : null },
     });
   } catch (e) {
     console.error("relatorios/aberto:", e);

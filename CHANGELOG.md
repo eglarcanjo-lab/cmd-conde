@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.82.0** — Base de PDVs × dia de visita + 301–305 somados em 107–111.
+Versão atual: **v3.83.0** — Relatório aberto: cesta de SKUs + % de cobertura.
+
+## v3.83.0 — Relatório aberto: vários SKUs + % de cobertura
+- **SKU específico** agora monta uma **cesta**: cada produto escolhido na busca entra numa lista (chips, com × p/ tirar). Na cobertura o PDV conta 1x se comprou **qualquer** SKU da cesta (ex.: incentivo Doces Vieira).
+- **Cobertura sempre com %**: PDVs que compraram ÷ **base de PDVs ativos do setor** (base de clientes atual), por mês, na média e na operação; nova coluna **Base PDVs**. Todos os setores da base aparecem, inclusive quem ficou em 0%.
+- Campo opcional **Meta % da base**: pinta o % de verde (bateu) ou vermelho (não bateu).
+- Excel da cobertura traz Base PDVs, PDVs e % por mês e da média.
 
 ## v3.82.0 — Base de PDVs × dia de visita · 301–305 somados em 107–111
 - **Outros relatórios → 🗺️ Base de PDVs × dia de visita** (substitui a planilha "BASE DEFINITIVA" montada à mão): PDVs ativos da base de clientes com cidade, bairro, categoria, setor, dia de visita e volume (HL) dos meses marcados (padrão: jan até o último mês completo) + média mensal. Abas: **Dia × Cidade por setor** · **Cidade / Bairro** (PDVs e volume por dia, dia de maior volume e de mais PDVs) · **Maiores PDVs** (top N com dia sugerido p/ equilibrar o volume na semana + balanceamento/amplitude) · **Cidade × Setor** (e × dia, quantos RNs atendem) · **Base total**. Filtro por setor e **Excel com todas as abas**.
