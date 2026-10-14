@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.83.0** — Relatório aberto: cesta de SKUs + % de cobertura.
+Versão atual: **v3.83.1** — Relatório aberto: cobertura total do período.
+
+## v3.83.1 — Cobertura total do período
+- Cobertura ganha a coluna **Total período**: PDVs **distintos** que compraram em **qualquer** mês marcado (soma as vendas dos meses; PDV que comprou nos dois conta 1x) ÷ a mesma base do setor. A média mensal continua. Também no Excel.
 
 ## v3.83.0 — Relatório aberto: vários SKUs + % de cobertura
 - **SKU específico** agora monta uma **cesta**: cada produto escolhido na busca entra numa lista (chips, com × p/ tirar). Na cobertura o PDV conta 1x se comprou **qualquer** SKU da cesta (ex.: incentivo Doces Vieira).

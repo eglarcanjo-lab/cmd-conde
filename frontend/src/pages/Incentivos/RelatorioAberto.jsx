@@ -99,11 +99,11 @@ export default function RelatorioAberto() {
     if (!d) return;
     const cobX = d.indicador === "cobertura";
     const cab = cobX
-      ? ["Setor", "RN", "Base PDVs", ...d.meses.map((m) => `${rot(m)} PDVs`), ...d.meses.map((m) => `${rot(m)} %`), d.totalLabel, `${d.totalLabel} %`]
+      ? ["Setor", "RN", "Base PDVs", ...d.meses.map((m) => `${rot(m)} PDVs`), ...d.meses.map((m) => `${rot(m)} %`), d.totalLabel, `${d.totalLabel} %`, "Total período PDVs", "Total período %"]
       : ["Setor", "RN", ...d.meses.map(rot), d.totalLabel];
     if (d.indicador === "distribuicao") cab.splice(2 + d.meses.length, 0, ...d.meses.map((m) => `Média/PDV ${rot(m)}`));
     const linha = (setor, nome, o) => {
-      if (cobX) return [setor, nome, o.base || 0, ...o.valores.map((v) => v.v), ...o.valores.map((v) => (v.pct ?? "")), o.total, o.totalPct ?? ""];
+      if (cobX) return [setor, nome, o.base || 0, ...o.valores.map((v) => v.v), ...o.valores.map((v) => (v.pct ?? "")), o.total, o.totalPct ?? "", o.acum ?? 0, o.acumPct ?? ""];
       const base = [setor, nome, ...o.valores.map((v) => v.v)];
       if (d.indicador === "distribuicao") base.push(...o.valores.map((v) => v.media ?? 0));
       return [...base, o.total];
@@ -215,6 +215,7 @@ export default function RelatorioAberto() {
                     {cob && <th style={S.thC}>Base PDVs</th>}
                     {d.meses.map((m) => <th key={m} style={S.thC}>{rot(m)}</th>)}
                     <th style={S.thC}>{d.totalLabel}</th>
+                    {cob && <th style={S.thC} title="PDVs distintos que compraram em qualquer mês marcado ÷ base">Total período</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -226,9 +227,10 @@ export default function RelatorioAberto() {
                         <td key={i} style={S.tdC}>{fmt(v.v, d.indicador)}{dist && v.pdvs ? <span style={S.media}> · {fmt(v.media, "x")}/PDV</span> : null}{cob && <Pct p={v.pct} />}</td>
                       ))}
                       <td style={{ ...S.tdC, fontWeight: 700 }}>{fmt(l.total, d.indicador)}{cob && <Pct p={l.totalPct} />}</td>
+                      {cob && <td style={{ ...S.tdC, fontWeight: 700 }}>{fmtN(l.acum)}<Pct p={l.acumPct} /></td>}
                     </tr>
                   ))}
-                  {porSetor && !d.linhas.length && <tr><td colSpan={d.meses.length + 3} style={S.vazio}>Sem venda desse item nos meses escolhidos.</td></tr>}
+                  {porSetor && !d.linhas.length && <tr><td colSpan={d.meses.length + 4} style={S.vazio}>Sem venda desse item nos meses escolhidos.</td></tr>}
                   <tr style={{ background: "rgba(125,186,61,0.10)" }}>
                     <td style={{ ...S.td, fontWeight: 700, color: VERDE }}>🏭 Operação</td>
                     {cob && <td style={{ ...S.tdC, fontWeight: 700 }}>{fmtN(d.operacao.base)}</td>}
@@ -236,11 +238,12 @@ export default function RelatorioAberto() {
                       <td key={i} style={{ ...S.tdC, fontWeight: 700 }}>{fmt(v.v, d.indicador)}{dist && v.pdvs ? <span style={S.media}> · {fmt(v.media, "x")}/PDV</span> : null}{cob && <Pct p={v.pct} />}</td>
                     ))}
                     <td style={{ ...S.tdC, fontWeight: 800, color: VERDE }}>{fmt(d.operacao.total, d.indicador)}{cob && <Pct p={d.operacao.totalPct} />}</td>
+                    {cob && <td style={{ ...S.tdC, fontWeight: 800, color: VERDE }}>{fmtN(d.operacao.acum)}<Pct p={d.operacao.acumPct} /></td>}
                   </tr>
                 </tbody>
               </table>
               <p style={S.hint}>{IND[d.indicador].unid} · {d.item.label}{d.item.skus > 1 && !d.item.id.startsWith("sku:") ? ` (${d.item.skus} SKUs cadastrados na categoria)` : ""}
-                {cob ? " · % = PDVs que compraram ÷ PDVs ativos do setor na base de clientes atual (média mensal % = média ÷ base)" : ""}
+                {cob ? " · % = PDVs que compraram ÷ PDVs ativos do setor na base de clientes atual (média mensal % = média ÷ base · total período = PDVs distintos que compraram em qualquer mês marcado ÷ base)" : ""}
                 {cob && meta !== null && !isNaN(meta) ? ` · meta ${meta}%: verde bateu, vermelho não` : ""} · setores 301–305 somados em 107–111.</p>
             </div>
           )}

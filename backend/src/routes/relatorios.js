@@ -168,11 +168,18 @@ router.get("/aberto", async (req, res) => {
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeDe[c] = String(u.nome || "").trim(); });
     // Todos os setores da base aparecem (inclusive quem não vendeu = 0%), + quem vendeu fora da base.
     const cob = indicador === "cobertura";
+    // Cobertura ACUMULADA do período: PDVs DISTINTOS que compraram em QUALQUER mês marcado
+    // (soma as vendas dos meses, PDV conta 1x) ÷ a mesma base do setor.
+    const acumulado = (cels, base) => {
+      const u = new Set(); cels.forEach((c) => c.pdvs.forEach((p) => u.add(p)));
+      return { acum: u.size, acumPct: pct(u.size, base) };
+    };
     const setores = [...new Set([...Object.keys(baseDe), ...Object.keys(agg)])];
     const linhas = setores.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map((setor) => {
       const vals = meses.map((m) => valor((agg[setor] || {})[m], baseDe[setor]));
       const total = fechar(vals);
-      return { setor, nome: nomeDe[setor] || "", base: baseDe[setor] || 0, valores: vals, total, totalPct: cob ? pct(total, baseDe[setor]) : null };
+      return { setor, nome: nomeDe[setor] || "", base: baseDe[setor] || 0, valores: vals, total, totalPct: cob ? pct(total, baseDe[setor]) : null,
+        ...(cob ? acumulado(Object.values(agg[setor] || {}), baseDe[setor]) : {}) };
     });
     const valsOp = meses.map((m) => valor(op[m], baseOp));
     const totalOp = fechar(valsOp);
@@ -182,7 +189,8 @@ router.get("/aberto", async (req, res) => {
       indicador, meses,
       totalLabel: indicador === "volume" ? "Total" : "Média mensal",
       linhas,
-      operacao: { base: baseOp, valores: valsOp, total: totalOp, totalPct: cob ? pct(totalOp, baseOp) : null },
+      operacao: { base: baseOp, valores: valsOp, total: totalOp, totalPct: cob ? pct(totalOp, baseOp) : null,
+        ...(cob ? acumulado(Object.values(op), baseOp) : {}) },
     });
   } catch (e) {
     console.error("relatorios/aberto:", e);
