@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.87.4** — Missões: pesquisa que acompanha a visão (missão / PDV).
+Versão atual: **v3.88.0** — Incentivo "Desafio Marketplace" de outubro (meta R$ 400.000).
+
+## v3.88.0 — Desafio Marketplace (outubro)
+- **Popup com arte no celular** (RN e qualquer usuário na Home do celular): anel animado com o % da meta, realizado × meta, quanto falta, ritmo necessário por dia útil, dias restantes, tendência e — para o RN — **a sua contribuição e a posição no ranking**. Abre ao entrar no app **sempre que o CORA for atualizado** (guarda o carimbo da última importação já vista); espera o popup de arte do admin fechar, se houver.
+- **Bloco simples no desktop** (Home, abaixo de Volumes): % e barra (realizado + tendência), falta, tendência, ritmo/dia e ranking dos RNs.
+- Fonte: `rv_faturamento_mktp` (faturamento MKTP sem ADF, vindo do CORA). Meta **coletiva da operação**: R$ 400.000. Fica ativo em outubro e até o dia 5 de novembro (resultado final). Próximo incentivo = trocar `INCENTIVO_MKTP` em `backend/src/routes/resumo.js`. Rota `GET /api/resumo/incentivo-mktp`.
 
 ## v3.87.4 — Pesquisa em Missões
 - Caixa de pesquisa logo abaixo de "Por missão / Por PDV", **também no celular**: em **Por missão** pesquisa só o texto da missão; em **Por PDV** pesquisa o código ou nome do PDV. Trocar de visão limpa a pesquisa.

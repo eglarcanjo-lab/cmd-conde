@@ -393,4 +393,73 @@ router.get("/verdes/pedidos", async (req, res) => {
   }
 });
 
+// ── Incentivo Faturamento Marketplace (bloco da Home desktop + popup no celular) ─────────
+// Meta COLETIVA da operação no mês. Próximo incentivo = trocar este objeto.
+const INCENTIVO_MKTP = { mes: "2026-10", meta: 400000, titulo: "Desafio Marketplace", campanha: "Outubro" };
+
+// dias úteis (seg–sex) do mês; "passados" = até ONTEM (o CORA traz o faturado até D-1)
+function diasUteis(mes, hojeBR) {
+  const [y, m] = mes.split("-").map(Number);
+  let total = 0, passados = 0;
+  for (let d = new Date(y, m - 1, 1); d.getMonth() === m - 1; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay(); if (dow === 0 || dow === 6) continue;
+    total++; if (d < new Date(hojeBR.getFullYear(), hojeBR.getMonth(), hojeBR.getDate())) passados++;
+  }
+  return { total, passados };
+}
+
+// GET /api/resumo/incentivo-mktp — faturamento MKTP (R$) da operação × meta do incentivo.
+// Todos veem o número da OPERAÇÃO (meta coletiva); o RN também vê a própria contribuição.
+// atualizado_em = última importação do CORA (o popup reaparece quando muda).
+router.get("/incentivo-mktp", async (req, res) => {
+  try {
+    const { mes, meta, titulo, campanha } = INCENTIVO_MKTP;
+    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const mesHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+    // ativo no mês do incentivo e até o dia 5 do mês seguinte (p/ mostrar o resultado final)
+    const [y, m] = mes.split("-").map(Number);
+    const seguinte = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}`;
+    const ativo = mesHoje === mes || (mesHoje === seguinte && hoje.getDate() <= 5);
+    if (!ativo) return res.json({ ativo: false });
+
+    const [fat, statusArq, usuarios] = await Promise.all([
+      readSheet("rv_faturamento_mktp").catch(() => []),
+      readSheet("status_arquivos").catch(() => []),
+      readSheet("usuarios").catch(() => []),
+    ]);
+    const doMes = fat.filter((r) => String(r.mes_referencia || "").slice(0, 7) === mes);
+    const porSetor = {};
+    doMes.forEach((r) => { const s = String(r.setor || "").trim(); if (s) porSetor[s] = (porSetor[s] || 0) + num(r.faturamento_mktp_real); });
+    const realizado = Object.values(porSetor).reduce((a, b) => a + b, 0);
+    const nomeDe = {}; usuarios.forEach((u) => { nomeDe[String(u.cod || "").trim()] = String(u.nome || "").trim(); });
+    const por_rn = Object.entries(porSetor).filter(([, v]) => v > 0)
+      .map(([setor, v]) => ({ setor, nome: nomeDe[setor] || "", real: Math.round(v) }))
+      .sort((a, b) => b.real - a.real);
+
+    const encerrado = mesHoje !== mes;
+    const { total, passados } = encerrado ? { total: diasUteis(mes, hoje).total, passados: diasUteis(mes, hoje).total } : diasUteis(mes, hoje);
+    const restantes = Math.max(0, total - passados);
+    const tendencia = passados > 0 ? Math.round((realizado / passados) * total) : null;
+    const falta = Math.max(0, meta - realizado);
+    const st = statusArq.find((r) => /^CORA \(Consulta/i.test(String(r.arquivo || "")))
+            || statusArq.find((r) => /Faturamento Mktp/i.test(String(r.arquivo || "")));
+    const meuSetor = String(req.user.cod || "").trim();
+    const posicao = por_rn.findIndex((r) => r.setor === meuSetor);
+
+    return res.json({
+      ativo: true, encerrado, mes, titulo, campanha, meta,
+      realizado: Math.round(realizado), pct: meta ? Math.round((realizado / meta) * 1000) / 10 : 0,
+      falta: Math.round(falta), tendencia, pct_tendencia: tendencia && meta ? Math.round((tendencia / meta) * 100) : null,
+      dias_uteis: total, dias_passados: passados, dias_restantes: restantes,
+      ritmo_dia: restantes > 0 ? Math.round(falta / restantes) : 0,
+      atualizado_em: st ? String(st.atualizado_em || "").trim() : "",
+      por_rn,
+      meu: req.user.perfil === "rn" ? { setor: meuSetor, real: Math.round(porSetor[meuSetor] || 0), posicao: posicao >= 0 ? posicao + 1 : null, de: por_rn.length } : null,
+    });
+  } catch (e) {
+    console.error("resumo/incentivo-mktp:", e);
+    return res.status(500).json({ error: "Erro ao montar o incentivo Marketplace." });
+  }
+});
+
 module.exports = router;

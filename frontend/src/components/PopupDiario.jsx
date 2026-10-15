@@ -68,7 +68,7 @@ export default function PopupDiario() {
   const clicavel = (popup.acao_tipo === "rota" || popup.acao_tipo === "link") && popup.acao_valor;
 
   return (
-    <div style={S.overlay} onClick={fechar}>
+    <div style={S.overlay} onClick={fechar} data-popup="diario">
       <div style={S.box} onClick={(e) => e.stopPropagation()}>
         <button style={S.close} onClick={fechar} aria-label="Fechar">✕</button>
         <img

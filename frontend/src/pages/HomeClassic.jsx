@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
+import PopupMktp from "../components/PopupMktp"; // incentivo Desafio Marketplace (abre quando o CORA atualiza)
 import { modulosDoPerfil } from "../menu";
 
 export default function HomeClassic() {
@@ -12,6 +13,7 @@ export default function HomeClassic() {
 
   return (
     <div style={styles.root}>
+      <PopupMktp />
       <div style={styles.header}>
         <div>
           <p style={styles.greeting}>Bem-vindo,</p>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import ResumoVolumes from "../components/ResumoVolumes";
+import ResumoMktp from "../components/ResumoMktp"; // incentivo Desafio Marketplace
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
 import { mesPadraoHome, somaMes, rotuloMes } from "../utils/mesRef";
@@ -112,6 +113,7 @@ export default function HomeDashboard() {
         </div>
 
         <ResumoVolumes mes={mes} />
+        <ResumoMktp />
         <ResumoVerdes mes={mes} />
         <ResumoRankings mes={mes} />
       </main>
