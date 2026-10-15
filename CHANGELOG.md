@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.5** — Tasks do RN 108 (comparação de setor tolerante) + diagnóstico.
+Versão atual: **v3.85.6** — Tasks: filtro por RN para gestores.
+
+## v3.85.6 — Tasks: filtro por RN
+- Admin, diretor e GVs ganham o seletor **"Todos os RNs / setor · nome"** na tela de Tasks (só os setores com task no escopo de cada um; nome do RN aparece para o admin). Fica no endereço (`/tasks?rn=108`), então recarregar mantém o RN escolhido.
+- No celular os filtros quebram em 2 por linha.
 
 ## v3.85.5 — Tasks vazias no RN 108
 - Tasks e Cobertura refaziam no app um filtro "setor da task = código do usuário" com comparação exata; qualquer diferença (sessão salva com 302, número × texto, espaço) zerava a tela mesmo com o backend mandando as tasks certas (PDVs/RV não têm esse filtro extra, por isso funcionavam). Agora usa comparação tolerante (`utils/setor.js`: texto/número, espaços, zero à esquerda, 301–305 = 107–111).

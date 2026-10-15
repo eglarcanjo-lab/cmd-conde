@@ -67,8 +67,17 @@ export default function Tasks() {
   const [taskExpandida, setTaskExpandida] = useState(null);
   const [taskDetalhe, setTaskDetalhe]     = useState(null); // modal detalhe Por Task
   const [ordem, setOrdem] = useState("qtd_desc"); // ordenar por qtd de task
+  const [filtroRn, setFiltroRn] = useAbaUrl("rn", ""); // gestor: filtrar por RN (fica no endereço ?rn=108)
+  const [nomesRn, setNomesRn] = useState({});
 
   useEffect(() => { carregar(); }, []);
+  // nome do RN no seletor (admin); demais gestores veem só o nº do setor
+  useEffect(() => {
+    if (usuario?.perfil !== "admin") return;
+    api.get("/api/solicitacoes/setores").then((r) => {
+      const m = {}; (r.data || []).forEach((x) => { m[x.setor] = x.nome; }); setNomesRn(m);
+    }).catch(() => {});
+  }, [usuario?.perfil]);
 
   async function carregar() {
     setLoading(true);
@@ -94,8 +103,15 @@ export default function Tasks() {
     if (!isGestor && !mesmoSetor(t.setor, usuario?.cod)) return false; // tolerante (texto/número, 302=108)
     if (isGestor && usuario?.perfil === "gv1" && !t.setor?.startsWith("1")) return false;
     if (isGestor && usuario?.perfil === "gv3" && !t.setor?.startsWith("3")) return false;
+    if (isGestor && filtroRn && !mesmoSetor(t.setor, filtroRn)) return false;
     return true;
   });
+  // RNs disponíveis no seletor = setores com task no escopo do gestor
+  const rnsDisponiveis = isGestor
+    ? [...new Set(tasks.map((t) => String(t.setor || "").trim()).filter(Boolean)
+        .filter((s) => usuario?.perfil === "gv1" ? s.startsWith("1") : usuario?.perfil === "gv3" ? s.startsWith("3") : true))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    : [];
 
   // Tasks do dia selecionado (só OPEN)
   const tasksDia = tasksFiltradas.filter((t) => {
@@ -180,8 +196,8 @@ export default function Tasks() {
 
           .tk-filtros { gap: 6px !important; }
           .tk-search  { width: 100% !important; box-sizing: border-box !important; font-size: 0.8rem !important; }
-          .tk-select  { flex: 1 !important; min-width: 0 !important; font-size: 0.78rem !important; padding: 7px 8px !important; }
-          .tk-selects-row { display: flex !important; gap: 6px !important; width: 100% !important; }
+          .tk-select  { flex: 1 1 calc(50% - 6px) !important; min-width: 0 !important; font-size: 0.78rem !important; padding: 7px 8px !important; }
+          .tk-selects-row { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; width: 100% !important; }
 
           .tk-toggle-btn { font-size: 0.78rem !important; padding: 7px 12px !important; }
 
@@ -262,6 +278,18 @@ export default function Tasks() {
             onChange={(e) => setBusca(e.target.value)}
           />
           <div className="tk-selects-row" style={{ display: "flex", gap: "10px" }}>
+            {isGestor && (
+              <select
+                className="tk-select"
+                style={{ ...styles.inputSelect, ...(filtroRn ? { borderColor: "#7DBA3D", color: "#7DBA3D" } : {}) }}
+                value={filtroRn}
+                onChange={(e) => setFiltroRn(e.target.value)}
+                title="Filtrar por RN"
+              >
+                <option value="">Todos os RNs</option>
+                {rnsDisponiveis.map((s) => <option key={s} value={s}>{s}{nomesRn[s] ? ` · ${nomesRn[s].split(" ")[0]}` : ""}</option>)}
+              </select>
+            )}
             <select
               className="tk-select"
               style={styles.inputSelect}
