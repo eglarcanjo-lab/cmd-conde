@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.86.0** — Auditoria out/26 concluída (abas em Outros relatórios, uso leve, SPO/processador divididos, Google Sheets removido).
+Versão atual: **v3.86.1** — Bloco 🎯 Foco NE removido da Home.
+
+## v3.86.1 — Home sem Foco NE
+- Removido o bloco **🎯 Foco NE** da Home (+LN · Faturamento Score 5 · Portfólio Score 5), a rota `/api/resumo/foco-ne` e o helper `trimestre` que só ela usava. Os números continuam no SPO (KPIs 12, 24 e 27).
 
 ## v3.86.0 — Fechamento da auditoria de outubro
 - **Outros relatórios em abas:** Relatório aberto · Base de PDVs × dia · Conversão Pure Gold · Campanhas (antes eram caixas empilhadas). A aba fica no endereço (`/incentivos?aba=base`) e entra no Engajamento.

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import ResumoVolumes from "../components/ResumoVolumes";
-import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
 import { mesPadraoHome, somaMes, rotuloMes } from "../utils/mesRef";
@@ -113,7 +112,6 @@ export default function HomeDashboard() {
         </div>
 
         <ResumoVolumes mes={mes} />
-        <ResumoFocoNE mes={mes} />
         <ResumoVerdes mes={mes} />
         <ResumoRankings mes={mes} />
       </main>
