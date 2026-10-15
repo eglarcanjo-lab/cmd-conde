@@ -233,8 +233,7 @@ export default function Tasks() {
           <button className="tk-toggle-btn" style={{ ...styles.viewBtn, ...(secao === "missoes" ? styles.viewBtnAtivo : {}) }} onClick={() => setSecao("missoes")}>🎯 Missões</button>
         </div>
 
-        {secao === "missoes" ? <Missoes usuario={usuario} isGestor={isGestor} nomesRn={nomesRn} /> : (<>
-        {/* Seletor de dia */}
+        {/* Seletor de dia — vale p/ Tasks e Missões */}
         <div style={styles.diasRow} className="tk-dias">
           {DIAS.map((d) => (
             <button
@@ -248,6 +247,7 @@ export default function Tasks() {
           ))}
         </div>
 
+        {secao === "missoes" ? <Missoes usuario={usuario} isGestor={isGestor} nomesRn={nomesRn} dia={diaFiltro} mapaPdv={mapaPdv} /> : (<>
         {/* Dashboard */}
         <div style={styles.dashRow} className="tk-dash">
           <div style={styles.dashCard}>

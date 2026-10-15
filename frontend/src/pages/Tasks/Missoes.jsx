@@ -1,6 +1,8 @@
 // Tasks › Missões — relatório de missões do BI (campanha, ex.: "MANDA BALA NAS VENDAS").
 // Duas visões: POR MISSÃO (quantos PDVs têm cada missão e quantos já validaram) e POR PDV
 // (missões de cada PDV). Dados: GET /api/tasks/missoes (escopo por perfil no backend).
+// Mostra só os PDVs com VISITA NO DIA escolhido na barra de dias da tela de Tasks (dia de
+// visita do PDV na rota — pdv_base). No celular: sem busca/filtros/Excel (só dia + visões).
 // Import: Admin › Arquivos › "Missões (BI)".
 import { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx-js-style";
@@ -26,7 +28,20 @@ function Barra({ v, total }) {
   );
 }
 
-export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
+const normDia = (v) => String(v || "").trim().toUpperCase().split("/")[0].trim();
+function useMobile() {
+  const q = "(max-width: 767px)";
+  const [m, setM] = useState(() => typeof window !== "undefined" && window.matchMedia(q).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(q); const on = (e) => setM(e.matches);
+    mq.addEventListener ? mq.addEventListener("change", on) : mq.addListener(on);
+    return () => (mq.removeEventListener ? mq.removeEventListener("change", on) : mq.removeListener(on));
+  }, []);
+  return m;
+}
+
+export default function Missoes({ usuario, isGestor, nomesRn = {}, dia, mapaPdv = {} }) {
+  const mobile = useMobile();
   const [dados, setDados] = useState([]);
   const [atualizado, setAtualizado] = useState("");
   const [loading, setLoading] = useState(true);
@@ -35,7 +50,6 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
   useContarAba("/tasks#missoes", visao);
   const [filtroRn, setFiltroRn] = useAbaUrl("rn", "");
   const [status, setStatus] = useState("");                  // "" | pendente | validada
-  const [visita, setVisita] = useState("");                  // dd/mm/aaaa da próxima visita
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(null);
 
@@ -48,8 +62,6 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
 
   const rns = useMemo(() => [...new Set(dados.map((m) => String(m.setor || "").trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })), [dados]);
-  const visitas = useMemo(() => [...new Set(dados.map((m) => m.proxima_visita).filter(Boolean))]
-    .sort((a, b) => dataKey(a).localeCompare(dataKey(b))), [dados]);
 
   const filtradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -57,11 +69,11 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
       if (isGestor && filtroRn && !mesmoSetor(m.setor, filtroRn)) return false;
       if (status === "validada" && m.validada !== "SIM") return false;
       if (status === "pendente" && m.validada === "SIM") return false;
-      if (visita && m.proxima_visita !== visita) return false;
+      if (dia && normDia(mapaPdv[m.cod_pdv]?.dia_visita) !== dia) return false;   // visita do dia (rota)
       if (q && !`${m.cod_pdv} ${m.nome_pdv} ${m.missao}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [dados, isGestor, filtroRn, status, visita, busca]);
+  }, [dados, isGestor, filtroRn, status, busca, dia, mapaPdv]);
 
   const validadas = filtradas.filter((m) => m.validada === "SIM").length;
   const pdvs = new Set(filtradas.map((m) => m.cod_pdv)).size;
@@ -89,7 +101,7 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
     cab.forEach((_, c) => { const ref = XLSX.utils.encode_cell({ r: 0, c }); if (ws[ref]) ws[ref].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2E7D32" } } }; });
     ws["!cols"] = [6, 9, 30, 13, 48, 9, 13, 24].map((w) => ({ wch: w }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Missões");
-    XLSX.writeFile(wb, `Missoes${filtroRn ? `_RN${filtroRn}` : ""}${status ? `_${status}` : ""}.xlsx`);
+    XLSX.writeFile(wb, `Missoes_${dia || "todos"}${filtroRn ? `_RN${filtroRn}` : ""}${status ? `_${status}` : ""}.xlsx`);
   }
 
   if (loading) return <p style={S.msg}>Carregando missões…</p>;
@@ -110,7 +122,7 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
         <button type="button" style={visao === "pdv" ? S.tOn : S.t} onClick={() => { setVisao("pdv"); setAberto(null); }}>🏪 Por PDV</button>
       </div>
 
-      <div style={S.filtros} className="ms-filtros">
+      {!mobile && <div style={S.filtros}>
         <input style={{ ...S.input, flex: "2 1 220px" }} placeholder="Buscar PDV ou missão…" value={busca} onChange={(e) => setBusca(e.target.value)} />
         {isGestor && (
           <select style={{ ...S.input, ...(filtroRn ? { borderColor: VERDE, color: VERDE } : {}) }} value={filtroRn} onChange={(e) => setFiltroRn(e.target.value)}>
@@ -123,12 +135,8 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
           <option value="pendente">Pendentes</option>
           <option value="validada">Validadas</option>
         </select>
-        <select style={S.input} value={visita} onChange={(e) => setVisita(e.target.value)}>
-          <option value="">Qualquer visita</option>
-          {visitas.map((v) => <option key={v} value={v}>Visita {v.slice(0, 5)}</option>)}
-        </select>
         <button type="button" style={S.excel} onClick={exportar}>⤓ Excel</button>
-      </div>
+      </div>}
 
       {visao === "missao" ? (
         <div style={S.lista}>
@@ -157,7 +165,7 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
               )}
             </div>
           ))}
-          {!porMissao.length && <p style={S.msg}>Nenhuma missão com esses filtros.</p>}
+          {!porMissao.length && <p style={S.msg}>Nenhuma missão para os PDVs com visita neste dia.</p>}
         </div>
       ) : (
         <div style={S.lista}>
@@ -184,10 +192,9 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
               )}
             </div>
           ))}
-          {!porPdv.length && <p style={S.msg}>Nenhum PDV com esses filtros.</p>}
+          {!porPdv.length && <p style={S.msg}>Nenhum PDV com missão e visita neste dia.</p>}
         </div>
       )}
-      <style>{`@media (max-width: 640px) { .ms-filtros > * { flex: 1 1 calc(50% - 6px) !important; } }`}</style>
     </div>
   );
 }
@@ -195,11 +202,11 @@ export default function Missoes({ usuario, isGestor, nomesRn = {} }) {
 const S = {
   msg: { color: "rgba(255,255,255,0.45)", textAlign: "center", padding: "32px 0", fontSize: "0.9rem" },
   hint: { color: "rgba(255,255,255,0.4)", fontSize: "0.76rem", margin: "6px 0 12px" },
-  dash: { display: "flex", gap: 12, flexWrap: "wrap" },
-  card: { flex: "1 1 140px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(125,186,61,0.2)", borderRadius: 12, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 4 },
+  dash: { display: "flex", gap: 8 },
+  card: { flex: "1 1 0", minWidth: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(125,186,61,0.2)", borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 4 },
   cardLbl: { color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" },
-  cardVal: { fontSize: "1.5rem", color: "#fff" },
-  small: { fontSize: "0.85rem", fontWeight: 600 },
+  cardVal: { fontSize: "clamp(1.05rem, 4.5vw, 1.5rem)", color: "#fff", whiteSpace: "nowrap" },
+  small: { fontSize: "0.72em", fontWeight: 600 },
   toggle: { display: "flex", gap: 8, margin: "4px 0 12px" },
   t: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem" },
   tOn: { background: "rgba(125,186,61,0.18)", border: `1px solid ${VERDE}`, color: VERDE, borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700 },

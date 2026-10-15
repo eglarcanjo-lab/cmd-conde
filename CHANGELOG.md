@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.87.0** — Tasks › Missões (por missão e por PDV).
+Versão atual: **v3.87.1** — Missões por dia de visita + versão enxuta no celular.
+
+## v3.87.1 — Missões: dia de visita e celular
+- A barra de dias (Segunda…Sábado, começa em hoje) agora fica **acima das duas abas** (Tasks e Missões). Missões mostra só os PDVs com **visita no dia escolhido** (dia de visita do PDV na rota, igual às Tasks).
+- **No celular:** sem caixas — saíram busca, filtros de RN/status e Excel; ficam os 3 cards (lado a lado) e as visões Por missão / Por PDV. No computador os filtros e o Excel continuam (saiu só o filtro de data, substituído pelos dias).
 
 ## v3.87.0 — Missões
 - **Tasks ganhou abas: ✅ Tasks · 🎯 Missões.** Missões mostra o relatório de missões da campanha do BI (ex.: "MANDA BALA NAS VENDAS"): cards de Missões · Validadas (%) · PDVs; visão **Por missão** (quantos PDVs têm cada missão e quantos validaram, com a lista de PDVs ao abrir) e **Por PDV** (missões de cada PDV, ordenado pela próxima visita). Filtros: RN (gestor), pendentes/validadas, data da próxima visita e busca; **Excel** da lista filtrada. Abas e filtros ficam no endereço.
