@@ -33,10 +33,16 @@ router.get("/meses", async (req, res) => {
   try {
     const esc = escopoPerfil(req.user);
     if (!esc.ok) return res.status(403).json({ error: "Acesso restrito a gestores." });
-    const vendas = await readSheet("vendas_cliente_produto").catch(() => []);
-    const set = new Set();
-    vendas.forEach((r) => { const m = String(r.mes_referencia || "").slice(0, 7); if (/^\d{4}-\d{2}$/.test(m)) set.add(m); });
-    return res.json([...set].sort().reverse());
+    // Só os meses (DISTINCT no banco) — antes lia a tabela de vendas inteira p/ isso.
+    let ms = [];
+    try {
+      const { query } = require("../services/db");
+      ms = (await query(`SELECT DISTINCT LEFT(mes_referencia::text, 7) AS m FROM vendas_cliente_produto`)).rows.map((r) => r.m);
+    } catch {
+      const vendas = await readSheet("vendas_cliente_produto").catch(() => []);
+      ms = vendas.map((r) => String(r.mes_referencia || "").slice(0, 7));
+    }
+    return res.json([...new Set(ms.filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort().reverse());
   } catch (err) { console.error("cobertura-sku/meses:", err); return res.status(500).json({ error: "Erro ao listar meses." }); }
 });
 
@@ -49,8 +55,11 @@ router.get("/buscar", async (req, res) => {
     const q = String(req.query.q || "").trim().toLowerCase();
     if (q.length < 2) return res.json([]);
 
+    // Autocomplete: só os últimos 3 meses (antes varria o histórico inteiro a cada letra)
+    const d = new Date();
+    const ult3 = [0, 1, 2].map((k) => { const x = new Date(d.getFullYear(), d.getMonth() - k, 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`; });
     const [vendasRaw, produtosFull] = await Promise.all([
-      readSheet("vendas_cliente_produto").catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", ult3).catch(() => []),
       readSheet("produtos_full").catch(() => []),
     ]);
     const nomeMap = {};

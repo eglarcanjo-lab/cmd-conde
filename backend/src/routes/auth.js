@@ -8,12 +8,31 @@ const { SENHA_PADRAO, ehHash, ehSenhaPadrao, hashSenha, conferirSenha } = requir
 const USUARIO_COLS = ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"];
 const rowUsuario = (u) => USUARIO_COLS.map((c) => u[c] ?? "");
 
-function gerarToken(usuario) {
+// troca=true → token restrito (15 min) que só serve p/ trocar a senha-padrão.
+function gerarToken(usuario, troca = false) {
   return jwt.sign(
-    { cod: usuario.cod, nome: usuario.nome, telefone: usuario.telefone, perfil: usuario.perfil, gv: usuario.gv },
+    { cod: usuario.cod, nome: usuario.nome, telefone: usuario.telefone, perfil: usuario.perfil, gv: usuario.gv, ...(troca ? { troca: true } : {}) },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: troca ? "15m" : "7d" }
   );
+}
+
+// Limite de tentativas (Auditoria out/26): 5 senhas erradas no mesmo CPF → bloqueia 15 min.
+// Em memória (1 instância no Railway); reiniciar o servidor zera os contadores.
+const MAX_ERROS = 5, BLOQUEIO_MS = 15 * 60 * 1000;
+const tentativas = new Map(); // cpf → { erros, ate }
+function bloqueado(cpf) {
+  const t = tentativas.get(cpf);
+  if (!t || !t.ate) return 0;
+  if (Date.now() >= t.ate) { tentativas.delete(cpf); return 0; }
+  return Math.ceil((t.ate - Date.now()) / 60000);
+}
+function registrarErro(cpf) {
+  const t = tentativas.get(cpf) || { erros: 0, ate: 0 };
+  t.erros += 1;
+  if (t.erros >= MAX_ERROS) { t.ate = Date.now() + BLOQUEIO_MS; t.erros = 0; }
+  tentativas.set(cpf, t);
+  return MAX_ERROS - t.erros;
 }
 
 // POST /api/auth/login
@@ -24,6 +43,8 @@ router.post("/login", async (req, res) => {
 
     const cpfLimpo = cpf.replace(/\D/g, "");
     if (cpfLimpo.length !== 11) return res.status(400).json({ error: "CPF inválido." });
+    const min = bloqueado(cpfLimpo);
+    if (min) return res.status(429).json({ error: `Muitas tentativas erradas. Tente de novo em ${min} min ou peça a redefinição da senha.` });
 
     const usuarios = await readSheet("usuarios");
     const idx = usuarios.findIndex(
@@ -33,7 +54,11 @@ router.post("/login", async (req, res) => {
     const usuario = usuarios[idx];
 
     const ok = await conferirSenha(senha, usuario.senha, cpfLimpo);
-    if (!ok) return res.status(401).json({ error: "Senha incorreta." });
+    if (!ok) {
+      const resta = registrarErro(cpfLimpo);
+      return res.status(401).json({ error: resta > 0 && resta < MAX_ERROS ? `Senha incorreta. Restam ${resta} tentativa(s).` : bloqueado(cpfLimpo) ? "Senha incorreta. Acesso bloqueado por 15 min." : "Senha incorreta." });
+    }
+    tentativas.delete(cpfLimpo);
 
     // Migração suave: senha real ainda em texto puro → re-hasheia no 1º login certo.
     // (Senhas-padrão ficam como sentinela em texto para o app pedir a troca.)
@@ -43,11 +68,12 @@ router.post("/login", async (req, res) => {
       } catch (e) { console.error("rehash login:", e.message); }
     }
 
-    const token = gerarToken(usuario);
+    const precisaTrocar = ehSenhaPadrao(usuario.senha, cpfLimpo);
+    const token = gerarToken(usuario, precisaTrocar);
     return res.json({
       success: true,
       token,
-      precisa_trocar_senha: ehSenhaPadrao(usuario.senha, cpfLimpo),
+      precisa_trocar_senha: precisaTrocar,
       usuario: { cod: usuario.cod, nome: usuario.nome, perfil: usuario.perfil, gv: usuario.gv },
     });
   } catch (err) {
@@ -69,7 +95,8 @@ router.post("/trocar-senha", authMiddleware, async (req, res) => {
 
     const atualizado = { ...usuarios[idx], senha: await hashSenha(nova) };
     await updateRow("usuarios", idx + 1, rowUsuario(atualizado));
-    return res.json({ success: true, message: "Senha atualizada com sucesso." });
+    // Devolve um token NORMAL (o da troca era restrito e curto)
+    return res.json({ success: true, message: "Senha atualizada com sucesso.", token: gerarToken(atualizado) });
   } catch (err) {
     console.error("trocar-senha:", err);
     return res.status(500).json({ error: "Erro ao atualizar a senha." });

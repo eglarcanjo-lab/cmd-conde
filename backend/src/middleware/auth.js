@@ -11,6 +11,10 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Token de "troca de senha" (login com senha-padrão): só serve p/ trocar a senha.
+    if (decoded.troca && !req.originalUrl.startsWith("/api/auth/trocar-senha")) {
+      return res.status(403).json({ error: "Troque a senha-padrão para continuar." });
+    }
     req.user = decoded; // { cod, nome, perfil, gv, telefone }
     next();
   } catch (err) {

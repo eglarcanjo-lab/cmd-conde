@@ -1,41 +1,16 @@
 import { useNavigate } from "react-router-dom";
-// v2.3 - SPO ativo
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import HopBoasVindas from "../components/HopBoasVindas";
 import { HOP_ATIVA } from "../theme";
+import { modulosDoPerfil } from "../menu";
 
 export default function HomeClassic() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   const perfil = usuario?.perfil;
-  const isRn = perfil === "rn";
-  const isAdminOuDirector = perfil === "admin" || perfil === "director";
-
-  const modulos = [
-    { icon: "📊", label: "Outros relatórios",    route: "/incentivos",    ativo: true,  soGestor: false, soRn: false },
-    { icon: "📈", label: "Volume Diário", route: "/volume-diario", ativo: true,  soGestor: false, soRn: false },
-    { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura", ativo: true, soGestor: false, soRn: false },
-    { icon: "🗺️", label: "PDVs",          route: "/pdvs",          ativo: true,  soGestor: false, soRn: false },
-    { icon: "📦", label: "Produtos",      route: "/produtos",      ativo: true,  soGestor: false, soRn: false },
-    { icon: "✅", label: "Tasks",         route: "/tasks",         ativo: true,  soGestor: false, soRn: false },
-    { icon: "💰", label: "Remuneração",   route: "/rv",            ativo: true,  soGestor: false, soRn: true  },
-    { icon: "📊", label: "SPO",           route: "/spo",           ativo: true,  soGestor: false, soRn: false },
-    { icon: "🚨", label: "Solicitações",  route: "/incidentes",    ativo: true,  soGestor: false, soRn: false },
-    { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer", ativo: true, soGestor: false, soRn: false },
-    { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento", ativo: true, soGestor: false, soRn: false },
-    { icon: "🧊", label: "Equipamentos", route: "/refrigeradores", ativo: true, soGestor: false, soRn: false, soAdminDir: true },
-    { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", ativo: true, soGestor: false, soRn: false, soAdmin: true },
-    { icon: "📋", label: "Imput de Tasks", route: "/input-tasks", ativo: true, soGestor: false, soRn: false, soAdmin: true },
-    { icon: "🛣️", label: "Rota Efetiva", route: "/rota-efetiva", ativo: true, soGestor: true, soRn: false },
-  ].filter((m) => {
-    if (m.soAdmin && perfil !== "admin") return false; // só admin
-    if (m.soAdminDir && !isAdminOuDirector) return false; // só admin/director
-    if (isRn && m.soGestor) return false;        // RN não vê Cobertura/SPO
-    if (isAdminOuDirector && m.soRn) return false; // Admin/Director não vê Remuneração
-    return true;
-  });
+  const modulos = modulosDoPerfil(perfil); // menu único (src/menu.js)
 
   return (
     <div style={styles.root}>
@@ -51,9 +26,6 @@ export default function HomeClassic() {
           {usuario?.perfil === "admin" && (
             <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>
           )}
-          {usuario?.perfil === "director" && (
-            <button style={styles.adminBtn} onClick={() => navigate("/rv-admin")}>💰 RV Simulador</button>
-          )}
           <button style={styles.logout} onClick={logout}>Sair</button>
         </div>
       </div>
@@ -62,12 +34,11 @@ export default function HomeClassic() {
         {modulos.map((item) => (
           <div
             key={item.label}
-            style={{ ...styles.card, ...(item.ativo ? styles.cardAtivo : styles.cardInativo) }}
-            onClick={() => item.ativo && navigate(item.route)}
+            style={{ ...styles.card, ...styles.cardAtivo }}
+            onClick={() => navigate(item.route)}
           >
             <span style={styles.cardIcon}>{item.icon}</span>
             <span style={styles.cardLabel}>{item.label}</span>
-            {!item.ativo && <span style={styles.cardTag}>Em breve</span>}
           </div>
         ))}
       </div>

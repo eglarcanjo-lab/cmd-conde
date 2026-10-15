@@ -9,26 +9,8 @@ import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
 import { HOP_ATIVA } from "../theme";
 import { mesPadraoHome, somaMes, rotuloMes } from "../utils/mesRef";
+import { modulosDoPerfil, ADMIN_TABS } from "../menu";
 
-// Sub-abas do Admin (deep-link /admin?tab=id) — espelha as TABS de pages/Admin/index.jsx
-const ADMIN_TABS = [
-  { id: "usuarios",      icon: "👥", label: "Usuários" },
-  { id: "metas",         icon: "🎯", label: "Metas" },
-  { id: "sku_foco",      icon: "📈", label: "SKU Foco" },
-  { id: "arquivos",      icon: "📁", label: "Arquivos" },
-  { id: "produtos",      icon: "📦", label: "Produtos" },
-  { id: "ap",            icon: "🎯", label: "AT. Produtivo" },
-  { id: "rv_simulador",  icon: "💰", label: "RV Simulador" },
-  { id: "spo_desafios",  icon: "📋", label: "SPO Desafios" },
-  { id: "spo_metas",     icon: "📊", label: "SPO Metas" },
-  { id: "incentivos",    icon: "🏆", label: "Campanhas" },
-  { id: "popups",        icon: "🖼️", label: "Popups" },
-  { id: "avisos",        icon: "❔", label: "Avisos" },
-  { id: "engajamento",   icon: "📊", label: "Engajamento" },
-  { id: "incidentes",    icon: "🚨", label: "Solicitações" },
-  { id: "alertas",       icon: "📧", label: "Alertas" },
-  { id: "configuracoes", icon: "⚙️", label: "Configurações" },
-];
 
 // Home "dashboard" — só desktop + admin/director (ver Home.jsx). RN e mobile usam HomeClassic.
 export default function HomeDashboard() {
@@ -44,23 +26,11 @@ export default function HomeDashboard() {
   const perfil = usuario?.perfil;
   const isAdminOuDirector = perfil === "admin" || perfil === "director";
 
-  const modulos = [
-    { icon: "📊", label: "Outros relatórios", route: "/incentivos" },
-    { icon: "📈", label: "Volume Diário", route: "/volume-diario" },
-    { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura" },
-    { icon: "🗺️", label: "PDVs",          route: "/pdvs" },
-    { icon: "📦", label: "Produtos",      route: "/produtos" },
-    { icon: "✅", label: "Tasks",         route: "/tasks" },
-    { icon: "💰", label: "Remuneração",   route: "/rv", soRn: true },
-    { icon: "📊", label: "SPO",           route: "/spo" },
-    { icon: "🚨", label: "Solicitações",  route: "/incidentes" },
-    { icon: "🧾", label: "Faturados × Buffer", route: "/faturados-buffer" },
-    { icon: "🌿", label: "Devolução × Ruptura", route: "/detalhamento" },
-    { icon: "🧊", label: "Equipamentos", route: "/refrigeradores" },
-    { icon: "🏷️", label: "Ações de Preço", route: "/acoes-preco", soAdmin: true },
-    { icon: "📋", label: "Imput de Tasks", route: "/input-tasks", soAdmin: true },
-    { icon: "🛣️", label: "Rota Efetiva", route: "/rota-efetiva", soGestor: true },
-  ].filter((m) => !(isAdminOuDirector && m.soRn) && !(m.soAdmin && perfil !== "admin") && !(m.soGestor && perfil === "rn"));
+  // Menu único (src/menu.js). Itens do grupo "admin" (Ações de Preço, Input de Tasks)
+  // ficam dentro do grupo Admin da barra, não na lista principal.
+  const todos = modulosDoPerfil(perfil);
+  const modulos = todos.filter((m) => m.grupo !== "admin");
+  const modulosAdmin = todos.filter((m) => m.grupo === "admin");
 
   const toggleGrupo = (id) => {
     if (!aberto) { setAberto(true); setGrupos(new Set([id])); return; } // rail → expande e abre
@@ -103,13 +73,13 @@ export default function HomeDashboard() {
               icon="⚙️" label="Admin" aberto={aberto}
               expandido={grupos.has("admin")} onToggle={() => toggleGrupo("admin")}
             >
+              {modulosAdmin.map((m) => (
+                <SubItem key={m.route} icon={m.icon} label={m.label} onClick={() => navigate(m.route)} />
+              ))}
               {ADMIN_TABS.map((t) => (
                 <SubItem key={t.id} icon={t.icon} label={t.label} onClick={() => navigate(`/admin?tab=${t.id}`)} />
               ))}
             </Grupo>
-          )}
-          {perfil === "director" && (
-            <Item icon="💰" label="RV Simulador" aberto={aberto} onClick={() => navigate("/rv-admin")} />
           )}
         </nav>
       </aside>
@@ -124,7 +94,6 @@ export default function HomeDashboard() {
           <div style={styles.headerRight}>
             <Sininho />
             {perfil === "admin" && <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>}
-            {perfil === "director" && <button style={styles.adminBtn} onClick={() => navigate("/rv-admin")}>💰 RV Simulador</button>}
             <button style={styles.logout} onClick={logout}>Sair</button>
           </div>
         </div>

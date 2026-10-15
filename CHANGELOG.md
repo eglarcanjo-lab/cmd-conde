@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.83.2** — Produtos "nan" na Devolução × Ruptura.
+Versão atual: **v3.84.0** — Auditoria out/26, lote 1 (login, menu único, Admin agrupado, desempenho).
+
+## v3.84.0 — Auditoria out/26 · lote 1
+- **Login mais seguro:** 5 senhas erradas no mesmo CPF bloqueiam por 15 min (mostra quantas tentativas restam). Quem entra com a **senha-padrão** recebe um acesso que só serve para trocar a senha (15 min); o acesso completo só vem depois da troca. Antes a troca era obrigatória só na tela.
+- **Menu único** (`src/menu.js`): as duas Homes e o Admin leem a mesma lista (antes eram 3 cópias que já divergiam). Ícones distintos (Outros relatórios 🗂️, SPO 🏅) e "Imput" → "Input de Tasks".
+- **RV Simulador num lugar só** (`/rv-admin`): saiu a aba do Admin, o item extra do diretor e o botão duplicado do topo; link antigo `/admin?tab=rv_simulador` redireciona.
+- **Admin agrupado** em Pessoas · Metas e RV · Dados · Comunicação. Na barra lateral, Ações de Preço e Input de Tasks ficam dentro do grupo Admin.
+- **Cobertura por SKU mais leve:** a lista de meses vem do banco (antes lia todas as vendas) e a busca de produto olha só os últimos 3 meses (antes varria o histórico a cada letra digitada).
+- Removida a tela antiga `CoberturaSku/index.jsx` (nada abria; o Comparativo segue).
 
 ## v3.83.2 — Produtos "nan" na Devolução × Ruptura / Pesquisa Pedido
 - Causa: alguns itens do relatório CORA vêm com **"Desc. produto" vazio**; o import gravava o texto "nan" como nome (pedido, ruptura, vendas…).

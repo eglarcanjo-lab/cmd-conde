@@ -13,35 +13,19 @@ import SkuFoco from "./SkuFoco";
 import AtendimentoProdutivo from "./AtendimentoProdutivo";
 import SpoDesafios from "./SpoDesafios";
 import SpoMetas from "./SpoMetas";
-import RvSimulador from "./RvSimulador";
 import IncentivosAdmin from "./Incentivos";
 import PopupsAdmin from "./Popups";
 import AvisosAdmin from "./Avisos";
 import Engajamento from "./Engajamento";
 import Alertas from "./Alertas";
+import { ADMIN_TABS, ADMIN_GRUPOS } from "../../menu";
 
-const TABS = [
-  { id: "usuarios", label: "👥 Usuários" },
-  { id: "metas", label: "🎯 Metas" },
-  { id: "sku_foco", label: "📈 SKU Foco" },
-  { id: "arquivos", label: "📁 Arquivos" },
-  { id: "produtos", label: "📦 Produtos" },
-  { id: "ap", label: "🎯 AT. Produtivo" },
-  { id: "rv_simulador", label: "💰 RV Simulador" },
-  { id: "spo_desafios", label: "📋 SPO Desafios" },
-  { id: "spo_metas", label: "📊 SPO Metas" },
-  { id: "incentivos", label: "🏆 Campanhas" },
-  { id: "popups", label: "🖼️ Popups" },
-  { id: "avisos", label: "❔ Avisos" },
-  { id: "engajamento", label: "📊 Engajamento" },
-  { id: "incidentes", label: "🚨 Solicitações" },
-  { id: "alertas", label: "📧 Alertas" },
-  { id: "configuracoes", label: "⚙️ Configurações" },
-];
 
 export default function Admin() {
   const searchParams = new URLSearchParams(window.location.search);
   const tabInicial = searchParams.get("tab") || "usuarios";
+  // RV Simulador saiu do Admin (fica só em /rv-admin) — link antigo redireciona
+  if (tabInicial === "rv_simulador") window.location.replace("/rv-admin");
   const [tab, setTab] = useState(tabInicial);
   const [limpandoCache, setLimpandoCache] = useState(false);
   const [msgCache, setMsgCache] = useState("");
@@ -93,21 +77,28 @@ export default function Admin() {
           .admin-body { flex-direction: column !important; }
           .admin-sidebar { flex-direction: row !important; overflow-x: auto; min-width: 0 !important; width: 100%;
             border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 10px 12px !important; }
+          .admin-grupo { flex-direction: row !important; align-items: center; }
           .admin-content { padding: 20px 16px !important; max-width: 100% !important; }
         }
       `}</style>
 
       <div className="admin-body" style={styles.body}>
         <nav className="admin-sidebar" style={styles.sidebar}>
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              style={{ ...styles.tab, ...(tab === t.id ? styles.tabActive : {}) }}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
+          {ADMIN_GRUPOS.map((g) => (
+            <div key={g} className="admin-grupo" style={styles.grupo}>
+              <span style={styles.grupoTit}>{g}</span>
+              {ADMIN_TABS.filter((t) => t.grupo === g).map((t) => (
+                <button
+                  key={t.id}
+                  style={{ ...styles.tab, ...(tab === t.id ? styles.tabActive : {}) }}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.icon} {t.label}
+                </button>
+              ))}
+            </div>
           ))}
+          <button style={styles.tab} onClick={() => navigate("/rv-admin")}>🧮 RV Simulador ↗</button>
         </nav>
 
         <div className="admin-content" style={styles.content}>
@@ -116,7 +107,6 @@ export default function Admin() {
           {tab === "arquivos" && <Arquivos />}
           {tab === "produtos" && <Produtos />}
           {tab === "ap" && <AtendimentoProdutivo />}
-          {tab === "rv_simulador" && <RvSimulador />}
           {tab === "spo_desafios" && <SpoDesafios />}
           {tab === "spo_metas" && <SpoMetas />}
           {tab === "sku_foco" && <SkuFoco />}
@@ -134,6 +124,8 @@ export default function Admin() {
 }
 
 const styles = {
+  grupo: { display: "flex", flexDirection: "column", gap: "2px", marginBottom: "10px" },
+  grupoTit: { fontSize: "0.66rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", padding: "6px 12px 2px", whiteSpace: "nowrap" },
   root: { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", color: "#fff" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" },
   headerLeft: { display: "flex", alignItems: "center", gap: "16px" },

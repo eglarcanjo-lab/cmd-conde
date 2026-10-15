@@ -64,8 +64,9 @@ export default function Login() {
     if (novaSenha !== confSenha) { setErro("As senhas não conferem."); return; }
     setLoading(true);
     try {
-      await api.post("/api/auth/trocar-senha", { nova_senha: novaSenha });
-      login(pend.token, pend.usuario); // agora sim entra
+      const r = await api.post("/api/auth/trocar-senha", { nova_senha: novaSenha });
+      // o token do login com senha-padrão é restrito (só troca); entra com o token novo
+      login(r.data?.token || pend.token, pend.usuario);
       navigate("/");
     } catch (err) {
       setErro(err.response?.data?.error || "Erro ao salvar a senha.");
