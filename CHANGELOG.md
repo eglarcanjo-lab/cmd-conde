@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.86.1** — Bloco 🎯 Foco NE removido da Home.
+Versão atual: **v3.86.2** — Admin › Configurações com a versão e a estrutura atuais.
+
+## v3.86.2 — "Versão do Sistema" atualizada
+- Admin › Configurações › Versão do Sistema: tirou "Fase 1" e "Google Sheets API"; agora mostra a **versão** (a mesma do rodapé, automática), Frontend (Vercel), Backend (Railway), **Processador (Python · Render)**, **Banco PostgreSQL · Supabase**, **Fotos e vídeos (Cloudinary)** e **E-mail dos alertas (Brevo)**.
 
 ## v3.86.1 — Home sem Foco NE
 - Removido o bloco **🎯 Foco NE** da Home (+LN · Faturamento Score 5 · Portfólio Score 5), a rota `/api/resumo/foco-ne` e o helper `trimestre` que só ela usava. Os números continuam no SPO (KPIs 12, 24 e 27).

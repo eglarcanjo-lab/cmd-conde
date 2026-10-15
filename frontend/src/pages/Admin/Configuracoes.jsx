@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import { APP_VERSION } from "../../App"; // mesma versão do rodapé (bump a cada release)
 
 const MSGS_OPCOES = ["Em Atualização", "Em Manutenção"];
 
@@ -113,10 +114,13 @@ export default function Configuracoes() {
         <h3 style={styles.sectionTitle}>ℹ️ Versão do Sistema</h3>
         <div style={styles.infoGrid}>
           {[
-            { label: "Fase", value: "1 — Base + Admin" },
-            { label: "Frontend", value: "React + Vite / Vercel" },
-            { label: "Backend", value: "Node.js + Express / Railway" },
-            { label: "Banco", value: "Google Sheets API" },
+            { label: "Versão", value: APP_VERSION },
+            { label: "Frontend", value: "React + Vite · Vercel (cmd-conde.vercel.app)" },
+            { label: "Backend", value: "Node.js + Express · Railway" },
+            { label: "Processador", value: "Python (pandas) · Render" },
+            { label: "Banco", value: "PostgreSQL · Supabase" },
+            { label: "Fotos e vídeos", value: "Cloudinary" },
+            { label: "E-mail (alertas)", value: "Brevo" },
           ].map((item) => (
             <div key={item.label} style={styles.infoItem}>
               <span style={styles.infoLabel}>{item.label}</span>
