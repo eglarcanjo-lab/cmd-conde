@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { useContarAba } from "../../utils/uso";
 
 const VERDE = "#7DBA3D";
 const VERMELHO = "#ef6f6f";
@@ -30,6 +31,7 @@ const dataMs = (s) => {
 export default function Detalhamento() {
   const navigate = useNavigate();
   const [aba, setAba] = useState("entrega");
+  useContarAba("/detalhamento", aba); // Engajamento por aba
   return (
     <div style={S.root}>
       <div style={S.header}>

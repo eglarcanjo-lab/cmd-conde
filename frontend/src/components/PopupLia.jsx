@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
+import { quemInterrompeuHoje, reservarInterrupcao } from "../utils/interrupcao";
 
 const VERDE = "#7DBA3D";
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR");
@@ -32,7 +33,15 @@ export default function PopupLia() {
         const d = r.data || {};
         const temShelf = (d.shelf || []).length > 0;
         const temCat = (d.categorias || []).length > 0;
-        if (temShelf || temCat) { setDados(d); setTimeout(() => vivo && setAberto(true), 700); }
+        if (!(temShelf || temCat)) return;
+        // 1 interrupção por dia: espera o popup de arte decidir; se ele abriu hoje, a Lia fica p/ amanhã
+        // (admin continua vendo sempre, p/ conferir as mudanças).
+        setTimeout(() => {
+          if (!vivo) return;
+          if (!sempre && quemInterrompeuHoje() && quemInterrompeuHoje() !== "lia") return;
+          if (!sempre) reservarInterrupcao("lia");
+          setDados(d); setTimeout(() => vivo && setAberto(true), 50);
+        }, 2500);
       })
       .catch(() => {});
     return () => { vivo = false; };

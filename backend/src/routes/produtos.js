@@ -41,6 +41,8 @@ router.get("/", async (req, res) => {
 router.get("/sem-categoria", async (req, res) => {
   try {
     const dados = await readSheet("produtos_sem_categoria");
+    // ?contagem=1 → só o nº pendente (o sininho consulta a cada 60s; não precisa da lista)
+    if (req.query.contagem) return res.json({ pendentes: dados.filter((p) => !limpo(p.categoria)).length });
     return res.json(dados);
   } catch {
     return res.json([]);

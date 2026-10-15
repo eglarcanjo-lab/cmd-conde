@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { useContarAba } from "../../utils/uso";
 
 const VERDE = "#7DBA3D";
 const fmt = (v, d = 0) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -17,6 +18,7 @@ export default function RotaEfetiva() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [tab, setTab] = useState("resumo");
+  useContarAba("/rota-efetiva", tab); // Engajamento por aba
   const [fltCat, setFltCat] = useState("");
   const [fltRn, setFltRn] = useState("");
 

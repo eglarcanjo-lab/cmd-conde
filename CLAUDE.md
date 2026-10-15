@@ -9,6 +9,10 @@
   (alternativas: flag `beta` por usuário p/ telas, staging no Render free p/ cálculo).
 - **Versão/CHANGELOG:** bumpar `APP_VERSION` e logar no CHANGELOG a cada mudança
   que sobe pra produção.
+- **Antes de cada push (teste rápido):**
+  1. `node backend/scripts/smoke.js` — chama todas as rotas GET com banco simulado; tem que dar ✅.
+  2. `frontend/node_modules/.bin/vite build --outDir <pasta temp>` — o app inteiro tem que compilar.
+  3. Mudou o processador → `py_compile` do `processor.py`.
 
 ## Dois repositórios (sempre os dois quando a mudança envolve o processador)
 - `cmd-conde` — frontend (Vercel) + backend Node (Railway).

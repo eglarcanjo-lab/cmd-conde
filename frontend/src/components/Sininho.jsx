@@ -24,12 +24,12 @@ export default function Sininho() {
     try {
       const [resInc, resSem, resMig] = await Promise.all([
         api.get("/api/incidentes/pendentes"),
-        api.get("/api/admin/produtos/sem-categoria"),
+        api.get("/api/admin/produtos/sem-categoria", { params: { contagem: 1 } }).catch(() => ({ data: { pendentes: 0 } })),
         api.get("/api/solicitacoes/pendentes").catch(() => ({ data: { pendentes: 0 } })),
       ]);
       setMigracoes(resMig.data.pendentes || 0);
       setIncidentes(resInc.data.pendentes || 0);
-      setSemCat(Array.isArray(resSem.data) ? resSem.data.filter(p => !p.categoria).length : 0);
+      setSemCat(resSem.data?.pendentes || 0);
     } catch { }
   }
 

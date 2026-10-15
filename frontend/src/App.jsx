@@ -30,6 +30,7 @@ import AtualizacaoApp from "./components/AtualizacaoApp";
 import HopAssistente from "./components/HopAssistente";
 import BotaoAjuda from "./components/BotaoAjuda";
 import { HOP_ATIVA } from "./theme";
+import { usoContagem } from "./utils/uso";
 import api from "./services/api";
 
 // Registra "abertura do app" 1x por carregamento (refresh/abrir o PWA conta de novo;
@@ -41,7 +42,7 @@ let usoRegistrado = false;
 // Intervalo longo de propósito: cada flush é uma ESCRITA no Sheets; com vários RNs
 // online, 30s saturava a cota de escrita (60/min) e atrapalhava a importação (429).
 const FLUSH_TELAS_MS = 5 * 60 * 1000;
-const telaCount = {};
+const telaCount = usoContagem; // compartilhado com as abas (utils/uso.js)
 function flushTelas() {
   const chaves = Object.keys(telaCount);
   if (!chaves.length) return;
@@ -133,7 +134,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.84.0";
+export const APP_VERSION = "v3.85.0";
 
 export default function App() {
   return (

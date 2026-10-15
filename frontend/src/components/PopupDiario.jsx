@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
+import { reservarInterrupcao } from "../utils/interrupcao";
 
 function hojeStr() {
   const d = new Date();
@@ -31,6 +32,7 @@ export default function PopupDiario() {
         .then((r) => {
           if (cancelado) return;
           const naoVistos = (r.data || []).filter((p) => !jaVisto(p.id));
+          if (naoVistos.length) reservarInterrupcao("popup"); // tem prioridade: a Lia não aparece hoje
           setFila(naoVistos);
           setIdx(0);
         })

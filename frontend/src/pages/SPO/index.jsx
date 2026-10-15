@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { SPO_KPIS, SPO_KPIS_BASICO, realDaLinha } from "../../config/spoKpis";
+import { useContarAba } from "../../utils/uso";
 
 const META_GV = 36;
 
@@ -62,6 +63,7 @@ export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [aba, setAba] = useState("operacao");
+  useContarAba("/spo", aba); // Engajamento por aba
   const [kpiAtivo, setKpiAtivo] = useState(null);
   const [spoMetas, setSpoMetas] = useState([]);
   const [resumo, setResumo] = useState([]);

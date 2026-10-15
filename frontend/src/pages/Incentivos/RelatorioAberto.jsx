@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { contarUso } from "../../utils/uso";
 
 const VERDE = "#7DBA3D";
 const NOMES_MES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -142,7 +143,7 @@ export default function RelatorioAberto() {
   ));
   return (
     <div style={S.card}>
-      <button style={S.head} onClick={() => setAberto((a) => !a)}>
+      <button style={S.head} onClick={() => setAberto((a) => { if (!a) contarUso("/incentivos#relatorio-aberto"); return !a; })}>
         <span>📊 Relatório aberto por setor — cobertura · volume · distribuição</span>
         <span style={{ color: "rgba(255,255,255,0.5)" }}>{aberto ? "▾" : "▸"}</span>
       </button>

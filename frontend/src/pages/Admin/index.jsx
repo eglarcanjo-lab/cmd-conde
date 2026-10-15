@@ -19,6 +19,7 @@ import AvisosAdmin from "./Avisos";
 import Engajamento from "./Engajamento";
 import Alertas from "./Alertas";
 import { ADMIN_TABS, ADMIN_GRUPOS } from "../../menu";
+import { useContarAba } from "../../utils/uso";
 
 
 export default function Admin() {
@@ -27,6 +28,7 @@ export default function Admin() {
   // RV Simulador saiu do Admin (fica só em /rv-admin) — link antigo redireciona
   if (tabInicial === "rv_simulador") window.location.replace("/rv-admin");
   const [tab, setTab] = useState(tabInicial);
+  useContarAba("/admin", tab); // Engajamento por aba
   const [limpandoCache, setLimpandoCache] = useState(false);
   const [msgCache, setMsgCache] = useState("");
   const { usuario, logout } = useAuth();

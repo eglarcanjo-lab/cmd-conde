@@ -1,19 +1,31 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import { MODULOS, ADMIN_TABS } from "../../menu";
 
 function mesAtual() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+// Nomes das telas vêm do menu único (src/menu.js). "/rota#aba" = aba/bloco dentro da tela.
 const TELA_LABEL = {
-  "/": "🏠 Início", "/volume-diario": "📈 Volume Diário", "/cobertura": "📊 Cobertura & Distribuição",
-  "/pdvs": "🗺️ PDVs", "/tasks": "✅ Tasks", "/spo": "📊 SPO", "/rv": "💰 Remuneração",
-  "/incidentes": "🚨 Incidentes", "/incentivos": "📊 Outros relatórios", "/produtos": "📦 Produtos",
-  "/detalhamento": "🌿 Devolução × Ruptura", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
-  "/rv-admin": "💰 RV Simulador",
+  "/": "🏠 Início", "/admin": "⚙️ Admin", "/rv-relatorio": "📄 Relatório RV",
+  ...Object.fromEntries(MODULOS.map((m) => [m.route, `${m.icon} ${m.label}`])),
 };
-const telaLabel = (t) => TELA_LABEL[t] || t;
+const ABA_LABEL = {
+  ...Object.fromEntries(ADMIN_TABS.map((t) => [t.id, t.label])),
+  "relatorio-aberto": "Relatório aberto", "base-visita": "Base de PDVs × dia de visita", "conversao-pg": "Conversão Pure Gold",
+  entrega: "Entrega", ruptura: "Ruptura", grade: "Grade", shelf: "Shelf", deck: "Deck",
+  dia: "Visitas do dia", sem_compra: "Sem compra", inadimplentes: "Inadimplentes", rank: "Rank de clientes",
+  pdv: "Por PDV", task: "Por task", operacao: "Operação", gv: "GV", detalhe: "Detalhe",
+  faturados: "Faturados", buffer: "Buffer", resumo: "Resumo", furos: "Furos de cobertura",
+  novo: "Nova solicitação", historico: "Histórico", cobertura: "Cobertura", distribuicao: "Distribuição", analitico: "Analítico",
+};
+const telaLabel = (t) => {
+  const [rota, aba] = String(t).split("#");
+  const base = TELA_LABEL[rota] || rota;
+  return aba ? `${base} › ${ABA_LABEL[aba] || aba}` : base;
+};
 
 export default function Engajamento() {
   const [mes, setMes] = useState(mesAtual());

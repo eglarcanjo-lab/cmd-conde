@@ -9,11 +9,16 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── MIDDLEWARES ─────────────────────────────────────────────────────────────
+// CORS só do domínio da HOP (Auditoria out/26 — antes aceitava QUALQUER *.vercel.app).
+// Outro domínio (ex.: staging/preview) → coloque em FRONTEND_URL (aceita vários, separados por vírgula).
+// Chamadas servidor→servidor (processador, Apps Script) não passam por CORS.
+const ORIGENS = [
+  "https://cmd-conde.vercel.app",
+  "http://localhost:5173",
+  ...String(process.env.FRONTEND_URL || "").split(",").map((s) => s.trim().replace(/\/$/, "")).filter(Boolean),
+];
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || "http://localhost:5173",
-    /\.vercel\.app$/,
-  ],
+  origin: ORIGENS,
   credentials: true,
 }));
 app.use(express.json({ limit: "10mb" }));

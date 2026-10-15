@@ -5,6 +5,7 @@
 import { useState } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { contarUso } from "../../utils/uso";
 
 const VERDE = "#7DBA3D";
 const check = (v) => (v ? "✔" : "✘");
@@ -50,6 +51,7 @@ export default function ConversaoPG() {
   async function abrir() {
     if (aberto) { setAberto(false); return; }
     setAberto(true);
+    contarUso("/incentivos#conversao-pg"); // Engajamento
     if (d) return;
     setLoading(true); setErro("");
     try {

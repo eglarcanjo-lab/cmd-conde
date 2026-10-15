@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useContarAba } from "../../utils/uso";
 
 const DIAS = [
   { key: "TODOS", label: "Todos" },
@@ -41,6 +42,7 @@ export default function PDVs() {
     return hoje === "DOM" ? "TODOS" : hoje;
   });
   const [aba, setAba] = useState("dia");
+  useContarAba("/pdvs", aba); // Engajamento por aba
   const [busca, setBusca] = useState("");
   const [pdvBase, setPdvBase] = useState([]);
   const [cobertura, setCobertura] = useState([]);

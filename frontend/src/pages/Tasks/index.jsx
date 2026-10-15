@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useContarAba } from "../../utils/uso";
 
 const DIAS = [
   { key: "SEG", label: "Segunda" },
@@ -60,6 +61,7 @@ export default function Tasks() {
   const [busca, setBusca]       = useState("");
   const [pdvExpandido, setPdvExpandido]   = useState(null);
   const [viewMode, setViewMode] = useState("pdv");
+  useContarAba("/tasks", viewMode); // Engajamento por aba
   const [taskExpandida, setTaskExpandida] = useState(null);
   const [taskDetalhe, setTaskDetalhe]     = useState(null); // modal detalhe Por Task
   const [ordem, setOrdem] = useState("qtd_desc"); // ordenar por qtd de task

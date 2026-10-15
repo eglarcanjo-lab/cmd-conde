@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.84.0** — Auditoria out/26, lote 1 (login, menu único, Admin agrupado, desempenho).
+Versão atual: **v3.85.0** — Auditoria out/26, lote 2 (segurança, uso por aba, 1 aviso por dia, teste rápido).
+
+## v3.85.0 — Auditoria out/26 · lote 2
+- **CORS só do domínio da HOP** (`https://cmd-conde.vercel.app` + localhost; outros via `FRONTEND_URL`, separados por vírgula). Antes aceitava qualquer site `*.vercel.app`.
+- **Usuário desativado perde o acesso na hora** (antes o login valia até 7 dias).
+- **Engajamento por aba:** além da tela, conta a aba aberta (Admin, Cobertura, Devolução × Ruptura, Produtos, PDVs, Tasks, SPO, Faturados × Buffer, Rota Efetiva, Solicitações) e cada relatório aberto em Outros relatórios. Aparece como "Tela › aba". Sem escrita extra (vai no mesmo envio em lote).
+- **No máximo 1 janela automática por dia:** o popup de arte (comunicado do admin) tem prioridade; a Lia só aparece nos dias sem arte (admin continua vendo sempre).
+- **Sininho mais leve:** pede só o nº de produtos sem categoria (antes baixava a lista inteira a cada 60s).
+- **Teste rápido antes de cada versão:** `node backend/scripts/smoke.js` chama as ~145 consultas do backend com banco simulado (vazio e com exemplo) e acusa erro 500/trava. Regra registrada no CLAUDE.md.
 
 ## v3.84.0 — Auditoria out/26 · lote 1
 - **Login mais seguro:** 5 senhas erradas no mesmo CPF bloqueiam por 15 min (mostra quantas tentativas restam). Quem entra com a **senha-padrão** recebe um acesso que só serve para trocar a senha (15 min); o acesso completo só vem depois da troca. Antes a troca era obrigatória só na tela.

@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import ComparativoSku from "../CoberturaSku/Comparativo";
+import { useContarAba } from "../../utils/uso";
 
 const CATEGORIAS = [
   { key: "GIRO RGB",                   label: "GIRO RGB" },
@@ -102,6 +103,7 @@ export default function Cobertura() {
   const [filtroRN, setFiltroRN]     = useState("");
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useState("cobertura");
+  useContarAba("/cobertura", aba); // Engajamento por aba
   const [catFiltro, setCatFiltro]   = useState(null);
   const [ordDist, setOrdDist]       = useState({ col: null, dir: "desc" }); // ordenação da tabela de distribuição
   const [tabelaFull, setTabelaFull] = useState(false);

@@ -1,5 +1,17 @@
 const jwt = require("jsonwebtoken");
 
+// Usuário desativado no Admin perde o acesso NA HORA (antes o token valia 7 dias).
+// Lê a tabela de usuários (cache de 60s do sqlRepo); se a leitura falhar, deixa passar
+// (não derruba todo mundo por um soluço do banco).
+async function usuarioAtivo(cod) {
+  try {
+    const { readSheet } = require("../services/sheets");
+    const us = await readSheet("usuarios");
+    const u = us.find((x) => String(x.cod).trim() === String(cod).trim());
+    return !u ? false : String(u.ativo).toLowerCase() === "true";
+  } catch { return true; }
+}
+
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
 
@@ -16,10 +28,13 @@ function authMiddleware(req, res, next) {
       return res.status(403).json({ error: "Troque a senha-padrão para continuar." });
     }
     req.user = decoded; // { cod, nome, perfil, gv, telefone }
-    next();
   } catch (err) {
     return res.status(401).json({ error: "Token inválido ou expirado." });
   }
+  usuarioAtivo(req.user.cod).then((ok) => {
+    if (!ok) return res.status(401).json({ error: "Usuário desativado. Fale com o administrador." });
+    next();
+  });
 }
 
 // Middleware para rotas exclusivas do admin
