@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import Migracao, { Seta, TagInativar, TagCoord } from "./Migracao";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const STATUS_CONFIG = {
   "Aguardando": { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" },
@@ -24,7 +25,7 @@ const TIPOS = [
 export default function Incidentes() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [aba, setAba] = useState("novo");
+  const [aba, setAba] = useAbaUrl("aba", "novo");
   useContarAba("/incidentes", aba); // Engajamento por aba
   const [meus, setMeus] = useState([]);
   const [minhasMig, setMinhasMig] = useState([]);

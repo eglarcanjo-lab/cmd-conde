@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { SPO_KPIS, SPO_KPIS_BASICO, realDaLinha } from "../../config/spoKpis";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const META_GV = 36;
 
@@ -62,7 +63,7 @@ function BarraMeta({ real, meta }) {
 export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const [aba, setAba] = useState("operacao");
+  const [aba, setAba] = useAbaUrl("aba", "operacao");
   useContarAba("/spo", aba); // Engajamento por aba
   const [kpiAtivo, setKpiAtivo] = useState(null);
   const [spoMetas, setSpoMetas] = useState([]);

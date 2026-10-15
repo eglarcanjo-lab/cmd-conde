@@ -6,6 +6,7 @@ import Deck from "./Deck";
 import Shelf from "./Shelf";
 import * as XLSX from "xlsx-js-style";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const VERDE = "#7DBA3D";
 const BG = "#0c1410";
@@ -13,7 +14,7 @@ const fmtN = (v, d = 0) => Number(v || 0).toLocaleString("pt-BR", { minimumFract
 
 export default function Produtos() {
   const navigate = useNavigate();
-  const [aba, setAba] = useState("grade");
+  const [aba, setAba] = useAbaUrl("aba", "grade");
   useContarAba("/produtos", aba); // Engajamento por aba
   return (
     <div style={S.root}>

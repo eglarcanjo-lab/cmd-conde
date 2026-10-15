@@ -20,14 +20,13 @@ import Engajamento from "./Engajamento";
 import Alertas from "./Alertas";
 import { ADMIN_TABS, ADMIN_GRUPOS } from "../../menu";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 
 export default function Admin() {
-  const searchParams = new URLSearchParams(window.location.search);
-  const tabInicial = searchParams.get("tab") || "usuarios";
   // RV Simulador saiu do Admin (fica só em /rv-admin) — link antigo redireciona
-  if (tabInicial === "rv_simulador") window.location.replace("/rv-admin");
-  const [tab, setTab] = useState(tabInicial);
+  if (new URLSearchParams(window.location.search).get("tab") === "rv_simulador") window.location.replace("/rv-admin");
+  const [tab, setTab] = useAbaUrl("tab", "usuarios"); // aba no endereço (?tab=)
   useContarAba("/admin", tab); // Engajamento por aba
   const [limpandoCache, setLimpandoCache] = useState(false);
   const [msgCache, setMsgCache] = useState("");

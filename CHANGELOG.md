@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.1** — Limpeza: Faróis WhatsApp e assistente HOP removidos do código.
+Versão atual: **v3.85.2** — A aba aberta fica no endereço (recarregar não perde a aba).
+
+## v3.85.2 — Aba no endereço
+- Cada aba agora fica no endereço da página (ex.: `/produtos?aba=shelf`, `/admin?tab=metas`). **Recarregar, voltar ou mandar o link abre na mesma aba** — antes o refresh voltava para a primeira.
+- Vale para: Admin, Cobertura, Devolução × Ruptura (aba, sub-aba de Entrega/Ruptura e o modo da Pesquisa Pedido), Produtos, PDVs, Tasks, SPO, Faturados × Buffer, Rota Efetiva e Solicitações. A aba padrão não aparece no endereço; trocar de aba não enche o botão "voltar".
+- Hook `useAbaUrl` em `src/utils/abaUrl.js` (uso igual ao `useState`).
 
 ## v3.85.1 — Limpeza de código parado (Auditoria out/26)
 - Removidos do código (decisão do Eduardo): **Faróis por WhatsApp** (rotas `farol-visita`, `farol-queda`, `farol-volumes`), **assistente HOP** (balão + boas-vindas, `/api/hop`, chave `HOP_ATIVA`) e o serviço antigo de código por WhatsApp no login (`services/whatsapp.js`, sem uso). ~1.160 linhas a menos; nada muda na tela.

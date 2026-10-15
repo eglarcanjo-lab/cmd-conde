@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const DIAS = [
   { key: "TODOS", label: "Todos" },
@@ -41,7 +42,7 @@ export default function PDVs() {
     const hoje = getDiaHoje();
     return hoje === "DOM" ? "TODOS" : hoje;
   });
-  const [aba, setAba] = useState("dia");
+  const [aba, setAba] = useAbaUrl("aba", "dia");
   useContarAba("/pdvs", aba); // Engajamento por aba
   const [busca, setBusca] = useState("");
   const [pdvBase, setPdvBase] = useState([]);

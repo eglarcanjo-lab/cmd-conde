@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const DIAS = [
   { key: "SEG", label: "Segunda" },
@@ -60,7 +61,7 @@ export default function Tasks() {
   const [filtroCluster, setFiltroCluster]     = useState("");
   const [busca, setBusca]       = useState("");
   const [pdvExpandido, setPdvExpandido]   = useState(null);
-  const [viewMode, setViewMode] = useState("pdv");
+  const [viewMode, setViewMode] = useAbaUrl("visao", "pdv");
   useContarAba("/tasks", viewMode); // Engajamento por aba
   const [taskExpandida, setTaskExpandida] = useState(null);
   const [taskDetalhe, setTaskDetalhe]     = useState(null); // modal detalhe Por Task

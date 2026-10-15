@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const VERDE = "#7DBA3D";
 const VERMELHO = "#ef6f6f";
@@ -30,7 +31,7 @@ const dataMs = (s) => {
 
 export default function Detalhamento() {
   const navigate = useNavigate();
-  const [aba, setAba] = useState("entrega");
+  const [aba, setAba] = useAbaUrl("aba", "entrega");
   useContarAba("/detalhamento", aba); // Engajamento por aba
   return (
     <div style={S.root}>
@@ -55,7 +56,7 @@ export default function Detalhamento() {
 // ─── PESQUISA PEDIDO — documento de rastreabilidade do pedido BEES ───────────
 const CORStatus = { ENTREGUE: "#4ade80", DEVOLVIDO: VERMELHO, FATURADO: AMARELO };
 function PesquisaPedido() {
-  const [modo, setModo] = useState("pedido"); // pedido (BEES/NF/nº) | pdv (todos os pedidos do PDV)
+  const [modo, setModo] = useAbaUrl("busca", "pedido"); // pedido (BEES/NF/nº) | pdv (todos os pedidos do PDV)
   const [q, setQ] = useState("");
   const [d, setD] = useState(null);         // documento de 1 pedido
   const [lista, setLista] = useState(null); // resultado por PDV
@@ -395,7 +396,7 @@ function Entrega() {
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
-  const [sub, setSub] = useState("motivo");
+  const [sub, setSub] = useAbaUrl("entrega", "motivo");
   const [nota, setNota] = useState(null); // { numero, info, itens, loading }
 
   useEffect(() => {
@@ -575,7 +576,7 @@ function Ruptura() {
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
-  const [sub, setSub] = useState("produto");
+  const [sub, setSub] = useAbaUrl("ruptura", "produto");
   const [drill, setDrill] = useState(null); // { tipo, chave, nome }
 
   useEffect(() => {

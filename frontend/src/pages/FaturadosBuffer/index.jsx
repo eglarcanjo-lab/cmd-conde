@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
+import { useAbaUrl } from "../../utils/abaUrl";
 
 const fmtHL = (v) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -93,7 +94,7 @@ export default function FaturadosBuffer() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
-  const [aba, setAba] = useState("faturados");
+  const [aba, setAba] = useAbaUrl("aba", "faturados");
   useContarAba("/faturados-buffer", aba); // Engajamento por aba
   const [abertos, setAbertos] = useState(() => new Set());
 
