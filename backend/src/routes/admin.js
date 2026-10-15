@@ -174,7 +174,6 @@ router.get("/config", async (req, res) => {
   return res.json({
     maintenance_start: process.env.MAINTENANCE_START,
     maintenance_end: process.env.MAINTENANCE_END,
-    sheet_id: process.env.GOOGLE_SHEET_ID,
     admin_whatsapp: process.env.ADMIN_WHATSAPP,
   });
 });

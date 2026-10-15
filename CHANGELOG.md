@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.7** — Import de Tasks não apaga mais os outros RNs (arquivo filtrado).
+Versão atual: **v3.86.0** — Auditoria out/26 concluída (abas em Outros relatórios, uso leve, SPO/processador divididos, Google Sheets removido).
+
+## v3.86.0 — Fechamento da auditoria de outubro
+- **Outros relatórios em abas:** Relatório aberto · Base de PDVs × dia · Conversão Pure Gold · Campanhas (antes eram caixas empilhadas). A aba fica no endereço (`/incentivos?aba=base`) e entra no Engajamento.
+- **Registro de uso mais leve:** abrir o app e trocar de tela grava com 1 comando SQL ("insere ou soma"), sem ler a tabela inteira. Se o SQL falhar, cai no caminho antigo.
+- **SPO dividido:** `SPO/index.jsx` (2.754 → ~1.050 linhas) + `KpisVisitacao`, `KpisExecucao`, `KpisTasks`, `KpisProgramas` e `shared.jsx`. Código dos blocos idêntico ao original (conferido linha a linha); nomes conferidos pelo `tsc`.
+- **Processador dividido:** `processor.py` (4.980 linhas) virou 9 módulos `proc_*.py` por tema; `processor.py` só reexporta (o `app.py` não mudou). Conferido: 123 nomes presentes, 77 funções idênticas, nenhum nome global sem origem.
+- **Google Sheets removido do código:** backend e processador usam sempre o PostgreSQL (`sheets.js`/`sheets_service.py` só reexportam a camada SQL). Saíram a implementação via planilha, a ferramenta de migração (`etl.py` + rota `/api/migrar/sheets-para-sql`), o aviso de "cota do Google", o quadro "Google Sheets" de Admin › Configurações e as libs `gspread`/`google-auth` do processador. Alertas de ruptura rodam sempre após o import (já era assim em produção). A planilha antiga continua no Google Drive, só como backup.
 
 ## v3.85.7 — Import de Tasks protegido
 - Causa do "108 sem tasks": a última importação de Tasks foi de um export do BI **filtrado** (só 109 e 110), e o import substituía a tabela inteira → todos os outros setores ficaram sem task.

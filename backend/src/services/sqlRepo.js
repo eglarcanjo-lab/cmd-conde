@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // sqlRepo — implementação PostgreSQL do "encaixe" de dados, com a MESMA assinatura
-// de services/sheets.js. Ativado por DATA_BACKEND=sql (ver sheets.js).
+// de services/sheets.js (que hoje só reexporta este arquivo).
 //
 // Princípios:
 //   • Leitura: SELECT * ORDER BY ctid → devolve objetos com valores em STRING
@@ -227,7 +227,7 @@ async function sobrescreverAba(tab, rows) {
 
 // No SQL as tabelas já existem (schema.sql + ETL). No-ops compatíveis com o Sheets.
 async function ensureTab() { /* tabelas geridas pelo schema/ETL/sobrescreverAba */ }
-async function initializeSheets() { console.log("DATA_BACKEND=sql: tabelas já existem (schema.sql/ETL)."); }
+async function initializeSheets() { console.log("📦 Banco: PostgreSQL (tabelas em backend/db/schema.sql)."); }
 function cacheClearAll() { _colsCache.clear(); _dataCache.clear(); }
 
 module.exports = {

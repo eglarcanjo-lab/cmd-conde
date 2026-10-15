@@ -4,7 +4,7 @@ import api from "../../services/api";
 const MSGS_OPCOES = ["Em Atualização", "Em Manutenção"];
 
 export default function Configuracoes() {
-  const [config, setConfig] = useState({ maintenance_start: "05:00", maintenance_end: "06:00", admin_whatsapp: "", sheet_id: "" });
+  const [config, setConfig] = useState({ maintenance_start: "05:00", maintenance_end: "06:00", admin_whatsapp: "" });
   const [loading, setLoading] = useState(true);
   const [sucesso, setSucesso] = useState("");
 
@@ -97,16 +97,6 @@ export default function Configuracoes() {
           </div>
         </div>
         <p style={styles.hint}>⚠️ Para alterar o horário de manutenção, atualize as variáveis MAINTENANCE_START e MAINTENANCE_END no Railway.</p>
-      </div>
-
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>📊 Google Sheets</h3>
-        <p style={styles.sectionDesc}>ID da planilha conectada ao sistema.</p>
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>Sheet ID</label>
-          <input style={{ ...styles.input, fontFamily: "monospace", fontSize: "0.82rem" }} value={config.sheet_id} readOnly />
-        </div>
-        <p style={styles.hint}>Para alterar, atualize a variável GOOGLE_SHEET_ID no Railway.</p>
       </div>
 
       <div style={styles.section}>

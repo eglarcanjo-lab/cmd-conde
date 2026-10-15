@@ -22,7 +22,11 @@
 Ver `RELEASE.md` para o passo a passo e a configuração do ambiente de staging.
 
 ## Notas técnicas
-- Banco = Google Sheets (`GOOGLE_SHEET_ID`). Staging usa uma **planilha cópia**.
+- Banco = **PostgreSQL (Supabase)** — backend `services/sqlRepo.js` (`services/sheets.js` só reexporta),
+  processador `sql_service.py` (`sheets_service.py` só reexporta). Tabelas: `backend/db/schema.sql`.
+  O Google Sheets foi removido do código em out/2026 (a planilha antiga é só backup congelado).
+- Processador dividido em módulos `proc_*.py`; `processor.py` só reexporta (imports do `app.py` iguais).
+- SPO: `pages/SPO/index.jsx` + blocos `Kpis*.jsx` (recebem `ctx`) + `shared.jsx`.
 - Sem npm/node local de forma confiável; há um Python em
   `AppData\Local\Python\pythoncore-3.14-64` para validar o processador (py_compile + pandas).
 - Versionamento e regras de bump: ver `CHANGELOG.md`.

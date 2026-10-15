@@ -1,4 +1,4 @@
-// Pool de conexão PostgreSQL (Supabase) — usado pelo sqlRepo quando DATA_BACKEND=sql.
+// Pool de conexão PostgreSQL (Supabase) — usado pelo sqlRepo (camada de dados do backend).
 // pg só é carregado aqui; se a dependência/URL faltar, só o modo SQL falha.
 const { Pool } = require("pg");
 

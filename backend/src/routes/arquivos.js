@@ -98,12 +98,10 @@ router.post(
       cacheClearAll();
 
       // Alertas de ruptura: roda em background após o import (não bloqueia a resposta).
-      // Só em modo SQL (usa o Postgres). Erros não afetam o import.
-      if (String(process.env.DATA_BACKEND || "").trim().toLowerCase() === "sql") {
-        require("../services/alertas").rodar()
-          .then((r) => r?.enviado && console.log("📧 Alertas enviados:", r.resumo))
-          .catch((e) => console.error("Alertas (pós-import):", e.message));
-      }
+      // Erros não afetam o import.
+      require("../services/alertas").rodar()
+        .then((r) => r?.enviado && console.log("📧 Alertas enviados:", r.resumo))
+        .catch((e) => console.error("Alertas (pós-import):", e.message));
 
       return res.json(response.data);
     } catch (err) {
@@ -117,7 +115,7 @@ router.post(
       const gateway = [429, 502, 503, 504].includes(status);
       if (!msg && gateway) {
         msg = `O processador está reiniciando/acordando (erro ${status} da infraestrutura, ` +
-              "não do Google Sheets). Aguarde ~1-2 min e tente de novo.";
+              "não do processador). Aguarde ~1-2 min e tente de novo.";
       }
       msg = msg || err.message || "Erro ao processar arquivos.";
       return res.status(gateway ? status : 500).json({ error: msg });
