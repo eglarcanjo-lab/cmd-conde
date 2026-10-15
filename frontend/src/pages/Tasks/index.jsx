@@ -5,6 +5,7 @@ import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
 import { mesmoSetor } from "../../utils/setor";
+import Missoes from "./Missoes";
 
 const DIAS = [
   { key: "SEG", label: "Segunda" },
@@ -67,6 +68,8 @@ export default function Tasks() {
   const [taskExpandida, setTaskExpandida] = useState(null);
   const [taskDetalhe, setTaskDetalhe]     = useState(null); // modal detalhe Por Task
   const [ordem, setOrdem] = useState("qtd_desc"); // ordenar por qtd de task
+  const [secao, setSecao] = useAbaUrl("secao", "tasks"); // tasks | missoes
+  useContarAba("/tasks", secao);
   const [filtroRn, setFiltroRn] = useAbaUrl("rn", ""); // gestor: filtrar por RN (fica no endereço ?rn=108)
   const [nomesRn, setNomesRn] = useState({});
 
@@ -224,6 +227,13 @@ export default function Tasks() {
       </div>
 
       <div style={styles.content} className="tk-content">
+        {/* Abas da tela: Tasks (BI de tasks) · Missões (BI de missões da campanha) */}
+        <div style={styles.viewToggle}>
+          <button className="tk-toggle-btn" style={{ ...styles.viewBtn, ...(secao === "tasks" ? styles.viewBtnAtivo : {}) }} onClick={() => setSecao("tasks")}>✅ Tasks</button>
+          <button className="tk-toggle-btn" style={{ ...styles.viewBtn, ...(secao === "missoes" ? styles.viewBtnAtivo : {}) }} onClick={() => setSecao("missoes")}>🎯 Missões</button>
+        </div>
+
+        {secao === "missoes" ? <Missoes usuario={usuario} isGestor={isGestor} nomesRn={nomesRn} /> : (<>
         {/* Seletor de dia */}
         <div style={styles.diasRow} className="tk-dias">
           {DIAS.map((d) => (
@@ -449,6 +459,7 @@ export default function Tasks() {
           </div>
 
         )}
+        </>)}
       </div>
 
       {/* Modal detalhe task (Por Task → clique no PDV) */}

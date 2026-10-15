@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.86.2** — Admin › Configurações com a versão e a estrutura atuais.
+Versão atual: **v3.87.0** — Tasks › Missões (por missão e por PDV).
+
+## v3.87.0 — Missões
+- **Tasks ganhou abas: ✅ Tasks · 🎯 Missões.** Missões mostra o relatório de missões da campanha do BI (ex.: "MANDA BALA NAS VENDAS"): cards de Missões · Validadas (%) · PDVs; visão **Por missão** (quantos PDVs têm cada missão e quantos validaram, com a lista de PDVs ao abrir) e **Por PDV** (missões de cada PDV, ordenado pela próxima visita). Filtros: RN (gestor), pendentes/validadas, data da próxima visita e busca; **Excel** da lista filtrada. Abas e filtros ficam no endereço.
+- **Import:** Admin › Arquivos › **Missões (BI)** (ou arquivo com "miss" no nome no auto-import). Processador gera a aba `missoes` (setor, PDV, missão sem emoji/sufixo, próxima visita, conclusão, validada). Arquivo filtrado por RN atualiza só esses setores (mesma proteção das Tasks). RNs fora da operação (ex.: 995/997) ficam de fora.
+- Admin › Arquivos: o card agora acha a data da última importação sem diferenciar acento/maiúscula (o de Tasks também passa a mostrar).
 
 ## v3.86.2 — "Versão do Sistema" atualizada
 - Admin › Configurações › Versão do Sistema: tirou "Fase 1" e "Google Sheets API"; agora mostra a **versão** (a mesma do rodapé, automática), Frontend (Vercel), Backend (Railway), **Processador (Python · Render)**, **Banco PostgreSQL · Supabase**, **Fotos e vídeos (Cloudinary)** e **E-mail dos alertas (Brevo)**.
