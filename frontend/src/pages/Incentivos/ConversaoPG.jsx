@@ -2,7 +2,7 @@
 // Fácil de remover: apagar este arquivo + o <ConversaoPG/> no Incentivos/index.jsx
 // + a rota /api/conversao-pg no backend.
 // Só PG600: PDVs que compram ≥1 base 600ml (Original/Stella/Spaten) e ainda NÃO a Pure Gold 600.
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
 import { contarUso } from "../../utils/uso";
@@ -24,7 +24,7 @@ const DIA_MAP = {
 };
 const normalizeDia = (raw) => { const s = String(raw || "").trim().toUpperCase().split(/[\/,; \-]/)[0].trim(); return DIA_MAP[s] || s; };
 
-export default function ConversaoPG() {
+export default function ConversaoPG({ embutido = false }) {
   const [aberto, setAberto] = useState(false);
   const [d, setD] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -47,6 +47,10 @@ export default function ConversaoPG() {
   function copiar(id, texto) {
     navigator.clipboard?.writeText(texto).then(() => { setCopiado(id); setTimeout(() => setCopiado(""), 1500); }).catch(() => {});
   }
+
+  // embutido (aba de Outros relatórios): carrega ao montar
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (embutido) abrir(); }, []);
 
   async function abrir() {
     if (aberto) { setAberto(false); return; }
@@ -79,13 +83,13 @@ export default function ConversaoPG() {
 
   return (
     <div style={S.wrap}>
-      <button style={S.head} onClick={abrir}>
+      {!embutido && <button style={S.head} onClick={abrir}>
         <span style={S.headTit}>🎯 Conversão Stella Pure Gold 600 {d ? `· ${d.trimestre}` : ""}</span>
         <span style={S.headSub}>
           {d && !loading ? `${d.pg600.total} PDVs p/ converter` : "clique para carregar"}
           <span style={{ marginLeft: 8 }}>{aberto ? "▲" : "▼"}</span>
         </span>
-      </button>
+      </button>}
 
       {aberto && (
         <div style={S.body}>

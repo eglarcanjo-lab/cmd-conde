@@ -23,9 +23,24 @@ const mesDe = (dataBR) => {
   return p.length === 3 ? `${p[2]}-${p[1]}` : "";
 };
 
+// Gravação direta no SQL (Auditoria out/26): 1 comando "insere ou soma", sem ler a tabela
+// inteira a cada abertura. Se o SQL falhar (ex.: banco antigo), cai no caminho antigo.
+async function sqlUso(sql, params) {
+  try { const { query } = require("../services/db"); await query(sql, params); return true; }
+  catch (e) { console.error("uso (sql direto) — usando caminho antigo:", e.message); return false; }
+}
+
 // POST /api/uso/registrar — soma +1 abertura no dia de hoje para o usuário logado
 router.post("/registrar", async (req, res) => {
   try {
+    {
+      const { data, hora } = agoraBR();
+      const ok = await sqlUso(
+        `INSERT INTO uso_app (cod, nome, perfil, data, aberturas, ultimo_acesso) VALUES ($1,$2,$3,$4,1,$5)
+         ON CONFLICT (cod, data) DO UPDATE SET aberturas = COALESCE(uso_app.aberturas::int, 0) + 1, ultimo_acesso = EXCLUDED.ultimo_acesso`,
+        [String(req.user.cod || "").trim(), req.user.nome || "", req.user.perfil || "", data, hora]);
+      if (ok) return res.json({ ok: true });
+    }
     await ensureTab("uso_app");
     const { data, hora } = agoraBR();
     const cod = String(req.user.cod || "").trim();
@@ -50,6 +65,18 @@ router.post("/telas", async (req, res) => {
   try {
     const telas = req.body?.telas;
     if (!telas || typeof telas !== "object" || !Object.keys(telas).length) return res.json({ ok: true });
+    {
+      const { mes, hora } = agoraBR();
+      const lote = {}; Object.entries(telas).forEach(([t, n]) => { lote[t] = parseInt(n) || 0; });
+      const ok = await sqlUso(
+        `INSERT INTO uso_telas (cod, nome, mes, telas_json, atualizado_em) VALUES ($1,$2,$3,$4::jsonb,$5)
+         ON CONFLICT (cod, mes) DO UPDATE SET atualizado_em = EXCLUDED.atualizado_em, telas_json = (
+           SELECT COALESCE(jsonb_object_agg(k, COALESCE((v.velho->>k)::int, 0) + COALESCE((v.novo->>k)::int, 0)), '{}'::jsonb)
+           FROM (SELECT COALESCE(uso_telas.telas_json::jsonb, '{}'::jsonb) AS velho, EXCLUDED.telas_json::jsonb AS novo) v,
+                LATERAL jsonb_object_keys(v.velho || v.novo) AS k)`,
+        [String(req.user.cod || "").trim(), req.user.nome || "", mes, JSON.stringify(lote), hora]);
+      if (ok) return res.json({ ok: true });
+    }
     await ensureTab("uso_telas");
     const { mes, hora } = agoraBR();
     const cod = String(req.user.cod || "").trim();

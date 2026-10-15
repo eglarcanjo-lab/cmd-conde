@@ -6,6 +6,8 @@ import api from "../../services/api";
 import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
 import RelatorioAberto from "./RelatorioAberto"; // cobertura/volume/distribuição por setor × mês
 import BaseVisita from "./BaseVisita"; // base de PDVs × dia de visita (estudo de rota)
+import { useAbaUrl } from "../../utils/abaUrl";
+import { useContarAba } from "../../utils/uso";
 
 function fmtData(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
@@ -18,6 +20,13 @@ function fmtValor(v, unidade) {
   return unidade ? `${num} ${unidade}` : num;
 }
 
+const ABAS_REL = [
+  { id: "relatorio", icon: "📊", label: "Relatório aberto" },
+  { id: "base",      icon: "🗺️", label: "Base de PDVs × dia" },
+  { id: "conversao", icon: "🎯", label: "Conversão Pure Gold" },
+  { id: "campanhas", icon: "🏆", label: "Campanhas" },
+];
+
 export default function Incentivos() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +35,8 @@ export default function Incentivos() {
   const [sel, setSel] = useState(null);          // incentivo selecionado
   const [ranking, setRanking] = useState(null);  // { ranking, minha_posicao }
   const [loadingRank, setLoadingRank] = useState(false);
+  const [aba, setAba] = useAbaUrl("aba", "relatorio");
+  useContarAba("/incentivos", aba); // Engajamento por aba
 
   useEffect(() => { carregar(); }, []);
 
@@ -63,13 +74,20 @@ export default function Incentivos() {
         </div>
       </div>
 
-      <RelatorioAberto />
+      {/* Abas (Auditoria out/26: antes era uma pilha de caixas). Aba fica no endereço (?aba=). */}
+      <div style={S.abas}>
+        {ABAS_REL.map((a) => (
+          <button key={a.id} type="button" onClick={() => setAba(a.id)} style={aba === a.id ? S.abaOn : S.aba}>
+            {a.icon} {a.label}{a.id === "campanhas" && lista.length ? ` (${lista.length})` : ""}
+          </button>
+        ))}
+      </div>
 
-      <BaseVisita />
+      {aba === "relatorio" && <RelatorioAberto embutido />}
+      {aba === "base" && <BaseVisita embutido />}
+      {aba === "conversao" && <ConversaoPG embutido />}
 
-      <ConversaoPG />
-
-      {loading ? (
+      {aba === "campanhas" && (loading ? (
         <div style={S.loadingWrap}><div className="inc-spinner" /></div>
       ) : lista.length === 0 ? (
         <div style={S.empty}>
@@ -101,7 +119,7 @@ export default function Incentivos() {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
       {/* ── Modal de ranking ── */}
       {sel && (
@@ -165,6 +183,9 @@ export default function Incentivos() {
 }
 
 const S = {
+  abas: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 },
+  aba: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem" },
+  abaOn: { background: "rgba(125,186,61,0.18)", border: "1px solid rgba(125,186,61,0.6)", color: "#7DBA3D", borderRadius: 10, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700 },
   root:        { minHeight: "100vh", background: "#0c1410", fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif", padding: "clamp(16px,4vw,28px)", maxWidth: "1600px", margin: "0 auto", color: "#fff" },
   header:      { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "22px" },
   backBtn:     { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "10px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", flexShrink: 0, minHeight: "44px" },

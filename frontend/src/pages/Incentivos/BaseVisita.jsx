@@ -115,8 +115,9 @@ const ABAS = [
   { id: "base", label: "Base total" },
 ];
 
-export default function BaseVisita() {
-  const [aberto, setAberto] = useState(false);
+// embutido = dentro de uma aba de "Outros relatórios": já aberto, sem o cabeçalho recolhível.
+export default function BaseVisita({ embutido = false }) {
+  const [aberto, setAberto] = useState(embutido);
   const opcoesMes = mesesDisponiveis();
   const [meses, setMeses] = useState(() => mesesPadrao(opcoesMes));
   const [d, setD] = useState(null);
@@ -228,12 +229,12 @@ export default function BaseVisita() {
 
   return (
     <div style={S.card}>
-      <button style={S.head} onClick={() => setAberto((a) => { if (!a) contarUso("/incentivos#base-visita"); return !a; })}>
+      {!embutido && <button style={S.head} onClick={() => setAberto((a) => { if (!a) contarUso("/incentivos#base-visita"); return !a; })}>
         <span>🗺️ Base de PDVs × dia de visita — cidade · bairro · volume (estudo de rota)</span>
         <span style={{ color: "rgba(255,255,255,0.5)" }}>{aberto ? "▾" : "▸"}</span>
-      </button>
+      </button>}
       {aberto && (
-        <div style={{ padding: "4px 14px 14px" }}>
+        <div style={{ padding: embutido ? "14px" : "4px 14px 14px" }}>
           <div style={S.linhaCtrl}>
             <span style={S.lbl}>Volume dos meses:</span>
             {[...opcoesMes].reverse().map((m) => (

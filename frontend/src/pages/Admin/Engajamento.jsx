@@ -14,6 +14,7 @@ const TELA_LABEL = {
 };
 const ABA_LABEL = {
   ...Object.fromEntries(ADMIN_TABS.map((t) => [t.id, t.label])),
+  relatorio: "Relatório aberto", base: "Base de PDVs × dia", conversao: "Conversão Pure Gold", campanhas: "Campanhas",
   "relatorio-aberto": "Relatório aberto", "base-visita": "Base de PDVs × dia de visita", "conversao-pg": "Conversão Pure Gold",
   entrega: "Entrega", ruptura: "Ruptura", grade: "Grade", shelf: "Shelf", deck: "Deck",
   dia: "Visitas do dia", sem_compra: "Sem compra", inadimplentes: "Inadimplentes", rank: "Rank de clientes",

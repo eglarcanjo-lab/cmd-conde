@@ -57,8 +57,9 @@ function BuscaProduto({ produtos, escolhidos, onEscolher }) {
   );
 }
 
-export default function RelatorioAberto() {
-  const [aberto, setAberto] = useState(false);
+// embutido = dentro de uma aba de "Outros relatórios": já aberto, sem o cabeçalho recolhível.
+export default function RelatorioAberto({ embutido = false }) {
+  const [aberto, setAberto] = useState(embutido);
   const [opc, setOpc] = useState(null);               // { grupos, subcategorias }
   const [item, setItem] = useState("grupo:cerveja");  // grupo:… | cat:… | "sku"
   const [produtos, setProdutos] = useState([]);       // base de produtos com categoria
@@ -143,12 +144,12 @@ export default function RelatorioAberto() {
   ));
   return (
     <div style={S.card}>
-      <button style={S.head} onClick={() => setAberto((a) => { if (!a) contarUso("/incentivos#relatorio-aberto"); return !a; })}>
+      {!embutido && <button style={S.head} onClick={() => setAberto((a) => { if (!a) contarUso("/incentivos#relatorio-aberto"); return !a; })}>
         <span>📊 Relatório aberto por setor — cobertura · volume · distribuição</span>
         <span style={{ color: "rgba(255,255,255,0.5)" }}>{aberto ? "▾" : "▸"}</span>
-      </button>
+      </button>}
       {aberto && (
-        <div style={{ padding: "4px 14px 14px" }}>
+        <div style={{ padding: embutido ? "14px" : "4px 14px 14px" }}>
           <div style={S.linhaCtrl}>
             <select style={{ ...S.select, maxWidth: 340 }} value={item} onChange={(e) => setItem(e.target.value)}>
               <optgroup label="Grupos (somam as subcategorias)">
