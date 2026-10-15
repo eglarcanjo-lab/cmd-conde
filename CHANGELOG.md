@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.87.3** — Botão "Todos" na barra de dias (Tasks e Missões).
+Versão atual: **v3.87.4** — Missões: pesquisa que acompanha a visão (missão / PDV).
+
+## v3.87.4 — Pesquisa em Missões
+- Caixa de pesquisa logo abaixo de "Por missão / Por PDV", **também no celular**: em **Por missão** pesquisa só o texto da missão; em **Por PDV** pesquisa o código ou nome do PDV. Trocar de visão limpa a pesquisa.
 
 ## v3.87.3 — Dia "Todos"
 - Barra de dias de Tasks/Missões ganhou **Todos** (primeiro botão, visível no celular): mostra as tasks abertas e as missões de toda a base de PDVs, de qualquer dia de visita. O dia de hoje continua sendo o padrão ao abrir.

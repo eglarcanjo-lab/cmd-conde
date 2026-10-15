@@ -2,7 +2,8 @@
 // Duas visões: POR MISSÃO (quantos PDVs têm cada missão e quantos já validaram) e POR PDV
 // (missões de cada PDV). Dados: GET /api/tasks/missoes (escopo por perfil no backend).
 // Mostra só os PDVs com VISITA NO DIA escolhido na barra de dias da tela de Tasks (dia de
-// visita do PDV na rota — pdv_base). No celular: sem busca/filtros/Excel (só dia + visões).
+// visita do PDV na rota — pdv_base). Pesquisa (também no celular) acompanha a visão: Por missão →
+// pesquisa a missão; Por PDV → pesquisa o PDV. No celular: sem filtros/Excel.
 // Import: Admin › Arquivos › "Missões (BI)".
 import { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx-js-style";
@@ -70,10 +71,10 @@ export default function Missoes({ usuario, isGestor, nomesRn = {}, dia, mapaPdv 
       if (status === "validada" && m.validada !== "SIM") return false;
       if (status === "pendente" && m.validada === "SIM") return false;
       if (dia && dia !== "TODOS" && normDia(mapaPdv[m.cod_pdv]?.dia_visita) !== dia) return false;   // visita do dia (rota); "Todos" = toda a base
-      if (q && !`${m.cod_pdv} ${m.nome_pdv} ${m.missao}`.toLowerCase().includes(q)) return false;
+      if (q && !(visao === "pdv" ? `${m.cod_pdv} ${m.nome_pdv}` : m.missao).toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [dados, isGestor, filtroRn, status, busca, dia, mapaPdv]);
+  }, [dados, isGestor, filtroRn, status, busca, visao, dia, mapaPdv]);
 
   const validadas = filtradas.filter((m) => m.validada === "SIM").length;
   const pdvs = new Set(filtradas.map((m) => m.cod_pdv)).size;
@@ -118,12 +119,14 @@ export default function Missoes({ usuario, isGestor, nomesRn = {}, dia, mapaPdv 
       {atualizado && <p style={S.hint}>Campanha: {dados[0]?.campanha || "—"} · atualizado em {atualizado}</p>}
 
       <div style={S.toggle}>
-        <button type="button" style={visao === "missao" ? S.tOn : S.t} onClick={() => { setVisao("missao"); setAberto(null); }}>🎯 Por missão</button>
-        <button type="button" style={visao === "pdv" ? S.tOn : S.t} onClick={() => { setVisao("pdv"); setAberto(null); }}>🏪 Por PDV</button>
+        <button type="button" style={visao === "missao" ? S.tOn : S.t} onClick={() => { setVisao("missao"); setAberto(null); setBusca(""); }}>🎯 Por missão</button>
+        <button type="button" style={visao === "pdv" ? S.tOn : S.t} onClick={() => { setVisao("pdv"); setAberto(null); setBusca(""); }}>🏪 Por PDV</button>
       </div>
 
+      <input style={{ ...S.input, width: "100%", boxSizing: "border-box", marginBottom: 10 }} value={busca} onChange={(e) => setBusca(e.target.value)}
+        placeholder={visao === "pdv" ? "🔎 Pesquisar PDV (código ou nome)…" : "🔎 Pesquisar missão…"} />
+
       {!mobile && <div style={S.filtros}>
-        <input style={{ ...S.input, flex: "2 1 220px" }} placeholder="Buscar PDV ou missão…" value={busca} onChange={(e) => setBusca(e.target.value)} />
         {isGestor && (
           <select style={{ ...S.input, ...(filtroRn ? { borderColor: VERDE, color: VERDE } : {}) }} value={filtroRn} onChange={(e) => setFiltroRn(e.target.value)}>
             <option value="">Todos os RNs</option>
