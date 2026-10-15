@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.83.1** — Relatório aberto: cobertura total do período.
+Versão atual: **v3.83.2** — Produtos "nan" na Devolução × Ruptura.
+
+## v3.83.2 — Produtos "nan" na Devolução × Ruptura / Pesquisa Pedido
+- Causa: alguns itens do relatório CORA vêm com **"Desc. produto" vazio**; o import gravava o texto "nan" como nome (pedido, ruptura, vendas…).
+- Processador: nome vazio do CORA é completado pelo cadastro (produtos_base/produtos_full) e nunca mais vira "nan".
+- Detalhamento (Entrega, Nota, Ruptura, Pesquisa Pedido): nome "nan"/"None" já gravado é trocado na hora pelo nome do cadastro (produtos_full → produtos_base → grade de estoque).
 
 ## v3.83.1 — Cobertura total do período
 - Cobertura ganha a coluna **Total período**: PDVs **distintos** que compraram em **qualquer** mês marcado (soma as vendas dos meses; PDV que comprou nos dois conta 1x) ÷ a mesma base do setor. A média mensal continua. Também no Excel.

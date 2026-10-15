@@ -14,6 +14,38 @@ const r3 = (n) => Math.round(n * 1000) / 1000;
 const uniqSort = (arr) => [...new Set(arr.filter(Boolean))].sort();
 const normNota = (v) => String(v ?? "").trim().replace(/^0+/, "");
 
+// Nome de produto "nan"/"None"/vazio (item do CORA sem "Desc. produto", gravado antes da
+// correção no processador) → troca pelo nome do cadastro (produtos_full → produtos_base →
+// grade_estoque). Vale p/ TODA resposta desta rota: varre o JSON antes de enviar e só lê o
+// cadastro se achar algum nome ruim.
+const LIXO = new Set(["", "NAN", "NONE", "NULL", "NAT"]);
+const nomeRuim = (v) => LIXO.has(String(v ?? "").trim().toUpperCase());
+const normCodP = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
+async function corrigirNomes(body) {
+  const ruins = [];
+  const varrer = (o) => {
+    if (Array.isArray(o)) return o.forEach(varrer);
+    if (!o || typeof o !== "object") return;
+    if ("cod_produto" in o && "nome_produto" in o && nomeRuim(o.nome_produto)) ruins.push(o);
+    Object.values(o).forEach((v) => { if (v && typeof v === "object") varrer(v); });
+  };
+  varrer(body);
+  if (!ruins.length) return body;
+  const [full, base, grade] = await Promise.all([
+    readSheet("produtos_full").catch(() => []), readSheet("produtos_base").catch(() => []), readSheet("grade_estoque").catch(() => []),
+  ]);
+  const nomes = {};
+  [...grade.map((g) => [g.cod, g.nome || g.descricao]), ...base.map((p) => [p.cod, p.nome]), ...full.map((p) => [p.cod, p.nome])]
+    .forEach(([c, n]) => { if (normCodP(c) && !nomeRuim(n)) nomes[normCodP(c)] = String(n).trim(); });
+  ruins.forEach((o) => { o.nome_produto = nomes[normCodP(o.cod_produto)] || ""; });
+  return body;
+}
+router.use((req, res, next) => {
+  const enviar = res.json.bind(res);
+  res.json = (body) => { corrigirNomes(body).then(enviar, () => enviar(body)); return res; };
+  next();
+});
+
 // GET /api/detalhamento/entrega?mes=&setor=&motivo=&pdv=
 router.get("/entrega", async (req, res) => {
   try {
