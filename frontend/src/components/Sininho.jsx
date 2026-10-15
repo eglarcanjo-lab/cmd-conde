@@ -6,7 +6,6 @@ import api from "../services/api";
 export default function Sininho() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [incidentes, setIncidentes] = useState(0);
   const [semCat, setSemCat] = useState(0);
   const [migracoes, setMigracoes] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -22,20 +21,18 @@ export default function Sininho() {
 
   async function buscar() {
     try {
-      const [resInc, resSem, resMig] = await Promise.all([
-        api.get("/api/incidentes/pendentes"),
+      const [resSem, resMig] = await Promise.all([
         api.get("/api/admin/produtos/sem-categoria", { params: { contagem: 1 } }).catch(() => ({ data: { pendentes: 0 } })),
         api.get("/api/solicitacoes/pendentes").catch(() => ({ data: { pendentes: 0 } })),
       ]);
       setMigracoes(resMig.data.pendentes || 0);
-      setIncidentes(resInc.data.pendentes || 0);
       setSemCat(resSem.data?.pendentes || 0);
     } catch { }
   }
 
   if (!isGestor) return null;
 
-  const total = incidentes + semCat + migracoes;
+  const total = semCat + migracoes;
 
   return (
     <div style={{ position: "relative" }}
@@ -55,11 +52,6 @@ export default function Sininho() {
       {/* Tooltip */}
       {showTooltip && total > 0 && (
         <div style={styles.tooltip}>
-          {incidentes > 0 && (
-            <div style={styles.tooltipItem}>
-              <span>🚨 {incidentes} incidente{incidentes > 1 ? "s" : ""} pendente{incidentes > 1 ? "s" : ""}</span>
-            </div>
-          )}
           {migracoes > 0 && (
             <div style={styles.tooltipItem}>
               <span>🔀 {migracoes} migraç{migracoes > 1 ? "ões" : "ão"} de PDV p/ aprovar</span>

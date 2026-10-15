@@ -19,7 +19,6 @@ const STATUS_CONFIG = {
 // Tipos de solicitação (menu do "Nova solicitação"). Novo tipo = 1 item aqui + o form.
 const TIPOS = [
   { id: "migracao", icon: "🔀", titulo: "Migração / Inativação de PDVs", desc: "Trocar o RN ou o dia de visita, ou inativar PDVs da sua base" },
-  { id: "incidente", icon: "🚨", titulo: "Incidente / ocorrência", desc: "Registrar um problema com evidência (foto ou vídeo)" },
 ];
 
 export default function Incidentes() {
@@ -27,7 +26,6 @@ export default function Incidentes() {
   const navigate = useNavigate();
   const [aba, setAba] = useAbaUrl("aba", "novo");
   useContarAba("/incidentes", aba); // Engajamento por aba
-  const [meus, setMeus] = useState([]);
   const [minhasMig, setMinhasMig] = useState([]);
   const [tipo, setTipo] = useState(null);
   // ADM: age em nome de um setor (simula a visão do RN e abre solicitações por ele)
@@ -40,15 +38,6 @@ export default function Incidentes() {
     api.get("/api/solicitacoes/setores").then((r) => setSetoresAdm(r.data || [])).catch(() => {});
   }, [isAdmin]);
   const [loading, setLoading] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [sucesso, setSucesso] = useState("");
-  const [erro, setErro] = useState("");
-
-  // Form
-  const [dataOcorrido, setDataOcorrido] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [arquivo, setArquivo] = useState(null);
-  const [preview, setPreview] = useState(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (aba === "historico") carregarMeus(); }, [aba, setorAdm]);
@@ -56,49 +45,10 @@ export default function Incidentes() {
   async function carregarMeus() {
     setLoading(true);
     try {
-      const [res, mig] = await Promise.all([
-        api.get("/api/incidentes/meus", { params: paramsSetor }).catch(() => ({ data: [] })),
-        api.get("/api/solicitacoes/minhas", { params: paramsSetor }).catch(() => ({ data: [] })),
-      ]);
-      setMeus(res.data || []);
+      const mig = await api.get("/api/solicitacoes/minhas", { params: paramsSetor }).catch(() => ({ data: [] }));
       setMinhasMig(mig.data || []);
     } catch { }
     finally { setLoading(false); }
-  }
-
-  function selecionarArquivo(file) {
-    if (!file) return;
-    setArquivo(file);
-    const url = URL.createObjectURL(file);
-    setPreview({ url, tipo: file.type.startsWith("video") ? "video" : "imagem" });
-  }
-
-  async function enviar() {
-    setErro("");
-    if (!descricao.trim()) { setErro("Descreva a ocorrência."); return; }
-    if (!arquivo) { setErro("Anexe uma evidência (imagem ou vídeo)."); return; }
-
-    setEnviando(true);
-    try {
-      const form = new FormData();
-      form.append("descricao", descricao);
-      form.append("data_ocorrido", dataOcorrido || new Date().toISOString().split("T")[0]);
-      form.append("evidencia", arquivo);
-      if (isAdmin && setorAdm) form.append("setor", setorAdm);
-
-      await api.post("/api/incidentes", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 60000,
-      });
-
-      setSucesso("Solicitação enviada com sucesso!");
-      setDescricao(""); setDataOcorrido(""); setArquivo(null); setPreview(null);
-      setTimeout(() => setSucesso(""), 4000);
-    } catch (err) {
-      setErro(err.response?.data?.error || "Erro ao enviar. Tente novamente.");
-    } finally {
-      setEnviando(false);
-    }
   }
 
   return (
@@ -164,87 +114,12 @@ export default function Incidentes() {
           </div>
         )}
 
-        {/* Incidente (formulário original) */}
-        {aba === "novo" && tipo === "incidente" && (
-          <div style={styles.formCard}>
-            <h3 style={styles.formTitle}>Registrar Ocorrência</h3>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Data do ocorrido</label>
-              <input
-                type="date"
-                style={styles.input}
-                value={dataOcorrido}
-                onChange={(e) => setDataOcorrido(e.target.value)}
-              />
-              <span style={styles.hint}>Se não preenchido, será usada a data de hoje.</span>
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Descrição da ocorrência *</label>
-              <textarea
-                style={styles.textarea}
-                placeholder="Descreva o que aconteceu, qual PDV está relacionado, o que você precisa..."
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                rows={5}
-              />
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Evidência * (imagem ou vídeo)</label>
-              <label style={styles.uploadLabel}>
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => selecionarArquivo(e.target.files[0])}
-                />
-                <div style={{ ...styles.uploadArea, ...(arquivo ? styles.uploadAreaAtivo : {}) }}>
-                  {arquivo ? (
-                    <>
-                      <span style={{ fontSize: "1.5rem" }}>{preview?.tipo === "video" ? "🎥" : "🖼️"}</span>
-                      <span style={styles.uploadNome}>{arquivo.name}</span>
-                      <span style={styles.uploadTam}>{(arquivo.size / 1024).toFixed(0)} KB</span>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ fontSize: "1.5rem" }}>📎</span>
-                      <span style={styles.uploadNome}>Clique para anexar evidência</span>
-                      <span style={styles.uploadTam}>Imagem ou vídeo</span>
-                    </>
-                  )}
-                </div>
-              </label>
-
-              {/* Preview */}
-              {preview && preview.tipo === "imagem" && (
-                <img src={preview.url} alt="preview" style={styles.previewImg} />
-              )}
-              {preview && preview.tipo === "video" && (
-                <video src={preview.url} controls style={styles.previewImg} />
-              )}
-            </div>
-
-            {erro && <p style={styles.erro}>{erro}</p>}
-            {sucesso && <p style={styles.sucesso}>{sucesso}</p>}
-
-            <button
-              style={{ ...styles.btnEnviar, opacity: enviando ? 0.7 : 1 }}
-              onClick={enviar}
-              disabled={enviando}
-            >
-              {enviando ? "Enviando..." : "📤 Enviar Solicitação"}
-            </button>
-          </div>
-        )}
-
         {/* Histórico */}
         {aba === "historico" && (
           <div>
             {loading ? (
               <p style={styles.msg}>Carregando...</p>
-            ) : meus.length === 0 && minhasMig.length === 0 ? (
+            ) : minhasMig.length === 0 ? (
               <p style={styles.msg}>Nenhuma solicitação encontrada.</p>
             ) : (
               <div style={styles.lista}>
@@ -281,38 +156,6 @@ export default function Incidentes() {
                         <div style={styles.respostaBox}>
                           <p style={styles.respostaLabel}>💬 Resposta:</p>
                           <p style={styles.respostaTexto}>{sol.resposta}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {meus.map((inc) => {
-                  const stConf = STATUS_CONFIG[inc.status] || STATUS_CONFIG["Aguardando"];
-                  return (
-                    <div key={inc.id} style={styles.incCard}>
-                      <div style={styles.incHeader}>
-                        <div style={styles.incHeaderLeft}>
-                          <span style={{ ...styles.statusTag, background: stConf.bg, color: stConf.color }}>
-                            {inc.status}
-                          </span>
-                          <span style={styles.incData}>📅 {inc.data_ocorrido || inc.criado_em}</span>
-                        </div>
-                        <span style={styles.incId}>#{inc.id}</span>
-                      </div>
-
-                      <p style={styles.incDesc}>{inc.descricao}</p>
-
-                      {inc.evidencia_url && (
-                        <a href={inc.evidencia_url} target="_blank" rel="noreferrer" style={styles.evidenciaLink}>
-                          📎 Ver evidência
-                        </a>
-                      )}
-
-                      {inc.resposta && (
-                        <div style={styles.respostaBox}>
-                          <p style={styles.respostaLabel}>✅ Resposta:</p>
-                          <p style={styles.respostaTexto}>{inc.resposta}</p>
-                          <span style={styles.respostaData}>{inc.respondido_em}</span>
                         </div>
                       )}
                     </div>

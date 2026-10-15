@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.3** — RN com código antigo (301–305) volta a ver seus dados + SKU Foco removido.
+Versão atual: **v3.85.4** — Incidentes removido das Solicitações.
+
+## v3.85.4 — Incidentes removido
+- Solicitações fica só com **Migração / Inativação de PDVs**: saiu o tipo "Incidente / ocorrência" (tela do RN e histórico), a sub-aba Incidentes do Admin › Solicitações, o contador de incidentes do sininho e a rota `/api/incidentes`.
+- **Armazenamento de fotos anotado em `ARMAZENAMENTO_FOTOS.md`:** Cloudinary (variáveis `CLOUDINARY_*` no Railway), pasta `cmd-conde/incidentes`, o código de upload e as outras telas que seguem usando (Popups, Equipamentos, Material leve).
+- A tabela `incidentes` (com os links das evidências antigas) e os arquivos no Cloudinary ficam guardados.
 
 ## v3.85.3 — RN com código antigo · SKU Foco removido
 - **Setor 108 sem tasks (e qualquer RN ex-301–305):** usuário ainda cadastrado com o código antigo (ex.: 302) não "casava" com os dados, que já vêm como 107–111 → telas vazias (Tasks, PDVs…). Agora o login, cada chamada do backend e a sessão salva no app tratam 301–305 como 107–111. Troca de senha, ranking de campanhas, solicitações e incidentes também acham o RN pelos dois códigos.
