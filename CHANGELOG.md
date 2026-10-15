@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.87.1** — Missões por dia de visita + versão enxuta no celular.
+Versão atual: **v3.87.2** — Link do BI de Missões no card de importação.
+
+## v3.87.2 — Link do BI de Missões
+- Admin › Arquivos › Missões (BI): botão de copiar o link do relatório de missões no Power BI (igual aos outros cards do BI).
 
 ## v3.87.1 — Missões: dia de visita e celular
 - A barra de dias (Segunda…Sábado, começa em hoje) agora fica **acima das duas abas** (Tasks e Missões). Missões mostra só os PDVs com **visita no dia escolhido** (dia de visita do PDV na rota, igual às Tasks).
