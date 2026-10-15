@@ -5,6 +5,7 @@ import api from "../../services/api";
 import ComparativoSku from "../CoberturaSku/Comparativo";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
+import { mesmoSetor } from "../../utils/setor";
 
 const CATEGORIAS = [
   { key: "GIRO RGB",                   label: "GIRO RGB" },
@@ -160,10 +161,10 @@ export default function Cobertura() {
     : [];
 
   const coberturaSetor = isGestor ? cobertura
-    : cobertura.filter((r) => r.setor === usuario?.cod);
+    : cobertura.filter((r) => mesmoSetor(r.setor, usuario?.cod));
 
   const pdvSetor = isGestor ? pdvBase
-    : pdvBase.filter((r) => r.setor === usuario?.cod);
+    : pdvBase.filter((r) => mesmoSetor(r.setor, usuario?.cod));
 
   const pdvsDia = pdvSetor.filter((p) => normalizeDia(p.dia_visita) === diaFiltro);
 

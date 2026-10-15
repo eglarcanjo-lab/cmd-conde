@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
+import { mesmoSetor } from "../../utils/setor";
 
 const DIAS = [
   { key: "SEG", label: "Segunda" },
@@ -90,7 +91,7 @@ export default function Tasks() {
 
   const isGestor = ["admin","director","gv1","gv3"].includes(usuario?.perfil);
   const tasksFiltradas = tasks.filter((t) => {
-    if (!isGestor && t.setor !== usuario?.cod) return false;
+    if (!isGestor && !mesmoSetor(t.setor, usuario?.cod)) return false; // tolerante (texto/número, 302=108)
     if (isGestor && usuario?.perfil === "gv1" && !t.setor?.startsWith("1")) return false;
     if (isGestor && usuario?.perfil === "gv3" && !t.setor?.startsWith("3")) return false;
     return true;
@@ -300,7 +301,14 @@ export default function Tasks() {
         {loading ? (
           <p style={styles.msg}>Carregando...</p>
         ) : tasksVisiveis.length === 0 ? (
-          <p style={styles.msg}>Nenhuma task aberta para {diaFiltro}.</p>
+          <div>
+            <p style={styles.msg}>Nenhuma task aberta para {diaFiltro}.</p>
+            {/* Diagnóstico (quando vazio): em que etapa as tasks ficaram de fora */}
+            <p style={{ ...styles.msg, fontSize: "0.72rem", opacity: 0.55, marginTop: 4 }}>
+              Recebidas: {tasks.length} · do seu setor: {tasksFiltradas.length} · abertas: {tasksFiltradas.filter((t) => t.status === "OPEN").length}
+              {" "}· com PDV na sua base: {tasksFiltradas.filter((t) => mapaPdv[t.cod_pdv]).length} · PDVs na base: {pdvBase.length} · setor: {String(usuario?.cod ?? "")}
+            </p>
+          </div>
         ) : viewMode === "pdv" ? (
 
           /* ── VISÃO POR PDV ── */

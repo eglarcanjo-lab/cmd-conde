@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.4** — Incidentes removido das Solicitações.
+Versão atual: **v3.85.5** — Tasks do RN 108 (comparação de setor tolerante) + diagnóstico.
+
+## v3.85.5 — Tasks vazias no RN 108
+- Tasks e Cobertura refaziam no app um filtro "setor da task = código do usuário" com comparação exata; qualquer diferença (sessão salva com 302, número × texto, espaço) zerava a tela mesmo com o backend mandando as tasks certas (PDVs/RV não têm esse filtro extra, por isso funcionavam). Agora usa comparação tolerante (`utils/setor.js`: texto/número, espaços, zero à esquerda, 301–305 = 107–111).
+- Tela de Tasks vazia mostra uma linha de diagnóstico (recebidas · do seu setor · abertas · com PDV na base · PDVs na base · setor) para achar na hora onde as tasks ficam de fora.
 
 ## v3.85.4 — Incidentes removido
 - Solicitações fica só com **Migração / Inativação de PDVs**: saiu o tipo "Incidente / ocorrência" (tela do RN e histórico), a sub-aba Incidentes do Admin › Solicitações, o contador de incidentes do sininho e a rota `/api/incidentes`.
