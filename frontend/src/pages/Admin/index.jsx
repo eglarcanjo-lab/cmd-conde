@@ -9,7 +9,6 @@ import Configuracoes from "./Configuracoes";
 import Incidentes from "./Incidentes";
 // v2.8 - sku foco tab
 import Produtos from "./Produtos";
-import SkuFoco from "./SkuFoco";
 import AtendimentoProdutivo from "./AtendimentoProdutivo";
 import SpoDesafios from "./SpoDesafios";
 import SpoMetas from "./SpoMetas";
@@ -110,7 +109,6 @@ export default function Admin() {
           {tab === "ap" && <AtendimentoProdutivo />}
           {tab === "spo_desafios" && <SpoDesafios />}
           {tab === "spo_metas" && <SpoMetas />}
-          {tab === "sku_foco" && <SkuFoco />}
           {tab === "incentivos" && <IncentivosAdmin />}
           {tab === "popups" && <PopupsAdmin />}
           {tab === "avisos" && <AvisosAdmin />}

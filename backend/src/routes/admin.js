@@ -1,11 +1,9 @@
-// v2.4 - motivo no sku_foco + GET /produtos para auto-fill
 const express = require("express");
 const router = express.Router();
 const { readSheet, appendRow, appendRows, upsertRows, updateRow, deleteRow, sobrescreverAba, ensureTab, cacheClearAll } = require("../services/sheets");
 const { authMiddleware, adminOnly } = require("../middleware/auth");
 const { SENHA_PADRAO, hashSenha } = require("../utils/senha");
 
-const SKU_FOCO_HEADERS = ["setor","cod_produto","nome_produto","meta_mensal_hl","mes_referencia","motivo"];
 
 router.use(authMiddleware, adminOnly);
 
@@ -169,59 +167,6 @@ router.post("/metas/import", async (req, res) => {
 // NOTA: a rota GET /api/admin/produtos é servida por routes/produtos.js
 // (retorna a base completa, incluindo a coluna 'categorias'). Não definir
 // aqui um /produtos — senão ele sombreia a rota real e remove as categorias.
-
-// ─── SKU FOCO ────────────────────────────────────────────────────────────────
-// Usa sobrescreverAba em todas as mutações para garantir que o cabeçalho
-// sempre exista corretamente, independente do estado da aba no Sheets.
-
-async function skuFocoSobrescrever(lista) {
-  const rows = [SKU_FOCO_HEADERS, ...lista.map((r) => SKU_FOCO_HEADERS.map((h) => r[h] ?? ""))];
-  await sobrescreverAba("sku_foco", rows);
-}
-
-router.get("/sku-foco", async (req, res) => {
-  try {
-    await ensureTab("sku_foco");
-    const dados = await readSheet("sku_foco");
-    return res.json(dados);
-  } catch (err) {
-    console.error("sku-foco GET:", err);
-    return res.status(500).json({ error: "Erro ao buscar SKU Foco." });
-  }
-});
-
-router.post("/sku-foco", async (req, res) => {
-  try {
-    const { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia, motivo } = req.body;
-    if (!setor || !cod_produto || !nome_produto || !meta_mensal_hl || !mes_referencia) {
-      return res.status(400).json({ error: "Campos obrigatórios: setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia." });
-    }
-    await ensureTab("sku_foco");
-    const existentes = await readSheet("sku_foco");
-    const nova = { setor, cod_produto, nome_produto, meta_mensal_hl, mes_referencia, motivo: motivo || "" };
-    await skuFocoSobrescrever([...existentes, nova]);
-    return res.json({ success: true, message: "SKU Foco cadastrado." });
-  } catch (err) {
-    console.error("sku-foco POST:", err);
-    return res.status(500).json({ error: `Erro ao cadastrar SKU Foco: ${err.message || err}` });
-  }
-});
-
-router.delete("/sku-foco/:idx", async (req, res) => {
-  try {
-    const idx = parseInt(req.params.idx, 10);
-    if (isNaN(idx) || idx < 0) return res.status(400).json({ error: "Índice inválido." });
-    await ensureTab("sku_foco");
-    const dados = await readSheet("sku_foco");
-    if (idx >= dados.length) return res.status(404).json({ error: "SKU Foco não encontrado." });
-    dados.splice(idx, 1);
-    await skuFocoSobrescrever(dados);
-    return res.json({ success: true });
-  } catch (err) {
-    console.error("sku-foco DELETE:", err);
-    return res.status(500).json({ error: "Erro ao remover SKU Foco." });
-  }
-});
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 

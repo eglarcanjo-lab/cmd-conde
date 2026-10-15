@@ -1,4 +1,4 @@
-// v1.1 - 3 cards (sem tendência), categorias breakdown, motivo no sku_foco
+// v1.2 - 3 cards (sem tendência), categorias breakdown (SKU Foco removido)
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -271,52 +271,8 @@ export default function VolumeDiario() {
             </div>
           ); })()}
 
-          {/* ── SKU Foco ── */}
-          {d.sku_foco?.length > 0 && (
-            <div style={S.section}>
-              <h3 style={S.sectionTitle}>🎯 SKU Foco</h3>
-              {d.sku_foco.map((sf) => (
-                <div key={`${sf.setor}-${sf.cod_produto}`} style={S.focoCard}>
-                  <div style={S.focoHeader}>
-                    <div style={{ flex: 1 }}>
-                      <div style={S.focoNome}>{sf.nome_produto}</div>
-                      <div style={S.focoCod}>cod {sf.cod_produto} · Setor {sf.setor}</div>
-                      {sf.motivo && (
-                        <div style={S.focoMotivo}>💡 {sf.motivo}</div>
-                      )}
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ ...S.focoPct, color: sf.pct_mes >= 100 ? "#4ade80" : sf.pct_mes >= 70 ? "#7DBA3D" : "#f87171" }}>
-                        {sf.pct_mes}%
-                      </div>
-                      <div style={S.focoSub}>do mês</div>
-                    </div>
-                  </div>
-                  <div style={{ margin: "8px 0 6px" }}>
-                    <ProgressBar pct={sf.pct_mes} />
-                  </div>
-                  <div style={S.focoStats}>
-                    <span>Realizado: <strong style={{ color: "#fff" }}>{fmtHL(sf.realizado_mes_hl)} HL</strong></span>
-                    <span>Meta: <strong style={{ color: "#fff" }}>{fmtHL(sf.meta_mensal_hl)} HL</strong></span>
-                  </div>
-                  <div style={S.focoDia}>
-                    <span>Hoje:{" "}
-                      <strong style={{ color: sf.pct_hoje >= 100 ? "#4ade80" : sf.pct_hoje > 0 ? "#7DBA3D" : "rgba(255,255,255,0.3)" }}>
-                        {fmtHL(sf.realizado_hoje_hl)} HL
-                      </strong>
-                    </span>
-                    <span>Meta dia: <strong style={{ color: "#fff" }}>{fmtHL(sf.meta_diaria_hl)} HL</strong></span>
-                    <span style={{ marginLeft: "auto", ...(sf.pct_hoje >= 100 ? { color: "#4ade80" } : sf.pct_hoje >= 70 ? { color: "#7DBA3D" } : { color: "#f87171" }) }}>
-                      {sf.pct_hoje}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Empty state */}
-          {d.top_skus?.length === 0 && d.sku_foco?.length === 0 && d.categorias?.length === 0 && (
+          {d.top_skus?.length === 0 && d.categorias?.length === 0 && (
             <div style={S.empty}>
               Nenhuma venda registrada para {d.data}.<br />
               <span style={{ fontSize: "0.78rem" }}>Importe o arquivo de pedidos para gerar os dados.</span>

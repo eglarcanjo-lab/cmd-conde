@@ -41,7 +41,6 @@ export const ADMIN_TABS = [
   { id: "usuarios",      icon: "👥", label: "Usuários",      grupo: "Pessoas" },
   { id: "engajamento",   icon: "📉", label: "Engajamento",   grupo: "Pessoas" },
   { id: "metas",         icon: "🎯", label: "Metas",         grupo: "Metas e RV" },
-  { id: "sku_foco",      icon: "📈", label: "SKU Foco",      grupo: "Metas e RV" },
   { id: "ap",            icon: "🎯", label: "AT. Produtivo", grupo: "Metas e RV" },
   { id: "spo_metas",     icon: "🏅", label: "SPO Metas",     grupo: "Metas e RV" },
   { id: "spo_desafios",  icon: "📋", label: "SPO Desafios",  grupo: "Metas e RV" },

@@ -2,7 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { readSheet, appendRow, updateRow } = require("../services/sheets");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { authMiddleware, adminOnly, codHop } = require("../middleware/auth");
 const { SENHA_PADRAO, ehHash, ehSenhaPadrao, hashSenha, conferirSenha } = require("../utils/senha");
 
 const USUARIO_COLS = ["cod", "nome", "cpf", "telefone", "perfil", "gv", "ativo", "senha", "criado_em"];
@@ -74,7 +74,7 @@ router.post("/login", async (req, res) => {
       success: true,
       token,
       precisa_trocar_senha: precisaTrocar,
-      usuario: { cod: usuario.cod, nome: usuario.nome, perfil: usuario.perfil, gv: usuario.gv },
+      usuario: { cod: codHop(usuario.cod), nome: usuario.nome, perfil: usuario.perfil, gv: usuario.gv },
     });
   } catch (err) {
     console.error("Erro no login:", err);
@@ -90,7 +90,7 @@ router.post("/trocar-senha", authMiddleware, async (req, res) => {
     if (nova === SENHA_PADRAO) return res.status(400).json({ error: "Escolha uma senha diferente da padrão (1234)." });
 
     const usuarios = await readSheet("usuarios");
-    const idx = usuarios.findIndex((u) => String(u.cod) === String(req.user.cod));
+    const idx = usuarios.findIndex((u) => codHop(u.cod) === codHop(req.user.cod));
     if (idx === -1) return res.status(404).json({ error: "Usuário não encontrado." });
 
     const atualizado = { ...usuarios[idx], senha: await hashSenha(nova) };

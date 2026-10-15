@@ -3,11 +3,17 @@ const jwt = require("jsonwebtoken");
 // Usuário desativado no Admin perde o acesso NA HORA (antes o token valia 7 dias).
 // Lê a tabela de usuários (cache de 60s do sqlRepo); se a leitura falhar, deixa passar
 // (não derruba todo mundo por um soluço do banco).
+// Setores 301–305 viraram 107–111 (mesmos RNs). Usuário ainda cadastrado com o código
+// antigo funciona como o novo — senão não "casa" com os dados (tasks, PDVs…), que já vêm 107–111.
+const NOVO_SETOR = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+const codHop = (c) => { const s = String(c ?? "").trim(); return NOVO_SETOR[s] || s; };
+
 async function usuarioAtivo(cod) {
   try {
     const { readSheet } = require("../services/sheets");
     const us = await readSheet("usuarios");
-    const u = us.find((x) => String(x.cod).trim() === String(cod).trim());
+    const u = us.find((x) => String(x.cod).trim() === String(cod).trim())
+           || us.find((x) => codHop(x.cod) === codHop(cod));
     return !u ? false : String(u.ativo).toLowerCase() === "true";
   } catch { return true; }
 }
@@ -33,6 +39,7 @@ function authMiddleware(req, res, next) {
   }
   usuarioAtivo(req.user.cod).then((ok) => {
     if (!ok) return res.status(401).json({ error: "Usuário desativado. Fale com o administrador." });
+    req.user = { ...req.user, cod: codHop(req.user.cod) };
     next();
   });
 }
@@ -62,4 +69,4 @@ function adminDiretorOnly(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, adminOnly, gestorOnly, adminDiretorOnly };
+module.exports = { authMiddleware, adminOnly, gestorOnly, adminDiretorOnly, codHop };

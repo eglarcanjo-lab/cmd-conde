@@ -1,4 +1,4 @@
-// v1.2 - categoria breakdown, sem tendência, sku_foco setor explícito
+// v1.3 - categoria breakdown, sem tendência (SKU Foco removido em v3.85.3)
 const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
@@ -7,17 +7,6 @@ const { authMiddleware } = require("../middleware/auth");
 router.use(authMiddleware);
 
 const { filtrarPorPerfil } = require("../utils/perfil");
-
-// Filtro explícito de setor para sku_foco (não reusa filtrarPorPerfil para evitar edge cases)
-function filtrarSkuFocoPorPerfil(lista, usuario) {
-  const perfil = String(usuario.perfil || "").toLowerCase();
-  if (["admin", "director"].includes(perfil)) return lista;
-  if (perfil === "gv1") return lista.filter((s) => String(s.setor || "").trim().startsWith("1"));
-  if (perfil === "gv3") return lista.filter((s) => String(s.setor || "").trim().startsWith("3"));
-  // RN: exato
-  const codUsuario = String(usuario.cod || "").trim();
-  return lista.filter((s) => String(s.setor || "").trim() === codUsuario);
-}
 
 function diasUteisMes(ano, mes) {
   let count = 0;
@@ -114,10 +103,9 @@ router.get("/", async (req, res) => {
     const dataCompStr = toDataStr(dataComp);
 
     // Lê todas as planilhas necessárias em paralelo
-    const [volumeDiario, metas, skuFoco, prodBase, statusArq, rvMktp, rvResultado] = await Promise.all([
+    const [volumeDiario, metas, prodBase, statusArq, rvMktp, rvResultado] = await Promise.all([
       readSheet("volume_diario").catch(() => []),
       readSheet("metas").catch(() => []),
-      readSheet("sku_foco").catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
       readSheet("rv_mktp").catch(() => []),
@@ -323,30 +311,6 @@ router.get("/", async (req, res) => {
       .slice(0, 15)
       .map((s) => ({ ...s, volume_hl: Math.round(s.volume_hl * 100) / 100 }));
 
-    // ── SKU Foco — filtro EXPLÍCITO por setor ───────────────────────────────
-    const skuFocoFiltrado = filtrarSkuFocoPorPerfil(skuFoco, usuario)
-      .filter((s) => normalizeMesRef(s.mes_referencia) === mesRef);
-
-    const skuFocoProgress = skuFocoFiltrado.map((sf) => {
-      const cod          = normCod(sf.cod_produto);
-      const meta         = parseFloat(String(sf.meta_mensal_hl || "0").replace(",", ".")) || 0;
-      const metaDiaFoco  = totalDiasUteis > 0 ? meta / totalDiasUteis : 0;
-      const realizadoMes  = somarVol(dadosMes.filter( (r) => normCod(r.cod_produto) === cod));
-      const realizadoHoje = somarVol(dadosHoje.filter((r) => normCod(r.cod_produto) === cod));
-      return {
-        setor:            sf.setor,
-        cod_produto:      cod,
-        nome_produto:     sf.nome_produto,
-        motivo:           sf.motivo || "",
-        meta_mensal_hl:   meta,
-        meta_diaria_hl:   Math.round(metaDiaFoco  * 100) / 100,
-        realizado_mes_hl: Math.round(realizadoMes  * 100) / 100,
-        realizado_hoje_hl:Math.round(realizadoHoje * 100) / 100,
-        pct_mes:  meta        > 0 ? Math.round((realizadoMes  / meta)       * 100) : 0,
-        pct_hoje: metaDiaFoco > 0 ? Math.round((realizadoHoje / metaDiaFoco) * 100) : 0,
-      };
-    });
-
     return res.json({
       data:                    dataRefStr,
       data_comparacao:         dataCompStr,
@@ -365,7 +329,6 @@ router.get("/", async (req, res) => {
       categorias:              categorias,
       top_skus:                topSkus,
       top_skus_mes:            topSkusMes,
-      sku_foco:                skuFocoProgress,
     });
   } catch (err) {
     console.error("Erro volume-diario:", err);

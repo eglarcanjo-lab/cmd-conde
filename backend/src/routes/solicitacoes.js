@@ -276,7 +276,10 @@ async function carregar(where = "", params = []) {
 router.get("/minhas", async (req, res) => {
   try {
     await ensureTabelas();
-    return res.json(await carregar("WHERE setor = $1", [setorAlvo(req, req.query.setor)]));
+    // inclui pedidos antigos gravados com o código 301–305 do mesmo RN (hoje 107–111)
+    const alvo = setorAlvo(req, req.query.setor);
+    const antigo = { "107": "301", "108": "302", "109": "303", "110": "304", "111": "305" }[alvo];
+    return res.json(await carregar("WHERE setor = ANY($1)", [antigo ? [alvo, antigo] : [alvo]]));
   } catch (e) {
     console.error("solicitacoes/minhas:", e);
     return res.status(500).json({ error: "Erro ao buscar solicitações." });

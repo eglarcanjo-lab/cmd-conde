@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const { readSheet, appendRow, updateRow } = require("../services/sheets");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { authMiddleware, adminOnly, codHop } = require("../middleware/auth");
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -99,7 +99,7 @@ router.get("/", async (req, res) => {
     const todos = await readSheet("incidentes");
     // Gestor vê tudo, RN vê só os seus
     const isGestor = ["admin", "director", "gv1", "gv3"].includes(req.user.perfil);
-    const lista = isGestor ? todos : todos.filter((i) => String(i.setor) === String(req.user.cod));
+    const lista = isGestor ? todos : todos.filter((i) => codHop(i.setor) === codHop(req.user.cod));
     return res.json(lista.sort((a, b) => String(b.data_criacao || "").localeCompare(String(a.data_criacao || ""))));
   } catch (err) {
     return res.status(500).json({ error: "Erro ao buscar incidentes." });

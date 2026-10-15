@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.2** — A aba aberta fica no endereço (recarregar não perde a aba).
+Versão atual: **v3.85.3** — RN com código antigo (301–305) volta a ver seus dados + SKU Foco removido.
+
+## v3.85.3 — RN com código antigo · SKU Foco removido
+- **Setor 108 sem tasks (e qualquer RN ex-301–305):** usuário ainda cadastrado com o código antigo (ex.: 302) não "casava" com os dados, que já vêm como 107–111 → telas vazias (Tasks, PDVs…). Agora o login, cada chamada do backend e a sessão salva no app tratam 301–305 como 107–111. Troca de senha, ranking de campanhas, solicitações e incidentes também acham o RN pelos dois códigos.
+- **SKU Foco removido** (decisão do Eduardo): saíram a aba Admin › SKU Foco, o bloco "🎯 SKU Foco" do Volume Diário e as rotas `/api/admin/sku-foco`. A tabela `sku_foco` fica no banco, sem uso.
 
 ## v3.85.2 — Aba no endereço
 - Cada aba agora fica no endereço da página (ex.: `/produtos?aba=shelf`, `/admin?tab=metas`). **Recarregar, voltar ou mandar o link abre na mesma aba** — antes o refresh voltava para a primeira.

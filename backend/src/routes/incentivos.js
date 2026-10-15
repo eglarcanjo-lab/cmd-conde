@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { readSheet, appendRow, sobrescreverAba, ensureTab } = require("../services/sheets");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+const { authMiddleware, adminOnly, codHop } = require("../middleware/auth");
 
 router.use(authMiddleware);
 
@@ -107,7 +107,7 @@ router.get("/:id/ranking", async (req, res) => {
     usuarios.forEach((u) => { if (u.cod) usuariosMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
     const ranking = (await calcularRanking(inc, usuariosMap)).map((r, i) => ({ ...r, posicao: i + 1 }));
-    const minhaPos = ranking.find((r) => String(r.setor) === String(req.user.cod)) || null;
+    const minhaPos = ranking.find((r) => codHop(r.setor) === codHop(req.user.cod)) || null;
 
     return res.json({ incentivo: inc, ranking, minha_posicao: minhaPos });
   } catch (err) {
