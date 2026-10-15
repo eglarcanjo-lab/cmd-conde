@@ -60,12 +60,8 @@ app.use("/api/incentivos", require("./routes/incentivos"));
 app.use("/api/relatorios", require("./routes/relatorios"));
 app.use("/api/conversao-pg", require("./routes/conversao-pg")); // acompanhamento temporário Pure Gold
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
-app.use("/api/farol-visita", require("./routes/farol-visita")); // farol WhatsApp: PDVs sem visita registrada
-app.use("/api/farol-queda", require("./routes/farol-queda"));   // farol WhatsApp: queda de volume (PDVs + produtos)
-app.use("/api/farol-volumes", require("./routes/farol-volumes")); // farol WhatsApp: volumes meta×real×tendência (por RN + operação)
 app.use("/api/input-tasks", require("./routes/input-tasks")); // gerador de tasks (grupo Ações de Preço, admin)
 app.use("/api/popups", require("./routes/popups"));
-app.use("/api/hop", require("./routes/hop"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));
 app.use("/api/grade", require("./routes/grade"));
 app.use("/api/deck", require("./routes/deck"));

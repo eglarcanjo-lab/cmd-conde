@@ -27,9 +27,7 @@ import InputTasks from "./pages/InputTasks";
 import RotaEfetiva from "./pages/RotaEfetiva";
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
-import HopAssistente from "./components/HopAssistente";
 import BotaoAjuda from "./components/BotaoAjuda";
-import { HOP_ATIVA } from "./theme";
 import { usoContagem } from "./utils/uso";
 import api from "./services/api";
 
@@ -103,7 +101,6 @@ function AppContent() {
   return (
     <>
       {usuario && location.pathname !== "/login" && <PopupDiario />}
-      {HOP_ATIVA && usuario && location.pathname !== "/login" && <HopAssistente />}
       {usuario && location.pathname !== "/login" && <BotaoAjuda />}
       <Routes>
       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
@@ -134,7 +131,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.85.0";
+export const APP_VERSION = "v3.85.1";
 
 export default function App() {
   return (

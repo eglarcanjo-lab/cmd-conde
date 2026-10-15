@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.0** — Auditoria out/26, lote 2 (segurança, uso por aba, 1 aviso por dia, teste rápido).
+Versão atual: **v3.85.1** — Limpeza: Faróis WhatsApp e assistente HOP removidos do código.
+
+## v3.85.1 — Limpeza de código parado (Auditoria out/26)
+- Removidos do código (decisão do Eduardo): **Faróis por WhatsApp** (rotas `farol-visita`, `farol-queda`, `farol-volumes`), **assistente HOP** (balão + boas-vindas, `/api/hop`, chave `HOP_ATIVA`) e o serviço antigo de código por WhatsApp no login (`services/whatsapp.js`, sem uso). ~1.160 linhas a menos; nada muda na tela.
+- Mantidos: Conversão Pure Gold e o bloco Verdes da Home. `utils/volumesReport.js` fica (a Home usa).
 
 ## v3.85.0 — Auditoria out/26 · lote 2
 - **CORS só do domínio da HOP** (`https://cmd-conde.vercel.app` + localhost; outros via `FRONTEND_URL`, separados por vírgula). Antes aceitava qualquer site `*.vercel.app`.

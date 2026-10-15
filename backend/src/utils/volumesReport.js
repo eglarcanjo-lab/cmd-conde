@@ -1,6 +1,6 @@
 // Monta o "Report Volumes" (planilha): Operação → GV → RN × 6 categorias × Meta/Real/%/Tend/%T.
 // Fonte: rv_resultado (metas/real das 4 principais) + rv_volume (volume das "zero").
-// Usado pelo farol WhatsApp (farol-volumes) e pela Home (resumo/volumes, aba Analítico).
+// Usado pela Home (resumo/volumes, aba Analítico).
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
 

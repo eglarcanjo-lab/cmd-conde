@@ -2,12 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
-import HopBoasVindas from "../components/HopBoasVindas";
 import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoFocoNE from "../components/ResumoFocoNE";
 import ResumoVerdes from "../components/ResumoVerdes";
 import ResumoRankings from "../components/ResumoRankings";
-import { HOP_ATIVA } from "../theme";
 import { mesPadraoHome, somaMes, rotuloMes } from "../utils/mesRef";
 import { modulosDoPerfil, ADMIN_TABS } from "../menu";
 
@@ -50,7 +48,6 @@ export default function HomeDashboard() {
         .hd-item:hover { background: rgba(255,255,255,0.07) !important; color: #fff !important; }
         .hd-sub:hover  { background: rgba(255,255,255,0.07) !important; color: #fff !important; }
       `}</style>
-      {HOP_ATIVA && <HopBoasVindas />}
 
       <aside style={{ ...styles.side, width: W }}>
         <button style={styles.toggle} onClick={() => setAberto((a) => !a)} aria-label={aberto ? "Recolher menu" : "Expandir menu"}>

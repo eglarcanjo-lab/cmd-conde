@@ -91,7 +91,7 @@ router.get("/volumes", async (req, res) => {
       bars: catBars(rv.filter((r) => setSetor(r) === s), vol.filter((r) => setSetor(r) === s)),
     }));
 
-    // Analítico (planilha): Operação → GV → RN × categorias. Mesmo helper do farol.
+    // Analítico (planilha): Operação → GV → RN × categorias.
     const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator);
 
     return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report, diasUteis });
