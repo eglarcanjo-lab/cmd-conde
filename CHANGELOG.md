@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.87.2** — Link do BI de Missões no card de importação.
+Versão atual: **v3.87.3** — Botão "Todos" na barra de dias (Tasks e Missões).
+
+## v3.87.3 — Dia "Todos"
+- Barra de dias de Tasks/Missões ganhou **Todos** (primeiro botão, visível no celular): mostra as tasks abertas e as missões de toda a base de PDVs, de qualquer dia de visita. O dia de hoje continua sendo o padrão ao abrir.
 
 ## v3.87.2 — Link do BI de Missões
 - Admin › Arquivos › Missões (BI): botão de copiar o link do relatório de missões no Power BI (igual aos outros cards do BI).

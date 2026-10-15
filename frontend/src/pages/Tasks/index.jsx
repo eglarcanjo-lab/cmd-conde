@@ -8,6 +8,7 @@ import { mesmoSetor } from "../../utils/setor";
 import Missoes from "./Missoes";
 
 const DIAS = [
+  { key: "TODOS", label: "Todos" },   // toda a base (qualquer dia de visita)
   { key: "SEG", label: "Segunda" },
   { key: "TER", label: "Terça" },
   { key: "QUA", label: "Quarta" },
@@ -121,7 +122,7 @@ export default function Tasks() {
     const pdv = mapaPdv[t.cod_pdv];
     if (!pdv) return false;
     const dia = String(pdv.dia_visita || "").trim().toUpperCase().split("/")[0].trim();
-    return dia === diaFiltro && t.status === "OPEN";
+    return (diaFiltro === "TODOS" || dia === diaFiltro) && t.status === "OPEN";
   });
 
   // Opções dos filtros dinâmicos
@@ -340,7 +341,7 @@ export default function Tasks() {
           <p style={styles.msg}>Carregando...</p>
         ) : tasksVisiveis.length === 0 ? (
           <div>
-            <p style={styles.msg}>Nenhuma task aberta para {diaFiltro}.</p>
+            <p style={styles.msg}>Nenhuma task aberta {diaFiltro === "TODOS" ? "na sua base" : `para ${diaFiltro}`}.</p>
             {/* Diagnóstico (quando vazio): em que etapa as tasks ficaram de fora */}
             <p style={{ ...styles.msg, fontSize: "0.72rem", opacity: 0.55, marginTop: 4 }}>
               Recebidas: {tasks.length} · do seu setor: {tasksFiltradas.length} · abertas: {tasksFiltradas.filter((t) => t.status === "OPEN").length}

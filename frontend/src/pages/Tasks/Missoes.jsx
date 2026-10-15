@@ -69,7 +69,7 @@ export default function Missoes({ usuario, isGestor, nomesRn = {}, dia, mapaPdv 
       if (isGestor && filtroRn && !mesmoSetor(m.setor, filtroRn)) return false;
       if (status === "validada" && m.validada !== "SIM") return false;
       if (status === "pendente" && m.validada === "SIM") return false;
-      if (dia && normDia(mapaPdv[m.cod_pdv]?.dia_visita) !== dia) return false;   // visita do dia (rota)
+      if (dia && dia !== "TODOS" && normDia(mapaPdv[m.cod_pdv]?.dia_visita) !== dia) return false;   // visita do dia (rota); "Todos" = toda a base
       if (q && !`${m.cod_pdv} ${m.nome_pdv} ${m.missao}`.toLowerCase().includes(q)) return false;
       return true;
     });
