@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.85.6** — Tasks: filtro por RN para gestores.
+Versão atual: **v3.85.7** — Import de Tasks não apaga mais os outros RNs (arquivo filtrado).
+
+## v3.85.7 — Import de Tasks protegido
+- Causa do "108 sem tasks": a última importação de Tasks foi de um export do BI **filtrado** (só 109 e 110), e o import substituía a tabela inteira → todos os outros setores ficaram sem task.
+- Agora: arquivo **completo** substitui tudo (como antes); arquivo **parcial** atualiza só os setores que vieram nele e mantém os demais. O status em Admin › Arquivos mostra os setores do arquivo e, se parcial, "⚠️ Parcial — mantidos da importação anterior: …".
+- Para recuperar agora: reimportar o arquivo completo de Tasks (todos os setores).
 
 ## v3.85.6 — Tasks: filtro por RN
 - Admin, diretor e GVs ganham o seletor **"Todos os RNs / setor · nome"** na tela de Tasks (só os setores com task no escopo de cada um; nome do RN aparece para o admin). Fica no endereço (`/tasks?rn=108`), então recarregar mantém o RN escolhido.
