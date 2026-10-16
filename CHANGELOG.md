@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.2** — Verdes por dia em gráfico de linhas, com todas as datas.
+Versão atual: **v3.88.3** — Verdes: clicar no dia atualiza o ranking de RNs.
+
+## v3.88.3 — Ranking de RN por dia
+- No mês aberto por dia, **clicar num dia filtra o ranking de RNs embaixo** para aquele dia (PDVs que cada RN atendeu no dia, ou HL do dia no flag Vol HL) — igual já acontecia ao clicar num mês. Clicar de novo no dia volta ao ranking do mês. O ranking traz sempre todos os RNs do escopo (perfil/GV), mesmo com um RN selecionado no gráfico.
+- `/api/resumo/verdes/dias` passa a devolver, por dia, os números de cada RN (`rn`).
 
 ## v3.88.2 — Verdes por dia: linhas
 - O mês aberto por dia virou **gráfico de linhas** (saíram as colunas): linha verde com o valor do dia (número em cima de cada ponto) e linha amarela tracejada com o acumulado do mês. **Todas as datas aparecem** no eixo; em mês com mais de 20 dias, as datas alternam em duas alturas no celular para não encostar. Toque/clique em qualquer dia destaca o ponto e mostra o detalhe.

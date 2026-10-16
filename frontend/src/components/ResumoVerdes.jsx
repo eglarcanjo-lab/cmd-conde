@@ -15,8 +15,8 @@ const primeiroNome = (s) => String(s || "").trim().split(/\s+/)[0] || "";
 // HL do dia), com o número em cima de cada ponto; amarela = acumulado do mês (PDVs distintos
 // até o dia = cobertura do mês / HL acumulado). Todas as datas no eixo. Toque/clique num dia
 // mostra o detalhe (no celular não há "hover"). Cada linha tem a própria escala.
-function GraficoDias({ dias, aba, mesRot }) {
-  const [sel, setSel] = useState(null);
+// sel/setSel vêm do bloco (o dia escolhido também filtra o ranking de RNs embaixo).
+function GraficoDias({ dias, aba, mesRot, sel, setSel }) {
   if (!dias?.length) return <div style={S.skel}>Sem pedidos deste SKU no mês (o detalhe diário vem da importação de Pedidos/CORA).</div>;
   const cob = aba === "cobertura";
   const val = (d) => (cob ? d.pdvs : d.hl);
@@ -100,8 +100,10 @@ export default function ResumoVerdes({ mes }) {
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
   const [gvSel, setGvSel] = useState("todos");      // todos | "1" (GV1 = 1xx) | "3" (GV3 = 3xx)
   const [dias, setDias] = useState(null);           // mês aberto por dia (quando mesSel != null)
+  const [diaSel, setDiaSel] = useState(null);       // índice do dia clicado (filtra o ranking) | null = mês
   const [carregandoDias, setCarregandoDias] = useState(false);
   const mesAberto = mesSel != null ? (data?.meses || [])[mesSel] : null;
+  useEffect(() => { setDiaSel(null); }, [mesAberto]);
   useEffect(() => {
     if (!mesAberto) { setDias(null); return; }
     let vivo = true;
@@ -187,7 +189,12 @@ export default function ResumoVerdes({ mes }) {
 
   // Ranking dos RNs (do GV escolhido) pelo flag atual, maior→menor. Se um mês estiver
   // selecionado, usa o valor daquele mês; senão, a soma do trimestre.
-  const valRank = (r) => { const arr = serieDe(r); return mesSel != null ? (Number(arr[mesSel]) || 0) : arr.reduce((s, x) => s + (Number(x) || 0), 0); };
+  // Dia clicado no gráfico diário → ranking daquele dia (PDVs / HL do RN no dia).
+  const diaObj = mesAberto && diaSel != null && dias ? dias[diaSel] : null;
+  const valRank = (r) => {
+    if (diaObj) { const e = (diaObj.rn || {})[String(r.setor)]; return e ? (aba === "cobertura" ? e.pdvs : e.hl) : 0; }
+    const arr = serieDe(r); return mesSel != null ? (Number(arr[mesSel]) || 0) : arr.reduce((s, x) => s + (Number(x) || 0), 0);
+  };
   const ranking = porRnGv
     .map((r) => ({ setor: r.setor, rn: r.rn, total: valRank(r) }))
     .filter((r) => r.total > 0)
@@ -239,7 +246,7 @@ export default function ResumoVerdes({ mes }) {
                     <button style={S.voltarBtn} onClick={() => setMesSel(null)}>← trimestre</button>
                   </div>
                   {carregandoDias || !dias ? <div style={S.skel}>Abrindo o mês por dia…</div>
-                    : <GraficoDias dias={dias} aba={aba} mesRot={String(mesAberto).slice(5, 7)} />}
+                    : <GraficoDias dias={dias} aba={aba} mesRot={String(mesAberto).slice(5, 7)} sel={diaSel} setSel={setDiaSel} />}
                 </>
               ) : (<>
               <div style={S.vlab}>{meses.map((m, i) => <span key={m} style={S.vs}>{serie[i] ? fmt(serie[i]) : ""}</span>)}</div>
@@ -260,7 +267,7 @@ export default function ResumoVerdes({ mes }) {
           {/* Faixa de ranking dos RNs pelo flag atual */}
           {ranking.length > 0 && (
             <div style={S.faixaWrap}>
-              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "volume (HL)"} · {mesSel != null ? rotMes(meses[mesSel]) : "trimestre"} (maior → menor) · clique num RN ou mês p/ filtrar</div>
+              <div style={S.faixaTit}>Ranking RN — {aba === "cobertura" ? "cobertura" : "volume (HL)"} · {diaObj ? `dia ${String(diaObj.dia).padStart(2, "0")}/${String(mesAberto).slice(5, 7)}` : mesSel != null ? rotMes(meses[mesSel]) : "trimestre"} (maior → menor) · clique num RN, mês ou dia p/ filtrar</div>
               {ranking.map((r) => {
                 const sel = String(r.setor) === String(rnSel);
                 return (

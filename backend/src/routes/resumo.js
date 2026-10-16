@@ -404,14 +404,29 @@ router.get("/verdes/dias", async (req, res) => {
     const setor = String(req.query.setor || "").trim();
     const gv = String(req.query.gv || "").trim();
     const all = await readSheetMonths("verdes_pedidos", "mes_referencia", [mes]).catch(() => []);
-    let lin = filtrarPorPerfil(all, req.user, "setor");
-    if (setor) lin = lin.filter((r) => String(r.setor || "").trim() === setor);
-    else if (gv) lin = lin.filter((r) => String(r.setor || "").trim().startsWith(gv));
+    const escopo = filtrarPorPerfil(all, req.user, "setor")
+      .filter((r) => !gv || String(r.setor || "").trim().startsWith(gv));
+    const lin = setor ? escopo.filter((r) => String(r.setor || "").trim() === setor) : escopo;
+    const isoDe = (r) => {
+      const m = String(r.data || "").match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      return m ? `${m[3]}-${m[2]}-${m[1]}` : String(r.data || "").slice(0, 10);
+    };
+
+    // Ranking por RN NO DIA (faixa de baixo quando um dia é clicado): sempre TODOS os RNs
+    // do escopo (perfil + GV), mesmo com um RN selecionado no gráfico.
+    const rnDia = {}; // nº do dia → setor → { pdvs:Set, hl }
+    escopo.forEach((r) => {
+      const iso = isoDe(r); if (!iso.startsWith(mes)) return;
+      const hl = num(r.volume_hl); if (hl <= 0) return;
+      const dd = Number(iso.slice(8, 10)), st = String(r.setor || "").trim();
+      const porSt = (rnDia[dd] = rnDia[dd] || {});
+      const e = (porSt[st] = porSt[st] || { pdvs: new Set(), hl: 0 });
+      e.pdvs.add(String(r.cod_pdv || "").trim()); e.hl += hl;
+    });
 
     const porDia = {}; // AAAA-MM-DD → { pdvs:Set, hl }
     lin.forEach((r) => {
-      const m = String(r.data || "").match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-      const iso = m ? `${m[3]}-${m[2]}-${m[1]}` : String(r.data || "").slice(0, 10);
+      const iso = isoDe(r);
       if (!iso.startsWith(mes)) return;
       const hl = num(r.volume_hl); if (hl <= 0) return;
       const d = porDia[iso] || (porDia[iso] = { pdvs: new Set(), hl: 0 });
@@ -435,6 +450,7 @@ router.get("/verdes/dias", async (req, res) => {
         dia: dd, dow: new Date(y, mo - 1, dd).getDay(),
         pdvs: d ? d.pdvs.size : 0, novos, hl: d ? Math.round(d.hl * 100) / 100 : 0,
         cob_acum: vistos.size, hl_acum: Math.round(hlAcum * 100) / 100,
+        rn: Object.fromEntries(Object.entries(rnDia[dd] || {}).map(([st, e]) => [st, { pdvs: e.pdvs.size, hl: Math.round(e.hl * 100) / 100 }])),
       });
     }
     return res.json({ mes, dias, total_pdvs: vistos.size, total_hl: Math.round(hlAcum * 100) / 100 });
