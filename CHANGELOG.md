@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.4** — Relatório aberto: grupo RGB.
+Versão atual: **v3.88.5** — RV de meses antigos: Mktp/Pontos/AP dos RNs 107–111 + 030509 de volta.
+
+## v3.88.5 — Recalcular a RV de setembro
+- **Causa do Mktp "sumido" em alguns RNs:** no cálculo da RV, as metas usavam o de-para 301–305 → 107–111, mas **Faturamento Mktp, Pontos BEES e AP liam o setor cru**. Setembro foi gravado (Promax) como 301–305 → ao recalcular, os RNs 107–111 ficavam com Mktp/Pontos/AP zerados. Corrigido: todos passam pelo de-para (Mktp soma antigo + novo; Pontos/AP ficam com o valor não-zerado).
+- **030509 (Faturamento Marketplace) de volta** em Admin › Arquivos (grupo Promax), **só para meses anteriores a out/2026** — o arquivo não tem data, então é obrigatório escolher o "mês de referência"; se apontar para out/26 ou depois, o import recusa (esse mês vem do CORA).
+- Import de mês anterior (030509 / Pontos / AP com mês de referência) agora **recalcula também a RV daquele mês**, não só a do mês atual. Mês com RV fechada continua protegido (reabrir no RV Simulador antes).
 
 ## v3.88.4 — Grupo RGB no Relatório aberto
 - Novo grupo **RGB** em Outros relatórios › Relatório aberto: soma **Giro RGB + Litrinho + Trimarcas RGB HE (Original, Stella, Spaten)** — produto com mais de uma dessas categorias conta 1x. Fica entre Cerveja e NAB na lista de grupos; as subcategorias continuam disponíveis separadas.
