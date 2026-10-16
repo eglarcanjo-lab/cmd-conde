@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.3** — Verdes: clicar no dia atualiza o ranking de RNs.
+Versão atual: **v3.88.4** — Relatório aberto: grupo RGB.
+
+## v3.88.4 — Grupo RGB no Relatório aberto
+- Novo grupo **RGB** em Outros relatórios › Relatório aberto: soma **Giro RGB + Litrinho + Trimarcas RGB HE (Original, Stella, Spaten)** — produto com mais de uma dessas categorias conta 1x. Fica entre Cerveja e NAB na lista de grupos; as subcategorias continuam disponíveis separadas.
 
 ## v3.88.3 — Ranking de RN por dia
 - No mês aberto por dia, **clicar num dia filtra o ranking de RNs embaixo** para aquele dia (PDVs que cada RN atendeu no dia, ou HL do dia no flag Vol HL) — igual já acontecia ao clicar num mês. Clicar de novo no dia volta ao ranking do mês. O ranking traz sempre todos os RNs do escopo (perfil/GV), mesmo com um RN selecionado no gráfico.

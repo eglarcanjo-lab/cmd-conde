@@ -19,6 +19,8 @@ const CERVEJA_FAM = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB",
   "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE", "LITRINHO"];
 const GRUPOS = [
   { id: "grupo:cerveja", label: "Cerveja (todas: Zero, Multipack, Giro RGB, HE, Trimarcas, BC, Litrinho)", cats: CERVEJA_FAM },
+  { id: "grupo:rgb",     label: "RGB (Giro RGB + Litrinho + Trimarcas Original/Stella/Spaten)",
+    cats: ["GIRO RGB", "LITRINHO", "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)"] },
   { id: "grupo:nab",     label: "NAB (inclui NAB Zero)", cats: ["NAB", "NAB ZERO"] },
   { id: "grupo:match",   label: "Match", cats: ["MATCH"] },
   { id: "grupo:mktp",    label: "Marketplace (MKTP)", cats: ["MKTP"] },
