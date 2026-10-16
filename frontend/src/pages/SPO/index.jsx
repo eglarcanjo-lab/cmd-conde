@@ -1,5 +1,5 @@
 /* BUILD_20260525_150000 */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -11,6 +11,7 @@ import KpisVisitacao from "./KpisVisitacao";
 import KpisExecucao from "./KpisExecucao";
 import KpisTasks from "./KpisTasks";
 import KpisProgramas from "./KpisProgramas";
+import FechamentoSpo from "./FechamentoSpo"; // foto do painel consolidado por trimestre
 import { BarraMeta, BarraProgresso, INICIO_AVAL_KPI, MESES_TRI, META_GV, SPO_ITEMS, rmTd, rmTh, styles } from "./shared";
 export default function SPO() {
   const { usuario, logout } = useAuth();
@@ -108,6 +109,7 @@ export default function SPO() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroDia, setFiltroDia] = useState("todos");
   const [painelFull, setPainelFull] = useState(false); // modo tela-cheia do painel consolidado
+  const painelRef = useRef(null);                       // alvo da foto do fechamento do trimestre
 
   // Entra/sai do modo full-screen — tenta travar orientação em paisagem (Android Chrome)
   // Se não suportado (iOS), o CSS rotate(90deg) faz o fallback automaticamente
@@ -782,6 +784,7 @@ export default function SPO() {
         {/* COLUNA DIREITA — Painel SPO fixo */}
         <div className="spo-col-right" style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
           <div
+            ref={painelRef} data-spo-painel
             className={painelFull ? "spo-painel-fullscreen" : ""}
             style={painelFull
               ? { padding: "0" }
@@ -792,13 +795,16 @@ export default function SPO() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px",
               ...(painelFull ? { position: "sticky", top: 0, background: "#0c1410", padding: "12px 14px 8px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" } : {}) }}>
               <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#7DBA3D" }}>📊 Painel SPO Consolidado</p>
-              <button
+              <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <FechamentoSpo alvoRef={painelRef} isAdmin={usuario?.perfil === "admin"} />
+              <button data-sem-foto
                 onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: "8px", color: "#fff", padding: "5px 10px", cursor: "pointer", fontSize: "1rem", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 }}
               >
                 {painelFull ? "✕" : "🔍"}
               </button>
+              </span>
             </div>
             {/* Wrapper de scroll da tabela */}
             <div style={painelFull ? { padding: "0 14px 14px", overflowX: "auto" } : {}}>

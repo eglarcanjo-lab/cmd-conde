@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.5** — RV de meses antigos: Mktp/Pontos/AP dos RNs 107–111 + 030509 de volta.
+Versão atual: **v3.89.0** — SPO: fechamento do trimestre (foto do Painel Consolidado).
+
+## v3.89.0 — Fechamento do trimestre no SPO
+- No cabeçalho do **Painel SPO Consolidado**: **🔒 Fechar 2026 T3** (só admin) tira a **foto (PNG)** do painel como está — tabela inteira, mesmo a parte escondida pela rolagem, sem os botões — e salva o trimestre. Fechar de novo substitui.
+- **📸 Fechamentos** (todos): lista os trimestres fechados (quem/quando), abre a foto e **baixa o PNG**; admin pode excluir.
+- Banco: tabela `spo_fechamentos` (criada sozinha). Rotas `GET/POST /api/spo/fechamentos`, `GET/DELETE /api/spo/fechamentos/:tri`. A captura usa html2canvas 1.4.1 (cdnjs), carregado só na hora de fechar.
 
 ## v3.88.5 — Recalcular a RV de setembro
 - **Causa do Mktp "sumido" em alguns RNs:** no cálculo da RV, as metas usavam o de-para 301–305 → 107–111, mas **Faturamento Mktp, Pontos BEES e AP liam o setor cru**. Setembro foi gravado (Promax) como 301–305 → ao recalcular, os RNs 107–111 ficavam com Mktp/Pontos/AP zerados. Corrigido: todos passam pelo de-para (Mktp soma antigo + novo; Pontos/AP ficam com o valor não-zerado).

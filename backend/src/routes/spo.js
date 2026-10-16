@@ -5,6 +5,7 @@ const router = express.Router();
 const { readSheet, sobrescreverAba } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { SPO_REAL, realDaLinha } = require("../config/spoKpis");
+const { query } = require("../services/db");
 
 router.use(authMiddleware);
 
@@ -746,6 +747,67 @@ router.get("/:id/detalhe", async (req, res) => {
     const dados = await readSheet(_abaSpo(req.params.id, "detalhe"));
     return res.json(filtrarGV(dados, req.user));
   } catch { return res.json([]); }
+});
+
+// ── Fechamento do trimestre do SPO ─────────────────────────────────────────────────
+// Os KPIs mudam todo trimestre → ao fechar, guardamos a FOTO (PNG) do Painel SPO
+// Consolidado. 1 fechamento por trimestre (fechar de novo substitui). A imagem fica no
+// banco (data URL) — a lista não traz a imagem (leve); GET /:tri traz.
+let _fechOk = false;
+async function ensureFech() {
+  if (_fechOk) return;
+  await query(`CREATE TABLE IF NOT EXISTS spo_fechamentos (
+    trimestre TEXT PRIMARY KEY, rotulo TEXT, imagem TEXT, largura INT, altura INT,
+    fechado_em TIMESTAMPTZ DEFAULT now(), fechado_por TEXT)`);
+  _fechOk = true;
+}
+const triValido = (t) => /^\d{4}-T[1-4]$/.test(String(t || ""));
+
+// GET /api/spo/fechamentos → [{ trimestre, rotulo, fechado_em, fechado_por, largura, altura }]
+router.get("/fechamentos", async (req, res) => {
+  try {
+    await ensureFech();
+    const r = await query("SELECT trimestre, rotulo, largura, altura, fechado_em, fechado_por FROM spo_fechamentos ORDER BY trimestre DESC");
+    return res.json(r.rows);
+  } catch (e) { console.error("spo/fechamentos:", e); return res.status(500).json({ error: "Erro ao listar fechamentos." }); }
+});
+
+// GET /api/spo/fechamentos/:tri → { ..., imagem }
+router.get("/fechamentos/:tri", async (req, res) => {
+  try {
+    await ensureFech();
+    const r = await query("SELECT * FROM spo_fechamentos WHERE trimestre = $1", [req.params.tri]);
+    if (!r.rows.length) return res.status(404).json({ error: "Fechamento não encontrado." });
+    return res.json(r.rows[0]);
+  } catch (e) { console.error("spo/fechamentos/:tri:", e); return res.status(500).json({ error: "Erro ao abrir o fechamento." }); }
+});
+
+// POST /api/spo/fechamentos { trimestre:"2026-T3", rotulo, imagem:"data:image/png;base64,…", largura, altura } — admin
+router.post("/fechamentos", async (req, res) => {
+  try {
+    if (req.user.perfil !== "admin") return res.status(403).json({ error: "Só o admin fecha o trimestre." });
+    const { trimestre, rotulo, imagem, largura, altura } = req.body || {};
+    if (!triValido(trimestre)) return res.status(400).json({ error: "Trimestre inválido (ex.: 2026-T3)." });
+    if (!/^data:image\/(png|jpeg);base64,/.test(String(imagem || ""))) return res.status(400).json({ error: "Imagem do painel inválida." });
+    if (String(imagem).length > 9 * 1024 * 1024) return res.status(413).json({ error: "Imagem grande demais." });
+    await ensureFech();
+    await query(`INSERT INTO spo_fechamentos (trimestre, rotulo, imagem, largura, altura, fechado_em, fechado_por)
+      VALUES ($1,$2,$3,$4,$5, now(), $6)
+      ON CONFLICT (trimestre) DO UPDATE SET rotulo = EXCLUDED.rotulo, imagem = EXCLUDED.imagem, largura = EXCLUDED.largura,
+        altura = EXCLUDED.altura, fechado_em = now(), fechado_por = EXCLUDED.fechado_por`,
+      [trimestre, String(rotulo || trimestre), imagem, Number(largura) || null, Number(altura) || null, req.user.nome || req.user.cod]);
+    return res.json({ ok: true, trimestre });
+  } catch (e) { console.error("spo/fechamentos POST:", e); return res.status(500).json({ error: "Erro ao salvar o fechamento." }); }
+});
+
+// DELETE /api/spo/fechamentos/:tri — admin
+router.delete("/fechamentos/:tri", async (req, res) => {
+  try {
+    if (req.user.perfil !== "admin") return res.status(403).json({ error: "Só o admin." });
+    await ensureFech();
+    await query("DELETE FROM spo_fechamentos WHERE trimestre = $1", [req.params.tri]);
+    return res.json({ ok: true });
+  } catch (e) { console.error("spo/fechamentos DELETE:", e); return res.status(500).json({ error: "Erro ao excluir." }); }
 });
 
 module.exports = router;
