@@ -393,6 +393,57 @@ router.get("/verdes/pedidos", async (req, res) => {
   }
 });
 
+// GET /api/resumo/verdes/dias?mes=YYYY-MM&setor=&gv= — o mês dos Verdes aberto POR DIA.
+// Por dia: PDVs que compraram NO dia, HL do dia e os ACUMULADOS do mês (PDVs distintos até
+// o dia = cobertura do mês; HL acumulado). Fonte: verdes_pedidos (venda efetiva, 1 linha
+// por pedido). Escopo por perfil + filtros opcionais de RN (setor) ou GV (1/3).
+router.get("/verdes/dias", async (req, res) => {
+  try {
+    const mes = String(req.query.mes || "").trim();
+    if (!/^\d{4}-\d{2}$/.test(mes)) return res.status(400).json({ error: "Informe o mês (YYYY-MM)." });
+    const setor = String(req.query.setor || "").trim();
+    const gv = String(req.query.gv || "").trim();
+    const all = await readSheetMonths("verdes_pedidos", "mes_referencia", [mes]).catch(() => []);
+    let lin = filtrarPorPerfil(all, req.user, "setor");
+    if (setor) lin = lin.filter((r) => String(r.setor || "").trim() === setor);
+    else if (gv) lin = lin.filter((r) => String(r.setor || "").trim().startsWith(gv));
+
+    const porDia = {}; // AAAA-MM-DD → { pdvs:Set, hl }
+    lin.forEach((r) => {
+      const m = String(r.data || "").match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      const iso = m ? `${m[3]}-${m[2]}-${m[1]}` : String(r.data || "").slice(0, 10);
+      if (!iso.startsWith(mes)) return;
+      const hl = num(r.volume_hl); if (hl <= 0) return;
+      const d = porDia[iso] || (porDia[iso] = { pdvs: new Set(), hl: 0 });
+      d.pdvs.add(String(r.cod_pdv || "").trim()); d.hl += hl;
+    });
+    // todos os dias do mês até o último com venda (ou até hoje, no mês corrente)
+    const [y, mo] = mes.split("-").map(Number);
+    const ultimoDia = new Date(y, mo, 0).getDate();
+    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const ehMesAtual = hoje.getFullYear() === y && hoje.getMonth() + 1 === mo;
+    const comVenda = Object.keys(porDia).map((k) => Number(k.slice(8, 10)));
+    const ate = ehMesAtual ? Math.max(hoje.getDate(), ...comVenda, 1) : ultimoDia;
+    const vistos = new Set(); let hlAcum = 0;
+    const dias = [];
+    for (let dd = 1; dd <= Math.min(ate, ultimoDia); dd++) {
+      const iso = `${mes}-${String(dd).padStart(2, "0")}`;
+      const d = porDia[iso];
+      const novos = d ? [...d.pdvs].filter((p) => !vistos.has(p)).length : 0;
+      if (d) { d.pdvs.forEach((p) => vistos.add(p)); hlAcum += d.hl; }
+      dias.push({
+        dia: dd, dow: new Date(y, mo - 1, dd).getDay(),
+        pdvs: d ? d.pdvs.size : 0, novos, hl: d ? Math.round(d.hl * 100) / 100 : 0,
+        cob_acum: vistos.size, hl_acum: Math.round(hlAcum * 100) / 100,
+      });
+    }
+    return res.json({ mes, dias, total_pdvs: vistos.size, total_hl: Math.round(hlAcum * 100) / 100 });
+  } catch (e) {
+    console.error("resumo/verdes/dias:", e);
+    return res.status(500).json({ error: "Erro ao abrir o mês por dia." });
+  }
+});
+
 // ── Incentivo Faturamento Marketplace (bloco da Home desktop + popup no celular) ─────────
 // Meta COLETIVA da operação no mês. Próximo incentivo = trocar este objeto.
 const INCENTIVO_MKTP = { mes: "2026-10", meta: 400000, titulo: "Desafio Marketplace", campanha: "Outubro" };

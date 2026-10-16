@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.0** — Incentivo "Desafio Marketplace" de outubro (meta R$ 400.000).
+Versão atual: **v3.88.1** — Verdes: clicar no mês abre o gráfico por dia.
+
+## v3.88.1 — Verdes por dia
+- Home › Verdes (Stella Pure Gold 600): **clicar num mês abre o mês por dia** — barras = PDVs que compraram no dia (ou HL do dia, no flag Vol HL) e linha amarela = **acumulado do mês** (PDVs distintos até o dia = cobertura do mês / HL acumulado). Toque/clique numa barra mostra dia, valor, novos PDVs e acumulado; fins de semana sombreados; "← trimestre" volta. Respeita o escopo GV e o RN selecionado.
+- Rota nova `GET /api/resumo/verdes/dias?mes=&setor=&gv=` (fonte: `verdes_pedidos`, venda efetiva por pedido).
 
 ## v3.88.0 — Desafio Marketplace (outubro)
 - **Popup com arte no celular** (RN e qualquer usuário na Home do celular): anel animado com o % da meta, realizado × meta, quanto falta, ritmo necessário por dia útil, dias restantes, tendência e — para o RN — **a sua contribuição e a posição no ranking**. Abre ao entrar no app **sempre que o CORA for atualizado** (guarda o carimbo da última importação já vista); espera o popup de arte do admin fechar, se houver.

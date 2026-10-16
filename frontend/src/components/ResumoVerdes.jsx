@@ -11,6 +11,61 @@ const rotMes = (m) => { const [, mo] = String(m).split("-"); return MESES_ABR[(N
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR");
 const primeiroNome = (s) => String(s || "").trim().split(/\s+/)[0] || "";
 
+// Gráfico do mês ABERTO POR DIA: barras = valor do dia (PDVs que compraram no dia / HL do dia);
+// linha amarela = acumulado do mês (PDVs distintos até o dia = cobertura do mês / HL acumulado).
+// Toque/clique numa barra mostra o detalhe do dia (no celular não há "hover").
+function GraficoDias({ dias, aba, mesRot }) {
+  const [sel, setSel] = useState(null);
+  if (!dias?.length) return <div style={S.skel}>Sem pedidos deste SKU no mês (o detalhe diário vem da importação de Pedidos/CORA).</div>;
+  const cob = aba === "cobertura";
+  const val = (d) => (cob ? d.pdvs : d.hl);
+  const acu = (d) => (cob ? d.cob_acum : d.hl_acum);
+  const maxV = Math.max(1, ...dias.map(val));
+  const maxA = Math.max(1, ...dias.map(acu));
+  const H = 110, n = dias.length;
+  const pts = dias.map((d, i) => `${(i + 0.5).toFixed(2)},${(H - (acu(d) / maxA) * (H - 8)).toFixed(1)}`).join(" ");
+  const ativo = sel != null ? dias[sel] : [...dias].reverse().find((d) => val(d) > 0) || dias[dias.length - 1];
+  const un = cob ? "PDVs" : "HL";
+  const DOW = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  return (
+    <div style={{ marginTop: 6 }}>
+      <div style={S.diaInfo}>
+        <b>{String(ativo.dia).padStart(2, "0")}/{mesRot}</b> <span style={{ opacity: 0.55 }}>({DOW[ativo.dow]})</span>
+        {" · "}<span style={{ color: "#9fce6a" }}>{fmt(val(ativo))} {un} no dia</span>
+        {cob && ativo.novos > 0 ? <span style={{ opacity: 0.7 }}> ({ativo.novos} novos)</span> : null}
+        {" · "}<span style={{ color: "#e8c468" }}>acumulado {fmt(acu(ativo))} {un}</span>
+      </div>
+      <div style={{ position: "relative", height: H, marginTop: 6 }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 2 }}>
+          {dias.map((d, i) => (
+            <div key={d.dia} onClick={() => setSel(sel === i ? null : i)}
+              title={`${String(d.dia).padStart(2, "0")}/${mesRot} · ${fmt(val(d))} ${un} no dia · acumulado ${fmt(acu(d))}`}
+              style={{ flex: 1, height: "100%", display: "flex", alignItems: "flex-end", cursor: "pointer", borderRadius: 3,
+                background: d.dow === 0 || d.dow === 6 ? "rgba(255,255,255,0.03)" : "transparent", outline: sel === i ? "1px solid rgba(125,186,61,0.6)" : "none" }}>
+              <div style={{ width: "100%", height: `${val(d) > 0 ? Math.max(4, (val(d) / maxV) * (H - 14)) : 0}px`, borderRadius: "3px 3px 0 0",
+                background: sel === i ? "#b8f35a" : "rgba(125,186,61,0.75)" }} />
+            </div>
+          ))}
+        </div>
+        <svg viewBox={`0 0 ${n} ${H}`} preserveAspectRatio="none" width="100%" height={H} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} aria-hidden="true">
+          <polyline points={pts} fill="none" stroke="#e8c468" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
+      <div style={{ display: "flex", gap: 2, marginTop: 3 }}>
+        {dias.map((d, i) => (
+          <span key={d.dia} style={{ flex: 1, textAlign: "center", fontSize: "0.6rem", color: sel === i ? "#7DBA3D" : "rgba(255,255,255,0.35)", fontVariantNumeric: "tabular-nums" }}>
+            {d.dia === 1 || d.dia % 5 === 0 || i === n - 1 || sel === i ? d.dia : ""}
+          </span>
+        ))}
+      </div>
+      <div style={S.legenda}>
+        <span><i style={{ ...S.leg, background: "rgba(125,186,61,0.75)" }} /> {cob ? "PDVs que compraram no dia" : "HL no dia"}</span>
+        <span><i style={{ ...S.leg, background: "#e8c468", height: 2 }} /> {cob ? "Cobertura acumulada no mês" : "HL acumulado no mês"}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ResumoVerdes({ mes }) {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState("");
@@ -19,6 +74,21 @@ export default function ResumoVerdes({ mes }) {
   const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
   const [gvSel, setGvSel] = useState("todos");      // todos | "1" (GV1 = 1xx) | "3" (GV3 = 3xx)
+  const [dias, setDias] = useState(null);           // mês aberto por dia (quando mesSel != null)
+  const [carregandoDias, setCarregandoDias] = useState(false);
+  const mesAberto = mesSel != null ? (data?.meses || [])[mesSel] : null;
+  useEffect(() => {
+    if (!mesAberto) { setDias(null); return; }
+    let vivo = true;
+    setCarregandoDias(true);
+    const params = { mes: mesAberto };
+    if (rnSel !== "todos") params.setor = rnSel; else if (gvSel !== "todos") params.gv = gvSel;
+    api.get("/api/resumo/verdes/dias", { params, timeout: 20000 })
+      .then((r) => vivo && setDias(r.data?.dias || []))
+      .catch(() => vivo && setDias([]))
+      .finally(() => vivo && setCarregandoDias(false));
+    return () => { vivo = false; };
+  }, [mesAberto, rnSel, gvSel]);
 
   useEffect(() => {
     let cancel = false, tent = 0;
@@ -137,14 +207,25 @@ export default function ResumoVerdes({ mes }) {
           ) : (
             <>
               <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : gvSel !== "todos" ? ` · GV ${gvSel}` : ""}</small></div>
+              {mesAberto ? (
+                <>
+                  <div style={S.voltar}>
+                    <span>📅 {rotMes(mesAberto)} aberto por dia</span>
+                    <button style={S.voltarBtn} onClick={() => setMesSel(null)}>← trimestre</button>
+                  </div>
+                  {carregandoDias || !dias ? <div style={S.skel}>Abrindo o mês por dia…</div>
+                    : <GraficoDias dias={dias} aba={aba} mesRot={String(mesAberto).slice(5, 7)} />}
+                </>
+              ) : (<>
               <div style={S.vlab}>{meses.map((m, i) => <span key={m} style={S.vs}>{serie[i] ? fmt(serie[i]) : ""}</span>)}</div>
               <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="96" preserveAspectRatio="none" style={{ marginTop: 2, display: "block" }} aria-hidden="true">
                 <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
                 {n > 1 && <polyline points={`${x0},${bot} ${pts.join(" ")} ${xN},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
                 <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               </svg>
+              </>)}
               <div style={S.mlab}>{meses.map((m, i) => (
-                <span key={m} onClick={() => setMesSel(mesSel === i ? null : i)} style={{ ...S.ms, ...(mesSel === i ? S.msOn : {}) }} title="Clique para filtrar a faixa por este mês">
+                <span key={m} onClick={() => setMesSel(mesSel === i ? null : i)} style={{ ...S.ms, ...(mesSel === i ? S.msOn : {}) }} title="Clique para abrir este mês por dia">
                   {rotMes(m)}{multiAno ? <small style={{ opacity: 0.55 }}>/{String(m).slice(2, 4)}</small> : null}
                 </span>
               ))}</div>
@@ -201,6 +282,11 @@ const S = {
   ms: { flex: 1, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textAlign: "center", cursor: "pointer", padding: "2px 0", borderRadius: "4px" },
   msOn: { color: "#7DBA3D", fontWeight: "700", background: "rgba(125,186,61,0.14)" },
   skel: { color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", padding: "10px 2px" },
+  voltar: { display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, color: "rgba(255,255,255,0.6)", fontSize: "0.78rem" },
+  voltarBtn: { fontSize: "0.74rem", fontFamily: "inherit", color: "#7DBA3D", background: "transparent", border: "1px solid rgba(125,186,61,0.4)", borderRadius: 20, padding: "3px 10px", cursor: "pointer" },
+  diaInfo: { color: "rgba(255,255,255,0.8)", fontSize: "0.76rem", minHeight: 18 },
+  legenda: { display: "flex", gap: 14, flexWrap: "wrap", marginTop: 6, color: "rgba(255,255,255,0.45)", fontSize: "0.68rem" },
+  leg: { display: "inline-block", width: 10, height: 8, borderRadius: 2, marginRight: 4, verticalAlign: "middle" },
   faixaWrap: { marginTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "10px", display: "flex", flexDirection: "column", gap: "5px" },
   faixaTit: { color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", marginBottom: "3px" },
   faixaRow: { display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" },
