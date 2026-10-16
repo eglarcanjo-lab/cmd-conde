@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.88.1** — Verdes: clicar no mês abre o gráfico por dia.
+Versão atual: **v3.88.2** — Verdes por dia em gráfico de linhas, com todas as datas.
+
+## v3.88.2 — Verdes por dia: linhas
+- O mês aberto por dia virou **gráfico de linhas** (saíram as colunas): linha verde com o valor do dia (número em cima de cada ponto) e linha amarela tracejada com o acumulado do mês. **Todas as datas aparecem** no eixo; em mês com mais de 20 dias, as datas alternam em duas alturas no celular para não encostar. Toque/clique em qualquer dia destaca o ponto e mostra o detalhe.
 
 ## v3.88.1 — Verdes por dia
 - Home › Verdes (Stella Pure Gold 600): **clicar num mês abre o mês por dia** — barras = PDVs que compraram no dia (ou HL do dia, no flag Vol HL) e linha amarela = **acumulado do mês** (PDVs distintos até o dia = cobertura do mês / HL acumulado). Toque/clique numa barra mostra dia, valor, novos PDVs e acumulado; fins de semana sombreados; "← trimestre" volta. Respeita o escopo GV e o RN selecionado.

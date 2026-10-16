@@ -11,9 +11,10 @@ const rotMes = (m) => { const [, mo] = String(m).split("-"); return MESES_ABR[(N
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR");
 const primeiroNome = (s) => String(s || "").trim().split(/\s+/)[0] || "";
 
-// Gráfico do mês ABERTO POR DIA: barras = valor do dia (PDVs que compraram no dia / HL do dia);
-// linha amarela = acumulado do mês (PDVs distintos até o dia = cobertura do mês / HL acumulado).
-// Toque/clique numa barra mostra o detalhe do dia (no celular não há "hover").
+// Gráfico do mês ABERTO POR DIA (linhas): verde = valor do dia (PDVs que compraram no dia /
+// HL do dia), com o número em cima de cada ponto; amarela = acumulado do mês (PDVs distintos
+// até o dia = cobertura do mês / HL acumulado). Todas as datas no eixo. Toque/clique num dia
+// mostra o detalhe (no celular não há "hover"). Cada linha tem a própria escala.
 function GraficoDias({ dias, aba, mesRot }) {
   const [sel, setSel] = useState(null);
   if (!dias?.length) return <div style={S.skel}>Sem pedidos deste SKU no mês (o detalhe diário vem da importação de Pedidos/CORA).</div>;
@@ -22,45 +23,69 @@ function GraficoDias({ dias, aba, mesRot }) {
   const acu = (d) => (cob ? d.cob_acum : d.hl_acum);
   const maxV = Math.max(1, ...dias.map(val));
   const maxA = Math.max(1, ...dias.map(acu));
-  const H = 110, n = dias.length;
-  const pts = dias.map((d, i) => `${(i + 0.5).toFixed(2)},${(H - (acu(d) / maxA) * (H - 8)).toFixed(1)}`).join(" ");
+  const H = 130, TOPO = 16, BASE = H - 6, n = dias.length;
+  const yV = (d) => BASE - (val(d) / maxV) * (BASE - TOPO);
+  const yA = (d) => BASE - (acu(d) / maxA) * (BASE - TOPO);
+  const x = (i) => i + 0.5;
+  const linhaV = dias.map((d, i) => `${x(i)},${yV(d).toFixed(1)}`).join(" ");
+  const linhaA = dias.map((d, i) => `${x(i)},${yA(d).toFixed(1)}`).join(" ");
   const ativo = sel != null ? dias[sel] : [...dias].reverse().find((d) => val(d) > 0) || dias[dias.length - 1];
+  const iAtivo = dias.indexOf(ativo);
   const un = cob ? "PDVs" : "HL";
   const DOW = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  const pct = (i) => `${(x(i) / n) * 100}%`;
+  const rotuloV = (v) => (cob ? fmt(v) : (Number(v) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
   return (
     <div style={{ marginTop: 6 }}>
       <div style={S.diaInfo}>
         <b>{String(ativo.dia).padStart(2, "0")}/{mesRot}</b> <span style={{ opacity: 0.55 }}>({DOW[ativo.dow]})</span>
-        {" · "}<span style={{ color: "#9fce6a" }}>{fmt(val(ativo))} {un} no dia</span>
+        {" · "}<span style={{ color: "#9fce6a" }}>{rotuloV(val(ativo))} {un} no dia</span>
         {cob && ativo.novos > 0 ? <span style={{ opacity: 0.7 }}> ({ativo.novos} novos)</span> : null}
-        {" · "}<span style={{ color: "#e8c468" }}>acumulado {fmt(acu(ativo))} {un}</span>
+        {" · "}<span style={{ color: "#e8c468" }}>acumulado {rotuloV(acu(ativo))} {un}</span>
       </div>
-      <div style={{ position: "relative", height: H, marginTop: 6 }}>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 2 }}>
+      <div style={{ position: "relative", height: H, marginTop: 8 }}>
+        {/* fundo: fins de semana + coluna do dia selecionado (também é a área de clique) */}
+        <div style={{ position: "absolute", inset: 0, display: "flex" }}>
           {dias.map((d, i) => (
             <div key={d.dia} onClick={() => setSel(sel === i ? null : i)}
-              title={`${String(d.dia).padStart(2, "0")}/${mesRot} · ${fmt(val(d))} ${un} no dia · acumulado ${fmt(acu(d))}`}
-              style={{ flex: 1, height: "100%", display: "flex", alignItems: "flex-end", cursor: "pointer", borderRadius: 3,
-                background: d.dow === 0 || d.dow === 6 ? "rgba(255,255,255,0.03)" : "transparent", outline: sel === i ? "1px solid rgba(125,186,61,0.6)" : "none" }}>
-              <div style={{ width: "100%", height: `${val(d) > 0 ? Math.max(4, (val(d) / maxV) * (H - 14)) : 0}px`, borderRadius: "3px 3px 0 0",
-                background: sel === i ? "#b8f35a" : "rgba(125,186,61,0.75)" }} />
-            </div>
+              title={`${String(d.dia).padStart(2, "0")}/${mesRot} · ${rotuloV(val(d))} ${un} no dia · acumulado ${rotuloV(acu(d))}`}
+              style={{ flex: 1, height: "100%", cursor: "pointer",
+                background: i === iAtivo ? "rgba(125,186,61,0.10)" : d.dow === 0 || d.dow === 6 ? "rgba(255,255,255,0.03)" : "transparent" }} />
           ))}
         </div>
         <svg viewBox={`0 0 ${n} ${H}`} preserveAspectRatio="none" width="100%" height={H} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} aria-hidden="true">
-          <polyline points={pts} fill="none" stroke="#e8c468" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          <line x1="0" y1={BASE} x2={n} y2={BASE} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
+          <polyline points={linhaA} fill="none" stroke="#e8c468" strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          <polyline points={`${x(0)},${BASE} ${linhaV} ${x(n - 1)},${BASE}`} fill="rgba(125,186,61,0.10)" stroke="none" />
+          <polyline points={linhaV} fill="none" stroke="#7DBA3D" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         </svg>
-      </div>
-      <div style={{ display: "flex", gap: 2, marginTop: 3 }}>
+        {/* pontos e números (HTML p/ não distorcer) */}
         {dias.map((d, i) => (
-          <span key={d.dia} style={{ flex: 1, textAlign: "center", fontSize: "0.6rem", color: sel === i ? "#7DBA3D" : "rgba(255,255,255,0.35)", fontVariantNumeric: "tabular-nums" }}>
-            {d.dia === 1 || d.dia % 5 === 0 || i === n - 1 || sel === i ? d.dia : ""}
+          <div key={d.dia} style={{ position: "absolute", left: pct(i), top: yV(d), transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
+            <span style={{ display: "block", width: i === iAtivo ? 9 : 6, height: i === iAtivo ? 9 : 6, borderRadius: "50%",
+              background: i === iAtivo ? "#b8f35a" : "#7DBA3D", border: "1.5px solid #0f1a14" }} />
+            {val(d) > 0 && (
+              <span style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", fontSize: "0.6rem", fontWeight: 700,
+                color: i === iAtivo ? "#b8f35a" : "#9fce6a", whiteSpace: "nowrap" }}>{rotuloV(val(d))}</span>
+            )}
+          </div>
+        ))}
+        <div style={{ position: "absolute", left: pct(iAtivo), top: yA(ativo), transform: "translate(-50%, -50%)", width: 7, height: 7, borderRadius: "50%", background: "#e8c468", pointerEvents: "none" }} />
+      </div>
+      {/* TODAS as datas */}
+      <div style={{ display: "flex", marginTop: 4 }}>
+        {dias.map((d, i) => (
+          <span key={d.dia} onClick={() => setSel(sel === i ? null : i)} style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: n > 22 ? "0.58rem" : "0.62rem", cursor: "pointer", overflow: "visible", whiteSpace: "nowrap",
+            // mês longo: datas alternadas em 2 alturas (todas visíveis sem encostar)
+            paddingTop: n > 20 && i % 2 === 1 ? 10 : 0,
+            color: i === iAtivo ? "#7DBA3D" : d.dow === 0 || d.dow === 6 ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.5)", fontWeight: i === iAtivo ? 700 : 400, fontVariantNumeric: "tabular-nums" }}>
+            {d.dia}
           </span>
         ))}
       </div>
       <div style={S.legenda}>
-        <span><i style={{ ...S.leg, background: "rgba(125,186,61,0.75)" }} /> {cob ? "PDVs que compraram no dia" : "HL no dia"}</span>
-        <span><i style={{ ...S.leg, background: "#e8c468", height: 2 }} /> {cob ? "Cobertura acumulada no mês" : "HL acumulado no mês"}</span>
+        <span><i style={{ ...S.leg, background: "#7DBA3D", height: 3 }} /> {cob ? "PDVs que compraram no dia" : "HL no dia"}</span>
+        <span><i style={{ ...S.leg, background: "#e8c468", height: 2 }} /> {cob ? "Cobertura acumulada no mês (tracejada)" : "HL acumulado no mês (tracejada)"}</span>
       </div>
     </div>
   );
