@@ -18,7 +18,7 @@ export default function KpisProgramas({ ctx }) {
   return (
     <>
             {/* CUPONS DIGITAIS */}
-            {(kpiAtivo === null || kpiAtivo === 21) && (
+            {SH.mostra(kpiAtivo, 21) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 21 — Cupons Digitais Score 5</h3>
               {cupons.length === 0 ? (
@@ -118,7 +118,7 @@ export default function KpisProgramas({ ctx }) {
 
 
             {/* LOJA IDEAL VIZINHANÇA */}
-            {(kpiAtivo === null || kpiAtivo === 22) && (
+            {SH.mostra(kpiAtivo, 22) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 22 — % Lojas Ideais Vizinhança</h3>
               {lojaIdeal.length === 0 ? (
@@ -216,7 +216,7 @@ export default function KpisProgramas({ ctx }) {
 
 
             {/* EXPANSÃO SCANNTECH */}
-            {(kpiAtivo === null || kpiAtivo === 23) && (
+            {SH.mostra(kpiAtivo, 23) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 23 — Expansão Scanntech</h3>
               {scanntech.length === 0 ? (
@@ -326,7 +326,7 @@ export default function KpisProgramas({ ctx }) {
 
 
             {/* PORTFÓLIO IDEAL SCORE 5 */}
-            {(kpiAtivo === null || kpiAtivo === 24) && (
+            {SH.mostra(kpiAtivo, 24) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 24 — Portfólio Ideal Score 5</h3>
               {portIdeal.length === 0 ? (
@@ -422,7 +422,7 @@ export default function KpisProgramas({ ctx }) {
 
 
             {/* ATENDIMENTO PRODUTIVO */}
-            {(kpiAtivo === null || kpiAtivo === 5) && (
+            {SH.mostra(kpiAtivo, 5) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 5 — Atendimento Produtivo</h3>
               {ap.length === 0 && apDet.length === 0 ? (

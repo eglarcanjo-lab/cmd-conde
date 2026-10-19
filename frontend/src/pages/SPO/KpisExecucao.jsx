@@ -16,7 +16,7 @@ export default function KpisExecucao({ ctx }) {
   return (
     <>
             {/* ABA PROMOÇÃO */}
-            {(kpiAtivo === null || kpiAtivo === 7) && (
+            {SH.mostra(kpiAtivo, 7) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 7 — % PDVs abrindo Aba de Promoção no BEES</h3>
               {promo.length === 0 ? (
@@ -149,7 +149,7 @@ export default function KpisExecucao({ ctx }) {
             )}
 
             {/* POLÍTICA COMERCIAL */}
-            {(kpiAtivo === null || kpiAtivo === 8) && (
+            {SH.mostra(kpiAtivo, 8) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 8 — Aderência de Política Comercial</h3>
               {politica.length === 0 ? (
@@ -188,7 +188,7 @@ export default function KpisExecucao({ ctx }) {
 
 
             {/* MENU DE CERVEJA */}
-            {(kpiAtivo === null || kpiAtivo === 9) && (
+            {SH.mostra(kpiAtivo, 9) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 9 — Execução Menu de Cerveja</h3>
               {menu.length === 0 ? (
@@ -229,7 +229,7 @@ export default function KpisExecucao({ ctx }) {
 
 
             {/* TASKS PORTFÓLIO CERVEJA */}
-            {(kpiAtivo === null || kpiAtivo === 11) && (
+            {SH.mostra(kpiAtivo, 11) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 11 — Tasks de Portfólio Cerveja</h3>
               {tasksCerveja.length === 0 ? (
@@ -293,7 +293,7 @@ export default function KpisExecucao({ ctx }) {
 
 
             {/* TASKS FATURAMENTO SCORE 5 */}
-            {(kpiAtivo === null || kpiAtivo === 12) && (
+            {SH.mostra(kpiAtivo, 12) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 12 — Task de Faturamento Score 5</h3>
               {renderTabelaTasks(score5, 12, { realField: "pdvs_ok", totalField: "pdvs_total", uplift: 1.0, unidade: "PDVs", semDados: "Importe o relatório de Task de Faturamento (task fat) para calcular automaticamente." })}
@@ -360,7 +360,7 @@ export default function KpisExecucao({ ctx }) {
 
 
             {/* TASKS NAB */}
-            {(kpiAtivo === null || kpiAtivo === 13) && (
+            {SH.mostra(kpiAtivo, 13) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 13 — Tasks de Portfólio NAB</h3>
               {renderTabelaTasks(tasksNab, 13)}

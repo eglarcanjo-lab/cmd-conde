@@ -11,8 +11,8 @@ import KpisVisitacao from "./KpisVisitacao";
 import KpisExecucao from "./KpisExecucao";
 import KpisTasks from "./KpisTasks";
 import KpisProgramas from "./KpisProgramas";
-import FechamentoSpo from "./FechamentoSpo"; // foto do painel consolidado por trimestre
-import { BarraMeta, BarraProgresso, INICIO_AVAL_KPI, MESES_TRI, META_GV, SPO_ITEMS, rmTd, rmTh, styles } from "./shared";
+import FechamentoSpo, { triDoPainel } from "./FechamentoSpo"; // foto do painel consolidado por trimestre
+import { BarraMeta, BarraProgresso, INICIO_AVAL_KPI, MESES_TRI, META_GV, SPO_ITEMS, mostra, rmTd, rmTh, styles } from "./shared";
 export default function SPO() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -130,7 +130,7 @@ export default function SPO() {
   const kpiTriStatus = (() => {
     const status = {};
     SPO_ITEMS.forEach(({ n }) => {
-      const ini = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || "2026-07";
+      const ini = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || MESES_TRI[0];
       const meses = MESES_TRI.filter(m => ini <= m && m <= _mesAtualStr);
       let metaTot = 0, realTot = 0, hasMeta = false, hasReal = false;
       for (const mes of meses) {
@@ -147,7 +147,7 @@ export default function SPO() {
 
   // Config editável de pts/peso por KPI (admin Metas SPO) — alimenta o consolidado.
   useEffect(() => {
-    api.get("/api/spo/painel/config")
+    api.get("/api/spo/painel/config", { params: { tri: triDoPainel().id } })   // config do tri vigente
       .then((r) => { const m = {}; (r.data || []).forEach((x) => { m[String(x.item)] = { pts: x.pts, peso: x.peso, inicio: x.inicio }; }); setSpoCfg(m); })
       .catch(() => {});
   }, []);
@@ -383,7 +383,7 @@ export default function SPO() {
 
     // ── TRIMESTRAL — agrega em Operação pelo spo_metas (meses do tri até o atual) ──
     if (tasksView === "trimestral") {
-      const ini = spoCfg[String(kpiN)]?.inicio || INICIO_AVAL_KPI[kpiN] || "2026-07";
+      const ini = spoCfg[String(kpiN)]?.inicio || INICIO_AVAL_KPI[kpiN] || MESES_TRI[0];
       const meses = MESES_TRI.filter((m) => ini <= m && m <= mesAtual);
       // % + mês atual: usa o valor AO VIVO (Σvalidadas/Σtotais do resumo); jul/ago ficam
       // como cadastrado na aba Metas SPO.
@@ -643,7 +643,7 @@ export default function SPO() {
         {/* Abas de visão — contextuais por KPI */}
         {(() => {
           let abasVisiveis = ["operacao"];
-          if (kpiAtivo === null || kpiAtivo === 1) abasVisiveis = ["operacao", "gv", "detalhe"];
+          if (mostra(kpiAtivo, 1)) abasVisiveis = ["operacao", "gv", "detalhe"];
           if (kpiAtivo === 2) abasVisiveis = ["detalhe_rn"];
           return (
             <div style={styles.abas}>
@@ -690,9 +690,19 @@ export default function SPO() {
             <KpisExecucao ctx={spoCtx} />
             <KpisTasks ctx={spoCtx} />
             <KpisProgramas ctx={spoCtx} />
+            {/* KPIs sem relatório automático (Academia, e os novos do Q4) — explica de onde vem o número */}
+            {[10, 28, 29].includes(kpiAtivo) && (
+              <div style={{ ...styles.section, border: "1px dashed rgba(245,196,81,0.4)", borderRadius: 12, padding: 16 }}>
+                <h3 style={styles.sectionTitle}>📝 {SPO_ITEMS.find((k) => k.n === kpiAtivo)?.label}</h3>
+                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.85rem", margin: 0 }}>
+                  Este KPI ainda não tem relatório automático na HOP: a <b>meta</b> e o <b>realizado</b> de cada mês são lançados em
+                  <b> Admin › Metas SPO</b> e entram no Painel Consolidado.
+                </p>
+              </div>
+            )}
 
             {/* POR GV */}
-            {aba === "gv" && (kpiAtivo === null || kpiAtivo === 1) && (
+            {aba === "gv" && mostra(kpiAtivo, 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
                 <div style={styles.gvGrid}>
@@ -721,7 +731,7 @@ export default function SPO() {
             )}
 
             {/* DETALHE */}
-            {aba === "detalhe" && (kpiAtivo === null || kpiAtivo === 1) && (
+            {aba === "detalhe" && mostra(kpiAtivo, 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitas Detalhadas</h3>
                 <div style={styles.filtrosRow}>
@@ -835,12 +845,12 @@ export default function SPO() {
               <>
                           {/* PAINEL SPO CONSOLIDADO */}
                           {(() => {
-                            const MESES = ["2026-07","2026-08","2026-09"];
-                            const MESES_LABEL = {"2026-07":"Julho","2026-08":"Agosto","2026-09":"Setembro"};
+                            const MESES = MESES_TRI;
+                            const MESES_LABEL = Object.fromEntries(MESES_TRI.map((m) => [m, ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][Number(m.slice(5, 7)) - 1]]));
                             // Início do apontamento: usa o configurado no painel Metas
                             // (spo_kpi_config.inicio) com fallback no mapa padrão.
                             const INICIO_AVAL = {};
-                            SPO_ITEMS.forEach(({ n }) => { INICIO_AVAL[n] = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || "2026-07"; });
+                            SPO_ITEMS.forEach(({ n }) => { INICIO_AVAL[n] = spoCfg[String(n)]?.inicio || INICIO_AVAL_KPI[n] || MESES_TRI[0]; });
               
                             const ITENS_SPO = SPO_KPIS_BASICO; // registro único (config/spoKpis.js)
               

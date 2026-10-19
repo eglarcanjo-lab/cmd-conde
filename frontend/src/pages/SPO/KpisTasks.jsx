@@ -16,7 +16,7 @@ export default function KpisTasks({ ctx }) {
   return (
     <>
             {/* TASKS SKU/PDV TT (KPI 26 / ord 13) */}
-            {(kpiAtivo === null || kpiAtivo === 26) && (
+            {SH.mostra(kpiAtivo, 26) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 13 — Tarefas de SKU/PDV TT</h3>
               <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
@@ -101,7 +101,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* TASKS VOLUME */}
-            {(kpiAtivo === null || kpiAtivo === 14) && (
+            {SH.mostra(kpiAtivo, 14) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 14 — Tasks de Volume</h3>
               {tasksVolume.length === 0 ? (
@@ -142,7 +142,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* TASKS MARKETPLACE */}
-            {(kpiAtivo === null || kpiAtivo === 15) && (
+            {SH.mostra(kpiAtivo, 15) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 15 — Tasks de Marketplace</h3>
               {renderTabelaTasks(tasksMktp, 15)}
@@ -151,7 +151,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* TASKS MATCH */}
-            {(kpiAtivo === null || kpiAtivo === 16) && (
+            {SH.mostra(kpiAtivo, 16) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 16 — Tasks de Portfólio MATCH</h3>
               {renderTabelaTasks(tasksMatch, 16)}
@@ -160,7 +160,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* TASKS CERVEJA ZERO */}
-            {(kpiAtivo === null || kpiAtivo === 17) && (
+            {SH.mostra(kpiAtivo, 17) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 17 — Tasks de Portfólio Cerveja Zero</h3>
               {renderTabelaTasks(tasksCervZero, 17)}
@@ -169,7 +169,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* TASKS DIGITALIZAÇÃO */}
-            {(kpiAtivo === null || kpiAtivo === 18) && (
+            {SH.mostra(kpiAtivo, 18) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 18 — Tasks de Digitalização</h3>
               <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>
@@ -254,7 +254,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* PDV COMPRA INDEPENDENTE */}
-            {(kpiAtivo === null || kpiAtivo === 19) && (
+            {SH.mostra(kpiAtivo, 19) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 19 — PDVs com Compra Independente</h3>
               {alone.length === 0 ? (
@@ -385,7 +385,7 @@ export default function KpisTasks({ ctx }) {
 
 
             {/* +RGB */}
-            {(kpiAtivo === null || kpiAtivo === 20) && (
+            {SH.mostra(kpiAtivo, 20) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 20 — +RGB</h3>
               {rgb.length === 0 ? (

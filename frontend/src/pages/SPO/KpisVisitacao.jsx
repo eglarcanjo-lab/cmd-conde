@@ -14,7 +14,7 @@ export default function KpisVisitacao({ ctx }) {
   return (
     <>
             {/* OPERAÇÃO */}
-            {aba === "operacao" && (kpiAtivo === null || kpiAtivo === 1) && (
+            {aba === "operacao" && SH.mostra(kpiAtivo, 1) && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Item 1 — Visitação GV na Base Foco</h3>
                 <div style={styles.opGrid}>
@@ -141,7 +141,7 @@ export default function KpisVisitacao({ ctx }) {
             )}
 
             {/* DIAS EM ROTA TT */}
-            {(kpiAtivo === null || kpiAtivo === 3) && (
+            {SH.mostra(kpiAtivo, 3) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 3 — TT Dias com Rotas</h3>
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -179,7 +179,7 @@ export default function KpisVisitacao({ ctx }) {
             )}
 
             {/* DESAFIOS DIÁRIOS */}
-            {(kpiAtivo === null || kpiAtivo === 4) && (
+            {SH.mostra(kpiAtivo, 4) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 4 — Abertura de Desafios Diários</h3>
               <div style={styles.gvGrid}>
@@ -241,7 +241,7 @@ export default function KpisVisitacao({ ctx }) {
             )}
 
             {/* ROTINA + */}
-            {(kpiAtivo === null || kpiAtivo === 25) && (
+            {SH.mostra(kpiAtivo, 25) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 5 — Rotina + · % Visitas Medianas ou Excelentes</h3>
               {rotinaMais.length === 0 ? (
@@ -295,7 +295,7 @@ export default function KpisVisitacao({ ctx }) {
             )}
 
             {/* DTO GC */}
-            {(kpiAtivo === null || kpiAtivo === 6) && (
+            {SH.mostra(kpiAtivo, 6) && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Item 6 — DTO GC x GV</h3>
               {dto.length === 0 ? (

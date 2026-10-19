@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.89.1** — Faróis do WhatsApp voltaram (rotas removidas por engano).
+Versão atual: **v3.90.0** — SPO do 4º tri/2026 (out–dez): novos KPIs, pontos e pesos.
+
+## v3.90.0 — SPO 4º tri (out–dez/2026)
+- **KPIs do Q4** (22 itens, 180 pts) conforme a guia Comercial: pontos novos em Menu de Cerveja ou Cardápio (6), Academia (6), Cerveja TT (26), NAB TT (8), Marketplace (4), Match (4), Atendimento Produtivo (32) e Portfólio Ideal (10); "+LN" virou **Tarefas de Long Neck**. **Saem:** Cerveja Zero, Digitalização e Cupons Digitais. **Entram:** **Vendendo com o BEES** (4) e **Ofertas de Pontos Concluídas** (6) — por ora com meta/realizado lançados em Admin › Metas SPO (ainda sem relatório).
+- Trimestre vigente = **out/nov/dez** (tela SPO, Painel Consolidado, Admin › Metas SPO); todos os KPIs avaliados a partir de outubro.
+- **Pontos/peso/início por trimestre:** a config editável de Admin › Metas SPO agora é separada por tri (`?tri=2026-T4`) — a do Q3 fica guardada e não "vaza" para o Q4 (antes o Q3 tinha Cerveja = 20 salvo, que sobrescreveria os 26).
+- No panorama geral do SPO só aparecem os blocos dos KPIs ativos (antes os inativos também apareciam). KPIs sem relatório (Academia e os 2 novos) mostram de onde vem o número.
 
 ## v3.89.1 — Faróis do WhatsApp de volta
 - O envio diário "HOP · Faróis do dia" (robô `cmd-conde-whatsapp`, 8h) saía só com a Conversão PG: as rotas `/api/farol-visita`, `/api/farol-queda` e `/api/farol-volumes` tinham sido removidas na v3.85.1 (a auditoria achou que estavam sem uso — o robô roda fora da HOP). Restauradas como estavam; o próximo envio volta completo.

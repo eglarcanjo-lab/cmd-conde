@@ -3,16 +3,23 @@ import { SPO_KPIS } from "../../config/spoKpis";
 
 export const META_GV = 36;
 
-// Meses e início de avaliação por KPI — espelha as constantes do painel consolidado
-export const MESES_TRI = ["2026-07","2026-08","2026-09"];
-// Trimestre Jul–Set/2026: todos os KPIs começam a ser avaliados em Julho.
-export const INICIO_AVAL_KPI = {1:"2026-07",2:"2026-07",3:"2026-07",4:"2026-07",5:"2026-07",6:"2026-07",7:"2026-07",8:"2026-07",9:"2026-07",10:"2026-07",11:"2026-07",12:"2026-07",13:"2026-07",14:"2026-07",15:"2026-07",16:"2026-07",17:"2026-07",18:"2026-07",19:"2026-07",20:"2026-07",21:"2026-07",22:"2026-07",23:"2026-07",24:"2026-07",25:"2026-07",26:"2026-07",27:"2026-07"}; INICIO_AVAL_KPI[2]="2026-08";
+// Trimestre vigente do SPO. TROCA DE TRI: atualizar MESES_TRI (+ KPIs em config/spoKpis.js)
+// DEPOIS de fechar o tri anterior em "🔒 Fechar" (a foto usa o painel do tri vigente).
+export const MESES_TRI = ["2026-10","2026-11","2026-12"]; // 4º tri/2026
+// Início da avaliação por KPI: por padrão o 1º mês do tri (dá p/ ajustar por KPI em
+// Admin › Metas SPO, coluna "Início apont.", que vale só para o tri vigente).
+export const INICIO_AVAL_KPI = Object.fromEntries(SPO_KPIS.map((k) => [k.n, MESES_TRI[0]]));
 
 // Lista de KPIs vem do registro único (config/spoKpis.js) — fonte de verdade
 // compartilhada com o Painel SPO e o admin de Metas.
 export const SPO_ITEMS = SPO_KPIS.filter((k) => k.ativo).sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999)); // ativos, na ordem oficial (ord)
 
 export const TOTAL_PTS = SPO_ITEMS.reduce((s, i) => s + i.pts, 0); // 180
+
+// Bloco de KPI na tela: KPI selecionado → mostra; panorama geral (nenhum selecionado) → só
+// os KPIs ATIVOS do tri (antes os inativos também apareciam no panorama).
+const _ATIVOS = new Set(SPO_ITEMS.map((k) => k.n));
+export const mostra = (kpiAtivo, n) => kpiAtivo === n || (kpiAtivo === null && _ATIVOS.has(n));
 
 // Estilos da seção Rotina+ (detalhada)
 export const rmCard = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "12px 16px", textAlign: "center", minWidth: "108px" };

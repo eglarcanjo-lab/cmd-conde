@@ -476,23 +476,31 @@ router.post("/painel/metas", async (req, res) => {
 
 // GET /api/spo/painel/config — pontuação (pts) e peso por KPI, editáveis no admin.
 // Alimenta o consolidado (fallback: constantes do registro config/spoKpis.js).
+// POR TRIMESTRE (?tri=2026-T4): cada tri tem a sua config — os KPIs/pontos mudam todo tri e
+// a config do anterior não pode "vazar" para o novo. Linhas antigas sem `tri` = 2026-T3.
+const TRI_LEGADO = "2026-T3";
+const triDaLinha = (r) => String(r.tri || "").trim() || TRI_LEGADO;
 router.get("/painel/config", async (req, res) => {
   try {
     const dados = await readSheet("spo_kpi_config");
-    return res.json(dados);
+    const tri = String(req.query.tri || "").trim();
+    return res.json(tri ? dados.filter((r) => triDaLinha(r) === tri) : dados);
   } catch { return res.json([]); }
 });
 
-// POST /api/spo/painel/config — substitui a aba spo_kpi_config
+// POST /api/spo/painel/config { tri, linhas } — substitui SÓ as linhas daquele trimestre
 router.post("/painel/config", async (req, res) => {
   try {
     const { linhas } = req.body;
+    const tri = String(req.body?.tri || "").trim() || TRI_LEGADO;
     if (!Array.isArray(linhas)) return res.status(400).json({ error: "Envie { linhas: [...] }." });
-    const headers = ["item", "pts", "peso", "inicio"];
+    const headers = ["item", "pts", "peso", "inicio", "tri"];
     const val = (x) => (x !== "" && x !== null && x !== undefined ? String(x) : "");
+    const outros = (await readSheet("spo_kpi_config").catch(() => [])).filter((r) => triDaLinha(r) !== tri);
     const rows = [
       headers,
-      ...linhas.map((l) => [String(l.item ?? ""), val(l.pts), val(l.peso), val(l.inicio)]),
+      ...outros.map((r) => [String(r.item ?? ""), val(r.pts), val(r.peso), val(r.inicio), triDaLinha(r)]),
+      ...linhas.map((l) => [String(l.item ?? ""), val(l.pts), val(l.peso), val(l.inicio), tri]),
     ];
     await sobrescreverAba("spo_kpi_config", rows);
     return res.json({ success: true, total: linhas.length });

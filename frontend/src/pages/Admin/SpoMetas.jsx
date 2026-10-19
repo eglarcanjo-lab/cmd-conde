@@ -2,9 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 import { SPO_KPIS, SPO_KPIS_BASICO } from "../../config/spoKpis";
+import { MESES_TRI } from "../SPO/shared";
+import { triDoPainel } from "../SPO/FechamentoSpo";
+const TRI = triDoPainel().id; // pts/peso/início valem por trimestre
 
-const MESES = ["2026-07","2026-08","2026-09"];
-const MESES_LABEL = { "2026-07":"Julho","2026-08":"Agosto","2026-09":"Setembro" };
+const MESES = MESES_TRI; // tri vigente (pages/SPO/shared.jsx)
+const MESES_LABEL = Object.fromEntries(MESES_TRI.map((m) => [m, ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][Number(m.slice(5, 7)) - 1]]));
 
 // Calcula o mês anterior ao atual (padrão do snapshot)
 function mesAnterior() {
@@ -42,7 +45,7 @@ export default function SpoMetas() {
     try {
       const [resM, resC] = await Promise.all([
         api.get("/api/spo/painel/metas"),
-        api.get("/api/spo/painel/config").catch(() => ({ data: [] })),
+        api.get("/api/spo/painel/config", { params: { tri: TRI } }).catch(() => ({ data: [] })),   // config do tri vigente
       ]);
       const mapa = {};
       (resM.data || []).forEach((r) => {
@@ -103,7 +106,7 @@ export default function SpoMetas() {
         const cfgLinhas0 = ITENS
           .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso"), inicio: getCfg(n, "inicio") }))
           .filter((l) => l.pts !== "" || l.peso !== "" || l.inicio !== "");
-        if (cfgLinhas0.length) await api.post("/api/spo/painel/config", { linhas: cfgLinhas0 });
+        if (cfgLinhas0.length) await api.post("/api/spo/painel/config", { tri: TRI, linhas: cfgLinhas0 });
         setMsg("⚠️ Nenhuma meta/real preenchido — metas NÃO foram sobrescritas (proteção). Config salva.");
         setSalvando(false);
         setTimeout(() => setMsg(""), 7000);
@@ -115,7 +118,7 @@ export default function SpoMetas() {
       const cfgLinhas = ITENS
         .map(({ n }) => ({ item: n, pts: getCfg(n, "pts"), peso: getCfg(n, "peso"), inicio: getCfg(n, "inicio") }))
         .filter((l) => l.pts !== "" || l.peso !== "" || l.inicio !== "");
-      await api.post("/api/spo/painel/config", { linhas: cfgLinhas });
+      await api.post("/api/spo/painel/config", { tri: TRI, linhas: cfgLinhas });
 
       setMsg(`✅ ${linhas.length} metas + ${cfgLinhas.length} configs salvas!`);
     } catch {
