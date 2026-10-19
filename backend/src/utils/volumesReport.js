@@ -19,7 +19,7 @@ const CATS_BASE = [
 // ({ setor: HL }, utils/rgbVolume). Meta = monitoramento lançado (opts.rateio.rgb); sem meta → "—".
 const CAT_RGB = { key: "rgb", label: "RGB TT", tipo: "ext" };
 const catsDe = (opts) => {
-  if (opts && opts.rgb) { const c = [...CATS_BASE]; c.splice(1, 0, CAT_RGB); return c; } // após Cerveja
+  if (opts && opts.rgb) { const c = [...CATS_BASE]; c.splice(c.findIndex((x) => x.key === "mktp") + 1, 0, CAT_RGB); return c; } // após Mktp
   return CATS_BASE;
 };
 // Sem a coluna "%" (Real vs Meta) — fica só o "%T" (Tendência vs Meta).

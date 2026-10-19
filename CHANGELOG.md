@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.96.0** — RGB TT no acompanhamento de Volumes (com meta).
+Versão atual: **v3.96.1** — RGB TT depois de Mktp.
+
+## v3.96.1 — Ordem das categorias
+- **RGB TT** passa a vir **depois de Mktp** (Home: barras/por RN/Analítico; Report Volumes do motor): Cerveja · NAB · Match · Mktp · RGB TT · Cerv. Zero · NAB Zero.
 
 ## v3.96.0 — RGB TT nos Volumes
 - Nova categoria **RGB TT** = **Giro RGB + Litrinho + Trimarcas RGB HE (Original/Stella/Spaten)** — produto com mais de uma dessas categorias conta 1x (fonte: vendas_cliente_produto × produtos_base, `utils/rgbVolume.js`).

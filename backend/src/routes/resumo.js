@@ -75,10 +75,10 @@ router.get("/volumes", async (req, res) => {
       const realRgb = setoresRec.reduce((s, st) => s + (rgbSetor[st] || 0), 0);
       return [
         mk("Cerveja", realCerveja, soma("meta_cerveja")),
-        mk("RGB TT", realRgb, mRgb ?? 0, mRgb == null),
         mk("NAB", realNab, soma("meta_nab")),
         mk("Match", soma("real_match"), mMatch ?? soma("meta_match")),
         mk("Mktp", soma("real_marketplace"), soma("meta_marketplace")),
+        mk("RGB TT", realRgb, mRgb ?? 0, mRgb == null),
         mk("Cerveja Zero", volCat("CERVEJA ZERO"), mCZ ?? 0.15 * realCerveja, mCZ == null),
         mk("NAB Zero", volCat("NAB ZERO"), mNZ ?? 0.15 * realNab, mNZ == null),
       ];
