@@ -6,6 +6,7 @@ const { readSheet, sobrescreverAba } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { SPO_REAL, realDaLinha } = require("../config/spoKpis");
 const { query } = require("../services/db");
+const { filtrarPorPerfil } = require("../utils/perfil");
 
 router.use(authMiddleware);
 
@@ -188,6 +189,41 @@ router.get("/politica-comercial/resumo", async (req, res) => {
     const dados = await readSheet("spo_politica_resumo");
     return res.json(dados);
   } catch { return res.json([]); }
+});
+
+// GET /api/spo/politica-comercial/pdvs — Planificador de Execução TTC (KPI 8) PDV a PDV,
+// já cruzado com o relatório de Tasks: cada PDV traz as tasks de TTC do mês (abertas,
+// validadas, inválidas) p/ o RN saber qual task fazer no aderido sem execução.
+// Escopo: RN vê o próprio setor; GV o seu; admin/director tudo.
+const TASKS_TTC = new Set(["03_05_09", "03_03_01", "03_04_01", "03_05_10"]);
+router.get("/politica-comercial/pdvs", async (req, res) => {
+  try {
+    const [plan, tasks, statusArq] = await Promise.all([
+      readSheet("planificador_ttc").catch(() => []),
+      readSheet("tasks").catch(() => []),
+      readSheet("status_arquivos").catch(() => []),
+    ]);
+    const pdvs = filtrarPorPerfil(plan, req.user);
+    const cods = new Set(pdvs.map((p) => String(p.cod_pdv)));
+    const porPdv = {};
+    for (const t of tasks) {
+      const cod = String(t.cod_pdv || "").replace(/^0+/, "");
+      if (!cods.has(cod) || !TASKS_TTC.has(String(t.id_task || "").trim())) continue;
+      (porPdv[cod] = porPdv[cod] || []).push({
+        id_task: t.id_task, descricao: t.descricao, status: String(t.status || "").toUpperCase(),
+        data_criacao: t.data_criacao, data_visita: t.data_visita, data_conclusao: t.data_conclusao,
+        justificativa: /^(nan|none)?$/i.test(String(t.justificativa || "").trim()) ? "" : t.justificativa,
+      });
+    }
+    const st = statusArq.find((r) => /planificador/i.test(String(r.arquivo || "")));
+    return res.json({
+      atualizado_em: st ? String(st.atualizado_em || "").trim() : "",
+      pdvs: pdvs.map((p) => ({ ...p, tasks_ttc: porPdv[String(p.cod_pdv)] || [] })),
+    });
+  } catch (err) {
+    console.error("spo/politica-comercial/pdvs:", err);
+    return res.status(500).json({ error: "Erro ao buscar o planificador TTC." });
+  }
 });
 
 // GET /api/spo/politica-comercial/detalhe

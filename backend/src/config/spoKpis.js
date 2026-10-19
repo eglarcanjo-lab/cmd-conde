@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const SPO_REAL = {
   5:  { aba: "spo_ap_resumo",              campos: ["rns_ap_ok"] },
-  8:  { aba: "spo_politica_resumo",        campos: ["pdvs_execucao"] },
+  8:  { aba: "spo_politica_resumo",        campos: ["pct"] }, // % Aderidos E Executados / base (Planificador TTC) — meta em %
   9:  { aba: "spo_menu_resumo",            campos: ["tasks_validas"] },
   11: { aba: "spo_tasks_cerveja_resumo",   campos: ["tasks_validas", "pdvs_ok"] },
   12: { aba: "spo_score5_resumo",          campos: ["pdvs_ok"] },

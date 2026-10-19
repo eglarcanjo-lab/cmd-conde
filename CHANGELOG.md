@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.90.0** — SPO do 4º tri/2026 (out–dez): novos KPIs, pontos e pesos.
+Versão atual: **v3.91.0** — KPI 8 (Política Comercial) pelo Planificador TTC + lista de ataque.
+
+## v3.91.0 — KPI 8 pelo Planificador de Execução TTC
+- **Novo import** Admin › Arquivos › SPO › **Planificador TTC (BI)** (#8, link do BI no botão): export da tabela do planificador, 1 linha por PDV Comprador RGB Coletável. Gera a tabela `planificador_ttc` e o `spo_politica_resumo`. Arquivo filtrado atualiza só os setores dele. PDVs 997 (sem RN) entram na base da operação, como no BI (conferido: 306 base · 20 aderidos e executados = 6,5% · 104 aderidos · 66 executados).
+- **KPI 8 agora é o oficial:** real = Aderidos **E** Executados ÷ base, em **%** (meta em % no Metas SPO, ex.: 28,8). Antes era aproximado só pelas tasks de TTC; com planificador importado, o cálculo antigo por tasks é ignorado.
+- **Tela do KPI 8:** funil da operação (base → aderidos → executados → aderidos e executados, faltam p/ meta), tabela por RN com **ranking de justificativas** (tasks de TTC justificadas em vez de executadas), e **lista de ataque** com 3 grupos — 🎯 aderido sem execução, 💲 quase aderido (50–79%), ⚠️ fotos recusadas — filtro por dia de visita/RN/busca e Excel.
+- **Cruzamento com o relatório de Tasks:** cada PDV mostra as tasks de TTC (03_05_09, 03_03_01, 03_04_01, 03_05_10) do relatório de Tasks — **qual está aberta** p/ o RN executar na próxima visita (com data de visita e justificativa). Rota `GET /api/spo/politica-comercial/pdvs`.
 
 ## v3.90.0 — SPO 4º tri (out–dez/2026)
 - **KPIs do Q4** (22 itens, 180 pts) conforme a guia Comercial: pontos novos em Menu de Cerveja ou Cardápio (6), Academia (6), Cerveja TT (26), NAB TT (8), Marketplace (4), Match (4), Atendimento Produtivo (32) e Portfólio Ideal (10); "+LN" virou **Tarefas de Long Neck**. **Saem:** Cerveja Zero, Digitalização e Cupons Digitais. **Entram:** **Vendendo com o BEES** (4) e **Ofertas de Pontos Concluídas** (6) — por ora com meta/realizado lançados em Admin › Metas SPO (ainda sem relatório).

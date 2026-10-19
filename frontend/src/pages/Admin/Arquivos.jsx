@@ -27,6 +27,7 @@ const ARQUIVOS_CONFIG = [
   { id: "spo_scanntech",     campo: "spo_scanntech",     rotulo: "Expansão Scanntech",     item: "23", link: "https://app.powerbi.com/groups/me/apps/00153bdf-1acc-4037-8215-45ebeee65254/reports/2eb89312-42ee-4770-a74f-00f722ef388e/de124bb293e5a660a6be?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi&clientSideAuth=0", extensoes: ".xlsx,.xls", grupo: "spo", icon: "📡" },
   { id: "spo_portfolio_ideal",campo:"spo_portfolio_ideal",rotulo: "Portfólio Ideal Score 5",item:"24", link: "https://app.powerbi.com/groups/me/apps/b08603f3-3936-4e6a-b59d-95f490701d9e/reports/f3bfd0b4-937d-4ede-8cf8-9e8d1198b98a/105da1b5d095a08b5c10?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🏆" },
   { id: "spo_ln",            campo: "spo_ln",            rotulo: "+LN (SKU/PDV Long Neck HE)", item: "19", link: "https://app.powerbi.com/groups/me/apps/b08603f3-3936-4e6a-b59d-95f490701d9e/reports/9c0f9fb7-0a85-44e2-b3b3-114ded237dfd/1f2ac9a3a8b92239da32?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🍾" },
+  { id: "planificador_ttc",  campo: "planificador_ttc",  rotulo: "Planificador TTC (BI)",  item: "8",  link: "https://app.powerbi.com/groups/me/apps/848032ac-a840-4465-b8ea-7d5d22322059/reports/d500bb79-c809-4f56-94a5-3bfe8db9c611/0724903bd359c67c7d20?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "💲" },
   { id: "spo_ap",            campo: "spo_ap",            rotulo: "Atendimento Produtivo",  item: "5",  link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/4ef274c0-bd4e-4dd6-ae0d-702a89d2e956/8be33b97e5d33e72ea83?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls", grupo: "spo", icon: "🎯" },
   // ── OUTROS ──────────────────────────────────────────────
   { id: "tasks",        campo: "tasks",        rotulo: "Tasks (BI)",          link: "https://app.powerbi.com/groups/me/apps/ad76132a-eb0f-4fd2-b020-30c46730bfb7/reports/3bab9612-85bd-4086-9828-6aec4111025b/7e62d4adb22216c40240?ctid=cef04b19-7776-4a94-b89b-375c77a8f936&experience=power-bi", extensoes: ".xlsx,.xls",     grupo: "outros", icon: "✅" },
@@ -92,8 +93,8 @@ export default function Arquivos() {
     } catch { /* silencioso */ }
   }
 
-  // sem diferenciar acento/maiúscula ("Missões (BI)" casa com "missoes"; "Tasks (BI)" com "tasks")
-  const semAcento = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  // sem diferenciar acento/maiúscula ("Missões (BI)" casa com "missoes"; "Planificador TTC (BI)" com "planificador_ttc")
+  const semAcento = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/_/g, " ");
   function getStatus(campo) {
     const c = semAcento(campo);
     return status.find(s => s.arquivo === campo || semAcento(s.arquivo).includes(c));

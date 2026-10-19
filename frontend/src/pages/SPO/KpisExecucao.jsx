@@ -1,6 +1,7 @@
 // SPO — blocos de KPI: Aba Promoção, Política comercial, Menu de cerveja, Tasks Portfólio / Score 5 / NAB (KPIs 7–9, 11–13).
 // Recebe o estado/funções da tela via `ctx` (montado em index.jsx). Só desenha; não guarda estado.
 import * as SH from "./shared";
+import PoliticaTtc from "./PoliticaTtc"; // KPI 8 pelo Planificador TTC
 
 export default function KpisExecucao({ ctx }) {
   const {
@@ -151,38 +152,8 @@ export default function KpisExecucao({ ctx }) {
             {/* POLÍTICA COMERCIAL */}
             {SH.mostra(kpiAtivo, 8) && (
             <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Item 8 — Aderência de Política Comercial</h3>
-              {politica.length === 0 ? (
-                <p style={styles.msg}>Importe o arquivo de tasks para calcular automaticamente.</p>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                  {politica.map((r) => {
-                    const isOp = r.setor === "OPERACAO";
-                    const real = parseFloat(r.pdvs_execucao || 0);
-                    const _ader = parseFloat(r.pdvs_aderidos || 0);
-                    const metaRef = _ader > 0 ? Math.ceil(_ader * 0.60) : (isOp ? spoMetaTotal(8) : null);
-                    const pct = metaRef !== null && metaRef > 0 ? Math.round(real / metaRef * 100) : parseFloat(r.pct || 0);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    const okBadge = metaRef !== null ? real >= metaRef : r.ok === "OK";
-                    return (
-                      <div key={r.setor} style={{ ...styles.gvCard, ...(isOp ? { border: "1px solid rgba(125,186,61,0.3)", gridColumn: "1/-1" } : {}) }}>
-                        <div style={styles.gvHeader}>
-                          <span style={{ fontWeight: "700", fontSize: isOp ? "1rem" : "0.88rem" }}>
-                            {isOp ? "🏭 Operação" : `Setor ${r.setor}`}
-                          </span>
-                          <span style={{ ...styles.apBadge, background: okBadge ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: okBadge ? "#4ade80" : "#f87171" }}>{okBadge ? "OK" : "NOK"}</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>{real} / {metaRef !== null ? metaRef : r.pdvs_aderidos} PDVs</span>
-                          <span style={{ color: cor, fontWeight: "700" }}>{pct}%</span>
-                        </div>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.25)", fontSize: "0.7rem" }}>Meta: {metaRef !== null ? `${metaRef} PDVs` : "≥ 60%"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <h3 style={styles.sectionTitle}>Item 8 — Aderência da Política Comercial (Planificador TTC)</h3>
+              <PoliticaTtc spoMetaTotal={spoMetaTotal} />
             </div>
             )}
 
