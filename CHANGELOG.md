@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.101.0** — Ruptura de Estoque no WhatsApp (17:10).
+Versão atual: **v3.101.1** — Ruptura: "Clientes afetados" travado em 101 corrigido.
+
+## v3.101.1 — Clientes afetados (Ruptura de Estoque)
+- Devolução × Ruptura › Ruptura de Estoque: o card **Clientes afetados** dava sempre **101** em qualquer filtro (quadrimestre, mês ou dia) com mais clientes — a lista por cliente era cortada nos 101 primeiros e o card contava a lista cortada. Agora conta todos e a lista vem completa. A lista de PDVs da aba Entrega também tinha o mesmo corte (sem card) e foi liberada.
 
 ## v3.101.0 — Farol Ruptura de Estoque (17:10)
 - Rota nova `GET /api/farol-ruptura/mensagens` (robô WhatsApp — NÃO REMOVER): **RN** recebe o setor dele, **GV** o consolidado da região e **Diretoria** o consolidado da operação (+ quebra por RN).

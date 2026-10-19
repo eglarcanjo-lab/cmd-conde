@@ -140,8 +140,7 @@ router.get("/entrega", async (req, res) => {
     });
     const porPdv = Object.values(mapPdv)
       .map((x) => ({ ...x, volume_hl: r3(x.volume_hl), valor: r2(x.valor) }))
-      .sort((a, b) => b.volume_hl - a.volume_hl)
-      .slice(0, 101);
+      .sort((a, b) => b.volume_hl - a.volume_hl); // lista completa (antes cortava em 101)
 
     // Por produto — itens das notas frustradas (via nota_itens)
     const notasFiltradas = new Set(fFilt.map((r) => normNota(r.nota)));
@@ -254,10 +253,11 @@ router.get("/ruptura", async (req, res) => {
       mapCli[k].qtd_faltas += Math.round(num(r.qtd_faltas));
       mapCli[k].volume_falta_hl += num(r.volume_falta_hl);
     });
+    // Lista COMPLETA (antes cortava em 101 e o card "Clientes afetados" contava a lista cortada:
+    // dava sempre 101 em qualquer escopo com mais clientes — corrigido em v3.101.1).
     const porCliente = Object.values(mapCli)
       .map((c) => ({ ...c, volume_falta_hl: r3(c.volume_falta_hl) }))
-      .sort((a, b) => b.volume_falta_hl - a.volume_falta_hl)
-      .slice(0, 101);
+      .sort((a, b) => b.volume_falta_hl - a.volume_falta_hl);
 
     const totalVolume = r3(porProduto.reduce((s, p) => s + p.volume_falta_hl, 0));
 
