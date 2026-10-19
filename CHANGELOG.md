@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.91.2** — KPI 8: lista de ataque ordenável por coluna.
+Versão atual: **v3.92.0** — Tarefas de Long Neck (HE + Zero) pelo relatório de Tasks.
+
+## v3.92.0 — KPI 16 · Tarefas de Long Neck HE + Zero (Q4)
+- Regra do Q4: realizado = **nº de tasks validadas** de Long Neck **High End** (Corona, Stella, Spaten, Michelob…, "SKUs distintos de Coleção +LN de Long Necks HE") ou **Zero** (Corona Cero, Brahma Zero…), clusters Portfólio e Volume. **LN Core não conta** (ex.: Brahma Chopp LN). Tri = acumulado.
+- Calculado sozinho a cada import de **Tasks (BI)** (`_calcular_tasks_ln_com_df`), a partir de out/26. Grava `spo_tasks_ln_resumo` (mesmo formato) e o detalhe task a task em `spo_tasks_ln_tasks`.
+- Tela do KPI: tabela por RN × meta + lista das tasks (setor, PDV, HE/Zero, task, qtd, status, visita, justificativa) com filtro por RN e "só não validadas".
+- O arquivo dedicado **+LN** (PDVs que bateram) fica só para o 3º tri: para out/26 em diante o import recusa com aviso.
 
 ## v3.91.2 — Ordenar a lista do KPI 8
 - Na lista de ataque do KPI 8 (Política Comercial), **clicar no cabeçalho ordena** a coluna (maior → menor; clicar de novo inverte): RN, PDV, dia, % vol. aderido, executado, tasks, validadas, justificadas, sem visita, recusadas e task de TTC (abertas primeiro). O Excel sai na mesma ordem.

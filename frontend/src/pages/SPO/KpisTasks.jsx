@@ -179,15 +179,69 @@ export default function KpisTasks({ ctx }) {
             </div>
             )}
 
-            {/* +LN — TASK SKU/PDV LONG NECK HE (KPI 27 / ord 19) */}
-            {kpiAtivo === 27 && (
+            {/* TAREFAS DE LONG NECK — HE + ZERO (KPI 27 / ord 16). Q4: tasks do relatório de Tasks; Q3: arquivo +LN */}
+            {SH.mostra(kpiAtivo, 27) && (
             <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Item 19 — +LN · Task SKU/PDV de Long Neck HE</h3>
+              <h3 style={styles.sectionTitle}>Item 16 — Tarefas de Long Neck (HE + Zero)</h3>
               <p style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.45)", margin: "0 0 10px" }}>
-                Realizado = nº de PDVs que <b>bateram</b> a task (compraram a meta de SKUs distintos de Long Neck HE). Marcas: Stella (STE), Stella Pure Gold (STE PG), Corona (COR), Corona Cero (CORZ), Spaten (SPT), Michelob (MIC).
+                Realizado = nº de <b>tasks validadas</b> de Long Neck <b>High End</b> (Corona, Stella, Spaten, Michelob, "SKUs distintos de LN HE"…) ou <b>Zero</b> (Corona Cero, Brahma Zero…), clusters Portfólio e Volume — vem do relatório de Tasks. LN Core (ex.: Brahma regular) não conta. Tri = acumulado (soma dos 3 meses).
               </p>
               {renderTabelaTasks(soMesVivo(tasksLn), 27)}
               {tasksLnDet.length > 0 && (() => {
+                // Q4: detalhe task a task (tem "descricao"); Q3: PDVs que bateram (+LN)
+                if (tasksLnDet[0]?.descricao !== undefined) {
+                  const rnsT = [...new Set(tasksLnDet.map((d) => d.setor))].sort();
+                  let lt = tasksLnDet;
+                  if (lnRN !== "TODOS") lt = lt.filter((d) => d.setor === lnRN);
+                  if (lnSoFalha) lt = lt.filter((d) => String(d.status).toUpperCase() !== "VALID");
+                  const ST = { VALID: ["validada", "#4ade80"], OPEN: ["aberta", "#f5c451"], INVALID: ["inválida", "#f87171"] };
+                  const thT = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap", fontSize: "0.7rem" };
+                  const tdT = { padding: "7px 10px", textAlign: "center" };
+                  const dd = (v) => { const m = String(v || "").match(/^(d{4})-(d{2})-(d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
+                  const val = tasksLnDet.filter((d) => String(d.status).toUpperCase() === "VALID");
+                  return (
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>📋 Tasks de Long Neck</span>
+                        <select value={lnRN} onChange={(e) => setLnRN(e.target.value)} style={{ background: "#13231a", color: "#fff", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 6, padding: "4px 8px", fontSize: "0.78rem" }}>
+                          <option value="TODOS">Todos os setores</option>
+                          {rnsT.map((x) => <option key={x} value={x}>Setor {x}</option>)}
+                        </select>
+                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+                          <input type="checkbox" checked={lnSoFalha} onChange={(e) => setLnSoFalha(e.target.checked)} /> Só não validadas
+                        </label>
+                        <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.4)", fontSize: "0.74rem" }}>
+                          {lt.length} tasks · validadas: HE {val.filter((d) => d.tipo === "HE").length} · Zero {val.filter((d) => d.tipo === "ZERO").length}
+                        </span>
+                      </div>
+                      <div style={{ overflowX: "auto", maxHeight: 460, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                          <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+                            <tr>{["Setor", "PDV", "Tipo", "Task", "Qtd", "Status", "Visita", "Justificativa"].map((h) => <th key={h} style={{ ...thT, textAlign: ["Task", "Justificativa"].includes(h) ? "left" : "center" }}>{h}</th>)}</tr>
+                          </thead>
+                          <tbody>
+                            {lt.slice(0, 500).map((r, i) => {
+                              const st = ST[String(r.status).toUpperCase()] || [String(r.status).toLowerCase(), "rgba(255,255,255,0.5)"];
+                              return (
+                                <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ ...tdT, color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                                  <td style={{ ...tdT, color: "rgba(255,255,255,0.6)" }}>{r.cod_pdv}</td>
+                                  <td style={{ ...tdT, fontWeight: 700, color: r.tipo === "ZERO" ? "#60a5fa" : "#f5c451" }}>{r.tipo === "ZERO" ? "Zero" : "HE"}</td>
+                                  <td style={{ ...tdT, textAlign: "left", color: "rgba(255,255,255,0.8)" }}>{r.descricao}</td>
+                                  <td style={{ ...tdT, color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>{r.qtd_comprada || 0}/{r.qtd_solicitada || "—"}</td>
+                                  <td style={tdT}><span style={{ padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700, background: "rgba(255,255,255,0.06)", color: st[1] }}>{st[0]}</span></td>
+                                  <td style={{ ...tdT, color: "rgba(255,255,255,0.6)" }}>{dd(r.data_visita) || "—"}</td>
+                                  <td style={{ ...tdT, textAlign: "left", color: "rgba(255,255,255,0.45)", fontSize: "0.72rem" }}>{/^(nan|none)?$/i.test(String(r.justificativa || "").trim()) ? "" : r.justificativa}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      {lt.length > 500 && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginTop: 6 }}>Mostrando 500 de {lt.length}. Use os filtros.</p>}
+                    </div>
+                  );
+                }
                 const rns = [...new Set(tasksLnDet.map((d) => d.setor))].sort();
                 let linhas = tasksLnDet;
                 if (lnRN !== "TODOS") linhas = linhas.filter((d) => d.setor === lnRN);

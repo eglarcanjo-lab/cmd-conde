@@ -307,10 +307,14 @@ router.get("/tasks-ln/resumo", async (req, res) => {
   try { return res.json(await readSheet("spo_tasks_ln_resumo")); }
   catch { return res.json([]); }
 });
-// GET /api/spo/tasks-ln/detalhe — PDVs com a task +LN em aberto
+// GET /api/spo/tasks-ln/detalhe — Q4: task a task de LN HE/Zero (relatório de Tasks,
+// tabela spo_tasks_ln_tasks). Sem ela, cai no detalhe do Q3 (+LN: PDVs que bateram).
 router.get("/tasks-ln/detalhe", async (req, res) => {
-  try { return res.json(await readSheet("spo_tasks_ln_detalhe")); }
-  catch { return res.json([]); }
+  try {
+    const q4 = await readSheet("spo_tasks_ln_tasks").catch(() => []);
+    if (q4.length) return res.json(q4);
+    return res.json(await readSheet("spo_tasks_ln_detalhe"));
+  } catch { return res.json([]); }
 });
 
 
