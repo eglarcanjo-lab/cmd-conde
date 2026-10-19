@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.99.0** — Volume Diário igual ao painel do CORA + faltas do dia.
+Versão atual: **v3.99.1** — motor: envio só dos incentivos.
+
+## v3.99.1 — Motor: opção só de incentivos
+- MOTOR.bat ganhou **12) PRÉVIA INCENTIVO** e **13) ENVIAR INCENTIVO** (`FAROL=incentivo`): manda só a foto do Bateu, Levou · Zeros, em **qualquer dia**, p/ todos com telefone (RN, GV, Diretoria). O envio de seg/qua/sex junto com os faróis continua.
+- `GET /api/incentivos-rn/:id/farol` passa a devolver `destinatarios`.
 
 ## v3.99.0 — Volume Diário × painel do CORA
 - **Causa dos 603 × 607 HL:** a HOP descartava o setor **997 (PDVs sem RN)** — 3,4 HL no dia 19/10 — que o painel do CORA conta. Conferido com o CORA de 19/10 (entrega 20/10): Dia 606,35 · Atendidos 489,28 · Faltas 93,32 · Ag. atendimento 1,06 (= painel, salvo o horário do print).

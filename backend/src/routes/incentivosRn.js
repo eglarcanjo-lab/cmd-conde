@@ -259,7 +259,17 @@ router.get("/:id/farol", async (req, res) => {
         : [{ v: `R$ ${f1(l.valor)}`, cls: l.valor ? "ok" : "" }, { v: `R$ ${f1(l.valorTend)}`, cls: l.valorTend ? "tend" : "" }]),
     ]);
     const tot = inc.id === "zeros" ? d.linhas.reduce((s, l) => s + l.valorTend, 0) : null;
+    // Destinatários (envio só-incentivo do motor): todos com telefone — mesma regra do Report Volumes
+    const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);
+    const vistos = new Set(), destinatarios = [];
+    (await readSheet("usuarios").catch(() => [])).forEach((u) => {
+      const tel = String(u.telefone || "").replace(/\D/g, "");
+      if (!tel || !perfisEnvio.has(String(u.perfil || "").toLowerCase()) || vistos.has(tel)) return;
+      vistos.add(tel);
+      destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
+    });
     return res.json({
+      destinatarios,
       ativo, titulo: inc.titulo, subtitulo: inc.subtitulo,
       data: `${p2(br.getDate())}/${p2(br.getMonth() + 1)}/${br.getFullYear()}`, dia: DIA_LABEL[br.getDay()],
       mes: d.mes, diasUteis: d.diasUteis, colunas, linhas,
