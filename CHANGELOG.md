@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.92.0** — Tarefas de Long Neck (HE + Zero) pelo relatório de Tasks.
+Versão atual: **v3.92.1** — sai o card +LN do Admin › Arquivos.
+
+## v3.92.1 — Card +LN removido
+- Admin › Arquivos: saiu o card **+LN** (arquivo dedicado do 3º tri). O KPI de Long Neck agora vem todo do relatório de **Tasks (BI)**. O processador continua aceitando o campo `spo_ln` (só meses do Q3), sem tela.
 
 ## v3.92.0 — KPI 16 · Tarefas de Long Neck HE + Zero (Q4)
 - Regra do Q4: realizado = **nº de tasks validadas** de Long Neck **High End** (Corona, Stella, Spaten, Michelob…, "SKUs distintos de Coleção +LN de Long Necks HE") ou **Zero** (Corona Cero, Brahma Zero…), clusters Portfólio e Volume. **LN Core não conta** (ex.: Brahma Chopp LN). Tri = acumulado.
