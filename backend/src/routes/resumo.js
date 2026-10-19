@@ -6,6 +6,7 @@ const { filtrarPorPerfil } = require("../utils/perfil");
 const { montarReport } = require("../utils/volumesReport");
 const { query } = require("../services/db");
 const { CATS_MONITOR, lerMetasMonitor, salvarMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
+const { rgbPorSetor } = require("../utils/rgbVolume");
 
 router.use(authMiddleware);
 
@@ -29,6 +30,7 @@ router.get("/volumes", async (req, res) => {
       readSheet("usuarios").catch(() => []),
       lerMetasMonitor(mes),
     ]);
+    const rgbSetor = await rgbPorSetor(mes); // RGB TT (Giro RGB + Litrinho + Trimarcas) por setor
     // Metas de monitoramento (Cerveja Zero / Match / NAB Zero) — rateio sobre a operação inteira
     const rateio = ratearMetasMonitor(metasMon, rvResultAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes)));
     // rv_resultado acumula meses — usa só o mês pedido (linhas antigas sem mês contam).
@@ -69,9 +71,11 @@ router.get("/volumes", async (req, res) => {
       // meta lançada (monitoramento) p/ os setores do recorte; null = não lançada
       const setoresRec = [...new Set([...rvRows, ...volRows].map((r) => String(r.setor || "").trim()).filter(Boolean))];
       const manual = (k) => (rateio[k] ? setoresRec.reduce((s, st) => s + (rateio[k][st] || 0), 0) : null);
-      const mMatch = manual("match"), mCZ = manual("cervejaZero"), mNZ = manual("nabZero");
+      const mMatch = manual("match"), mCZ = manual("cervejaZero"), mNZ = manual("nabZero"), mRgb = manual("rgb");
+      const realRgb = setoresRec.reduce((s, st) => s + (rgbSetor[st] || 0), 0);
       return [
         mk("Cerveja", realCerveja, soma("meta_cerveja")),
+        mk("RGB TT", realRgb, mRgb ?? 0, mRgb == null),
         mk("NAB", realNab, soma("meta_nab")),
         mk("Match", soma("real_match"), mMatch ?? soma("meta_match")),
         mk("Mktp", soma("real_marketplace"), soma("meta_marketplace")),
@@ -93,7 +97,7 @@ router.get("/volumes", async (req, res) => {
     }));
 
     // Analítico (planilha): Operação → GV → RN × categorias.
-    const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator, { rateio });
+    const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator, { rateio, rgb: rgbSetor });
 
     return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report, diasUteis, metasMonitor: metasMon });
   } catch (e) {

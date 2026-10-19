@@ -15,10 +15,11 @@ const CATS_BASE = [
   { key: "cervejaZero", label: "Cerv. Zero", tipo: "zero", volCat: "CERVEJA ZERO", base: "cerveja" },
   { key: "nabZero", label: "NAB Zero", tipo: "zero", volCat: "NAB ZERO", base: "nab" },
 ];
-// Giro RGB (= GIRO RGB + LITRINHO) — só quando opts.giroRgb (usado no motor de envio).
-const CAT_GIRO = { key: "giroRgb", label: "Giro RGB", tipo: "vol", volCats: ["GIRO RGB", "LITRINHO"], noMeta: true };
+// RGB TT (= GIRO RGB + LITRINHO + Trimarcas RGB HE, produto conta 1x) — quando opts.rgb
+// ({ setor: HL }, utils/rgbVolume). Meta = monitoramento lançado (opts.rateio.rgb); sem meta → "—".
+const CAT_RGB = { key: "rgb", label: "RGB TT", tipo: "ext" };
 const catsDe = (opts) => {
-  if (opts && opts.giroRgb) { const c = [...CATS_BASE]; c.splice(1, 0, CAT_GIRO); return c; } // após Cerveja
+  if (opts && opts.rgb) { const c = [...CATS_BASE]; c.splice(1, 0, CAT_RGB); return c; } // após Cerveja
   return CATS_BASE;
 };
 // Sem a coluna "%" (Real vs Meta) — fica só o "%T" (Tendência vs Meta).
@@ -32,7 +33,7 @@ const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "
 // Retorna { categorias, subcols, secoes } ou null.
 function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
   const CATS = catsDe(opts);
-  const noMeta = new Set(CATS.filter((c) => c.noMeta).map((c) => c.key));
+  const noMeta = new Set(CATS.filter((c) => c.noMeta || (c.tipo === "ext" && !opts.rateio?.[c.key])).map((c) => c.key));
   const raw = {}; // setor -> { catKey: {meta, real} }
   const initSetor = (s) => { if (!raw[s]) { raw[s] = {}; CATS.forEach((c) => raw[s][c.key] = { meta: 0, real: 0 }); } };
   rvRows.forEach((r) => {
@@ -51,6 +52,9 @@ function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
       raw[s][c.key] = { meta: manual ? (manual[s] || 0) : 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
     });
     if (opts.rateio?.match && raw[s].match) raw[s].match.meta = opts.rateio.match[s] || 0;
+    CATS.filter((c) => c.tipo === "ext").forEach((c) => {
+      raw[s][c.key] = { meta: opts.rateio?.[c.key]?.[s] || 0, real: opts[c.key]?.[s] || 0 };
+    });
     CATS.filter((c) => c.tipo === "vol").forEach((c) => {
       let r = 0; (c.volCats || []).forEach((vc) => { r += volSetor[s]?.[vc] || 0; });
       raw[s][c.key] = { meta: 0, real: r };

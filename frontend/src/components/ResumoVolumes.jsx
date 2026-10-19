@@ -7,9 +7,9 @@ import * as XLSX from "xlsx-js-style";
 import CurvaVolumes from "./CurvaVolumes";
 import { useAuth } from "../contexts/AuthContext";
 
-// Metas de MONITORAMENTO (não entram na RV): Cerveja Zero, Match, NAB Zero — HL da operação
+// Metas de MONITORAMENTO (não entram na RV): RGB TT, Cerveja Zero, Match, NAB Zero — HL da operação
 // no mês. Rateadas por RN no backend (peso na meta de Cerveja / NAB). Vão pro painel e pro motor.
-const CATS_MON = [["cervejaZero", "Cerveja Zero"], ["match", "Match"], ["nabZero", "NAB Zero"]];
+const CATS_MON = [["rgb", "RGB TT (Giro RGB + Litrinho + Trimarcas)"], ["cervejaZero", "Cerveja Zero"], ["match", "Match"], ["nabZero", "NAB Zero"]];
 function MetasMonitor({ mes, inicial, onFechar, onSalvo }) {
   const [val, setVal] = useState(() => Object.fromEntries(CATS_MON.map(([k]) => [k, inicial?.[k] ?? ""])));
   const [salvando, setSalvando] = useState(false);
@@ -28,7 +28,7 @@ function MetasMonitor({ mes, inicial, onFechar, onSalvo }) {
           <button onClick={onFechar} style={{ marginLeft: "auto", background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "1rem" }}>✕</button>
         </div>
         <p style={{ margin: "0 0 10px", fontSize: "0.74rem", color: "rgba(255,255,255,0.5)" }}>
-          Meta da <b>operação</b> em HL. Não entra na RV — só o painel da Home e o Report Volumes do WhatsApp. Por RN/GV é rateada pelo peso na meta de Cerveja (Cerveja Zero e Match) e de NAB (NAB Zero). Em branco = volta ao padrão (zeros 15% do realizado).
+          Meta da <b>operação</b> em HL. Não entra na RV — só o painel da Home e o Report Volumes do WhatsApp. Por RN/GV é rateada pelo peso na meta de Cerveja (RGB TT, Cerveja Zero e Match) e de NAB (NAB Zero). Em branco = volta ao padrão (zeros 15% do realizado).
         </p>
         {CATS_MON.map(([k, l]) => (
           <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>

@@ -10,6 +10,7 @@ const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { montarReport } = require("../utils/volumesReport");
 const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
+const { rgbPorSetor } = require("../utils/rgbVolume");
 
 const pad = (n) => String(n).padStart(2, "0");
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
@@ -52,8 +53,9 @@ router.get("/mensagens", async (req, res) => {
     const nomeSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
 
-    // giroRgb: true → inclui a categoria "Giro RGB" (GIRO RGB + LITRINHO) só no motor.
-    const report = montarReport(rv, vol, nomeSetor, fator, { giroRgb: true, rateio });
+    // RGB TT entra como categoria após Cerveja (meta = monitoramento, se lançada).
+    // RGB TT (Giro RGB + Litrinho + Trimarcas) no lugar do antigo "Giro RGB" (só Giro + Litrinho)
+    const report = montarReport(rv, vol, nomeSetor, fator, { rateio, rgb: await rgbPorSetor(mes) });
     if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.

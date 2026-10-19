@@ -1,15 +1,16 @@
-// Metas de MONITORAMENTO (não entram na RV): Cerveja Zero, Match e NAB Zero — meta da
+// Metas de MONITORAMENTO (não entram na RV): Cerveja Zero, Match, NAB Zero e RGB TT — meta da
 // OPERAÇÃO em HL por mês, lançada pelo admin no bloco Volumes da Home. Usadas no painel da
 // Home (barras + Analítico) e no Report Volumes do motor de WhatsApp.
 // Sem meta lançada, vale o de antes: zeros = 15% do realizado da categoria regular; Match = RV.
 // Por RN/GV: a meta da operação é rateada pelo peso de cada setor na meta da categoria-base
-// (Cerveja Zero e Match → meta de Cerveja; NAB Zero → meta de NAB) no rv_resultado do mês.
+// (Cerveja Zero, Match e RGB TT → meta de Cerveja; NAB Zero → meta de NAB) no rv_resultado do mês.
 const { query } = require("../services/db");
 
 const CATS_MONITOR = [
   { key: "cervejaZero", label: "Cerveja Zero", base: "meta_cerveja", baseReal: "real_cerveja" },
   { key: "match",       label: "Match",        base: "meta_cerveja", baseReal: "real_cerveja" },
   { key: "nabZero",     label: "NAB Zero",     base: "meta_nab",     baseReal: "real_nab" },
+  { key: "rgb",         label: "RGB TT",       base: "meta_cerveja", baseReal: "real_cerveja" }, // Giro RGB + Litrinho + Trimarcas
 ];
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 

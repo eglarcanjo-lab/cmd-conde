@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.95.0** — metas de monitoramento (Cerveja Zero, Match, NAB Zero).
+Versão atual: **v3.96.0** — RGB TT no acompanhamento de Volumes (com meta).
+
+## v3.96.0 — RGB TT nos Volumes
+- Nova categoria **RGB TT** = **Giro RGB + Litrinho + Trimarcas RGB HE (Original/Stella/Spaten)** — produto com mais de uma dessas categorias conta 1x (fonte: vendas_cliente_produto × produtos_base, `utils/rgbVolume.js`).
+- Aparece no bloco Volumes da Home (barras, por RN e Analítico, logo após Cerveja) e no **Report Volumes do motor de WhatsApp** — substitui o antigo "Giro RGB" do motor (que era só Giro + Litrinho).
+- Meta: no **🎯 Metas** do bloco Volumes (monitoramento, fora da RV), rateada por RN pelo peso na meta de Cerveja. Sem meta lançada, mostra só o realizado.
 
 ## v3.95.0 — Metas de monitoramento (fora da RV)
 - Bloco **Volumes** da Home: botão **🎯 Metas** (admin) para lançar a meta do mês da **operação** em HL de **Cerveja Zero**, **Match** e **NAB Zero**. Não entram na RV (nem em Admin › Metas).
