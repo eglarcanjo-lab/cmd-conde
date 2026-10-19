@@ -103,13 +103,14 @@ router.get("/", async (req, res) => {
     const dataCompStr = toDataStr(dataComp);
 
     // Lê todas as planilhas necessárias em paralelo
-    const [volumeDiario, metas, prodBase, statusArq, rvMktp, rvResultado] = await Promise.all([
+    const [volumeDiario, metas, prodBase, statusArq, rvMktp, rvResultado, coraDia] = await Promise.all([
       readSheet("volume_diario").catch(() => []),
       readSheet("metas").catch(() => []),
       readSheet("produtos_base").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
       readSheet("rv_mktp").catch(() => []),
       readSheet("rv_resultado").catch(() => []),
+      readSheet("cora_dia").catch(() => []),
     ]);
 
     // Horário da última importação de pedidos (atualiza o Volume Diário)
@@ -136,7 +137,43 @@ router.get("/", async (req, res) => {
     // ── Volume do dia / comparação ─────────────────────────────────────────
     const dadosHoje = dados.filter((r) => r.data === dataRefStr);
     const dadosComp = dados.filter((r) => r.data === dataCompStr);
-    const volumeHoje = somarVol(dadosHoje);
+    // Painel do dia igual à "Visão geral" do CORA (cora_dia: todos os setores, inclusive 997
+    // = PDVs sem RN, e todas as situações do item). Dia = tudo · Operação = Dia − anulados.
+    let coraEsc = filtrarPorPerfil(coraDia.map((r) => ({ ...r, setor: String(r.setor || "").trim() })), usuario)
+      .filter((r) => r.data === dataRefStr);
+    if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
+      coraEsc = coraEsc.filter((r) => r.setor === String(req.query.setor).trim());
+    }
+    const r2 = (n) => Math.round(n * 1000) / 1000;
+    let cora = null;
+    if (coraEsc.length) {
+      const sit = (nome) => somarVol(coraEsc.filter((r) => String(r.situacao || "").toUpperCase() === nome));
+      const faltas = coraEsc.filter((r) => String(r.situacao || "").toUpperCase() === "FALTA");
+      const porPdv = {}, porProd = {};
+      faltas.forEach((r) => {
+        const v = parseFloat(r.volume_hl) || 0;
+        const kp = `${r.setor}|${r.cod_pdv}`;
+        const p = (porPdv[kp] = porPdv[kp] || { setor: r.setor, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv, volume_hl: 0, itens: [] });
+        p.volume_hl += v; p.itens.push({ cod_produto: r.cod_produto, nome_produto: r.nome_produto, volume_hl: r2(v) });
+        const kq = normCod(r.cod_produto);
+        const q = (porProd[kq] = porProd[kq] || { cod_produto: kq, nome_produto: r.nome_produto, volume_hl: 0, pdvs: new Set() });
+        q.volume_hl += v; q.pdvs.add(kp);
+      });
+      const dia = somarVol(coraEsc);
+      cora = {
+        dia: r2(dia), operacao: r2(dia - sit("ANULADO")), atendidos: r2(sit("ATENDIDO")),
+        ag_alocacao: r2(sit("AGUARDANDO_ALOCACAO")), ag_atendimento: r2(sit("AGUARDANDO_ATENDIMENTO")),
+        faltas: r2(sit("FALTA")), anulados: r2(sit("ANULADO")),
+        sem_rn: r2(somarVol(coraEsc.filter((r) => ["997", "995"].includes(r.setor)))),
+        faltas_pdv: Object.values(porPdv).map((p) => ({ ...p, volume_hl: r2(p.volume_hl), itens: p.itens.sort((a, b) => b.volume_hl - a.volume_hl) }))
+          .sort((a, b) => b.volume_hl - a.volume_hl),
+        faltas_produto: Object.values(porProd).map((q) => ({ cod_produto: q.cod_produto, nome_produto: q.nome_produto, volume_hl: r2(q.volume_hl), pdvs: q.pdvs.size }))
+          .sort((a, b) => b.volume_hl - a.volume_hl),
+      };
+    }
+    // Dia atual (marcação): o total do dia = o "Dia" do painel do CORA (inclui os PDVs sem RN).
+    const ehHoje = dataRefStr === toDataStr(hojeEmBrasilia());
+    const volumeHoje = cora && ehHoje ? cora.dia : somarVol(dadosHoje);
     const volumeComp = somarVol(dadosComp);
     const deltaHL    = volumeHoje - volumeComp;
     const deltaPct   = volumeComp > 0 ? ((volumeHoje - volumeComp) / volumeComp) * 100 : null;
@@ -326,6 +363,7 @@ router.get("/", async (req, res) => {
       dias_uteis_passados:     diasPassados,
       mes_referencia:          mesRef,
       atualizado_em:           atualizadoEm,
+      cora:                    cora,
       categorias:              categorias,
       top_skus:                topSkus,
       top_skus_mes:            topSkusMes,

@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.98.0** — Bateu, Levou no motor de WhatsApp (seg/qua/sex) + export PNG.
+Versão atual: **v3.99.0** — Volume Diário igual ao painel do CORA + faltas do dia.
+
+## v3.99.0 — Volume Diário × painel do CORA
+- **Causa dos 603 × 607 HL:** a HOP descartava o setor **997 (PDVs sem RN)** — 3,4 HL no dia 19/10 — que o painel do CORA conta. Conferido com o CORA de 19/10 (entrega 20/10): Dia 606,35 · Atendidos 489,28 · Faltas 93,32 · Ag. atendimento 1,06 (= painel, salvo o horário do print).
+- Processador (CORA): nova tabela `cora_dia` — por dia (NF ou entrega − 1) × setor × PDV × produto × **situação do item** (ATENDIDO, FALTA, ANULADO, AGUARDANDO_*), **todos os setores**, de 7 dias atrás em diante.
+- **Volume Diário:** bloco **Visão geral do dia** com os mesmos cards do CORA — **Dia · Operação (Dia − anulados) · Atendidos · Ag. alocação · Ag. atendimento · Faltas** — e as **Faltas do dia por PDV** (abre os produtos) e **por produto** (nº de PDVs). No dia atual o "Volume Hoje" passa a ser o "Dia" do CORA (inclui o 997 na visão da operação). RN vê só o próprio setor.
+- Faturados × Ruptura continua com a mesma lógica.
 
 ## v3.98.0 — Incentivo no motor + PNG
 - **Motor de WhatsApp (temporário):** o **Bateu, Levou · Zeros** vai como **FOTO separada** (como o Deck), 1x por destinatário, **só segunda, quarta e sexta**. Backend: `GET /api/incentivos-rn/:id/farol` (tabela pronta + `ativo` pelo dia; `?forcar=1` p/ teste). Robô (`cmd-conde-whatsapp/enviar.js`): bloco "INCENTIVO" (backup em `enviar.backup_antes_incentivo_2026-10-19.js`); `FORCAR_INCENTIVO=1` manda em qualquer dia; prévia em `preview_INCENTIVO.png`.

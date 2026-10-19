@@ -45,6 +45,86 @@ function Card({ label, children }) {
   );
 }
 
+// Visão geral do dia — mesmos números do painel do CORA (cora_dia, todas as situações e
+// todos os setores, inclusive 997 = PDVs sem RN) + faltas do dia por PDV e por produto.
+// A lógica de ruptura do mês continua em Faturados × Ruptura (Devolução × Ruptura).
+function PainelCora({ c }) {
+  const [visao, setVisao] = useState("pdv");
+  const [aberto, setAberto] = useState(null);
+  const f3 = (v) => (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const cards = [
+    ["Dia", c.dia, "Tudo que foi marcado p/ o dia (inclui faltas e anulados)", "#f0997b"],
+    ["Operação", c.operacao, "Dia − anulados", "#f0997b"],
+    ["Atendidos", c.atendidos, "Itens atendidos", "#f0997b"],
+    ["Ag. alocação", c.ag_alocacao, "Aguardando alocação", "#fff"],
+    ["Ag. atendimento", c.ag_atendimento, "Aguardando atendimento", "#fff"],
+    ["Faltas", c.faltas, "Itens com falta de estoque", "#f87171"],
+  ];
+  const btn = (on) => ({ background: on ? "rgba(125,186,61,0.18)" : "transparent", border: `1px solid ${on ? "rgba(125,186,61,0.5)" : "rgba(255,255,255,0.12)"}`, color: on ? "#7DBA3D" : "rgba(255,255,255,0.55)", borderRadius: 20, padding: "4px 12px", cursor: "pointer", fontSize: "0.78rem", fontFamily: "inherit" });
+  const lista = visao === "pdv" ? c.faltas_pdv : c.faltas_produto;
+  return (
+    <div style={S.section}>
+      <h3 style={S.sectionTitle}>🧾 Visão geral do dia <span style={S.sectionHint}>· em hectolitros, igual ao painel do CORA</span></h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+        {cards.map(([l, v, tip, cor]) => (
+          <div key={l} style={{ ...S.card, padding: "12px 14px" }} title={tip}>
+            <div style={S.cardLabel}>{l}</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: v ? cor : "rgba(255,255,255,0.5)" }}>{v ? f3(v) : "-"}</div>
+          </div>
+        ))}
+      </div>
+      {c.sem_rn > 0 && <p style={{ ...S.cardPct, marginTop: 6 }}>Inclui {f3(c.sem_rn)} HL de PDVs sem RN (setor 997), que o CORA conta no total.</p>}
+
+      {(c.faltas_pdv || []).length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+            <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "#f87171" }}>⚠️ Faltas do dia</span>
+            <button style={btn(visao === "pdv")} onClick={() => setVisao("pdv")}>Por PDV ({c.faltas_pdv.length})</button>
+            <button style={btn(visao === "produto")} onClick={() => setVisao("produto")}>Por produto ({c.faltas_produto.length})</button>
+          </div>
+          <div style={{ overflowX: "auto", maxHeight: 420, overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+              <thead style={{ position: "sticky", top: 0, background: "#0e1a13" }}>
+                <tr style={{ color: "rgba(255,255,255,0.5)" }}>
+                  {visao === "pdv"
+                    ? <><th style={{ padding: 8, textAlign: "center" }}>Setor</th><th style={{ padding: 8, textAlign: "left" }}>PDV</th><th style={{ padding: 8 }}>Itens</th><th style={{ padding: 8, textAlign: "right" }}>Falta (HL)</th></>
+                    : <><th style={{ padding: 8, textAlign: "left" }}>Produto</th><th style={{ padding: 8 }}>PDVs</th><th style={{ padding: 8, textAlign: "right" }}>Falta (HL)</th></>}
+                </tr>
+              </thead>
+              <tbody>
+                {lista.map((r) => {
+                  const k = visao === "pdv" ? `${r.setor}|${r.cod_pdv}` : r.cod_produto;
+                  const exp = visao === "pdv" && aberto === k;
+                  return [
+                    <tr key={k} style={{ borderTop: "1px solid rgba(255,255,255,0.05)", cursor: visao === "pdv" ? "pointer" : "default" }} onClick={() => visao === "pdv" && setAberto(exp ? null : k)}>
+                      {visao === "pdv" ? <>
+                        <td style={{ padding: "6px 8px", textAlign: "center", color: "rgba(255,255,255,0.7)" }}>{r.setor}</td>
+                        <td style={{ padding: "6px 8px", color: "rgba(255,255,255,0.85)" }}>{exp ? "▾" : "▸"} {r.cod_pdv} · {r.nome_pdv}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", color: "rgba(255,255,255,0.6)" }}>{r.itens.length}</td>
+                      </> : <>
+                        <td style={{ padding: "6px 8px", color: "rgba(255,255,255,0.85)" }}>{r.cod_produto} · {r.nome_produto}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", color: "rgba(255,255,255,0.6)" }}>{r.pdvs}</td>
+                      </>}
+                      <td style={{ padding: "6px 8px", textAlign: "right", color: "#f87171", fontWeight: 700 }}>{f3(r.volume_hl)}</td>
+                    </tr>,
+                    exp && r.itens.map((it, i) => (
+                      <tr key={`${k}-${i}`} style={{ background: "rgba(248,113,113,0.05)" }}>
+                        <td />
+                        <td colSpan={2} style={{ padding: "4px 8px 4px 26px", color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}>{it.cod_produto} · {it.nome_produto}</td>
+                        <td style={{ padding: "4px 8px", textAlign: "right", color: "rgba(248,113,113,0.85)", fontSize: "0.75rem" }}>{f3(it.volume_hl)}</td>
+                      </tr>
+                    )),
+                  ];
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── main ─────────────────────────────────────────────────────────────────── */
 export default function VolumeDiario() {
   const { usuario } = useAuth();
@@ -197,6 +277,9 @@ export default function VolumeDiario() {
               </Card>
             )}
           </div>
+
+          {/* ── Visão geral do dia (igual ao painel do CORA) + Faltas por PDV / produto ── */}
+          {!verMes && d.cora && <PainelCora c={d.cora} />}
 
           {/* ── Volume por Categoria ── */}
           {d.categorias?.length > 0 && (
