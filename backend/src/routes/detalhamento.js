@@ -271,10 +271,12 @@ router.get("/ruptura", async (req, res) => {
 
     // ── Ruptura POR PEDIDO (CORA): TOTAL = nenhum item atendido (cliente não levou nada naquele
     // pedido) × PARCIAL = faltou parte. Recompra: MESMO DIA (pedido dividido) · ATÉ 7 DIAS · NÃO.
-    const [rpRaw, baseRaw] = await Promise.all([
+    const [rpRaw, baseRaw, stArq] = await Promise.all([
       readSheet("ruptura_pedidos").catch(() => []),
       readSheet("ruptura_pedidos_base").catch(() => []),
+      readSheet("status_arquivos").catch(() => []),
     ]);
+    const stRp = stArq.find((r) => /ruptura por pedido/i.test(String(r.arquivo || "")));
     const noEscopo = (r) => (!dia || String(r.data).trim() === dia) && (!mes || String(r.mes_referencia) === mes);
     const rpEsc = filtrarPorPerfil(rpRaw, req.user).filter(noEscopo);
     const totalPedidos = filtrarPorPerfil(baseRaw, req.user).filter(noEscopo).reduce((s, r) => s + num(r.pedidos), 0);
@@ -301,6 +303,7 @@ router.get("/ruptura", async (req, res) => {
     return res.json({
       filtros: { mes, dia },
       pedidos,
+      pedidos_status: stRp ? { status: stRp.status, detalhes: stRp.detalhes, atualizado_em: stRp.atualizado_em } : null,
       total_volume_falta_hl: totalVolume,
       produtos_afetados: porProduto.length,
       clientes_afetados: porCliente.length,

@@ -677,6 +677,12 @@ function Ruptura() {
       )}
 
       {/* Ruptura POR PEDIDO — quantos pedidos a falta zerou (cliente não levou nada) × parcial */}
+      {!d.pedidos && (
+        <div style={{ ...S.vazio, marginTop: 12 }}>
+          🧾 <b>Ruptura por pedido</b> ainda não gerada — reimporte o <b>CORA</b> (consulta-pedidos completo).
+          {d.pedidos_status && <> Último processamento: {d.pedidos_status.status} {d.pedidos_status.detalhes} ({d.pedidos_status.atualizado_em})</>}
+        </div>
+      )}
       {d.pedidos && (
         <>
           <h3 style={S.h3}>🧾 Ruptura por pedido</h3>

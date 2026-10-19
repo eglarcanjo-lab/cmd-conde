@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.102.2** — fix: Ruptura por pedido não gravava no Render.
+Versão atual: **v3.102.3** — Ruptura por pedido: aviso quando não gerada.
+
+## v3.102.3 — Aviso da Ruptura por pedido
+- Sem a tabela `ruptura_pedidos`, a tela mostra o aviso "reimporte o CORA" + o último status do processamento (antes o bloco só sumia). O processador grava "Ruptura por pedido (CORA)" em Admin › Arquivos com OK ou o erro.
 
 ## v3.102.2 — Ruptura por pedido (fix)
 - O bloco não aparecia: o processador usava `groupby.apply(include_groups=…)`, que só existe no pandas ≥ 2.2 — o Render roda **pandas 2.1.4**, a etapa falhava em silêncio e `ruptura_pedidos` não era gravada. Trocado por agregação simples (funciona nas duas versões). Reimportar o CORA.
