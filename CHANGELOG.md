@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.100.0** — Anomalia de Volume (Outros relatórios).
+Versão atual: **v3.101.0** — Ruptura de Estoque no WhatsApp (17:10).
+
+## v3.101.0 — Farol Ruptura de Estoque (17:10)
+- Rota nova `GET /api/farol-ruptura/mensagens` (robô WhatsApp — NÃO REMOVER): **RN** recebe o setor dele, **GV** o consolidado da região e **Diretoria** o consolidado da operação (+ quebra por RN).
+- Blocos: **Resumo** (volume em falta, clientes e produtos afetados — hoje × mês) · **Produtos afetados hoje** · **Clientes afetados hoje** · **Produtos mais em falta no mês** · **Clientes mais afetados no mês**.
+- Hoje = itens FALTA do painel do dia (`cora_dia`, mesma conta do CORA); mês = `ruptura_detalhe` do mês.
+- Robô: farol `ruptura`, MOTOR.bat 14) prévia / 15) enviar, `ENVIAR_RUPTURA_AUTO.bat` + tarefa agendada **17:10 todo dia** (`_tarefa_ruptura_17h10.xml`). Prévias do motor abrem sozinhas (foto do incentivo / pasta dos PDFs).
 
 ## v3.100.0 — Anomalia de Volume
 - Outros relatórios › **🚨 Anomalia de Volume** (gestores): PDVs dos setores **102, 995 e 997** (não podem fazer pedido) com venda no **mês atual** — zera todo mês.

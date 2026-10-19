@@ -63,6 +63,7 @@ app.use("/api/conversao-pg", require("./routes/conversao-pg")); // acompanhament
 app.use("/api/farol-visita", require("./routes/farol-visita"));   // PDVs sem visita registrada
 app.use("/api/farol-queda", require("./routes/farol-queda"));     // queda de volume (PDVs + produtos)
 app.use("/api/farol-volumes", require("./routes/farol-volumes")); // volumes meta×real×tendência (por RN + operação)
+app.use("/api/farol-ruptura", require("./routes/farol-ruptura")); // robô WhatsApp 17:10 — NÃO REMOVER
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/incentivos-rn", require("./routes/incentivosRn")); // aba Incentivos (Liga CMD, Zeros)
 app.use("/api/anomalia-volume", require("./routes/anomaliaVolume")); // Outros relatórios › Anomalia de Volume
