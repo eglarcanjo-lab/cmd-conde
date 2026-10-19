@@ -83,7 +83,7 @@ router.get("/mensagens", async (req, res) => {
         ] },
       ];
       if (opts.porRn) blocos.push({ titulo: "Ruptura por RN", subtitulo: "Hoje × mês, por setor", colunas: [
-        { key: "setor", label: "Setor" }, { key: "nome", label: "RN" }, { key: "hoje", label: "Hoje (HL)" }, { key: "cli_hoje", label: "Clientes hoje" }, { key: "mes", label: "Mês (HL)" }, { key: "cli_mes", label: "Clientes mês" }],
+        { key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "hoje", label: "Hoje (HL)" }, { key: "cli_hoje", label: "Clientes hoje" }, { key: "mes", label: "Mês (HL)" }, { key: "cli_mes", label: "Clientes mês" }],
         linhas: opts.porRn });
       blocos.push(
         { titulo: "Produtos afetados · hoje", subtitulo: `${a.nProds} produto(s) · ${hl(a.hl)} HL`, colunas: colProd,
@@ -119,7 +119,7 @@ router.get("/mensagens", async (req, res) => {
 
     const porRnDe = (sets) => sets.map((s) => {
       const a = agregar(dia.filter((l) => l.setor === s)), m = agregar(mes.filter((l) => l.setor === s));
-      return { setor: s, nome: (nomeSetor[s] || "").split(" ")[0], hoje: hl(a.hl), cli_hoje: a.nPdvs, mes: hl(m.hl), cli_mes: m.nPdvs, _hl: a.hl, _cores: { hoje: a.hl ? "down" : "up" } };
+      return { setor: s, rn: (nomeSetor[s] || "").split(" ")[0], hoje: hl(a.hl), cli_hoje: a.nPdvs, mes: hl(m.hl), cli_mes: m.nPdvs, _hl: a.hl, _cores: { hoje: a.hl ? "down" : "up" } };
     }).sort((x, y) => y._hl - x._hl);
 
     const perfilDoPrefixo = { "1": "gv1", "3": "gv3" };
