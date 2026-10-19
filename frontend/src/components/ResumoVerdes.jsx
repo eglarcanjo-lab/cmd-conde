@@ -5,6 +5,58 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+
+// Editor das metas (admin): por mês do tri, Operação + cada RN · cobertura (PDVs) e HL.
+function MetasVerdes({ meses, metas, setores, onFechar, onSalvo }) {
+  const [mes, setMes] = useState(meses[meses.length - 1] || meses[0]);
+  const linhas = ["OPERACAO", ...setores];
+  const ini = (m) => Object.fromEntries(linhas.map((s) => [s, {
+    cobertura: metas?.[m]?.[s]?.cobertura ?? "", hl: metas?.[m]?.[s]?.hl ?? "",
+  }]));
+  const [val, setVal] = useState(() => ini(mes));
+  const [salvando, setSalvando] = useState(false);
+  useEffect(() => { setVal(ini(mes)); }, [mes]); // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (s, k, v) => setVal((o) => ({ ...o, [s]: { ...o[s], [k]: v } }));
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await api.put("/api/resumo/verdes/metas", { mes, linhas: linhas.map((s) => ({ setor: s, ...val[s] })) });
+      onSalvo();
+    } catch (e) { alert("Erro ao salvar: " + (e?.response?.data?.error || e?.message || "falha")); }
+    finally { setSalvando(false); }
+  }
+  const inp = { width: 80, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "#fff", padding: "4px 6px", fontFamily: "inherit", fontSize: "0.8rem", textAlign: "right" };
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onFechar}>
+      <div style={{ background: "#13231a", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 12, padding: 16, maxWidth: 420, width: "100%", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <b style={{ color: "#fff" }}>🎯 Metas · Stella Pure Gold 600</b>
+          <button onClick={onFechar} style={{ marginLeft: "auto", background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+        </div>
+        <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
+          {meses.map((m) => (
+            <button key={m} onClick={() => setMes(m)} style={mes === m ? S.btnOn : S.btn}>{rotMes(m)}/{String(m).slice(2, 4)}</button>
+          ))}
+        </div>
+        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>33857 + 38172 juntas. Deixe em branco o que não tiver meta. Sem meta da operação, a meta do consolidado é a soma dos RNs.</p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+          <thead><tr style={{ color: "rgba(255,255,255,0.45)" }}><th style={{ textAlign: "left", padding: 4 }}>Setor</th><th style={{ padding: 4 }}>Cobertura (PDVs)</th><th style={{ padding: 4 }}>Volume (HL)</th></tr></thead>
+          <tbody>
+            {linhas.map((s) => (
+              <tr key={s} style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <td style={{ padding: 4, color: s === "OPERACAO" ? "#7DBA3D" : "rgba(255,255,255,0.8)", fontWeight: s === "OPERACAO" ? 700 : 500 }}>{s === "OPERACAO" ? "Operação" : s}</td>
+                <td style={{ padding: 4, textAlign: "center" }}><input inputMode="numeric" style={inp} value={val[s]?.cobertura ?? ""} onChange={(e) => set(s, "cobertura", e.target.value)} /></td>
+                <td style={{ padding: 4, textAlign: "center" }}><input inputMode="decimal" style={inp} value={val[s]?.hl ?? ""} onChange={(e) => set(s, "hl", e.target.value)} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button onClick={salvar} disabled={salvando} style={{ ...S.btnOn, marginTop: 12, width: "100%", padding: "8px" }}>{salvando ? "Salvando…" : `Salvar metas de ${rotMes(mes)}`}</button>
+      </div>
+    </div>
+  );
+}
 
 const MESES_ABR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const rotMes = (m) => { const [, mo] = String(m).split("-"); return MESES_ABR[(Number(mo) || 1) - 1] || m; };
@@ -99,6 +151,10 @@ export default function ResumoVerdes({ mes }) {
   // SKU: Stella Pure Gold 600 retornável (33857), one way (38172) ou as duas (PDV conta 1x)
   const [skuSel, setSkuSel] = useState("ambas");
   const skuParam = skuSel === "ambas" ? "33857,38172" : skuSel;
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.perfil === "admin";
+  const [editMetas, setEditMetas] = useState(false);
+  const [recarga, setRecarga] = useState(0); // recarrega após salvar metas
   const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
   const [gvSel, setGvSel] = useState("todos");      // todos | "1" (GV1 = 1xx) | "3" (GV3 = 3xx)
@@ -136,7 +192,7 @@ export default function ResumoVerdes({ mes }) {
     setData(null); setErro(""); setMesSel(null);
     buscar();
     return () => { cancel = true; };
-  }, [mes, skuParam]);
+  }, [mes, skuParam, recarga]);
 
   // Export Excel: linha a linha dos pedidos do SKU, respeitando o filtro atual (RN + mês).
   async function exportarExcel() {
@@ -191,6 +247,25 @@ export default function ResumoVerdes({ mes }) {
       : meses.map((_, i) => porRnGv.reduce((s, r) => s + (Number(serieDe(r)[i]) || 0), 0));
   const temDados = meses.length > 0 && serie.some((x) => x > 0);
 
+  // Meta (só no "Ambas" — a meta é da Stella PG 600 inteira). RN → meta do RN; Todos → meta da
+  // operação (ou soma dos RNs, se a operação não tiver); GV → soma das metas dos RNs do GV.
+  const metas = (data && data.metas) || {};
+  const campoMeta = aba === "cobertura" ? "cobertura" : "hl";
+  const metaDe = (m, setor) => { const v = metas[m]?.[setor]?.[campoMeta]; return v == null ? null : Number(v); };
+  const somaRns = (m, filtro) => {
+    const vs = Object.keys(metas[m] || {}).filter((s) => s !== "OPERACAO" && filtro(s)).map((s) => metaDe(m, s)).filter((v) => v != null);
+    return vs.length ? vs.reduce((a, b) => a + b, 0) : null;
+  };
+  const metaSerie = skuSel !== "ambas" ? meses.map(() => null) : meses.map((m) => (
+    rnSel !== "todos" ? metaDe(m, String(rnSel))
+      : gvSel !== "todos" ? somaRns(m, (s) => String(s)[0] === gvSel)
+        : (metaDe(m, "OPERACAO") ?? somaRns(m, () => true))
+  ));
+  const temMeta = metaSerie.some((v) => v != null);
+  const idxMeta = mesSel != null ? mesSel : meses.length - 1;
+  const metaAtual = metaSerie[idxMeta];
+  const pctMeta = metaAtual ? Math.round((serie[idxMeta] || 0) / metaAtual * 100) : null;
+
   // Ranking dos RNs (do GV escolhido) pelo flag atual, maior→menor. Se um mês estiver
   // selecionado, usa o valor daquele mês; senão, a soma do trimestre.
   // Dia clicado no gráfico diário → ranking daquele dia (PDVs / HL do RN no dia).
@@ -207,10 +282,11 @@ export default function ResumoVerdes({ mes }) {
 
   // Pontos da linha — X = centro da "coluna" de cada mês (alinha com os rótulos flex).
   const W = 300, H = 96, top = 12, bot = 84;
-  const max = Math.max(1, ...serie);
+  const max = Math.max(1, ...serie, ...metaSerie.filter((v) => v != null));
   const n = meses.length;
   const colX = (i) => ((i + 0.5) / Math.max(n, 1)) * W;
   const pts = meses.map((_, i) => `${colX(i).toFixed(1)},${(bot - ((serie[i] || 0) / max) * (bot - top)).toFixed(1)}`);
+  const ptsMeta = meses.map((_, i) => (metaSerie[i] == null ? null : `${colX(i).toFixed(1)},${(bot - (metaSerie[i] / max) * (bot - top)).toFixed(1)}`)).filter(Boolean);
   const x0 = colX(0), xN = colX(Math.max(n - 1, 0));
   const multiAno = new Set(meses.map((m) => String(m).slice(0, 4))).size > 1;
   const atual = mesSel != null ? (serie[mesSel] || 0) : (serie.length ? serie[serie.length - 1] : 0);
@@ -229,8 +305,14 @@ export default function ResumoVerdes({ mes }) {
           <button style={aba === "cobertura" ? S.btnOn : S.btn} onClick={() => setAba("cobertura")}>Cobertura</button>
           <button style={aba === "volhl" ? S.btnOn : S.btn} onClick={() => setAba("volhl")}>Vol HL</button>
           <button style={S.excelBtn} onClick={exportarExcel} title="Exportar linhas do pedido (Excel) — respeita o RN e o mês filtrados">⤓ Excel</button>
+          {isAdmin && data && <button style={S.excelBtn} onClick={() => setEditMetas(true)} title="Lançar meta de cobertura e volume (operação e por RN)">🎯 Metas</button>}
         </span>
       </div>
+      {editMetas && data && (
+        <MetasVerdes meses={data.meses} metas={data.metas}
+          setores={[...new Set([...(data.porRn || []).map((r) => String(r.setor)), ...Object.values(data.metas || {}).flatMap((o) => Object.keys(o)).filter((s) => s !== "OPERACAO")])].sort()}
+          onFechar={() => setEditMetas(false)} onSalvo={() => { setEditMetas(false); setRecarga((x) => x + 1); }} />
+      )}
 
       <div style={S.gvRow}>
         <span style={S.gvLbl}>Escopo:</span>
@@ -247,7 +329,13 @@ export default function ResumoVerdes({ mes }) {
             <div style={S.skel}>Sem vendas de {prod.nome} {rnSel !== "todos" ? `no setor ${rnSel}` : ""} — importe pedidos por mês.</div>
           ) : (
             <>
-              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : gvSel !== "todos" ? ` · GV ${gvSel}` : ""}</small></div>
+              <div style={S.val}>{fmt(atual)} <small style={S.unit}>{unidade} · {rotMes(mesSel != null ? meses[mesSel] : meses[meses.length - 1])}{rnSel !== "todos" ? ` · setor ${rnSel}` : gvSel !== "todos" ? ` · GV ${gvSel}` : ""}</small>
+                {metaAtual != null && (
+                  <small style={{ ...S.unit, marginLeft: 8, color: pctMeta >= 100 ? "#4ade80" : pctMeta >= 70 ? "#e8c468" : "#f87171", fontWeight: 700 }}>
+                    meta {fmt(metaAtual)} · {pctMeta}%
+                  </small>
+                )}
+              </div>
               {mesAberto ? (
                 <>
                   <div style={S.voltar}>
@@ -263,7 +351,16 @@ export default function ResumoVerdes({ mes }) {
                 <line x1={x0} y1={bot} x2={xN} y2={bot} stroke="rgba(255,255,255,0.12)" vectorEffect="non-scaling-stroke" />
                 {n > 1 && <polyline points={`${x0},${bot} ${pts.join(" ")} ${xN},${bot}`} fill="rgba(125,186,61,0.10)" stroke="none" />}
                 <polyline points={pts.join(" ")} fill="none" stroke="#7DBA3D" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                {ptsMeta.length > 1 && <polyline points={ptsMeta.join(" ")} fill="none" stroke="#e8c468" strokeWidth="1.5" strokeDasharray="5 4" vectorEffect="non-scaling-stroke" />}
+                {ptsMeta.length === 1 && <circle cx={ptsMeta[0].split(",")[0]} cy={ptsMeta[0].split(",")[1]} r="2.5" fill="#e8c468" />}
               </svg>
+              {temMeta && (
+                <div style={{ ...S.vlab, marginTop: 2 }}>{meses.map((m, i) => (
+                  <span key={m} style={{ ...S.vs, color: "#e8c468", fontSize: "0.68rem" }}>
+                    {metaSerie[i] != null ? `meta ${fmt(metaSerie[i])} · ${Math.round((serie[i] || 0) / metaSerie[i] * 100)}%` : ""}
+                  </span>
+                ))}</div>
+              )}
               </>)}
               <div style={S.mlab}>{meses.map((m, i) => (
                 <span key={m} onClick={() => setMesSel(mesSel === i ? null : i)} style={{ ...S.ms, ...(mesSel === i ? S.msOn : {}) }} title="Clique para abrir este mês por dia">
@@ -287,7 +384,15 @@ export default function ResumoVerdes({ mes }) {
                     <span style={S.faixaBarBg}>
                       <span style={{ ...S.faixaBar, width: `${Math.max(3, (r.total / maxRank) * 100)}%`, background: sel ? "#7DBA3D" : "rgba(125,186,61,0.55)" }} />
                     </span>
-                    <span style={S.faixaVal}>{fmt(r.total)}</span>
+                    <span style={S.faixaVal}>{fmt(r.total)}{(() => {
+                      // meta do RN no mês selecionado (ou soma do tri), só no "Ambas" e fora do recorte por dia
+                      if (skuSel !== "ambas" || diaObj) return null;
+                      const ms = mesSel != null ? [meses[mesSel]] : meses;
+                      const vs = ms.map((m) => metaDe(m, String(r.setor))).filter((v) => v != null);
+                      if (!vs.length) return null;
+                      const mt = vs.reduce((a, b) => a + b, 0); const p = mt ? Math.round(r.total / mt * 100) : 0;
+                      return <small style={{ marginLeft: 4, color: p >= 100 ? "#4ade80" : p >= 70 ? "#e8c468" : "#f87171" }}>/{fmt(mt)} · {p}%</small>;
+                    })()}</span>
                   </div>
                 );
               })}
@@ -334,5 +439,5 @@ const S = {
   faixaLbl: { fontSize: "0.76rem", width: "96px", flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   faixaBarBg: { flex: 1, height: "10px", background: "rgba(255,255,255,0.06)", borderRadius: "5px", overflow: "hidden" },
   faixaBar: { display: "block", height: "100%", borderRadius: "5px", transition: "width 0.3s" },
-  faixaVal: { fontSize: "0.76rem", color: "rgba(255,255,255,0.8)", fontWeight: "600", width: "44px", textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" },
+  faixaVal: { fontSize: "0.76rem", color: "rgba(255,255,255,0.8)", fontWeight: "600", minWidth: "44px", textAlign: "right", whiteSpace: "nowrap", flexShrink: 0, fontVariantNumeric: "tabular-nums" },
 };

@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.93.0** — Stella Pure Gold 600 one way (38172) junto da 33857.
+Versão atual: **v3.94.0** — metas de cobertura e volume da Stella PG 600 nos Verdes.
+
+## v3.94.0 — Metas dos Verdes (Stella PG 600)
+- Bloco **Verdes** da Home: botão **🎯 Metas** (só admin) para lançar, por mês do trimestre, a meta de **cobertura (PDVs)** e de **volume (HL)** da **operação** e de **cada RN** (33857 + 38172 juntas).
+- Com o flag **Ambas**: linha tracejada amarela da meta no gráfico, "meta X · %" em cada mês e no número do topo, e "/meta · %" por RN no ranking. GV = soma das metas dos RNs do GV; sem meta da operação, o consolidado usa a soma dos RNs.
+- Banco: tabela `verdes_metas` (mes, setor, cobertura, hl), criada sozinha. Rota `PUT /api/resumo/verdes/metas` (admin); o `GET /api/resumo/verdes` devolve `metas`.
 
 ## v3.93.0 — PG600: 33857 + 38172 (one way)
 - **Verdes (Home):** novo flag **Ambas · 33857 · 38172 OW**. Ambas (padrão) soma as duas — PDV que comprou qualquer uma conta 1x na cobertura; Vol HL soma. O mês aberto por dia, o ranking por RN e o Excel seguem o flag.

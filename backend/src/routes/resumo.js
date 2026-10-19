@@ -4,6 +4,7 @@ const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { filtrarPorPerfil } = require("../utils/perfil");
 const { montarReport } = require("../utils/volumesReport");
+const { query } = require("../services/db");
 
 router.use(authMiddleware);
 
@@ -311,6 +312,55 @@ function skusVerdes(q) {
   return new Set(l.length ? l : VERDES_SKUS);
 }
 
+// Metas dos Verdes (Stella PG 600, as duas juntas): por mês × setor ("OPERACAO" = operação).
+// Cobertura em PDVs e volume em HL. Lançadas pelo admin no próprio bloco da Home.
+let _verdesMetasOk = false;
+async function ensureVerdesMetas() {
+  if (_verdesMetasOk) return;
+  await query(`CREATE TABLE IF NOT EXISTS verdes_metas (
+    mes TEXT, setor TEXT, cobertura NUMERIC, hl NUMERIC, PRIMARY KEY (mes, setor))`);
+  _verdesMetasOk = true;
+}
+async function metasVerdes(meses, user) {
+  try {
+    await ensureVerdesMetas();
+    const r = await query("SELECT mes, setor, cobertura, hl FROM verdes_metas WHERE mes = ANY($1)", [meses]);
+    const out = {};
+    const rn = !["admin", "director", "gv1", "gv3"].includes(user.perfil);
+    r.rows.forEach((x) => {
+      if (rn && x.setor !== "OPERACAO" && String(x.setor) !== String(user.cod)) return;
+      (out[x.mes] = out[x.mes] || {})[x.setor] = {
+        cobertura: x.cobertura == null ? null : Number(x.cobertura), hl: x.hl == null ? null : Number(x.hl),
+      };
+    });
+    return out;
+  } catch (e) { console.error("verdes metas:", e.message); return {}; }
+}
+
+// PUT /api/resumo/verdes/metas { mes:"2026-10", linhas:[{ setor:"OPERACAO"|"101", cobertura, hl }] } — admin.
+// Substitui as metas daquele mês (linha sem cobertura e sem HL = apaga).
+router.put("/verdes/metas", async (req, res) => {
+  try {
+    if (req.user.perfil !== "admin") return res.status(403).json({ error: "Só o admin lança metas." });
+    const { mes, linhas } = req.body || {};
+    if (!/^\d{4}-\d{2}$/.test(String(mes || "")) || !Array.isArray(linhas)) return res.status(400).json({ error: "Envie { mes, linhas }." });
+    await ensureVerdesMetas();
+    const nOuNull = (v) => (v === "" || v == null || isNaN(Number(String(v).replace(",", "."))) ? null : Number(String(v).replace(",", ".")));
+    await query("DELETE FROM verdes_metas WHERE mes = $1", [mes]);
+    let n = 0;
+    for (const l of linhas) {
+      const setor = String(l.setor || "").trim(); const cob = nOuNull(l.cobertura), hl = nOuNull(l.hl);
+      if (!setor || (cob == null && hl == null)) continue;
+      await query("INSERT INTO verdes_metas (mes, setor, cobertura, hl) VALUES ($1,$2,$3,$4)", [mes, setor, cob, hl]);
+      n++;
+    }
+    return res.json({ ok: true, mes, linhas: n });
+  } catch (e) {
+    console.error("resumo/verdes/metas PUT:", e);
+    return res.status(500).json({ error: "Erro ao salvar metas." });
+  }
+});
+
 // GET /api/resumo/verdes?sku=33857 — bloco "Verdes" focado num SKU (default 33857,
 // Stella Pure Gold), mês a mês, com quebra por RN (setor) + consolidado.
 // Cobertura = nº de PDVs DISTINTOS que compraram o SKU no mês (conta 1x por PDV). Vol HL = volume_hl.
@@ -370,7 +420,9 @@ router.get("/verdes", async (req, res) => {
       };
     });
 
+    const metas = await metasVerdes(meses, req.user);
     return res.json({
+      metas,
       produto: { cod: [...SKUS].join(" + "), nome: [...SKUS].map((c) => nomes[c] || c).join(" + "), skus: [...SKUS] },
       meses,
       consolidado: {
