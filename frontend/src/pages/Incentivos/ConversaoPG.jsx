@@ -1,7 +1,7 @@
 // Acompanhamento TEMPORÁRIO — Conversão Stella Pure Gold (dentro de Incentivos).
 // Fácil de remover: apagar este arquivo + o <ConversaoPG/> no Incentivos/index.jsx
 // + a rota /api/conversao-pg no backend.
-// Só PG600: PDVs que compram ≥1 base 600ml (Original/Stella/Spaten) e ainda NÃO a Pure Gold 600.
+// Só PG600: PDVs que compram ≥1 base 600ml (Original/Stella/Spaten) e ainda NÃO a Pure Gold 600 (33857 nem a one way 38172).
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
@@ -116,7 +116,7 @@ export default function ConversaoPG({ embutido = false }) {
               </div>
 
               <p style={S.hint}>
-                PDVs que compram ≥1 das 600ml (Original/Stella/Spaten) e ainda NÃO compraram a Pure Gold 600 no trimestre.
+                PDVs que compram ≥1 das 600ml (Original/Stella/Spaten) e ainda NÃO compraram a Pure Gold 600 (nem a 33857 nem a one way 38172) no trimestre.
               </p>
 
               <div style={S.tableWrap}>

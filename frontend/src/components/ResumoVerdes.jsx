@@ -1,4 +1,4 @@
-// Home — bloco "Verdes" focado no SKU 33857 (Stella Pure Gold), mês a mês.
+// Home — bloco "Verdes" da Stella Pure Gold 600: 33857 (retornável) + 38172 (one way), flag Ambas/33857/38172.
 // Flag Cobertura/Vol HL controla TUDO: a linha do RN selecionado (Todos = consolidado)
 // e a faixa de ranking dos RNs (maior→menor). Cobertura = PDVs distintos que compraram
 // no mês (conta 1x). Vol HL = volume em HL. Dado: GET /api/resumo/verdes.
@@ -96,6 +96,9 @@ export default function ResumoVerdes({ mes }) {
   const [erro, setErro] = useState("");
   const [esperando, setEsperando] = useState(false);
   const [aba, setAba] = useState("cobertura");   // flag mestre: cobertura | volhl
+  // SKU: Stella Pure Gold 600 retornável (33857), one way (38172) ou as duas (PDV conta 1x)
+  const [skuSel, setSkuSel] = useState("ambas");
+  const skuParam = skuSel === "ambas" ? "33857,38172" : skuSel;
   const [rnSel, setRnSel] = useState("todos");     // todos (consolidado) | <setor> (via clique na faixa)
   const [mesSel, setMesSel] = useState(null);       // índice do mês (filtra a faixa) | null = trimestre
   const [gvSel, setGvSel] = useState("todos");      // todos | "1" (GV1 = 1xx) | "3" (GV3 = 3xx)
@@ -108,19 +111,19 @@ export default function ResumoVerdes({ mes }) {
     if (!mesAberto) { setDias(null); return; }
     let vivo = true;
     setCarregandoDias(true);
-    const params = { mes: mesAberto };
+    const params = { mes: mesAberto, sku: skuParam };
     if (rnSel !== "todos") params.setor = rnSel; else if (gvSel !== "todos") params.gv = gvSel;
     api.get("/api/resumo/verdes/dias", { params, timeout: 20000 })
       .then((r) => vivo && setDias(r.data?.dias || []))
       .catch(() => vivo && setDias([]))
       .finally(() => vivo && setCarregandoDias(false));
     return () => { vivo = false; };
-  }, [mesAberto, rnSel, gvSel]);
+  }, [mesAberto, rnSel, gvSel, skuParam]);
 
   useEffect(() => {
     let cancel = false, tent = 0;
     const buscar = () => {
-      api.get("/api/resumo/verdes", { params: mes ? { mes } : {}, timeout: 18000 })
+      api.get("/api/resumo/verdes", { params: mes ? { mes, sku: skuParam } : { sku: skuParam }, timeout: 18000 })
         .then((r) => { if (!cancel) { setData(r.data); setEsperando(false); } })
         .catch((e) => {
           if (cancel) return;
@@ -133,12 +136,13 @@ export default function ResumoVerdes({ mes }) {
     setData(null); setErro(""); setMesSel(null);
     buscar();
     return () => { cancel = true; };
-  }, [mes]);
+  }, [mes, skuParam]);
 
   // Export Excel: linha a linha dos pedidos do SKU, respeitando o filtro atual (RN + mês).
   async function exportarExcel() {
     try {
       const params = new URLSearchParams();
+      params.set("sku", skuParam);
       if (rnSel !== "todos") params.set("setor", rnSel);
       if (mesSel != null && (data?.meses || [])[mesSel]) params.set("mes", data.meses[mesSel]);
       const r = await api.get(`/api/resumo/verdes/pedidos?${params.toString()}`);
@@ -159,9 +163,9 @@ export default function ResumoVerdes({ mes }) {
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = [12, 12, 12, 8, 10, 28, 10, 28, 12, 10].map((w) => ({ wch: w }));
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Pedidos 33857");
+      XLSX.utils.book_append_sheet(wb, ws, "Pedidos PG600");
       const suf = (rnSel !== "todos" ? `_setor${rnSel}` : "") + (mesSel != null ? `_${data.meses[mesSel]}` : "");
-      XLSX.writeFile(wb, `verdes_stella_33857${suf}.xlsx`);
+      XLSX.writeFile(wb, `verdes_stella_pg600_${skuSel}${suf}.xlsx`);
     } catch (e) {
       alert("Erro ao exportar: " + (e?.response?.data?.error || e?.message || "falha"));
     }
@@ -172,7 +176,7 @@ export default function ResumoVerdes({ mes }) {
 
   const meses = data ? data.meses : [];
   const porRn = data ? (data.porRn || []) : [];
-  const prod = data ? data.produto : { cod: "33857", nome: "Stella Pure Gold" };
+  const prod = data ? data.produto : { cod: skuParam, nome: "Stella Pure Gold 600" };
 
   // Série do selecionado. Escopo GV filtra os RNs (1xx = GV1, 3xx = GV3).
   const serieDe = (obj) => (obj ? (aba === "cobertura" ? obj.cobertura : obj.volHl) : []) || [];
@@ -215,8 +219,13 @@ export default function ResumoVerdes({ mes }) {
   return (
     <div style={S.card}>
       <div style={S.head}>
-        <span style={S.title}><span style={{ color: "#7DBA3D" }}>🌿</span> Verdes · {prod.nome} <small style={S.cod}>({prod.cod})</small></span>
+        <span style={S.title}><span style={{ color: "#7DBA3D" }}>🌿</span> Verdes · Stella Pure Gold 600 <small style={S.cod}>({prod.cod})</small></span>
         <span style={S.tgl}>
+          {[["ambas", "Ambas"], ["33857", "33857"], ["38172", "38172 OW"]].map(([k, l]) => (
+            <button key={k} style={skuSel === k ? S.btnOn : S.btn} onClick={() => setSkuSel(k)}
+              title={k === "ambas" ? "33857 (retornável) + 38172 (one way) — PDV que comprou qualquer uma conta 1x" : k === "33857" ? "Stella Pure Gold 600 retornável" : "Stella Pure Gold 600 one way"}>{l}</button>
+          ))}
+          <span style={{ width: 6 }} />
           <button style={aba === "cobertura" ? S.btnOn : S.btn} onClick={() => setAba("cobertura")}>Cobertura</button>
           <button style={aba === "volhl" ? S.btnOn : S.btn} onClick={() => setAba("volhl")}>Vol HL</button>
           <button style={S.excelBtn} onClick={exportarExcel} title="Exportar linhas do pedido (Excel) — respeita o RN e o mês filtrados">⤓ Excel</button>
@@ -295,7 +304,7 @@ const S = {
   head: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
   title: { color: "#fff", fontWeight: "600", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: "7px" },
   cod: { color: "rgba(255,255,255,0.4)", fontWeight: "400", fontSize: "0.8rem" },
-  tgl: { marginLeft: "auto", display: "flex", gap: "5px" },
+  tgl: { marginLeft: "auto", display: "flex", gap: "5px", flexWrap: "wrap", alignItems: "center" },
   gvRow: { display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" },
   gvLbl: { color: "rgba(255,255,255,0.4)", fontSize: "0.76rem", marginRight: "2px" },
   gvBtn: { fontSize: "0.76rem", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "3px 11px", cursor: "pointer" },

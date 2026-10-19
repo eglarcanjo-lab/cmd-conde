@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.92.3** — Atendimento Produtivo com metas por pilar.
+Versão atual: **v3.93.0** — Stella Pure Gold 600 one way (38172) junto da 33857.
+
+## v3.93.0 — PG600: 33857 + 38172 (one way)
+- **Verdes (Home):** novo flag **Ambas · 33857 · 38172 OW**. Ambas (padrão) soma as duas — PDV que comprou qualquer uma conta 1x na cobertura; Vol HL soma. O mês aberto por dia, o ranking por RN e o Excel seguem o flag.
+- **Conversão Pure Gold (Outros relatórios + faróis do WhatsApp):** PDV só é alvo PG600 se **não comprou nenhuma** das duas (33857 nem 38172).
+- Processador: `verdes_pedidos` passa a gravar as duas (com o código real de cada linha). Meses já importados só têm a 33857 no detalhe por dia/Excel até reimportar; a cobertura/volume mês a mês já vem com as duas.
 
 ## v3.92.3 — Metas no Atendimento Produtivo
 - SPO › Item 5 (Atendimento Produtivo): a tabela por RN agora mostra **Meta · Real · Gap** de cada pilar — Positivação, Carteira, GPS % e Rota % (gap em p.p. nos percentuais). Real verde quando bate a meta. As metas já vinham no arquivo do BI; só não apareciam.

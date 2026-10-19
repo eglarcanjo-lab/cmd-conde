@@ -1,6 +1,6 @@
 // Acompanhamento de conversão — Stella Pure Gold (temporário, dentro de Incentivos).
-// PG600 (33857): PDVs que compram ao menos uma base 600ml (Original/Stella/Spaten) e
-//   AINDA NÃO compraram a Pure Gold 600ml.
+// PG600 (33857 retornável + 38172 one way): PDVs que compram ao menos uma base 600ml
+//   (Original/Stella/Spaten) e AINDA NÃO compraram nenhuma das duas Pure Gold 600ml.
 // PGLN (29580): PDVs que compram qualquer outra Long Neck e ainda NÃO compraram a Pure Gold LN.
 // Base: trimestre anterior (3 meses completos, sem o mês atual). Fácil de remover: apagar
 // este arquivo, o mount em index.js e o componente ConversaoPG do front.
@@ -14,7 +14,8 @@ const normCod = (v) => String(v ?? "").trim().replace(/^0+/, "") || "0";
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
-const PG600 = "33857";           // STELLA ARTOIS PURE GOLD 600ML
+const PG600 = "33857";           // STELLA ARTOIS PURE GOLD 600ML (retornável)
+const PG600_OW = "38172";        // STELLA ARTOIS PURE GOLD 600ML ONE WAY — conta junto c/ a 33857
 const PGLN = "29580";            // STELLA ARTOIS PURE GOLD LONG NECK 330ML
 const BASE600 = [
   { cod: "2546",  marca: "Original" }, // ORIGINAL 600ML
@@ -75,9 +76,9 @@ async function computeConversao(user) {
     const arr = Object.values(pdvs);
     const ordena = (a, b) => String(a.setor).localeCompare(String(b.setor)) || a.nome_pdv.localeCompare(b.nome_pdv);
 
-    // PG600: NÃO comprou 33857 e comprou ≥1 base 600ml.
+    // PG600: NÃO comprou 33857 nem 38172 e comprou ≥1 base 600ml.
     const pg600 = arr
-      .filter((e) => !e.comprou.has(PG600) && BASE600.some((b) => e.comprou.has(b.cod)))
+      .filter((e) => !e.comprou.has(PG600) && !e.comprou.has(PG600_OW) && BASE600.some((b) => e.comprou.has(b.cod)))
       .map((e) => ({
         cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor,
         dia_visita: diaMap[normCod(e.cod_pdv)] || "", ultima_compra: fmtBR(ultMap[normCod(e.cod_pdv)]),
@@ -97,7 +98,7 @@ async function computeConversao(user) {
 
     return {
       trimestre: label, meses,
-      pg600: { alvo: PG600, base: BASE600, total: pg600.length, pdvs: pg600 },
+      pg600: { alvo: `${PG600} + ${PG600_OW}`, base: BASE600, total: pg600.length, pdvs: pg600 },
       pgln: { alvo: PGLN, ln_skus: lnCods.size, total: pgln.length, pdvs: pgln },
     };
 }
@@ -153,7 +154,7 @@ function textoRN(setor, nome, dados, hoje) {
     `Setor ${setor}`,
     `Dia de visita ${hoje.diaLabel}`,
     "",
-    "*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600",
+    "*Pure Gold 600* — compram 600ml (Original/Stella/Spaten) e ainda não a PG600 (33857 nem a one way 38172)",
     secao(pg),
   ].join("\n");
 }

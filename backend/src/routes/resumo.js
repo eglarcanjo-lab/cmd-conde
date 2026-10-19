@@ -303,13 +303,21 @@ router.get("/rankings", async (req, res) => {
   }
 });
 
+// SKUs dos Verdes (Stella Pure Gold 600): 33857 retornável + 38172 one way. ?sku=33857 |
+// 38172 | 33857,38172 (padrão = as duas; PDV que comprou qualquer uma conta 1x).
+const VERDES_SKUS = ["33857", "38172"];
+function skusVerdes(q) {
+  const l = String(q || "").split(",").map((x) => x.trim().replace(/^0+/, "")).filter(Boolean);
+  return new Set(l.length ? l : VERDES_SKUS);
+}
+
 // GET /api/resumo/verdes?sku=33857 — bloco "Verdes" focado num SKU (default 33857,
 // Stella Pure Gold), mês a mês, com quebra por RN (setor) + consolidado.
 // Cobertura = nº de PDVs DISTINTOS que compraram o SKU no mês (conta 1x por PDV). Vol HL = volume_hl.
 router.get("/verdes", async (req, res) => {
   try {
     const normCod = (x) => { const s = String(x || "").trim(); return s.replace(/^0+/, "") || s; };
-    const SKU = normCod(req.query.sku || "33857");
+    const SKUS = skusVerdes(req.query.sku);
 
     // Trimestre (civil) do mês pedido (?mes=YYYY-MM, seletor da Home) ou do mês atual.
     const brNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -328,8 +336,8 @@ router.get("/verdes", async (req, res) => {
     ]);
     const v = filtrarPorPerfil(vendas, req.user, "setor");
 
-    let hlc = 0, nomeSku = "";
-    prodFull.forEach((p) => { if (normCod(p.cod) === SKU) { hlc = num(p.hl_caixa); nomeSku = String(p.nome || "").trim(); } });
+    const nomes = {};
+    prodFull.forEach((p) => { const c = normCod(p.cod); if (SKUS.has(c)) nomes[c] = String(p.nome || "").trim(); });
     const rnMap = {};
     usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
@@ -337,10 +345,11 @@ router.get("/verdes", async (req, res) => {
     const consCob = {}; // mes -> Set pdv (global)
     const consVol = {};
     v.forEach((r) => {
-      if (normCod(r.cod_produto) !== SKU) return;
+      const codP = normCod(r.cod_produto);
+      if (!SKUS.has(codP)) return;
       const mes = String(r.mes_referencia || "").slice(0, 7);
       if (!mes) return;
-      if (!nomeSku) nomeSku = String(r.nome_produto || "").trim();
+      if (!nomes[codP]) nomes[codP] = String(r.nome_produto || "").trim();
       const setor = String(r.setor || "").trim();
       const pdv = String(r.cod_pdv || "").trim();
       const hl = num(r.volume_hl);
@@ -362,7 +371,7 @@ router.get("/verdes", async (req, res) => {
     });
 
     return res.json({
-      produto: { cod: SKU, nome: nomeSku || SKU },
+      produto: { cod: [...SKUS].join(" + "), nome: [...SKUS].map((c) => nomes[c] || c).join(" + "), skus: [...SKUS] },
       meses,
       consolidado: {
         cobertura: meses.map((m) => (consCob[m] ? consCob[m].size : 0)),
@@ -381,7 +390,8 @@ router.get("/verdes", async (req, res) => {
 router.get("/verdes/pedidos", async (req, res) => {
   try {
     const all = await readSheet("verdes_pedidos").catch(() => []);
-    let lin = filtrarPorPerfil(all, req.user, "setor");
+    const SKUS = skusVerdes(req.query.sku);
+    let lin = filtrarPorPerfil(all, req.user, "setor").filter((r) => SKUS.has(String(r.cod_produto || "").trim().replace(/^0+/, "")));
     const setor = String(req.query.setor || "").trim();
     const mes = String(req.query.mes || "").trim();
     if (setor) lin = lin.filter((r) => String(r.setor || "").trim() === setor);
@@ -404,7 +414,9 @@ router.get("/verdes/dias", async (req, res) => {
     const setor = String(req.query.setor || "").trim();
     const gv = String(req.query.gv || "").trim();
     const all = await readSheetMonths("verdes_pedidos", "mes_referencia", [mes]).catch(() => []);
+    const SKUS = skusVerdes(req.query.sku);
     const escopo = filtrarPorPerfil(all, req.user, "setor")
+      .filter((r) => SKUS.has(String(r.cod_produto || "").trim().replace(/^0+/, "")))
       .filter((r) => !gv || String(r.setor || "").trim().startsWith(gv));
     const lin = setor ? escopo.filter((r) => String(r.setor || "").trim() === setor) : escopo;
     const isoDe = (r) => {
