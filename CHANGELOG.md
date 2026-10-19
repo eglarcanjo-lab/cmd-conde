@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.99.1** — motor: envio só dos incentivos.
+Versão atual: **v3.100.0** — Anomalia de Volume (Outros relatórios).
+
+## v3.100.0 — Anomalia de Volume
+- Outros relatórios › **🚨 Anomalia de Volume** (gestores): PDVs dos setores **102, 995 e 997** (não podem fazer pedido) com venda no **mês atual** — zera todo mês.
+- Mostra **tudo** da venda: pedidos (nº, nº BEES/cliente, data, entrada, entrega, NF, situação, canal de origem/marcação, quem digitou e motivo, vendedor, operação/tipo de movimento, pagamento, placa/itinerário, cancelamento) e **itens** (produto, qtd, unidade, valor unitário/item, HL, situação, corte, se conta como venda). Excel item a item.
+- **Sugestão de RN e dia:** RN com mais PDVs no **mesmo bairro** (desempate: mesma cidade, depois base menor) e o dia que ele mais visita aquele bairro (desempate: dia mais leve na rota). Mostra mais 2 opções. Cliente interno (AMBEV, só itens sem volume) fica marcado e escondido por padrão.
+- Processador: `anomalia_pedidos` (CORA, mês vivo, 102/995/997, ~40 colunas) e `pdv_fora` (base de clientes 0105070402: cidade/bairro/endereço/segmento/status dos 102/995/997). Rota `GET /api/anomalia-volume`.
 
 ## v3.99.1 — Motor: opção só de incentivos
 - MOTOR.bat ganhou **12) PRÉVIA INCENTIVO** e **13) ENVIAR INCENTIVO** (`FAROL=incentivo`): manda só a foto do Bateu, Levou · Zeros, em **qualquer dia**, p/ todos com telefone (RN, GV, Diretoria). O envio de seg/qua/sex junto com os faróis continua.

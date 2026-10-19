@@ -6,6 +6,7 @@ import api from "../../services/api";
 import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
 import RelatorioAberto from "./RelatorioAberto"; // cobertura/volume/distribuição por setor × mês
 import BaseVisita from "./BaseVisita"; // base de PDVs × dia de visita (estudo de rota)
+import AnomaliaVolume from "./AnomaliaVolume"; // PDVs 102/995/997 com venda no mês (gestores)
 import { useAbaUrl } from "../../utils/abaUrl";
 import { useContarAba } from "../../utils/uso";
 
@@ -25,6 +26,7 @@ const ABAS_REL = [
   { id: "base",      icon: "🗺️", label: "Base de PDVs × dia" },
   { id: "conversao", icon: "🎯", label: "Conversão Pure Gold" },
   { id: "campanhas", icon: "🏆", label: "Campanhas" },
+  { id: "anomalia",  icon: "🚨", label: "Anomalia de Volume", gestor: true },
 ];
 
 export default function Incentivos() {
@@ -76,7 +78,7 @@ export default function Incentivos() {
 
       {/* Abas (Auditoria out/26: antes era uma pilha de caixas). Aba fica no endereço (?aba=). */}
       <div style={S.abas}>
-        {ABAS_REL.map((a) => (
+        {ABAS_REL.filter((a) => !a.gestor || ["admin", "director", "gv1", "gv3"].includes(usuario?.perfil)).map((a) => (
           <button key={a.id} type="button" onClick={() => setAba(a.id)} style={aba === a.id ? S.abaOn : S.aba}>
             {a.icon} {a.label}{a.id === "campanhas" && lista.length ? ` (${lista.length})` : ""}
           </button>
@@ -86,6 +88,7 @@ export default function Incentivos() {
       {aba === "relatorio" && <RelatorioAberto embutido />}
       {aba === "base" && <BaseVisita embutido />}
       {aba === "conversao" && <ConversaoPG embutido />}
+      {aba === "anomalia" && <AnomaliaVolume />}
 
       {aba === "campanhas" && (loading ? (
         <div style={S.loadingWrap}><div className="inc-spinner" /></div>

@@ -65,6 +65,7 @@ app.use("/api/farol-queda", require("./routes/farol-queda"));     // queda de vo
 app.use("/api/farol-volumes", require("./routes/farol-volumes")); // volumes meta×real×tendência (por RN + operação)
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/incentivos-rn", require("./routes/incentivosRn")); // aba Incentivos (Liga CMD, Zeros)
+app.use("/api/anomalia-volume", require("./routes/anomaliaVolume")); // Outros relatórios › Anomalia de Volume
 app.use("/api/input-tasks", require("./routes/input-tasks")); // gerador de tasks (grupo Ações de Preço, admin)
 app.use("/api/popups", require("./routes/popups"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));
