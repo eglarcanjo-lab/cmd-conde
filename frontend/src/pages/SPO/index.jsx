@@ -587,13 +587,13 @@ export default function SPO() {
 
       <div style={styles.content}>
         {/* Layout side-by-side */}
-        <div className="spo-layout" style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+        <div className="spo-layout" style={{ display: "flex", gap: "20px", alignItems: "stretch" }}>
 
-        {/* COLUNA ESQUERDA — Cards + Detalhe KPI */}
-        <div className="spo-col-left" style={{ flex: "0 0 35%", minWidth: 0 }}>
+        {/* COLUNA ESQUERDA — Cards (mesma altura do consolidado) */}
+        <div className="spo-col-left" style={{ flex: "0 0 35%", minWidth: 0, display: "flex", flexDirection: "column" }}>
 
         {/* Scoreboard dos 24 KPIs */}
-        <div style={styles.scoreboard}>
+        <div style={{ ...styles.scoreboard, flex: 1 }}>
           <div style={styles.scoreboardHeader}>
             <span style={styles.scoreboardTitle}>Painel SPO — {totalPts} pontos</span>
             <span style={styles.scoreboardSub}>KPIs ativos em amarelo</span>
@@ -640,165 +640,16 @@ export default function SPO() {
           </div>
         </div>
 
-        {/* Abas de visão — contextuais por KPI */}
-        {(() => {
-          let abasVisiveis = ["operacao"];
-          if (mostra(kpiAtivo, 1)) abasVisiveis = ["operacao", "gv", "detalhe"];
-          if (kpiAtivo === 2) abasVisiveis = ["detalhe_rn"];
-          return (
-            <div style={styles.abas}>
-              {abasVisiveis.map((a) => (
-                <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
-                  {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : a === "detalhe_rn" ? "👤 Detalhado RN" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
-                </button>
-              ))}
-            </div>
-          );
-        })()}
-
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0" }}>
-            {[1,2,3].map(i => (
-              <div key={i} style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: "14px",
-                padding: "20px",
-                position: "relative",
-                overflow: "hidden",
-              }}>
-                <div style={{ height: "14px", width: "40%", background: "rgba(255,255,255,0.06)", borderRadius: "6px", marginBottom: "12px" }} />
-                <div style={{ height: "10px", width: "70%", background: "rgba(255,255,255,0.04)", borderRadius: "6px", marginBottom: "8px" }} />
-                <div style={{ height: "10px", width: "55%", background: "rgba(255,255,255,0.04)", borderRadius: "6px" }} />
-                <div style={{
-                  position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
-                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)",
-                  animation: "shimmer 1.4s infinite",
-                }} />
-              </div>
-            ))}
-            <style>{`@keyframes shimmer { 0% { left: -100% } 100% { left: 200% } }`}</style>
-          </div>
-        ) : (
-          <>
-
-
-
-
-            {/* Blocos de KPI — um arquivo por tema (Auditoria out/26: o arquivo tinha 2.754 linhas) */}
-            <KpisVisitacao ctx={spoCtx} />
-            <KpisExecucao ctx={spoCtx} />
-            <KpisTasks ctx={spoCtx} />
-            <KpisProgramas ctx={spoCtx} />
-            {/* KPIs sem relatório automático (Academia, e os novos do Q4) — explica de onde vem o número */}
-            {[10, 28, 29].includes(kpiAtivo) && (
-              <div style={{ ...styles.section, border: "1px dashed rgba(245,196,81,0.4)", borderRadius: 12, padding: 16 }}>
-                <h3 style={styles.sectionTitle}>📝 {SPO_ITEMS.find((k) => k.n === kpiAtivo)?.label}</h3>
-                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.85rem", margin: 0 }}>
-                  Este KPI ainda não tem relatório automático na HOP: a <b>meta</b> e o <b>realizado</b> de cada mês são lançados em
-                  <b> Admin › Metas SPO</b> e entram no Painel Consolidado.
-                </p>
-              </div>
-            )}
-
-            {/* POR GV */}
-            {aba === "gv" && mostra(kpiAtivo, 1) && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
-                <div style={styles.gvGrid}>
-                  {resumo.map((r) => {
-                    const pct = Math.round((parseInt(r.visitados) / parseInt(r.meta)) * 100);
-                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
-                    return (
-                      <div key={r.gv} style={styles.gvCard}>
-                        <div style={styles.gvHeader}>
-                          <span style={styles.gvLabel}>GV {r.gv}</span>
-                          <span style={{ color: cor, fontWeight: "700", fontSize: "1.1rem" }}>{pct}%</span>
-                        </div>
-                        <BarraProgresso pct={pct} cor={cor} />
-                        <div style={styles.gvFooter}>
-                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{r.visitados} / {r.meta} PDVs</span>
-                          <span style={{ color: "#7DBA3D", fontSize: "0.82rem", fontWeight: "600" }}>
-                            {pct >= 100 ? "14 pts" : `~${Math.round(14 * pct / 100)} pts`}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
-                </div>
-              </div>
-            )}
-
-            {/* DETALHE */}
-            {aba === "detalhe" && mostra(kpiAtivo, 1) && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Item 1 — Visitas Detalhadas</h3>
-                <div style={styles.filtrosRow}>
-                  <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
-                  <select style={styles.inputFiltro} value={filtroGv} onChange={(e) => setFiltroGv(e.target.value)}>
-                    <option value="todos">Todos os GVs</option>
-                    {gvsUnicos.map((g) => <option key={g} value={g}>GV {g}</option>)}
-                  </select>
-                  <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
-                    <option value="todos">Todos</option>
-                    <option value="ok">✅ Válidas</option>
-                    <option value="nok">❌ Inválidas</option>
-                  </select>
-                  <span style={styles.countLabel}>{detalheFiltrado.length} visitas</span>
-                </div>
-                <div style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        {["GV", "Setor", "PDV", "Nome", "Dia Visita", "Visita", "GPS", "Status"].map((h) => (
-                          <th key={h} style={styles.th}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detalheFiltrado.slice(0, 200).map((d, i) => {
-                        const ok = d.valida === "SIM";
-                        return (
-                          <tr key={i} style={styles.tr}>
-                            <td style={styles.td}>{d.gv}</td>
-                            <td style={styles.td}>{d.setor}</td>
-                            <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
-                            <td style={{ ...styles.td, textAlign: "left", fontSize: "0.8rem" }}>{d.nome_pdv || "—"}</td>
-                            <td style={styles.td}>{d.dia_visita || "—"}</td>
-                            <td style={styles.td}><span style={{ color: d.visita_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.visita_ok}</span></td>
-                            <td style={styles.td}><span style={{ color: d.gps_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.gps_ok}</span></td>
-                            <td style={styles.td}>
-                              <span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>
-                                {ok ? "✅ Válida" : "❌ Inválida"}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  {detalheFiltrado.length > 200 && (
-                    <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: "12px" }}>
-                      Mostrando 200 de {detalheFiltrado.length}. Use os filtros para refinar.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
         </div>{/* fim coluna esquerda */}
 
         {/* COLUNA DIREITA — Painel SPO fixo */}
-        <div className="spo-col-right" style={{ flex: "0 0 63%", minWidth: 0, position: "sticky", top: "16px", alignSelf: "flex-start" }}>
+        <div className="spo-col-right" style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div
             ref={painelRef} data-spo-painel
             className={painelFull ? "spo-painel-fullscreen" : ""}
             style={painelFull
               ? { padding: "0" }
-              : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto" }
+              : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowX: "auto", flex: 1 }
             }
           >
             {/* Header do painel: título + botão lupa/fechar */}
@@ -1078,6 +929,159 @@ export default function SPO() {
         </div>
 
         </div>{/* fim flex */}
+
+        {/* DETALHE DO KPI — largura total, abaixo dos cards + consolidado */}
+        <div className="spo-detalhe" style={{ minWidth: 0 }}>
+        {/* Abas de visão — contextuais por KPI */}
+        {(() => {
+          let abasVisiveis = ["operacao"];
+          if (mostra(kpiAtivo, 1)) abasVisiveis = ["operacao", "gv", "detalhe"];
+          if (kpiAtivo === 2) abasVisiveis = ["detalhe_rn"];
+          return (
+            <div style={styles.abas}>
+              {abasVisiveis.map((a) => (
+                <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
+                  {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : a === "detalhe_rn" ? "👤 Detalhado RN" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0" }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "14px",
+                padding: "20px",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ height: "14px", width: "40%", background: "rgba(255,255,255,0.06)", borderRadius: "6px", marginBottom: "12px" }} />
+                <div style={{ height: "10px", width: "70%", background: "rgba(255,255,255,0.04)", borderRadius: "6px", marginBottom: "8px" }} />
+                <div style={{ height: "10px", width: "55%", background: "rgba(255,255,255,0.04)", borderRadius: "6px" }} />
+                <div style={{
+                  position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
+                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)",
+                  animation: "shimmer 1.4s infinite",
+                }} />
+              </div>
+            ))}
+            <style>{`@keyframes shimmer { 0% { left: -100% } 100% { left: 200% } }`}</style>
+          </div>
+        ) : (
+          <>
+
+
+
+
+            {/* Blocos de KPI — um arquivo por tema (Auditoria out/26: o arquivo tinha 2.754 linhas) */}
+            <KpisVisitacao ctx={spoCtx} />
+            <KpisExecucao ctx={spoCtx} />
+            <KpisTasks ctx={spoCtx} />
+            <KpisProgramas ctx={spoCtx} />
+            {/* KPIs sem relatório automático (Academia, e os novos do Q4) — explica de onde vem o número */}
+            {[10, 28, 29].includes(kpiAtivo) && (
+              <div style={{ ...styles.section, border: "1px dashed rgba(245,196,81,0.4)", borderRadius: 12, padding: 16 }}>
+                <h3 style={styles.sectionTitle}>📝 {SPO_ITEMS.find((k) => k.n === kpiAtivo)?.label}</h3>
+                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.85rem", margin: 0 }}>
+                  Este KPI ainda não tem relatório automático na HOP: a <b>meta</b> e o <b>realizado</b> de cada mês são lançados em
+                  <b> Admin › Metas SPO</b> e entram no Painel Consolidado.
+                </p>
+              </div>
+            )}
+
+            {/* POR GV */}
+            {aba === "gv" && mostra(kpiAtivo, 1) && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Item 1 — Visitação por GV</h3>
+                <div style={styles.gvGrid}>
+                  {resumo.map((r) => {
+                    const pct = Math.round((parseInt(r.visitados) / parseInt(r.meta)) * 100);
+                    const cor = pct >= 100 ? "#4ade80" : pct >= 70 ? "#7DBA3D" : "#f87171";
+                    return (
+                      <div key={r.gv} style={styles.gvCard}>
+                        <div style={styles.gvHeader}>
+                          <span style={styles.gvLabel}>GV {r.gv}</span>
+                          <span style={{ color: cor, fontWeight: "700", fontSize: "1.1rem" }}>{pct}%</span>
+                        </div>
+                        <BarraProgresso pct={pct} cor={cor} />
+                        <div style={styles.gvFooter}>
+                          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{r.visitados} / {r.meta} PDVs</span>
+                          <span style={{ color: "#7DBA3D", fontSize: "0.82rem", fontWeight: "600" }}>
+                            {pct >= 100 ? "14 pts" : `~${Math.round(14 * pct / 100)} pts`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {resumo.length === 0 && <p style={styles.msg}>Nenhum dado disponível. Importe o relatório em Admin → Arquivos.</p>}
+                </div>
+              </div>
+            )}
+
+            {/* DETALHE */}
+            {aba === "detalhe" && mostra(kpiAtivo, 1) && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Item 1 — Visitas Detalhadas</h3>
+                <div style={styles.filtrosRow}>
+                  <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+                  <select style={styles.inputFiltro} value={filtroGv} onChange={(e) => setFiltroGv(e.target.value)}>
+                    <option value="todos">Todos os GVs</option>
+                    {gvsUnicos.map((g) => <option key={g} value={g}>GV {g}</option>)}
+                  </select>
+                  <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+                    <option value="todos">Todos</option>
+                    <option value="ok">✅ Válidas</option>
+                    <option value="nok">❌ Inválidas</option>
+                  </select>
+                  <span style={styles.countLabel}>{detalheFiltrado.length} visitas</span>
+                </div>
+                <div style={styles.tableWrap}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        {["GV", "Setor", "PDV", "Nome", "Dia Visita", "Visita", "GPS", "Status"].map((h) => (
+                          <th key={h} style={styles.th}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detalheFiltrado.slice(0, 200).map((d, i) => {
+                        const ok = d.valida === "SIM";
+                        return (
+                          <tr key={i} style={styles.tr}>
+                            <td style={styles.td}>{d.gv}</td>
+                            <td style={styles.td}>{d.setor}</td>
+                            <td style={styles.td}><span style={styles.codBadge}>{d.cod_pdv}</span></td>
+                            <td style={{ ...styles.td, textAlign: "left", fontSize: "0.8rem" }}>{d.nome_pdv || "—"}</td>
+                            <td style={styles.td}>{d.dia_visita || "—"}</td>
+                            <td style={styles.td}><span style={{ color: d.visita_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.visita_ok}</span></td>
+                            <td style={styles.td}><span style={{ color: d.gps_ok === "OK" ? "#4ade80" : "#f87171" }}>{d.gps_ok}</span></td>
+                            <td style={styles.td}>
+                              <span style={{ ...styles.statusTag, background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#4ade80" : "#f87171" }}>
+                                {ok ? "✅ Válida" : "❌ Inválida"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {detalheFiltrado.length > 200 && (
+                    <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: "12px" }}>
+                      Mostrando 200 de {detalheFiltrado.length}. Use os filtros para refinar.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        </div>{/* fim detalhe */}
       </div>
     </div>
   );

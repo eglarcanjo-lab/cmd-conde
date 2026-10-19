@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.91.0** — KPI 8 (Política Comercial) pelo Planificador TTC + lista de ataque.
+Versão atual: **v3.91.1** — SPO: cards e consolidado na mesma linha, detalhe do KPI em largura total.
+
+## v3.91.1 — Layout do SPO
+- Cards dos KPIs e Painel SPO Consolidado lado a lado com a **mesma altura**; o **detalhamento do KPI** (abas + blocos) saiu da coluna estreita da esquerda e ocupa **a largura toda** abaixo dos dois. O consolidado deixou de ser fixo (sticky) na rolagem.
 
 ## v3.91.0 — KPI 8 pelo Planificador de Execução TTC
 - **Novo import** Admin › Arquivos › SPO › **Planificador TTC (BI)** (#8, link do BI no botão): export da tabela do planificador, 1 linha por PDV Comprador RGB Coletável. Gera a tabela `planificador_ttc` e o `spo_politica_resumo`. Arquivo filtrado atualiza só os setores dele. PDVs 997 (sem RN) entram na base da operação, como no BI (conferido: 306 base · 20 aderidos e executados = 6,5% · 104 aderidos · 66 executados).
