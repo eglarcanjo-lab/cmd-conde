@@ -151,15 +151,12 @@ async function metasDe(incId, meses) {
 // GET /api/incentivos-rn → lista de incentivos (cards da aba)
 router.get("/", (req, res) => res.json(Object.values(INCENTIVOS).map(({ id, titulo, subtitulo, meses }) => ({ id, titulo, subtitulo, meses }))));
 
-// GET /api/incentivos-rn/:id?mes=2026-10|tri
-router.get("/:id", async (req, res) => {
-  try {
-    const inc = INCENTIVOS[req.params.id];
-    if (!inc) return res.status(404).json({ error: "Incentivo não encontrado." });
-    const tri = String(req.query.mes || "") === "tri";
+// Monta o incentivo (tela e farol do motor). mesQ = "2026-10" | "tri" | "" (= mês atual).
+async function montar(inc, mesQ, user) {
+    const tri = String(mesQ || "") === "tri";
     const br = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const atual = `${br.getFullYear()}-${String(br.getMonth() + 1).padStart(2, "0")}`;
-    const mesSel = tri ? null : (inc.meses.includes(String(req.query.mes)) ? String(req.query.mes) : (inc.meses.includes(atual) ? atual : inc.meses[0]));
+    const mesSel = tri ? null : (inc.meses.includes(String(mesQ)) ? String(mesQ) : (inc.meses.includes(atual) ? atual : inc.meses[0]));
     const mesesCalc = tri ? inc.meses.filter((m) => m <= atual) : [mesSel];
 
     const [metas, reais, usuarios] = await Promise.all([
@@ -227,13 +224,61 @@ router.get("/:id", async (req, res) => {
     }
 
     const f = mesSel ? fatorMes(mesSel) : null;
-    return res.json({
+    return {
       incentivo: { id: inc.id, titulo: inc.titulo, subtitulo: inc.subtitulo, meses: inc.meses, minPts: inc.minPts, premios: inc.premios, valorMeta: inc.valorMeta,
         kpis: inc.kpis.map(({ key, label, pts, unidade, ind }) => ({ key, label, pts, unidade, ind })) },
       mes: mesSel || "tri", mesesCalc, diasUteis: f && f.aberto ? { feitos: f.feitos, total: f.total } : null,
-      meuSetor: String(req.user.cod || ""),
+      meuSetor: String(user.cod || ""),
       metas, linhas,
+    };
+}
+
+// GET /api/incentivos-rn/:id/farol — tabela pronta p/ o motor de WhatsApp (vira FOTO, enviada
+// à parte, como o Deck). TEMPORÁRIO. `ativo` = hoje é dia de envio (DIAS_ENVIO: 1=seg 3=qua 5=sex).
+// Cada célula: { v: texto, cls: "ok" (bateu) | "tend" (tendência bate) | "nao" | "" }.
+const DIAS_ENVIO = { zeros: [1, 3, 5] };
+const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+router.get("/:id/farol", async (req, res) => {
+  try {
+    const inc = INCENTIVOS[req.params.id];
+    if (!inc) return res.status(404).json({ error: "Incentivo não encontrado." });
+    const br = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const p2 = (n) => String(n).padStart(2, "0");
+    const ativo = (DIAS_ENVIO[inc.id] || []).includes(br.getDay()) || req.query.forcar === "1";
+    const d = await montar(inc, "", req.user);
+    const f1 = (v) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
+    const colunas = ["Setor", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`),
+      ...(inc.id === "liga" ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
+    const linhas = d.linhas.map((l) => [
+      { v: l.setor, cls: "lbl" },
+      ...l.kpis.map((k) => (k.meta == null ? { v: "—", cls: "" } : {
+        v: `${f1(k.real)} / ${f1(k.meta)} · ${f1(k.atingTend)}%`, cls: k.bateu ? "ok" : k.bateTend ? "tend" : "nao",
+      })),
+      ...(inc.id === "liga"
+        ? [{ v: String(l.pontos), cls: "" }, { v: String(l.pontosTend), cls: l.elegivelTend ? "ok" : "" }, { v: l.premioTend || "—", cls: l.premioTend ? "tend" : "" }]
+        : [{ v: `R$ ${f1(l.valor)}`, cls: l.valor ? "ok" : "" }, { v: `R$ ${f1(l.valorTend)}`, cls: l.valorTend ? "tend" : "" }]),
+    ]);
+    const tot = inc.id === "zeros" ? d.linhas.reduce((s, l) => s + l.valorTend, 0) : null;
+    return res.json({
+      ativo, titulo: inc.titulo, subtitulo: inc.subtitulo,
+      data: `${p2(br.getDate())}/${p2(br.getMonth() + 1)}/${br.getFullYear()}`, dia: DIA_LABEL[br.getDay()],
+      mes: d.mes, diasUteis: d.diasUteis, colunas, linhas,
+      rodape: inc.id === "zeros"
+        ? `R$ ${f1(inc.valorMeta)} por meta batida · real / meta · % = tendência no ritmo de dias úteis · total na tendência: R$ ${f1(tot)}`
+        : `Tudo ou nada por KPI · elegível com ${inc.minPts} pts · % = tendência no ritmo de dias úteis`,
     });
+  } catch (e) {
+    console.error("incentivos-rn farol:", e);
+    return res.status(500).json({ error: "Erro ao montar o farol do incentivo." });
+  }
+});
+
+// GET /api/incentivos-rn/:id?mes=2026-10|tri
+router.get("/:id", async (req, res) => {
+  try {
+    const inc = INCENTIVOS[req.params.id];
+    if (!inc) return res.status(404).json({ error: "Incentivo não encontrado." });
+    return res.json(await montar(inc, req.query.mes, req.user));
   } catch (e) {
     console.error("incentivos-rn:", e);
     return res.status(500).json({ error: "Erro ao montar o incentivo." });

@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.97.0** — aba Incentivos (Liga CMD + Bateu, Levou Zeros).
+Versão atual: **v3.98.0** — Bateu, Levou no motor de WhatsApp (seg/qua/sex) + export PNG.
+
+## v3.98.0 — Incentivo no motor + PNG
+- **Motor de WhatsApp (temporário):** o **Bateu, Levou · Zeros** vai como **FOTO separada** (como o Deck), 1x por destinatário, **só segunda, quarta e sexta**. Backend: `GET /api/incentivos-rn/:id/farol` (tabela pronta + `ativo` pelo dia; `?forcar=1` p/ teste). Robô (`cmd-conde-whatsapp/enviar.js`): bloco "INCENTIVO" (backup em `enviar.backup_antes_incentivo_2026-10-19.js`); `FORCAR_INCENTIVO=1` manda em qualquer dia; prévia em `preview_INCENTIVO.png`.
+- **Aba Incentivos:** botão **📸 PNG** baixa a tabela do incentivo (fundo branco, mesmo visual da foto do motor) p/ o GV colar no PowerPoint — Liga ou Zeros, do mês/tri aberto.
 
 ## v3.97.0 — Aba Incentivos
 - Menu novo **🏆 Incentivos** (`/incentivos-rn`), separado de Outros relatórios. Cards: **LIGA CMD** e **Bateu, Levou · Zeros**. Todos os RNs veem todos (competição) + box "Sua posição" destacando o setor logado.

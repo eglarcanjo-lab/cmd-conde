@@ -16,7 +16,7 @@ export function triDoPainel() {
 }
 
 let _h2c = null;
-function carregarHtml2canvas() {
+export function carregarHtml2canvas() { // também usado no export PNG da aba Incentivos
   if (window.html2canvas) return Promise.resolve(window.html2canvas);
   if (_h2c) return _h2c;
   _h2c = new Promise((ok, erro) => {

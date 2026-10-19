@@ -8,6 +8,57 @@ import api from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAbaUrl } from "../../utils/abaUrl";
 import { useContarAba } from "../../utils/uso";
+import { carregarHtml2canvas } from "../SPO/FechamentoSpo";
+
+// Export PNG (p/ o GV colar no PowerPoint): tabela clara, mesmo visual da foto do motor de
+// WhatsApp. Monta um HTML fora da tela e captura com html2canvas (cdnjs, só na hora).
+const escH = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const CSS_PNG = `
+  .xp{font-family:Arial,'Segoe UI',sans-serif;background:#fff;color:#1a1a1a;padding:14px;width:1100px}
+  .xp *{box-sizing:border-box;margin:0}
+  .xp .ih{background:linear-gradient(135deg,#2E7D32,#7DBA3D);color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:10px}
+  .xp .it1{font-size:22px;font-weight:800}.xp .it2{font-size:13px;margin-top:3px}
+  .xp table{width:100%;border-collapse:collapse;font-size:14px}
+  .xp th{background:#2E7D32;color:#fff;padding:8px 6px;font-size:12.5px;border:1px solid #2E7D32}
+  .xp td{border:1px solid #d9dfd3;padding:7px 6px;text-align:center;white-space:nowrap}
+  .xp td.lbl{font-weight:800;background:#eef3e8;color:#2E7D32}
+  .xp td.ok{background:#d4edda;color:#1a7a34;font-weight:700}
+  .xp td.tend{background:#fff3cd;color:#8a6d00;font-weight:700}
+  .xp td.nao{background:#f8d7da;color:#a52834}
+  .xp .if{font-size:11px;color:#777;margin-top:8px}`;
+async function exportarPng(d) {
+  const inc = d.incentivo, liga = inc.id === "liga";
+  const f1 = (v) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
+  const cols = ["Setor", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`), ...(liga ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
+  const linhas = d.linhas.map((l) => [
+    ["lbl", l.setor],
+    ...l.kpis.map((k) => (k.meta == null ? ["", "—"] : [k.bateu ? "ok" : k.bateTend ? "tend" : "nao", `${f1(k.real)} / ${f1(k.meta)} · ${f1(k.atingTend)}%`])),
+    ...(liga ? [["", l.pontos], [l.elegivelTend ? "ok" : "", l.pontosTend], [l.premioTend ? "tend" : "", l.premioTend || "—"]]
+      : [[l.valor ? "ok" : "", `R$ ${f1(l.valor)}`], [l.valorTend ? "tend" : "", `R$ ${f1(l.valorTend)}`]]),
+  ]);
+  const periodo = d.mes === "tri" ? "Trimestre" : rotMes(d.mes);
+  const du = d.diasUteis ? ` · ${d.diasUteis.feitos} de ${d.diasUteis.total} dias úteis` : "";
+  const html = `<style>${CSS_PNG}</style><div class="xp">` +
+    `<div class="ih"><div class="it1">${liga ? "🏆" : "💰"} ${escH(inc.titulo)}</div><div class="it2">${escH(inc.subtitulo)} · ${escH(periodo)}${du}</div></div>` +
+    `<table><thead><tr>${cols.map((c) => `<th>${escH(c)}</th>`).join("")}</tr></thead><tbody>` +
+    linhas.map((l) => `<tr>${l.map(([cls, v]) => `<td class="${cls}">${escH(v)}</td>`).join("")}</tr>`).join("") +
+    `</tbody></table><div class="if">Verde = batida · amarelo = tendência bate · vermelho = não bate no ritmo · real / meta · % = tendência (dias úteis)` +
+    `${liga ? ` · tudo ou nada por KPI · elegível com ${inc.minPts} pts` : ` · R$ ${f1(inc.valorMeta)} por meta batida`} · HOP Follow-up</div></div>`;
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;left:-12000px;top:0;";
+  box.innerHTML = html;
+  document.body.appendChild(box);
+  try {
+    const html2canvas = await carregarHtml2canvas();
+    const canvas = await html2canvas(box.querySelector(".xp"), { backgroundColor: "#ffffff", scale: 2 });
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `${inc.titulo.replace(/[^\w]+/g, "_")}_${d.mes}.png`;
+    a.click();
+  } catch (e) {
+    alert("Não foi possível gerar o PNG: " + (e?.message || "falha"));
+  } finally { box.remove(); }
+}
 
 const VERDE = "#7DBA3D", OURO = "#f5c451", VERM = "#f87171", OK = "#4ade80";
 const MES_ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -248,6 +299,7 @@ export default function IncentivosRn() {
                 {[...d.incentivo.meses, ...(d.incentivo.id === "liga" ? ["tri"] : [])].map((m) => (
                   <button key={m} onClick={() => setMes(m)} style={S.chip(d.mes === m)}>{rotMes(m)}</button>
                 ))}
+                {d.linhas.length > 0 && <button onClick={() => exportarPng(d)} style={S.chip(false)} title="Baixa a tabela em PNG (fundo branco) p/ PowerPoint">📸 PNG</button>}
                 {isAdmin && <button onClick={() => setEditar(true)} style={{ ...S.chip(false), borderColor: OURO, color: OURO }}>🎯 Metas</button>}
               </div>
             </div>
