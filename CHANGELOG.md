@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.92.1** — sai o card +LN do Admin › Arquivos.
+Versão atual: **v3.92.2** — tasks do SPO contadas igual ao BI.
+
+## v3.92.2 — Tasks do SPO batendo com o BI
+- Conferido com o relatório de Tasks de out/26 × BI "SPO - Compra": o realizado agora **soma a coluna Validada** (task de **Combo** vale 2, 3… validações), em vez de contar 1 por linha. Cerveja Portfólio 1.595 → **1.700** (= BI) e NAB 710 → **915** (BI 919: diferença de 4, provavelmente horário do print × export).
+- **Match:** tasks manuais de portfólio que vêm **sem categoria** ("Auxilie o PDV na cobertura de Match (Beats, Flying Fish, Brutal Fruit)") entram em Match pelo texto, como no BI: 60 → **85** (= BI).
+- Marketplace (502), SKU/PDV (287) e Volume (77) já batiam. Vale também para Tarefas de Long Neck.
+- Corrigido: a data da visita da task (KPI 8 e Long Neck) continuava como 2026-10-01; agora sai dd/mm.
 
 ## v3.92.1 — Card +LN removido
 - Admin › Arquivos: saiu o card **+LN** (arquivo dedicado do 3º tri). O KPI de Long Neck agora vem todo do relatório de **Tasks (BI)**. O processador continua aceitando o campo `spo_ln` (só meses do Q3), sem tela.

@@ -197,7 +197,7 @@ export default function KpisTasks({ ctx }) {
                   const ST = { VALID: ["validada", "#4ade80"], OPEN: ["aberta", "#f5c451"], INVALID: ["inválida", "#f87171"] };
                   const thT = { padding: "8px 10px", color: "rgba(255,255,255,0.45)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap", fontSize: "0.7rem" };
                   const tdT = { padding: "7px 10px", textAlign: "center" };
-                  const dd = (v) => { const m = String(v || "").match(/^(d{4})-(d{2})-(d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
+                  const dd = (v) => { const m = String(v || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
                   const val = tasksLnDet.filter((d) => String(d.status).toUpperCase() === "VALID");
                   return (
                     <div style={{ marginTop: 14 }}>

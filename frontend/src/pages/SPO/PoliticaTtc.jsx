@@ -23,7 +23,7 @@ const n = (v) => Number(v) || 0;
 const recusadas = (p) => n(p.fraude) + n(p.regra_60) + n(p.sem_sku) + n(p.outros);
 const thS = { ...styles.th, fontSize: "0.72rem", padding: "8px 8px" };
 const tdS = { ...styles.td, fontSize: "0.82rem", padding: "7px 8px" };
-const fmtData = (v) => { const m = String(v || "").match(/^(d{4})-(d{2})-(d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
+const fmtData = (v) => { const m = String(v || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
 // Colunas ordenáveis da lista de ataque: valor usado na ordenação (texto ou número)
 const ORDENA = {
   setor: (p) => n(p.setor), pdv: (p) => String(p.nome_pdv || ""), dia: (p) => DIAS.indexOf(String(p.dia_visita || "").toUpperCase().split("/")[0].trim()) + 1 || 99,
