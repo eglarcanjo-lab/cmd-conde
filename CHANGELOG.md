@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.102.1** — Incentivos: 1º nome do RN nas tabelas.
+Versão atual: **v3.102.2** — fix: Ruptura por pedido não gravava no Render.
+
+## v3.102.2 — Ruptura por pedido (fix)
+- O bloco não aparecia: o processador usava `groupby.apply(include_groups=…)`, que só existe no pandas ≥ 2.2 — o Render roda **pandas 2.1.4**, a etapa falhava em silêncio e `ruptura_pedidos` não era gravada. Trocado por agregação simples (funciona nas duas versões). Reimportar o CORA.
 
 ## v3.102.1 — Nome do RN nos incentivos
 - Aba Incentivos (Liga CMD e Bateu, Levou): coluna **Setor · RN** com o 1º nome do RN (ex.: "104 · Hebert") nas tabelas, no pódio, no "1º hoje", no **PNG** e na **foto do motor de WhatsApp**.
