@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.91.1** — SPO: cards e consolidado na mesma linha, detalhe do KPI em largura total.
+Versão atual: **v3.91.2** — KPI 8: lista de ataque ordenável por coluna.
+
+## v3.91.2 — Ordenar a lista do KPI 8
+- Na lista de ataque do KPI 8 (Política Comercial), **clicar no cabeçalho ordena** a coluna (maior → menor; clicar de novo inverte): RN, PDV, dia, % vol. aderido, executado, tasks, validadas, justificadas, sem visita, recusadas e task de TTC (abertas primeiro). O Excel sai na mesma ordem.
+- Data da visita da task aparece como dd/mm (antes vinha "2026-10-01 00:00:00").
 
 ## v3.91.1 — Layout do SPO
 - Cards dos KPIs e Painel SPO Consolidado lado a lado com a **mesma altura**; o **detalhamento do KPI** (abas + blocos) saiu da coluna estreita da esquerda e ocupa **a largura toda** abaixo dos dois. O consolidado deixou de ser fixo (sticky) na rolagem.

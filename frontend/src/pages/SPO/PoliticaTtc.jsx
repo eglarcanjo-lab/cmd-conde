@@ -23,6 +23,14 @@ const n = (v) => Number(v) || 0;
 const recusadas = (p) => n(p.fraude) + n(p.regra_60) + n(p.sem_sku) + n(p.outros);
 const thS = { ...styles.th, fontSize: "0.72rem", padding: "8px 8px" };
 const tdS = { ...styles.td, fontSize: "0.82rem", padding: "7px 8px" };
+const fmtData = (v) => { const m = String(v || "").match(/^(d{4})-(d{2})-(d{2})/); return m ? `${m[3]}/${m[2]}` : String(v || "").split(" ")[0]; };
+// Colunas ordenáveis da lista de ataque: valor usado na ordenação (texto ou número)
+const ORDENA = {
+  setor: (p) => n(p.setor), pdv: (p) => String(p.nome_pdv || ""), dia: (p) => DIAS.indexOf(String(p.dia_visita || "").toUpperCase().split("/")[0].trim()) + 1 || 99,
+  peso: (p) => n(p.peso_aderido), executado: (p) => (p.executado === "SIM" ? 1 : 0), totais: (p) => n(p.totais), validadas: (p) => n(p.validadas),
+  justificadas: (p) => n(p.justificadas), sem_visita: (p) => n(p.sem_visita), recusadas: (p) => recusadas(p),
+  task: (p) => (p.tasks_ttc || []).filter((t) => t.status === "OPEN").length * 100 + (p.tasks_ttc || []).length,
+};
 
 export default function PoliticaTtc({ spoMetaTotal }) {
   const { usuario } = useAuth();
@@ -34,6 +42,7 @@ export default function PoliticaTtc({ spoMetaTotal }) {
   const [dia, setDia] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(null); // cod_pdv com as tasks expandidas
+  const [ordem, setOrdem] = useState({ col: "", dir: "desc" }); // clique no cabeçalho: maior↔menor
 
   useEffect(() => {
     api.get("/api/spo/politica-comercial/pdvs")
@@ -83,6 +92,24 @@ export default function PoliticaTtc({ spoMetaTotal }) {
       return recusadas(b) - recusadas(a);
     });
   }, [pdvs, grupo, rn, dia, busca]);
+  const listaOrd = useMemo(() => {
+    if (!ordem.col) return lista;
+    const get = ORDENA[ordem.col];
+    return [...lista].sort((a, b) => {
+      const va = get(a), vb = get(b);
+      const c = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+      return ordem.dir === "asc" ? c : -c;
+    });
+  }, [lista, ordem]);
+  const ordenar = (col) => setOrdem((o) => (o.col === col
+    ? { col, dir: o.dir === "asc" ? "desc" : "asc" }
+    : { col, dir: ["pdv", "dia", "setor"].includes(col) ? "asc" : "desc" }));
+  const Th = ({ col, children, left }) => (
+    <th onClick={() => ordenar(col)} title="Clique para ordenar (maior ↔ menor)"
+        style={{ ...thS, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", ...(left ? { textAlign: "left" } : {}), ...(ordem.col === col ? { color: "#7DBA3D" } : {}) }}>
+      {children} <span style={{ opacity: ordem.col === col ? 1 : 0.3 }}>{ordem.col === col ? (ordem.dir === "asc" ? "▲" : "▼") : "↕"}</span>
+    </th>
+  );
 
   const contagem = useMemo(() => ({
     aderido: pdvs.filter((p) => (!rn || String(p.setor) === rn) && p.aderido === "SIM" && p.executado !== "SIM").length,
@@ -92,7 +119,7 @@ export default function PoliticaTtc({ spoMetaTotal }) {
 
   function exportar() {
     const cab = ["RN", "Cód PDV", "PDV", "Dia visita", "% vol. aderido", "Aderido", "Executado", "Tasks L60d", "Validadas", "Justificadas", "Sem visita", "Recusadas", "Tasks TTC abertas (relatório de Tasks)"];
-    const linhas = lista.map((p) => [Number(p.setor) || p.setor, Number(p.cod_pdv) || p.cod_pdv, p.nome_pdv, p.dia_visita, n(p.peso_aderido), p.aderido, p.executado,
+    const linhas = listaOrd.map((p) => [Number(p.setor) || p.setor, Number(p.cod_pdv) || p.cod_pdv, p.nome_pdv, p.dia_visita, n(p.peso_aderido), p.aderido, p.executado,
       n(p.totais), n(p.validadas), n(p.justificadas), n(p.sem_visita), recusadas(p),
       (p.tasks_ttc || []).filter((t) => t.status === "OPEN").map((t) => t.descricao).join(" | ")]);
     const ws = XLSX.utils.aoa_to_sheet([cab, ...linhas]);
@@ -208,13 +235,13 @@ export default function PoliticaTtc({ spoMetaTotal }) {
           <div style={styles.tableWrap}>
             <table style={styles.table}>
               <thead><tr>
-                <th style={thS}>RN</th><th style={{ ...thS, textAlign: "left" }}>PDV</th><th style={thS}>Dia</th><th style={thS}>% vol. aderido</th>
-                {grupo === "quase" && <th style={thS}>Executado</th>}
-                <th style={thS}>Tasks L60d</th><th style={thS}>Validadas</th><th style={thS}>Justif.</th><th style={thS}>Sem visita</th><th style={thS}>Recusadas</th>
-                <th style={{ ...thS, textAlign: "left" }}>Task de TTC no relatório de Tasks</th>
+                <Th col="setor">RN</Th><Th col="pdv" left>PDV</Th><Th col="dia">Dia</Th><Th col="peso">% vol. aderido</Th>
+                {grupo === "quase" && <Th col="executado">Executado</Th>}
+                <Th col="totais">Tasks L60d</Th><Th col="validadas">Validadas</Th><Th col="justificadas">Justif.</Th><Th col="sem_visita">Sem visita</Th><Th col="recusadas">Recusadas</Th>
+                <Th col="task" left>Task de TTC no relatório de Tasks</Th>
               </tr></thead>
               <tbody>
-                {lista.map((p) => {
+                {listaOrd.map((p) => {
                   const tks = p.tasks_ttc || [];
                   const abertas = tks.filter((t) => t.status === "OPEN");
                   const exp = aberto === p.cod_pdv;
@@ -241,7 +268,7 @@ export default function PoliticaTtc({ spoMetaTotal }) {
                                   <span style={{ ...styles.statusTag, background: "rgba(255,255,255,0.06)", color: st.cor }}>{st.label}</span>{" "}
                                   <span style={{ color: "rgba(255,255,255,0.8)" }}>{t.descricao || t.id_task}</span>
                                   <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem" }}>
-                                    {t.data_visita ? ` · visita ${t.data_visita}` : ""}{t.justificativa ? ` · justificativa: ${t.justificativa}` : ""}
+                                    {t.data_visita ? ` · visita ${fmtData(t.data_visita)}` : ""}{t.justificativa ? ` · justificativa: ${t.justificativa}` : ""}
                                   </span>
                                 </div>
                               );
