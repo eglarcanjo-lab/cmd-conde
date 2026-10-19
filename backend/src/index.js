@@ -64,6 +64,7 @@ app.use("/api/farol-visita", require("./routes/farol-visita"));   // PDVs sem vi
 app.use("/api/farol-queda", require("./routes/farol-queda"));     // queda de volume (PDVs + produtos)
 app.use("/api/farol-volumes", require("./routes/farol-volumes")); // volumes meta×real×tendência (por RN + operação)
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
+app.use("/api/incentivos-rn", require("./routes/incentivosRn")); // aba Incentivos (Liga CMD, Zeros)
 app.use("/api/input-tasks", require("./routes/input-tasks")); // gerador de tasks (grupo Ações de Preço, admin)
 app.use("/api/popups", require("./routes/popups"));
 app.use("/api/detalhamento", require("./routes/detalhamento"));

@@ -25,6 +25,7 @@ import Refrigeradores from "./pages/Refrigeradores";
 import AcoesPreco from "./pages/AcoesPreco";
 import InputTasks from "./pages/InputTasks";
 import RotaEfetiva from "./pages/RotaEfetiva";
+import IncentivosRn from "./pages/IncentivosRn"; // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import BotaoAjuda from "./components/BotaoAjuda";
@@ -123,6 +124,7 @@ function AppContent() {
       <Route path="/refrigeradores" element={<PrivateRoute perfisPermitidos={["admin","director"]}><ErrorBoundary><Refrigeradores /></ErrorBoundary></PrivateRoute>} />
       <Route path="/acoes-preco" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><AcoesPreco /></ErrorBoundary></PrivateRoute>} />
       <Route path="/input-tasks" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><InputTasks /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/incentivos-rn" element={<PrivateRoute><ErrorBoundary><IncentivosRn /></ErrorBoundary></PrivateRoute>} />
       <Route path="/rota-efetiva" element={<PrivateRoute perfisPermitidos={["admin","director","gv1","gv3"]}><ErrorBoundary><RotaEfetiva /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -131,7 +133,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.96.1";
+export const APP_VERSION = "v3.97.0";
 
 export default function App() {
   return (

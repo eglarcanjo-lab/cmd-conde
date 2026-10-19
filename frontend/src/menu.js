@@ -8,6 +8,7 @@
 //   grupo: "admin" → fica dentro do grupo Admin na barra lateral (Home dashboard)
 
 export const MODULOS = [
+  { icon: "🏆", label: "Incentivos",               route: "/incentivos-rn" },
   { icon: "🗂️", label: "Outros relatórios",        route: "/incentivos" },
   { icon: "📈", label: "Volume Diário",            route: "/volume-diario" },
   { icon: "📊", label: "Cobertura & Distribuição", route: "/cobertura" },

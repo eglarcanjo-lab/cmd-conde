@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.96.1** — RGB TT depois de Mktp.
+Versão atual: **v3.97.0** — aba Incentivos (Liga CMD + Bateu, Levou Zeros).
+
+## v3.97.0 — Aba Incentivos
+- Menu novo **🏆 Incentivos** (`/incentivos-rn`), separado de Outros relatórios. Cards: **LIGA CMD** e **Bateu, Levou · Zeros**. Todos os RNs veem todos (competição) + box "Sua posição" destacando o setor logado.
+- **LIGA CMD (out→dez/2026):** Distribuição de RGB (30), Cobertura Stella Pure Gold 33857+38172 (30), Volume de RGB (20), Distribuição de Marketplace (20). **Tudo ou nada** por KPI; elegível com **≥ 80 pts**; pódio por pontos, desempate pelo % médio de atingimento. Prêmios: Smart TV, Caixa de Som, Air Fryer, R$ 150, R$ 100. Mostra meta · real · tendência (dias úteis) e ✅ batido / 📈 tendência bate / ❌. Abas Out/Nov/Dez/Trimestre (tri: volume soma; distribuição/cobertura = média mensal).
+- **Bateu, Levou · Zeros (mensal):** R$ 150 por meta batida — NAB Zero e Cerveja Zero em volume (Segmentado) e cobertura (Rota).
+- Distribuição = Σ, por PDV, dos SKUs distintos da categoria (mesma lógica do Relatório aberto). RGB = Giro RGB + Litrinho + Trimarcas.
+- **Metas:** botão 🎯 Metas (admin) na própria aba, por mês × setor × KPI. Out/26 já gravado dos prints (Mktp da Liga + todas as dos Zeros). Tabela `incentivos_metas`; rotas `GET /api/incentivos-rn[/:id?mes=]`, `PUT /api/incentivos-rn/:id/metas`.
 
 ## v3.96.1 — Ordem das categorias
 - **RGB TT** passa a vir **depois de Mktp** (Home: barras/por RN/Analítico; Report Volumes do motor): Cerveja · NAB · Match · Mktp · RGB TT · Cerv. Zero · NAB Zero.
