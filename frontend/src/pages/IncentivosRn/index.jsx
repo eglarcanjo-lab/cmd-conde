@@ -29,9 +29,9 @@ const CSS_PNG = `
 async function exportarPng(d) {
   const inc = d.incentivo, liga = inc.id === "liga";
   const f1 = (v) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
-  const cols = ["Setor", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`), ...(liga ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
+  const cols = ["Setor · RN", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`), ...(liga ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
   const linhas = d.linhas.map((l) => [
-    ["lbl", l.setor],
+    ["lbl", rotSetor(l)],
     ...l.kpis.map((k) => (k.meta == null ? ["", "—"] : [k.bateu ? "ok" : k.bateTend ? "tend" : "nao", `${f1(k.real)} / ${f1(k.meta)} · ${f1(k.atingTend)}%`])),
     ...(liga ? [["", l.pontos], [l.elegivelTend ? "ok" : "", l.pontosTend], [l.premioTend ? "tend" : "", l.premioTend || "—"]]
       : [[l.valor ? "ok" : "", `R$ ${f1(l.valor)}`], [l.valorTend ? "tend" : "", `R$ ${f1(l.valorTend)}`]]),
@@ -64,6 +64,8 @@ const VERDE = "#7DBA3D", OURO = "#f5c451", VERM = "#f87171", OK = "#4ade80";
 const MES_ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const rotMes = (m) => (m === "tri" ? "Trimestre" : `${MES_ROT[Number(String(m).slice(5, 7)) - 1]}/${String(m).slice(2, 4)}`);
 const fmt = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: d }));
+// Setor + 1º nome do RN (os vendedores mudam — o setor é a referência, o nome ajuda a ler)
+const rotSetor = (l) => `${l.setor}${l.nome ? ` · ${String(l.nome).trim().split(" ").filter(Boolean)[0]}` : ""}`;
 const SETORES_PADRAO = ["101", "103", "104", "105", "106", "107", "108", "109", "110", "111"];
 const MEDALHA = ["🥇", "🥈", "🥉", "4º", "5º"];
 
@@ -143,7 +145,7 @@ function Liga({ d, meu }) {
               <div style={{ fontSize: "1.3rem" }}>{MEDALHA[i]}</div>
               <div style={{ fontWeight: 700, fontSize: "0.86rem" }}>{p}</div>
               <div style={{ fontSize: "0.74rem", color: dono ? VERDE : "rgba(255,255,255,0.35)", marginTop: 2 }}>
-                {dono ? `Setor ${dono.setor}${dono.setor === meu ? " · você!" : ""}` : "ninguém elegível ainda"}
+                {dono ? `Setor ${rotSetor(dono)}${dono.setor === meu ? " · você!" : ""}` : "ninguém elegível ainda"}
               </div>
             </div>
           );
@@ -167,7 +169,7 @@ function Liga({ d, meu }) {
               return <span key={k.key} style={{ ...S.pill, borderColor: st[1], color: st[1] }}>{k.label} ({k.pts}): {st[0]}</span>;
             })}
           </div>
-          {lider(1) && lider(1).setor !== eu.setor && <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", marginTop: 6 }}>1º hoje: setor {lider(1).setor} com {lider(1).pontosTend} pts na tendência.</div>}
+          {lider(1) && lider(1).setor !== eu.setor && <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", marginTop: 6 }}>1º hoje: setor {rotSetor(lider(1))} com {lider(1).pontosTend} pts na tendência.</div>}
         </div>
       )}
 
@@ -175,7 +177,7 @@ function Liga({ d, meu }) {
         <table style={S.table}>
           <thead>
             <tr>
-              <th style={S.th}>#</th><th style={S.th}>Setor</th>
+              <th style={S.th}>#</th><th style={S.th}>Setor · RN</th>
               {inc.kpis.map((k) => <th key={k.key} style={S.th}>{k.label}<div style={{ fontWeight: 400, opacity: 0.6 }}>{k.pts} pts · {k.unidade}</div></th>)}
               <th style={S.th}>Pts hoje</th><th style={S.th}>Pts tendência</th><th style={S.th}>Ating. médio</th><th style={S.th}>Prêmio (tend.)</th>
             </tr>
@@ -184,7 +186,7 @@ function Liga({ d, meu }) {
             {d.linhas.map((l) => (
               <tr key={l.setor} style={{ ...S.tr, ...(l.setor === meu ? { background: "rgba(125,186,61,0.10)" } : {}) }}>
                 <td style={{ ...S.td, fontWeight: 800 }}>{l.posicaoTend}º</td>
-                <td style={{ ...S.td, fontWeight: 700 }}>{l.setor}{l.setor === meu ? " · você" : ""}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{rotSetor(l)}{l.setor === meu ? " (você)" : ""}</td>
                 {inc.kpis.map((k, i) => <CelKpi key={k.key} k={l.kpis[i]} unidade={k.unidade} />)}
                 <td style={{ ...S.td, fontWeight: 700 }}>{l.pontos}</td>
                 <td style={{ ...S.td, fontWeight: 800, color: l.elegivelTend ? OK : "rgba(255,255,255,0.8)" }}>{l.pontosTend}</td>
@@ -221,7 +223,7 @@ function Zeros({ d, meu }) {
         <table style={S.table}>
           <thead>
             <tr>
-              <th style={S.th}>Setor</th>
+              <th style={S.th}>Setor · RN</th>
               {inc.kpis.map((k) => <th key={k.key} style={S.th}>{k.label}<div style={{ fontWeight: 400, opacity: 0.6 }}>{k.unidade}</div></th>)}
               <th style={S.th}>Garantido</th><th style={S.th}>Tendência</th>
             </tr>
@@ -229,7 +231,7 @@ function Zeros({ d, meu }) {
           <tbody>
             {d.linhas.map((l) => (
               <tr key={l.setor} style={{ ...S.tr, ...(l.setor === meu ? { background: "rgba(125,186,61,0.10)" } : {}) }}>
-                <td style={{ ...S.td, fontWeight: 700 }}>{l.setor}{l.setor === meu ? " · você" : ""}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{rotSetor(l)}{l.setor === meu ? " (você)" : ""}</td>
                 {inc.kpis.map((k, i) => <CelKpi key={k.key} k={l.kpis[i]} unidade={k.unidade} />)}
                 <td style={{ ...S.td, fontWeight: 700, color: l.valor ? OK : "rgba(255,255,255,0.5)" }}>R$ {fmt(l.valor)}</td>
                 <td style={{ ...S.td, fontWeight: 800, color: l.valorTend ? OURO : "rgba(255,255,255,0.5)" }}>R$ {fmt(l.valorTend)}</td>

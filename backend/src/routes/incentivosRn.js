@@ -247,10 +247,10 @@ router.get("/:id/farol", async (req, res) => {
     const ativo = (DIAS_ENVIO[inc.id] || []).includes(br.getDay()) || req.query.forcar === "1";
     const d = await montar(inc, "", req.user);
     const f1 = (v) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
-    const colunas = ["Setor", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`),
+    const colunas = ["Setor · RN", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`),
       ...(inc.id === "liga" ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
     const linhas = d.linhas.map((l) => [
-      { v: l.setor, cls: "lbl" },
+      { v: `${l.setor}${l.nome ? ` · ${String(l.nome).trim().split(" ").filter(Boolean)[0]}` : ""}`, cls: "lbl" }, // setor + 1º nome do RN
       ...l.kpis.map((k) => (k.meta == null ? { v: "—", cls: "" } : {
         v: `${f1(k.real)} / ${f1(k.meta)} · ${f1(k.atingTend)}%`, cls: k.bateu ? "ok" : k.bateTend ? "tend" : "nao",
       })),

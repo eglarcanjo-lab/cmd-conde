@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.102.0** — Ruptura por pedido (total × parcial).
+Versão atual: **v3.102.1** — Incentivos: 1º nome do RN nas tabelas.
+
+## v3.102.1 — Nome do RN nos incentivos
+- Aba Incentivos (Liga CMD e Bateu, Levou): coluna **Setor · RN** com o 1º nome do RN (ex.: "104 · Hebert") nas tabelas, no pódio, no "1º hoje", no **PNG** e na **foto do motor de WhatsApp**.
 
 ## v3.102.0 — Ruptura por pedido
 - Devolução × Ruptura › Ruptura de Estoque ganhou o bloco **🧾 Ruptura por pedido** (respeita mês/dia): pedidos de venda com falta (% do total), **Ruptura TOTAL** (nenhum item atendido — o cliente não levou nada naquele pedido; vira CANCELADO), **parcial**, HL e R$ de cada, e **Venda perdida** = ruptura total sem nenhuma compra do PDV em 7 dias.
