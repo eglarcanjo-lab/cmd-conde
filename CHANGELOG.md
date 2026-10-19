@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.94.0** — metas de cobertura e volume da Stella PG 600 nos Verdes.
+Versão atual: **v3.95.0** — metas de monitoramento (Cerveja Zero, Match, NAB Zero).
+
+## v3.95.0 — Metas de monitoramento (fora da RV)
+- Bloco **Volumes** da Home: botão **🎯 Metas** (admin) para lançar a meta do mês da **operação** em HL de **Cerveja Zero**, **Match** e **NAB Zero**. Não entram na RV (nem em Admin › Metas).
+- Valem no painel da Home (barras, por RN e Analítico) e no **Report Volumes do motor de WhatsApp**. Por RN/GV a meta é rateada pelo peso do setor na meta de Cerveja (Cerveja Zero e Match) ou de NAB (NAB Zero) do mês.
+- Sem meta lançada fica como antes: zeros = 15% do realizado da categoria regular; Match = meta da RV.
+- Banco: tabela `metas_monitor` (mes, categoria, meta_hl), criada sozinha. Rotas `GET/PUT /api/resumo/metas-monitor`. Código em `backend/src/utils/metasMonitor.js`.
 
 ## v3.94.0 — Metas dos Verdes (Stella PG 600)
 - Bloco **Verdes** da Home: botão **🎯 Metas** (só admin) para lançar, por mês do trimestre, a meta de **cobertura (PDVs)** e de **volume (HL)** da **operação** e de **cada RN** (33857 + 38172 juntas).

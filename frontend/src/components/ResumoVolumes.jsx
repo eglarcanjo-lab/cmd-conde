@@ -5,6 +5,43 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 import * as XLSX from "xlsx-js-style";
 import CurvaVolumes from "./CurvaVolumes";
+import { useAuth } from "../contexts/AuthContext";
+
+// Metas de MONITORAMENTO (não entram na RV): Cerveja Zero, Match, NAB Zero — HL da operação
+// no mês. Rateadas por RN no backend (peso na meta de Cerveja / NAB). Vão pro painel e pro motor.
+const CATS_MON = [["cervejaZero", "Cerveja Zero"], ["match", "Match"], ["nabZero", "NAB Zero"]];
+function MetasMonitor({ mes, inicial, onFechar, onSalvo }) {
+  const [val, setVal] = useState(() => Object.fromEntries(CATS_MON.map(([k]) => [k, inicial?.[k] ?? ""])));
+  const [salvando, setSalvando] = useState(false);
+  async function salvar() {
+    setSalvando(true);
+    try { await api.put("/api/resumo/metas-monitor", { mes, metas: val }); onSalvo(); }
+    catch (e) { alert("Erro ao salvar: " + (e?.response?.data?.error || e?.message || "falha")); }
+    finally { setSalvando(false); }
+  }
+  const inp = { width: 100, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "#fff", padding: "6px 8px", fontFamily: "inherit", fontSize: "0.85rem", textAlign: "right" };
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onFechar}>
+      <div style={{ background: "#13231a", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 12, padding: 16, maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+          <b style={{ color: "#fff" }}>🎯 Metas de monitoramento · {mes.slice(5, 7)}/{mes.slice(0, 4)}</b>
+          <button onClick={onFechar} style={{ marginLeft: "auto", background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+        </div>
+        <p style={{ margin: "0 0 10px", fontSize: "0.74rem", color: "rgba(255,255,255,0.5)" }}>
+          Meta da <b>operação</b> em HL. Não entra na RV — só o painel da Home e o Report Volumes do WhatsApp. Por RN/GV é rateada pelo peso na meta de Cerveja (Cerveja Zero e Match) e de NAB (NAB Zero). Em branco = volta ao padrão (zeros 15% do realizado).
+        </p>
+        {CATS_MON.map(([k, l]) => (
+          <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.88rem", flex: 1 }}>{l}</span>
+            <input inputMode="decimal" style={inp} value={val[k]} onChange={(e) => setVal((o) => ({ ...o, [k]: e.target.value }))} />
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>HL</span>
+          </div>
+        ))}
+        <button onClick={salvar} disabled={salvando} style={{ marginTop: 6, width: "100%", padding: 8, borderRadius: 8, border: "none", background: "#7DBA3D", color: "#0c1410", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{salvando ? "Salvando…" : "Salvar"}</button>
+      </div>
+    </div>
+  );
+}
 
 const cor = (pct) => {
   if (pct == null) return "rgba(255,255,255,0.25)";
@@ -28,6 +65,9 @@ export default function ResumoVolumes({ mes }) {
   const [esperando, setEsperando] = useState(false);
   const [modo, setModo] = useState("sintetico"); // sintetico (curva) | barras (% da meta) | analitico (planilha)
   const [ordAnal, setOrdAnal] = useState(null);   // ordenação do Analítico: { key, dir } | null
+  const { usuario } = useAuth();
+  const [editMetas, setEditMetas] = useState(false);
+  const [recarga, setRecarga] = useState(0);
 
   // Célula de % colorida (heatmap) no dark theme.
   const corCel = (c) => c === "up" ? { background: "rgba(74,222,128,0.16)", color: "#7ee6a0", fontWeight: 700 }
@@ -166,7 +206,7 @@ export default function ResumoVolumes({ mes }) {
     buscar();
     api.get("/api/resumo/curva", { params: mes ? { ano: mes.slice(0, 4) } : {}, timeout: 18000 }).then((r) => { if (!cancel) setCurva(r.data); }).catch(() => {});
     return () => { cancel = true; };
-  }, [mes]);
+  }, [mes, recarga]);
 
   // Exporta o Report de Volumes formatado igual ao PDF do motor (cabeçalho verde por
   // categoria, subcolunas, seções em negrito, heatmap nas % via _cor/_corT).
@@ -247,12 +287,17 @@ export default function ResumoVolumes({ mes }) {
           </div>
         )}
         {data?.report && <button style={S.xlsBtn} onClick={exportarExcel} title="Exporta o Report de Volumes (o mesmo do PDF do motor)">📥 Excel</button>}
+        {usuario?.perfil === "admin" && data && <button style={S.xlsBtn} onClick={() => setEditMetas(true)} title="Metas de Cerveja Zero, Match e NAB Zero (não entram na RV)">🎯 Metas</button>}
       </div>
+      {editMetas && data && (
+        <MetasMonitor mes={data.mes} inicial={data.metasMonitor} onFechar={() => setEditMetas(false)}
+          onSalvo={() => { setEditMetas(false); setRecarga((x) => x + 1); }} />
+      )}
       <div style={S.sub}>
         {analitico
           ? "Planilha por Operação · GV · RN — Meta · Real · Tendência · %T (heatmap no %T)"
           : modo === "barras"
-          ? "% da meta — barra escura = realizado · barra clara = tendência do mês · zeros = monitoramento (15%)"
+          ? "% da meta — barra escura = realizado · barra clara = tendência do mês · zeros sem meta lançada = monitoramento (15%)"
           : "Curva mensal — Real × Budget × Meta × Ano passado, por categoria"}
         {data?.diasUteis && <span style={{ color: "#7DBA3D", fontWeight: 700, marginLeft: 6 }}>· 📅 {data.diasUteis.feitos} de {data.diasUteis.total} dias úteis</span>}
       </div>

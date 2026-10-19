@@ -5,6 +5,7 @@ const { authMiddleware } = require("../middleware/auth");
 const { filtrarPorPerfil } = require("../utils/perfil");
 const { montarReport } = require("../utils/volumesReport");
 const { query } = require("../services/db");
+const { CATS_MONITOR, lerMetasMonitor, salvarMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
 
 router.use(authMiddleware);
 
@@ -22,11 +23,14 @@ const num = (v) => {
 router.get("/volumes", async (req, res) => {
   try {
     const mes = req.query.mes || new Date().toISOString().slice(0, 7);
-    const [rvResultAll, rvVolAll, usuarios] = await Promise.all([
+    const [rvResultAll, rvVolAll, usuarios, metasMon] = await Promise.all([
       readSheet("rv_resultado").catch(() => []),
       readSheet("rv_volume").catch(() => []),
       readSheet("usuarios").catch(() => []),
+      lerMetasMonitor(mes),
     ]);
+    // Metas de monitoramento (Cerveja Zero / Match / NAB Zero) — rateio sobre a operação inteira
+    const rateio = ratearMetasMonitor(metasMon, rvResultAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes)));
     // rv_resultado acumula meses — usa só o mês pedido (linhas antigas sem mês contam).
     const rv = filtrarPorPerfil(rvResultAll, req.user, "setor")
       .filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
@@ -62,13 +66,17 @@ router.get("/volumes", async (req, res) => {
         return { label, real: r1(real), meta: r1(meta), pct: pct(real, meta), tend: r1(tend), pctTend: pct(tend, meta), monitoramento: !!monit };
       };
       const realCerveja = soma("real_cerveja"), realNab = soma("real_nab");
+      // meta lançada (monitoramento) p/ os setores do recorte; null = não lançada
+      const setoresRec = [...new Set([...rvRows, ...volRows].map((r) => String(r.setor || "").trim()).filter(Boolean))];
+      const manual = (k) => (rateio[k] ? setoresRec.reduce((s, st) => s + (rateio[k][st] || 0), 0) : null);
+      const mMatch = manual("match"), mCZ = manual("cervejaZero"), mNZ = manual("nabZero");
       return [
         mk("Cerveja", realCerveja, soma("meta_cerveja")),
         mk("NAB", realNab, soma("meta_nab")),
-        mk("Match", soma("real_match"), soma("meta_match")),
+        mk("Match", soma("real_match"), mMatch ?? soma("meta_match")),
         mk("Mktp", soma("real_marketplace"), soma("meta_marketplace")),
-        mk("Cerveja Zero", volCat("CERVEJA ZERO"), 0.15 * realCerveja, true),
-        mk("NAB Zero", volCat("NAB ZERO"), 0.15 * realNab, true),
+        mk("Cerveja Zero", volCat("CERVEJA ZERO"), mCZ ?? 0.15 * realCerveja, mCZ == null),
+        mk("NAB Zero", volCat("NAB ZERO"), mNZ ?? 0.15 * realNab, mNZ == null),
       ];
     };
 
@@ -85,12 +93,32 @@ router.get("/volumes", async (req, res) => {
     }));
 
     // Analítico (planilha): Operação → GV → RN × categorias.
-    const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator);
+    const report = montarReport(rv, vol.filter((r) => mref(r).startsWith(mes)), nomeSetor, fator, { rateio });
 
-    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report, diasUteis });
+    return res.json({ mes, bars, fator: Math.round(fator * 100) / 100, porRn, report, diasUteis, metasMonitor: metasMon });
   } catch (e) {
     console.error("resumo/volumes:", e);
     return res.status(500).json({ error: "Erro ao montar resumo de volumes." });
+  }
+});
+
+// GET/PUT /api/resumo/metas-monitor?mes=YYYY-MM — metas de MONITORAMENTO da operação (HL):
+// Cerveja Zero, Match e NAB Zero. Não entram na RV; só painel da Home + motor de WhatsApp.
+router.get("/metas-monitor", async (req, res) => {
+  const mes = String(req.query.mes || "").trim();
+  if (!/^\d{4}-\d{2}$/.test(mes)) return res.status(400).json({ error: "Informe o mês (YYYY-MM)." });
+  return res.json({ mes, categorias: CATS_MONITOR.map(({ key, label }) => ({ key, label })), metas: await lerMetasMonitor(mes) });
+});
+router.put("/metas-monitor", async (req, res) => {
+  try {
+    if (req.user.perfil !== "admin") return res.status(403).json({ error: "Só o admin lança metas." });
+    const { mes, metas } = req.body || {};
+    if (!/^\d{4}-\d{2}$/.test(String(mes || ""))) return res.status(400).json({ error: "Informe o mês (YYYY-MM)." });
+    await salvarMetasMonitor(mes, metas || {});
+    return res.json({ ok: true, mes, metas: await lerMetasMonitor(mes) });
+  } catch (e) {
+    console.error("resumo/metas-monitor PUT:", e);
+    return res.status(500).json({ error: "Erro ao salvar metas de monitoramento." });
   }
 });
 

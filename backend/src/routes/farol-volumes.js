@@ -9,6 +9,7 @@ const router = express.Router();
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { montarReport } = require("../utils/volumesReport");
+const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
 
 const pad = (n) => String(n).padStart(2, "0");
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
@@ -34,6 +35,8 @@ router.get("/mensagens", async (req, res) => {
       readSheet("usuarios").catch(() => []),
     ]);
     let rv = rvAll.filter((r) => !r.mes_referencia || String(r.mes_referencia).startsWith(mes));
+    // metas de monitoramento (Cerveja Zero/Match/NAB Zero) — rateio sobre a operação inteira (antes de ocultar setores)
+    const rateio = ratearMetasMonitor(await lerMetasMonitor(mes), rv);
     let vol = volAll.filter((r) => !r.mes_referencia && !r.mes_ref ? true : String(r.mes_ref || r.mes_referencia || "").startsWith(mes));
 
     // Setores ocultos SÓ no relatório do motor (não no app). Vazie a lista quando o RN
@@ -50,7 +53,7 @@ router.get("/mensagens", async (req, res) => {
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
 
     // giroRgb: true → inclui a categoria "Giro RGB" (GIRO RGB + LITRINHO) só no motor.
-    const report = montarReport(rv, vol, nomeSetor, fator, { giroRgb: true });
+    const report = montarReport(rv, vol, nomeSetor, fator, { giroRgb: true, rateio });
     if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.

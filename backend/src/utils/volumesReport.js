@@ -27,7 +27,9 @@ const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 const sinal = (p) => (p == null ? "flat" : p >= 100 ? "up" : p >= 70 ? "mid" : "down");
 
 // rvRows: rv_resultado (já do mês atual). volRows: rv_volume do mês atual. nomeSetor: {cod->nome}.
-// fator: projeção do mês (tend = real × fator). Retorna { categorias, subcols, secoes } ou null.
+// fator: projeção do mês (tend = real × fator). opts.rateio = metas de monitoramento lançadas
+// (utils/metasMonitor: { cervejaZero|match|nabZero: { setor: metaHL } }) — substituem os 15% / a RV.
+// Retorna { categorias, subcols, secoes } ou null.
 function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
   const CATS = catsDe(opts);
   const noMeta = new Set(CATS.filter((c) => c.noMeta).map((c) => c.key));
@@ -45,8 +47,10 @@ function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
   });
   Object.keys(raw).forEach((s) => {
     CATS.filter((c) => c.tipo === "zero").forEach((c) => {
-      raw[s][c.key] = { meta: 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
+      const manual = opts.rateio?.[c.key];
+      raw[s][c.key] = { meta: manual ? (manual[s] || 0) : 0.15 * (raw[s][c.base]?.real || 0), real: volSetor[s]?.[c.volCat] || 0 };
     });
+    if (opts.rateio?.match && raw[s].match) raw[s].match.meta = opts.rateio.match[s] || 0;
     CATS.filter((c) => c.tipo === "vol").forEach((c) => {
       let r = 0; (c.volCats || []).forEach((vc) => { r += volSetor[s]?.[vc] || 0; });
       raw[s][c.key] = { meta: 0, real: r };
