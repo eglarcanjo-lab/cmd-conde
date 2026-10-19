@@ -269,8 +269,38 @@ router.get("/ruptura", async (req, res) => {
       volume_falta_hl: r3(num(r.volume_falta_hl)),
     }));
 
+    // ── Ruptura POR PEDIDO (CORA): TOTAL = nenhum item atendido (cliente não levou nada naquele
+    // pedido) × PARCIAL = faltou parte. Recompra: MESMO DIA (pedido dividido) · ATÉ 7 DIAS · NÃO.
+    const [rpRaw, baseRaw] = await Promise.all([
+      readSheet("ruptura_pedidos").catch(() => []),
+      readSheet("ruptura_pedidos_base").catch(() => []),
+    ]);
+    const noEscopo = (r) => (!dia || String(r.data).trim() === dia) && (!mes || String(r.mes_referencia) === mes);
+    const rpEsc = filtrarPorPerfil(rpRaw, req.user).filter(noEscopo);
+    const totalPedidos = filtrarPorPerfil(baseRaw, req.user).filter(noEscopo).reduce((s, r) => s + num(r.pedidos), 0);
+    const somaDe = (arr, k) => r3(arr.reduce((s, r) => s + num(r[k]), 0));
+    const tot = rpEsc.filter((r) => r.tipo === "TOTAL"), par = rpEsc.filter((r) => r.tipo !== "TOTAL");
+    const rec = (v) => tot.filter((r) => r.recomprou === v);
+    const pctP = (n) => (totalPedidos > 0 ? Math.round((n / totalPedidos) * 1000) / 10 : null);
+    const pedidos = rpRaw.length ? {
+      total_pedidos: totalPedidos, com_falta: rpEsc.length, pct_com_falta: pctP(rpEsc.length),
+      total: { pedidos: tot.length, pct: pctP(tot.length), hl: somaDe(tot, "hl_falta"), valor: r2(tot.reduce((s, r) => s + num(r.valor_falta), 0)),
+        clientes: new Set(tot.map((r) => r.cod_pdv)).size,
+        mesmo_dia: rec("MESMO DIA").length, ate_7_dias: rec("ATÉ 7 DIAS").length, nao_comprou: rec("NÃO").length,
+        hl_perdido: somaDe(rec("NÃO"), "hl_falta"), valor_perdido: r2(rec("NÃO").reduce((s, r) => s + num(r.valor_falta), 0)) },
+      parcial: { pedidos: par.length, pct: pctP(par.length), hl: somaDe(par, "hl_falta"), valor: r2(par.reduce((s, r) => s + num(r.valor_falta), 0)),
+        clientes: new Set(par.map((r) => r.cod_pdv)).size },
+      lista: rpEsc.map((r) => ({
+        data: r.data, setor: r.setor, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv, num_pedido: r.num_pedido, pedido_cliente: r.pedido_cliente,
+        situacao_pedido: r.situacao_pedido, tipo: r.tipo, itens: num(r.itens), itens_falta: num(r.itens_falta),
+        hl_falta: r3(num(r.hl_falta)), valor_falta: r2(num(r.valor_falta)), recomprou: r.recomprou,
+        dias_ate_recompra: r.dias_ate_recompra, produtos_falta: r.produtos_falta,
+      })).sort((a, b) => (a.tipo === b.tipo ? b.hl_falta - a.hl_falta : a.tipo === "TOTAL" ? -1 : 1)),
+    } : null;
+
     return res.json({
       filtros: { mes, dia },
+      pedidos,
       total_volume_falta_hl: totalVolume,
       produtos_afetados: porProduto.length,
       clientes_afetados: porCliente.length,

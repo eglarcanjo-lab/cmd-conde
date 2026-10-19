@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.101.1** — Ruptura: "Clientes afetados" travado em 101 corrigido.
+Versão atual: **v3.102.0** — Ruptura por pedido (total × parcial).
+
+## v3.102.0 — Ruptura por pedido
+- Devolução × Ruptura › Ruptura de Estoque ganhou o bloco **🧾 Ruptura por pedido** (respeita mês/dia): pedidos de venda com falta (% do total), **Ruptura TOTAL** (nenhum item atendido — o cliente não levou nada naquele pedido; vira CANCELADO), **parcial**, HL e R$ de cada, e **Venda perdida** = ruptura total sem nenhuma compra do PDV em 7 dias.
+- Recompra de cada ruptura total: **mesmo dia** (pedido dividido — comprou o resto em outro pedido) · **até 7 dias** · **não comprou**. Sub-aba **Por pedido** lista os pedidos (filtro total/parcial/todos) com itens em falta, HL, R$, recompra, situação e produtos.
+- Conferido no CORA de 01–19/10: 4.033 pedidos de venda, 610 com falta, **111 ruptura total** (112 HL · R$ 92,5 mil) e 499 parciais; das totais, só 11 sem recompra em 7 dias.
+- Processador (CORA): `ruptura_pedidos` (1 linha por pedido com falta) e `ruptura_pedidos_base` (pedidos de venda por dia × setor), acumulam por mês.
 
 ## v3.101.1 — Clientes afetados (Ruptura de Estoque)
 - Devolução × Ruptura › Ruptura de Estoque: o card **Clientes afetados** dava sempre **101** em qualquer filtro (quadrimestre, mês ou dia) com mais clientes — a lista por cliente era cortada nos 101 primeiros e o card contava a lista cortada. Agora conta todos e a lista vem completa. A lista de PDVs da aba Entrega também tinha o mesmo corte (sem card) e foi liberada.

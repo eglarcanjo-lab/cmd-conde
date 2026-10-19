@@ -578,6 +578,7 @@ function Ruptura() {
   const [erro, setErro] = useState("");
   const [sub, setSub] = useAbaUrl("ruptura", "produto");
   const [drill, setDrill] = useState(null); // { tipo, chave, nome }
+  const [tipoPed, setTipoPed] = useState("TOTAL"); // filtro da lista Por pedido: TOTAL | PARCIAL | ""
 
   useEffect(() => {
     let vivo = true;
@@ -675,8 +676,30 @@ function Ruptura() {
         </div>
       )}
 
+      {/* Ruptura POR PEDIDO — quantos pedidos a falta zerou (cliente não levou nada) × parcial */}
+      {d.pedidos && (
+        <>
+          <h3 style={S.h3}>🧾 Ruptura por pedido</h3>
+          <div style={S.kpis}>
+            <Kpi label="Pedidos com falta" valor={d.pedidos.com_falta} cor={AMARELO}
+              sub={d.pedidos.total_pedidos ? `${d.pedidos.pct_com_falta}% de ${d.pedidos.total_pedidos} pedidos de venda` : escopo} />
+            <Kpi label="Ruptura TOTAL (não levou nada)" valor={d.pedidos.total.pedidos} cor={VERMELHO}
+              sub={`${d.pedidos.total.pct ?? "—"}% dos pedidos · ${fmt(d.pedidos.total.hl)} HL · ${fmtMoeda(d.pedidos.total.valor)} · ${d.pedidos.total.clientes} clientes`} />
+            <Kpi label="Ruptura parcial" valor={d.pedidos.parcial.pedidos} cor={AMARELO}
+              sub={`${d.pedidos.parcial.pct ?? "—"}% dos pedidos · ${fmt(d.pedidos.parcial.hl)} HL · ${fmtMoeda(d.pedidos.parcial.valor)}`} />
+            <Kpi label="Venda perdida (total, sem recompra em 7 dias)" valor={d.pedidos.total.nao_comprou} cor={VERMELHO}
+              sub={`${fmt(d.pedidos.total.hl_perdido)} HL · ${fmtMoeda(d.pedidos.total.valor_perdido)}`} />
+          </div>
+          <div style={S.dicaLinha}>
+            Dos {d.pedidos.total.pedidos} pedidos com ruptura total: <b>{d.pedidos.total.mesmo_dia}</b> o cliente comprou o resto em outro pedido no <b>mesmo dia</b> (pedido dividido) ·{" "}
+            <b>{d.pedidos.total.ate_7_dias}</b> voltou a comprar em até 7 dias · <b style={{ color: VERMELHO }}>{d.pedidos.total.nao_comprou}</b> não comprou nada em 7 dias
+            (pedidos dos últimos 7 dias ainda podem ser recomprados).
+          </div>
+        </>
+      )}
+
       <div style={S.subAbas}>
-        {[["produto", "Por produto"], ["cliente", `Top clientes (${d.clientes_afetados})`]].map(([k, t]) => (
+        {[["produto", "Por produto"], ["cliente", `Top clientes (${d.clientes_afetados})`], ...(d.pedidos ? [["pedido", `Por pedido (${d.pedidos.com_falta})`]] : [])].map(([k, t]) => (
           <button key={k} style={{ ...S.subTab, ...(sub === k ? S.subTabAtiva : {}) }} onClick={() => { setSub(k); setDrill(null); }}>{t}</button>
         ))}
       </div>
@@ -701,6 +724,26 @@ function Ruptura() {
             linhas={d.por_cliente} colunas={[
             { k: "cod_pdv", t: "Cód" }, { k: "nome_pdv", t: "Cliente" }, { k: "setor", t: "Setor" },
             { k: "qtd_faltas", t: "Ocorrências", num: true }, { k: "volume_falta_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }]} />
+        </>
+      )}
+
+      {sub === "pedido" && d.pedidos && (
+        <>
+          <div style={{ display: "flex", gap: 6, margin: "6px 0" }}>
+            {[["TOTAL", "Ruptura total"], ["PARCIAL", "Parcial"], ["", "Todos"]].map(([k, t]) => (
+              <button key={k} style={{ ...S.subTab, ...(tipoPed === k ? S.subTabAtiva : {}) }} onClick={() => setTipoPed(k)}>{t}</button>
+            ))}
+          </div>
+          {(() => {
+            const linhas = d.pedidos.lista.filter((l) => !tipoPed || l.tipo === tipoPed);
+            return linhas.length === 0 ? <div style={S.vazio}>Nenhum pedido no escopo.</div> : (
+              <Tabela inicial={{ k: "hl_falta", dir: "desc" }} linhas={linhas} colunas={[
+                { k: "data", t: "Data", date: true }, { k: "setor", t: "Setor" }, { k: "cod_pdv", t: "Cód" }, { k: "nome_pdv", t: "Cliente" },
+                { k: "num_pedido", t: "Pedido" }, { k: "tipo", t: "Tipo" }, { k: "itens_falta", t: "Itens em falta", num: true }, { k: "itens", t: "Itens", num: true },
+                { k: "hl_falta", t: "Falta (HL)", num: true, fmt: (v) => fmt(v, 2) }, { k: "valor_falta", t: "Falta (R$)", num: true, fmt: fmtMoeda },
+                { k: "recomprou", t: "Recompra" }, { k: "situacao_pedido", t: "Situação" }, { k: "produtos_falta", t: "Produtos em falta" }]} />
+            );
+          })()}
         </>
       )}
 
