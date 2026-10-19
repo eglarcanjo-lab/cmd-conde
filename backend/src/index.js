@@ -58,6 +58,11 @@ app.use("/api/volume-diario", require("./routes/volume-diario"));
 app.use("/api/incentivos", require("./routes/incentivos"));
 app.use("/api/relatorios", require("./routes/relatorios"));
 app.use("/api/conversao-pg", require("./routes/conversao-pg")); // acompanhamento temporário Pure Gold
+// Faróis do robô de WhatsApp (projeto cmd-conde-whatsapp, roda todo dia às 8h fora da HOP).
+// NÃO REMOVER sem desligar o robô — foram tirados na v3.85.1 por engano e o envio quebrou (v3.90.1 voltou).
+app.use("/api/farol-visita", require("./routes/farol-visita"));   // PDVs sem visita registrada
+app.use("/api/farol-queda", require("./routes/farol-queda"));     // queda de volume (PDVs + produtos)
+app.use("/api/farol-volumes", require("./routes/farol-volumes")); // volumes meta×real×tendência (por RN + operação)
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/input-tasks", require("./routes/input-tasks")); // gerador de tasks (grupo Ações de Preço, admin)
 app.use("/api/popups", require("./routes/popups"));

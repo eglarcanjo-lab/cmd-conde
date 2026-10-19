@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.89.0** — SPO: fechamento do trimestre (foto do Painel Consolidado).
+Versão atual: **v3.89.1** — Faróis do WhatsApp voltaram (rotas removidas por engano).
+
+## v3.89.1 — Faróis do WhatsApp de volta
+- O envio diário "HOP · Faróis do dia" (robô `cmd-conde-whatsapp`, 8h) saía só com a Conversão PG: as rotas `/api/farol-visita`, `/api/farol-queda` e `/api/farol-volumes` tinham sido removidas na v3.85.1 (a auditoria achou que estavam sem uso — o robô roda fora da HOP). Restauradas como estavam; o próximo envio volta completo.
 
 ## v3.89.0 — Fechamento do trimestre no SPO
 - No cabeçalho do **Painel SPO Consolidado**: **🔒 Fechar 2026 T3** (só admin) tira a **foto (PNG)** do painel como está — tabela inteira, mesmo a parte escondida pela rolagem, sem os botões — e salva o trimestre. Fechar de novo substitui.
