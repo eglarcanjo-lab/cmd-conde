@@ -474,10 +474,19 @@ export default function KpisProgramas({ ctx }) {
                       <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem" }}>
                           <thead>
+                            {/* 2 linhas: pilares (Positivação, Carteira, GPS, Rota) com Meta · Real · Gap */}
                             <tr>
-                              {["GV","RN","Segmento","AP OK","KPIs OK","Positivação","Carteira","GPS %","Rota %"].map(h => (
-                                <th key={h} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              {["GV","RN","Segmento","AP OK","KPIs OK"].map(h => (
+                                <th key={h} rowSpan={2} style={{ padding: "8px 10px", color: "rgba(255,255,255,0.4)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
                               ))}
+                              {["Positivação","Carteira","GPS %","Rota %"].map(h => (
+                                <th key={h} colSpan={3} style={{ padding: "6px 10px", color: "rgba(255,255,255,0.6)", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", borderLeft: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                            <tr>
+                              {[0,1,2,3].flatMap(g => ["Meta","Real","Gap"].map((h, j) => (
+                                <th key={`${g}${h}`} style={{ padding: "4px 8px", color: "rgba(255,255,255,0.35)", fontSize: "0.68rem", fontWeight: 500, textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", ...(j === 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {}) }}>{h}</th>
+                              )))}
                             </tr>
                           </thead>
                           <tbody>
@@ -495,10 +504,18 @@ export default function KpisProgramas({ ctx }) {
                                   <td style={{ padding: "7px 10px", textAlign: "center" }}>
                                     <span style={{ color: corKPI, fontWeight: "700" }}>{r.kpis_ok}/4</span>
                                   </td>
-                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.positiv_real) >= parseFloat(r.positiv_meta) ? "#4ade80" : "#f87171" }}>{r.positiv_real !== null && r.positiv_real !== "" ? r.positiv_real : "—"}</td>
-                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseInt(r.carteira_real) >= parseInt(r.carteira_meta) ? "#4ade80" : "#f87171" }}>{r.carteira_real || "—"}</td>
-                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.gps_real) >= parseFloat(r.gps_meta) ? "#4ade80" : "#f87171" }}>{r.gps_real !== null ? `${r.gps_real}%` : "—"}</td>
-                                  <td style={{ padding: "7px 10px", textAlign: "center", color: parseFloat(r.rota_real) >= parseFloat(r.rota_meta) ? "#4ade80" : "#f87171" }}>{r.rota_real !== null ? `${r.rota_real}%` : "—"}</td>
+                                  {[["positiv", false], ["carteira", false], ["gps", true], ["rota", true]].flatMap(([k, pct]) => {
+                                    const num = (v) => (v === null || v === undefined || v === "" || isNaN(parseFloat(v)) ? null : parseFloat(v));
+                                    const meta = num(r[`${k}_meta`]), real = num(r[`${k}_real`]);
+                                    const gap = meta !== null && real !== null ? Math.round((real - meta) * 10) / 10 : null;
+                                    const fmt = (v) => (v === null ? "—" : pct ? `${v}%` : v);
+                                    const ok = gap !== null && gap >= 0;
+                                    return [
+                                      <td key={`${k}m`} style={{ padding: "7px 8px", textAlign: "center", color: "rgba(255,255,255,0.5)", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>{fmt(meta)}</td>,
+                                      <td key={`${k}r`} style={{ padding: "7px 8px", textAlign: "center", fontWeight: "700", color: real === null ? "rgba(255,255,255,0.4)" : ok ? "#4ade80" : "#f87171" }}>{fmt(real)}</td>,
+                                      <td key={`${k}g`} style={{ padding: "7px 8px", textAlign: "center", fontSize: "0.7rem", color: gap === null ? "rgba(255,255,255,0.3)" : ok ? "#4ade80" : "#f87171" }}>{gap === null ? "—" : `${gap > 0 ? "+" : ""}${pct ? `${gap} p.p.` : gap}`}</td>,
+                                    ];
+                                  })}
                                 </tr>
                               );
                             })}

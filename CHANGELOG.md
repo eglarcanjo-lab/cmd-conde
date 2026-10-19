@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.92.2** — tasks do SPO contadas igual ao BI.
+Versão atual: **v3.92.3** — Atendimento Produtivo com metas por pilar.
+
+## v3.92.3 — Metas no Atendimento Produtivo
+- SPO › Item 5 (Atendimento Produtivo): a tabela por RN agora mostra **Meta · Real · Gap** de cada pilar — Positivação, Carteira, GPS % e Rota % (gap em p.p. nos percentuais). Real verde quando bate a meta. As metas já vinham no arquivo do BI; só não apareciam.
 
 ## v3.92.2 — Tasks do SPO batendo com o BI
 - Conferido com o relatório de Tasks de out/26 × BI "SPO - Compra": o realizado agora **soma a coluna Validada** (task de **Combo** vale 2, 3… validações), em vez de contar 1 por linha. Cerveja Portfólio 1.595 → **1.700** (= BI) e NAB 710 → **915** (BI 919: diferença de 4, provavelmente horário do print × export).
