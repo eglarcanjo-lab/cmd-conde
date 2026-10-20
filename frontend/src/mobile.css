@@ -87,3 +87,22 @@ img, video { max-width: 100%; }
   table.rt-card tr.rt-solta { display: block !important; }
   table.rt-card tr.rt-solta td { display: block !important; }
 }
+
+/* ── Utilitários de tela ──────────────────────────────────────────────────── */
+.so-mobile { display: none !important; }
+@media (max-width: 767px) {
+  .so-desktop { display: none !important; }
+  .so-mobile { display: revert !important; }
+
+  /* Faixa compacta (pódio, KPIs): uma linha rolável de cartões pequenos */
+  .hop-faixa { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; gap: 6px !important; scrollbar-width: none; }
+  .hop-faixa::-webkit-scrollbar { display: none; }
+  .hop-faixa > * { flex: 0 0 auto; min-width: 104px; padding: 8px 10px !important; }
+
+  /* KPIs: 2 por linha, compactos (números grandes sem caixa enorme) */
+  .hop-kpis { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .hop-kpis > * { padding: 8px 10px !important; min-height: 0 !important; }
+
+  /* textos de ajuda/dicas longas: escondidos no celular */
+  .hop-dica { display: none !important; }
+}

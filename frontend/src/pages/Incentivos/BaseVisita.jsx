@@ -256,7 +256,7 @@ export default function BaseVisita({ embutido = false }) {
 
           {r && (
             <>
-              <div style={S.kpis}>
+              <div style={S.kpis} className="hop-kpis">
                 <div style={S.kpi}><b>{fmtN(linhas.length)}</b><span style={S.kpiL}>PDVs</span></div>
                 <div style={S.kpi}><b>{fmtV(r.totalCidade.volTot)}</b><span style={S.kpiL}>HL no período</span></div>
                 <div style={S.kpi}><b>{fmtN(r.porCidade.length)}</b><span style={S.kpiL}>cidades</span></div>

@@ -64,7 +64,7 @@ export default function Engajamento() {
 
       {loading && !d ? <p style={S.dim}>Carregando…</p> : erro ? <p style={S.erro}>{erro}</p> : d && (
         <>
-          <div style={S.kpis}>
+          <div style={S.kpis} className="hop-kpis">
             <Kpi v={d.acessaram} l="Acessaram" cor="#7DBA3D" />
             <Kpi v={d.nao_acessaram} l="Não acessaram" cor="#ef6f6f" />
             <Kpi v={d.total_aberturas} l="Aberturas (total)" cor="#fff" />

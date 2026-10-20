@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.106.0** — mobile Fase 0b: tabelas viram cartões e abas numa linha.
+Versão atual: **v3.107.0** — mobile Fase 1: telas do RN.
+
+## v3.107.0 — Mobile Fase 1 (telas do RN)
+- **SPO:** no celular o Painel Consolidado vira **lista** — chip do mês/Trimestre, 1 cartão por KPI (real/meta · % · ✅/❌ pts) e o total de pontos; toque abre o KPI. No computador segue a matriz.
+- **Incentivos:** pódio numa faixa compacta rolável; meses/Metas numa linha; PNG só no computador; textos de regra escondidos no celular.
+- **KPIs compactos (2 por linha) e dicas escondidas** no celular em Devolução × Ruptura, Anomalia de Volume, Base × dia, Produtos/Shelf, Rota Efetiva, Solicitações, SPO Visitação.
+- Utilitários em `mobile.css`: `so-desktop`, `so-mobile`, `hop-faixa`, `hop-kpis`, `hop-dica`.
+- RV (cards e barras) e Tasks/Missões já estavam adaptadas.
 
 ## v3.106.0 — Mobile Fase 0b (app inteiro)
 - **Fim dos botões gigantes:** a regra do celular que forçava TODO botão a 44px/fonte 16 agora vale só p/ campos (fonte 16 evita o zoom do iPhone); botões ficam com altura mínima de toque (32px) no tamanho de cada tela.

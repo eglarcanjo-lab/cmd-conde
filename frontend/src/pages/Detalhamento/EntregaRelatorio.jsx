@@ -46,7 +46,7 @@ export default function EntregaRelatorio() {
         <p style={S.sub}>Escopo: <b>{escopo}</b> · gerado em {new Date().toLocaleString("pt-BR")}</p>
       </div>
 
-      <div style={S.kpis}>
+      <div style={S.kpis} className="hop-kpis">
         <Kpi l="Volume frustrado" v={`${fmt(d.volume_frustrado_hl)} HL`} c={VERM} />
         <Kpi l="Valor frustrado" v={fmtRS(d.valor_frustrado)} c={VERM} />
         <Kpi l="Notas frustradas" v={d.qtd_frustradas} c="#333" />

@@ -209,7 +209,7 @@ export default function Migracao({ onEnviado, setor }) {
         <label style={S.chk}><input type="checkbox" checked={soAlterados} onChange={(e) => setSoAlterados(e.target.checked)} /> Só alterados</label>
         <span style={S.info}>{pdvs.length} PDVs · média {base.meses.map(rotMes).join("/")}</span>
       </div>
-      <p style={S.dica}>Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação. Para tirar o PDV da carteira, use <b style={{ color: "#f87171" }}>🚫 Inativar</b> (mostra inadimplência e comodato; justificativa obrigatória). Para corrigir a localização, use <b style={{ color: "#60a5fa" }}>📍 Coordenada</b> e cole o link do Google Maps.</p>
+      <p style={S.dica} className="hop-dica">Deixe em branco o que não muda. Só as linhas alteradas vão para aprovação. Para tirar o PDV da carteira, use <b style={{ color: "#f87171" }}>🚫 Inativar</b> (mostra inadimplência e comodato; justificativa obrigatória). Para corrigir a localização, use <b style={{ color: "#60a5fa" }}>📍 Coordenada</b> e cole o link do Google Maps.</p>
 
       {grupos.map((g) => (
         <div key={g.dia || "sem"} style={{ marginBottom: 14 }}>

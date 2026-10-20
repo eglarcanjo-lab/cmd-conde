@@ -137,7 +137,7 @@ function Liga({ d, meu }) {
   return (
     <>
       {/* Pódio — quem está levando cada prêmio pela TENDÊNCIA (só elegíveis ≥ min pts) */}
-      <div style={S.podio}>
+      <div style={S.podio} className="hop-faixa">
         {inc.premios.map((p, i) => {
           const dono = d.linhas.find((l) => l.premioTend === p);
           return (
@@ -197,7 +197,7 @@ function Liga({ d, meu }) {
           </tbody>
         </table>
       </div>
-      <p style={S.nota}>
+      <p style={S.nota} className="hop-dica">
         Regras: cada KPI é <b>tudo ou nada</b> (bateu a meta = pontos cheios). Precisa de <b>{inc.minPts} pts</b> para ser elegível.
         Pódio por pontos; empate → maior % médio de atingimento. ✅ batido · 📈 tendência de bater (ritmo de dias úteis) · ❌ não bate no ritmo atual.
         Trimestre: volume soma os meses; distribuição e cobertura usam a média mensal.
@@ -240,7 +240,7 @@ function Zeros({ d, meu }) {
           </tbody>
         </table>
       </div>
-      <p style={S.nota}>Cada meta batida no mês vale <b>R$ {fmt(inc.valorMeta)}</b>. Segmentado (AS) é avaliado por volume; Rota por cobertura (PDVs que compraram).</p>
+      <p style={S.nota} className="hop-dica">Cada meta batida no mês vale <b>R$ {fmt(inc.valorMeta)}</b>. Segmentado (AS) é avaliado por volume; Rota por cobertura (PDVs que compraram).</p>
     </>
   );
 }
@@ -278,7 +278,7 @@ export default function IncentivosRn() {
       </div>
       <div style={S.content}>
         {!incId ? (
-          <div style={S.cards}>
+          <div style={S.cards} className="hop-kpis">
             {lista.map((i) => (
               <button key={i.id} style={S.card} onClick={() => { setMes(""); setIncId(i.id); }}>
                 <div style={{ fontSize: "1.6rem" }}>{i.id === "liga" ? "🏆" : "💰"}</div>
@@ -297,11 +297,11 @@ export default function IncentivosRn() {
                   {d.incentivo.subtitulo}{d.diasUteis ? ` · 📅 ${d.diasUteis.feitos} de ${d.diasUteis.total} dias úteis` : ""}
                 </div>
               </div>
-              <div style={{ marginLeft: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 6, flexWrap: "wrap" }} className="hop-abas">
                 {[...d.incentivo.meses, ...(d.incentivo.id === "liga" ? ["tri"] : [])].map((m) => (
                   <button key={m} onClick={() => setMes(m)} style={S.chip(d.mes === m)}>{rotMes(m)}</button>
                 ))}
-                {d.linhas.length > 0 && <button onClick={() => exportarPng(d)} style={S.chip(false)} title="Baixa a tabela em PNG (fundo branco) p/ PowerPoint">📸 PNG</button>}
+                {d.linhas.length > 0 && <button className="so-desktop" onClick={() => exportarPng(d)} style={S.chip(false)} title="Baixa a tabela em PNG (fundo branco) p/ PowerPoint">📸 PNG</button>}
                 {isAdmin && <button onClick={() => setEditar(true)} style={{ ...S.chip(false), borderColor: OURO, color: OURO }}>🎯 Metas</button>}
               </div>
             </div>

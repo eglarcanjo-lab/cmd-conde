@@ -58,7 +58,7 @@ export default function Shelf() {
   return (
     <>
       {d.atualizado_em && <div style={S.atualizado}>🔄 atualizado em {d.atualizado_em}</div>}
-      <div style={S.kpis}>
+      <div style={S.kpis} className="hop-kpis">
         <Kpi label="Itens em shelf" valor={fmtN(d.total_itens)} cor={VERDE} />
         <Kpi label="Caixas" valor={fmtN(d.total_cx)} cor="#fff" />
         <Kpi label="Valor total" valor={fmtR$(d.total_valor)} cor="#f5c451" />

@@ -87,7 +87,7 @@ export default function RotaEfetiva() {
 
         {!loading && tab === "resumo" && resumo && (
           <>
-            <div style={S.kpis}>
+            <div style={S.kpis} className="hop-kpis">
               <Card label="Rota Efetiva (RE%)" valor={`${fmt(resumo.consolidado.re_pct, 1)}%`} cor={VERDE} sub={`${fmt(resumo.consolidado.efetivas)} de ${fmt(resumo.consolidado.planejadas)} planejadas`} />
               <Card label="GPS OK" valor={`${fmt(resumo.consolidado.gps_pct, 1)}%`} cor="#f5c451" sub="check-in com GPS OK" />
               <Card label="Supervisitas" valor={fmt(resumo.consolidado.supervisitas)} />
@@ -116,7 +116,7 @@ export default function RotaEfetiva() {
 
         {!loading && tab === "furos" && furos && (
           <>
-            <div style={S.kpis}>
+            <div style={S.kpis} className="hop-kpis">
               <Card label="Cobertura" valor={`${fmt(furos.cobertura_pct, 1)}%`} cor={VERDE} sub={`${fmt(furos.visitados_ok)} de ${fmt(furos.total_ativos)} PDVs ativos`} />
               <Card label="Furos (total)" valor={fmt(furos.furos_total)} cor="#f87171" sub="ativos sem visita efetiva" />
               <Card label="Sem visita" valor={fmt(furos.sem_visita)} cor="#f0997b" sub="não apareceu na rota" />

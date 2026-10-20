@@ -69,7 +69,7 @@ export default function AnomaliaVolume() {
         </div>
       </div>
 
-      <div style={S.cards}>
+      <div style={S.cards} className="hop-kpis">
         {[["PDVs", d.resumo.pdvs], ["Pedidos", d.resumo.pedidos], ["Volume", `${fHL(d.resumo.hl)} HL`], ["Valor", fRS(d.resumo.valor)],
           ...Object.entries(d.resumo.por_setor).map(([s, n]) => [`Setor ${s}`, `${n} PDV${n > 1 ? "s" : ""}`])].map(([l, v]) => (
           <div key={l} style={S.card}><div style={S.lbl}>{l}</div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{v}</div></div>

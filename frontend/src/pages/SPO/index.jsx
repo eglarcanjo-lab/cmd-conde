@@ -109,6 +109,7 @@ export default function SPO() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroDia, setFiltroDia] = useState("todos");
   const [painelFull, setPainelFull] = useState(false); // modo tela-cheia do painel consolidado
+  const [mesMob, setMesMob] = useState("");             // celular: mês (ou "tri") do painel consolidado em lista
   const painelRef = useRef(null);                       // alvo da foto do fechamento do trimestre
 
   // Entra/sai do modo full-screen — tenta travar orientação em paisagem (Android Chrome)
@@ -827,9 +828,56 @@ export default function SPO() {
                             const thSubStyle = { padding: "4px 6px", color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" };
                             const tdStyle = { padding: "5px 6px", color: "rgba(255,255,255,0.6)", textAlign: "center", whiteSpace: "nowrap" };
 
+                            // ── CELULAR: o consolidado vira lista (1 cartão por KPI) com chip de mês/tri ──
+                            const hojeMes = new Date().toISOString().slice(0, 7);
+                            const mSel = mesMob || (MESES.includes(hojeMes) ? hojeMes : "tri");
+                            const ptsTri = ITENS_SPO.reduce((acc, item) => acc + (triBateu(item.n) ? getPts(item.n) : 0), 0);
+                            const listaMobile = (
+                              <div className="so-mobile" style={{ display: "none" }}>
+                                <div className="hop-abas" style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                                  {[...MESES, "tri"].map((m) => (
+                                    <button key={m} onClick={() => setMesMob(m)} style={{ fontFamily: "inherit", fontSize: "0.78rem", borderRadius: 20, padding: "5px 12px", cursor: "pointer",
+                                      background: mSel === m ? "#7DBA3D" : "transparent", color: mSel === m ? "#0c1410" : "rgba(255,255,255,0.65)", border: `1px solid ${mSel === m ? "#7DBA3D" : "rgba(255,255,255,0.15)"}`, fontWeight: mSel === m ? 700 : 500 }}>
+                                      {m === "tri" ? "Trimestre" : MESES_LABEL[m]}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", margin: "0 2px 8px", color: "#7DBA3D", fontWeight: 700 }}>
+                                  <span>{mSel === "tri" ? "Pontos SPO no tri" : `Pontos em ${MESES_LABEL[mSel]}`}</span>
+                                  <span>{mSel === "tri" ? `${ptsTri} de ${totalPts} · ${(ptsTri / totalPts * 100).toFixed(1)}%` : pontosMes(mSel)}</span>
+                                </div>
+                                {ITENS_SPO.map((item) => {
+                                  let meta, real, ok, pts;
+                                  if (mSel === "tri") {
+                                    meta = triAccumMeta(item.n); real = triAccumReal(item.n); ok = triBateu(item.n); pts = ok === null ? null : (ok ? getPts(item.n) : 0);
+                                  } else if (INICIO_AVAL[item.n] > mSel) {
+                                    meta = null; real = null; ok = null; pts = null;
+                                  } else {
+                                    meta = getMeta(item.n, mSel); real = getReal(item.n, mSel);
+                                    ok = meta !== null && real !== null ? real >= meta : null; pts = ok === null ? null : (ok ? 3 : 0);
+                                  }
+                                  const ating = meta !== null && real !== null && meta > 0 ? (real / meta * 100).toFixed(0) : null;
+                                  const cor = ok === true ? "#4ade80" : ok === false ? "#f87171" : "rgba(255,255,255,0.35)";
+                                  return (
+                                    <div key={item.n} onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)}
+                                      style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 10px", padding: "9px 11px", marginBottom: 6, borderRadius: 10, cursor: "pointer",
+                                        background: kpiAtivo === item.n ? "rgba(125,186,61,0.10)" : "rgba(255,255,255,0.035)", border: `1px solid ${kpiAtivo === item.n ? "rgba(125,186,61,0.4)" : "rgba(255,255,255,0.08)"}` }}>
+                                      <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>{item.ord ?? item.n}. {item.label}</span>
+                                      <span style={{ fontSize: "0.84rem", fontWeight: 800, color: cor, whiteSpace: "nowrap" }}>{ok === null ? "—" : ok ? "✅" : "❌"} {pts !== null ? `${pts} pts` : ""}</span>
+                                      <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
+                                        {meta === null && real === null ? "sem dado" : `real ${real ?? "—"} / meta ${meta ?? "—"}${ating !== null ? ` · ${ating}%` : ""}`}
+                                      </span>
+                                      <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", textAlign: "right" }}>{getPts(item.n)} pts máx</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+
                             return (
                               <div style={{ overflowX: "auto" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.83rem" }}>
+                                {listaMobile}
+                                <table className="so-desktop" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.83rem" }}>
                                   <thead>
                                     <tr>
                                       <th style={thStyle}>#</th>

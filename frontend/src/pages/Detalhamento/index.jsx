@@ -495,7 +495,7 @@ function Entrega() {
         {dia && <button style={S.limparDia} onClick={() => setDia("")}>limpar dia ✕</button>}
       </div>
 
-      <div style={S.kpis}>
+      <div style={S.kpis} className="hop-kpis">
         <Kpi label="Volume efetivado (HL)" valor={d.volume_efetivado_hl == null ? "—" : fmt(d.volume_efetivado_hl)} cor={VERDE} sub={dia ? "n/d por dia" : null} />
         <Kpi label="Volume frustrado (HL)" valor={fmt(d.volume_frustrado_hl)} cor={VERMELHO} sub={`${d.qtd_frustradas} notas`} />
         <Kpi label="Taxa de frustração" valor={taxa == null ? "—" : `${fmt(taxa)}%`} cor={taxa > 5 ? VERMELHO : AMARELO} />
@@ -535,7 +535,7 @@ function Entrega() {
         { k: "qtd", t: "Notas", num: true }, { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }, { k: "valor", t: "Valor", num: true, fmt: fmtMoeda }]} />}
       {sub === "detalhe" && (
         <>
-          <div style={S.dicaLinha}>👆 clique numa linha para abrir os itens da nota fiscal</div>
+          <div style={S.dicaLinha} className="hop-dica">👆 clique numa linha para abrir os itens da nota fiscal</div>
           <Tabela inicial={{ k: "volume_hl", dir: "desc" }} onRow={abrirNota} linhas={d.detalhe} colunas={[
             { k: "setor", t: "Setor" }, { k: "data", t: "Data", date: true }, { k: "nota", t: "Nota" },
             { k: "nome_pdv", t: "Cliente" }, { k: "desc_motivo", t: "Motivo" },
@@ -637,10 +637,10 @@ function Ruptura() {
         </label>
         {dia && <button style={S.limpar} onClick={() => setDia("")}>limpar dia ✕</button>}
         {mes && !dia && <button style={S.limpar} onClick={() => setMes("")}>ver quadrimestre ✕</button>}
-        <span style={S.dica}>clique numa barra p/ o mês · ou escolha um dia · 🔴 acima da média · 🟡 90% · 🟢 abaixo</span>
+        <span style={S.dica} className="hop-dica">clique numa barra p/ o mês · ou escolha um dia · 🔴 acima da média · 🟡 90% · 🟢 abaixo</span>
       </div>
 
-      <div style={S.kpis}>
+      <div style={S.kpis} className="hop-kpis">
         <Kpi label="Volume em ruptura (HL)" valor={fmt(d.total_volume_falta_hl)} cor={VERMELHO} sub={escopo} />
         <Kpi label="Produtos afetados" valor={d.produtos_afetados} cor={AMARELO} />
         <Kpi label="Clientes afetados" valor={d.clientes_afetados} cor={AMARELO} />
@@ -686,7 +686,7 @@ function Ruptura() {
       {d.pedidos && (
         <>
           <h3 style={S.h3}>🧾 Ruptura por pedido</h3>
-          <div style={S.kpis}>
+          <div style={S.kpis} className="hop-kpis">
             <Kpi label="Pedidos com falta" valor={d.pedidos.com_falta} cor={AMARELO}
               sub={d.pedidos.total_pedidos ? `${d.pedidos.pct_com_falta}% de ${d.pedidos.total_pedidos} pedidos de venda` : escopo} />
             <Kpi label="Ruptura TOTAL (não levou nada)" valor={d.pedidos.total.pedidos} cor={VERMELHO}
@@ -696,7 +696,7 @@ function Ruptura() {
             <Kpi label="Venda perdida (total, sem recompra em 7 dias)" valor={d.pedidos.total.nao_comprou} cor={VERMELHO}
               sub={`${fmt(d.pedidos.total.hl_perdido)} HL · ${fmtMoeda(d.pedidos.total.valor_perdido)}`} />
           </div>
-          <div style={S.dicaLinha}>
+          <div style={S.dicaLinha} className="hop-dica">
             Dos {d.pedidos.total.pedidos} pedidos com ruptura total: <b>{d.pedidos.total.mesmo_dia}</b> o cliente comprou o resto em outro pedido no <b>mesmo dia</b> (pedido dividido) ·{" "}
             <b>{d.pedidos.total.ate_7_dias}</b> voltou a comprar em até 7 dias · <b style={{ color: VERMELHO }}>{d.pedidos.total.nao_comprou}</b> não comprou nada em 7 dias
             (pedidos dos últimos 7 dias ainda podem ser recomprados).
@@ -713,7 +713,7 @@ function Ruptura() {
       {sub === "produto" && (
         d.por_produto.length === 0 ? <div style={S.vazio}>Sem rupturas no escopo.</div> :
         <>
-          <div style={S.dicaLinha}>👆 clique num produto para ver os clientes e as datas</div>
+          <div style={S.dicaLinha} className="hop-dica">👆 clique num produto para ver os clientes e as datas</div>
           <Tabela inicial={{ k: "volume_falta_hl", dir: "desc" }}
             onRow={(l) => setDrill({ tipo: "produto", chave: l.cod_produto, nome: l.nome_produto })}
             linhas={d.por_produto} colunas={[
@@ -724,7 +724,7 @@ function Ruptura() {
       {sub === "cliente" && (
         d.por_cliente.length === 0 ? <div style={S.vazio}>Sem rupturas no escopo.</div> :
         <>
-          <div style={S.dicaLinha}>👆 clique num cliente para ver o top de produtos em falta</div>
+          <div style={S.dicaLinha} className="hop-dica">👆 clique num cliente para ver o top de produtos em falta</div>
           <Tabela inicial={{ k: "volume_falta_hl", dir: "desc" }}
             onRow={(l) => setDrill({ tipo: "cliente", chave: l.cod_pdv, nome: l.nome_pdv })}
             linhas={d.por_cliente} colunas={[

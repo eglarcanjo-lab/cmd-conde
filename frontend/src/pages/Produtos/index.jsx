@@ -112,7 +112,7 @@ function Grade() {
     <>
       {d.atualizado_em && <div style={S.atualizado}>🔄 atualizado em {d.atualizado_em}</div>}
 
-      <div style={S.kpis}>
+      <div style={S.kpis} className="hop-kpis">
         <Kpi label="Itens em estoque" valor={fmtN(d.total_itens)} cor={VERDE} />
         <Kpi label="Caixas/Un (saldo)" valor={fmtN(d.total_caixas)} cor="#fff" />
         <Kpi label="HL em estoque" valor={fmtN(d.total_hl, 1)} cor="#f5c451" />
