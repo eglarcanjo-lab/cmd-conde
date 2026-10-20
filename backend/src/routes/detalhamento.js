@@ -215,7 +215,8 @@ router.get("/ruptura", async (req, res) => {
   try {
     const mes = String(req.query.mes || "").trim();
     const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
-    const detRaw = await readSheet("ruptura_detalhe").catch(() => []);
+    const detRaw = require("../utils/dedupe").dedupe(await readSheet("ruptura_detalhe").catch(() => []),
+      (r) => `${r.setor}|${r.cod_pdv}|${r.cod_produto}|${r.data}`); // 1 linha por PDV×produto×dia
     const det = filtrarPorPerfil(detRaw, req.user);
 
     // Chart: total por mês (todos) + média do período
@@ -278,10 +279,14 @@ router.get("/ruptura", async (req, res) => {
       readSheet("ruptura_pedidos_base").catch(() => []),
       readSheet("status_arquivos").catch(() => []),
     ]);
+    // 1 linha por pedido / por dia×setor (imports simultâneos podem ter gravado o mês em dobro)
+    const { dedupe } = require("../utils/dedupe");
+    const rpU = dedupe(rpRaw, (r) => String(r.num_pedido || ""));
+    const baseU = dedupe(baseRaw, (r) => `${r.mes_referencia}|${r.data}|${r.setor}`);
     const stRp = stArq.find((r) => /ruptura por pedido/i.test(String(r.arquivo || "")));
     const noEscopo = (r) => (!dia || String(r.data).trim() === dia) && (!mes || String(r.mes_referencia) === mes);
-    const rpEsc = filtrarPorPerfil(rpRaw, req.user).filter(noEscopo);
-    const totalPedidos = filtrarPorPerfil(baseRaw, req.user).filter(noEscopo).reduce((s, r) => s + num(r.pedidos), 0);
+    const rpEsc = filtrarPorPerfil(rpU, req.user).filter(noEscopo);
+    const totalPedidos = filtrarPorPerfil(baseU, req.user).filter(noEscopo).reduce((s, r) => s + num(r.pedidos), 0);
     const somaDe = (arr, k) => r3(arr.reduce((s, r) => s + num(r[k]), 0));
     const tot = rpEsc.filter((r) => r.tipo === "TOTAL"), par = rpEsc.filter((r) => r.tipo !== "TOTAL");
     const rec = (v) => tot.filter((r) => r.recomprou === v);

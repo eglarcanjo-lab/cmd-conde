@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.104.0** — Ruptura por pedido no relatório das 17:10.
+Versão atual: **v3.104.1** — Ruptura: leitura sem duplicados.
+
+## v3.104.1 — Ruptura sem duplicados
+- A prévia do motor mostrou cada pedido 2× (282 pedidos com falta hoje): `ruptura_pedidos` foi gravada em dobro (dois processamentos do CORA ao mesmo tempo — o backend reenvia quando o processador demora). A leitura (tela e motor) agora fica com 1 linha por pedido / por dia×setor / por PDV×produto×dia (`utils/dedupe.js`).
 
 ## v3.104.0 — Motor: ruptura por pedido
 - Relatório **Ruptura de Estoque** (WhatsApp 17:10): o Resumo ganhou **Pedidos com falta** (% dos pedidos), **Ruptura TOTAL — cliente não levou nada** (qtd · R$) e **Venda perdida — sem recompra em 7 dias** (só no mês), **hoje × mês**; e o bloco **Pedidos com ruptura TOTAL · hoje** (cliente, pedido, itens em falta, HL, R$, recompra). Motor = só dia + mês; o quadrimestre fica na HOP.

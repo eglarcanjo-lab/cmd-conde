@@ -9,6 +9,7 @@ const express = require("express");
 const router = express.Router();
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
+const { dedupe } = require("../utils/dedupe");
 
 router.use(authMiddleware);
 
@@ -51,9 +52,11 @@ router.get("/mensagens", async (req, res) => {
       readSheet("ruptura_pedidos_base").catch(() => []),
     ]);
     // Ruptura POR PEDIDO (motor = só DIA + MÊS; o quadrimestre fica na HOP)
-    const rpMes = rpAll.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
+    const rpAllU = dedupe(rpAll, (r) => String(r.num_pedido || ""));
+    const baseU = dedupe(rpBaseAll, (r) => `${r.mes_referencia}|${r.data}|${r.setor}`);
+    const rpMes = rpAllU.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
     const rpDia = rpMes.filter((r) => r.data === hojeBR);
-    const baseMes = rpBaseAll.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
+    const baseMes = baseU.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
     const baseDia = baseMes.filter((r) => r.data === hojeBR);
     const rs = (n) => (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
     function pedStats(lista, base) {
@@ -76,7 +79,7 @@ router.get("/mensagens", async (req, res) => {
         cod_produto: normCod(r.cod_produto), nome_produto: nomeDe(normCod(r.cod_produto), r.nome_produto), hl: num(r.volume_falta_hl), data: r.data }));
     }
     // MÊS
-    const mes = ruptura.filter((r) => String(r.mes || "").startsWith(mesAtual))
+    const mes = dedupe(ruptura, (r) => `${r.setor}|${r.cod_pdv}|${r.cod_produto}|${r.data}`).filter((r) => String(r.mes || "").startsWith(mesAtual))
       .map((r) => ({ setor: String(r.setor || "").trim(), cod_pdv: normCod(r.cod_pdv), nome_pdv: String(r.nome_pdv || "").trim(),
         cod_produto: normCod(r.cod_produto), nome_produto: nomeDe(normCod(r.cod_produto), r.nome_produto), hl: num(r.volume_falta_hl), data: r.data }));
 
