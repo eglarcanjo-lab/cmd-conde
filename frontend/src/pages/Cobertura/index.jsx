@@ -115,6 +115,7 @@ export default function Cobertura() {
   const mobile = useMobile();
   const [pdvAberto, setPdvAberto] = useState(null); // celular: PDV com as categorias abertas
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [ordSt, setOrdSt] = useState(null); // null | "ok" (OK primeiro) | "nok" (NOK primeiro)
   const [filtroRN, setFiltroRN]     = useState("");
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useAbaUrl("aba", "cobertura");
@@ -270,6 +271,11 @@ export default function Cobertura() {
     const rnOk      = !filtroRN      || String(p.setor) === String(filtroRN);
     const nokCatOk  = !filtroNOKCat  || p.cob[filtroNOKCat] === "NOK";
     return buscaOk && statusOk && rnOk && nokCatOk;
+  });
+  // clique no cabeçalho "Status PDV": OK → NOK, depois NOK → OK, depois sem ordem
+  if (ordSt) pdvsFiltrados.sort((a, b) => {
+    const d = (PESO_ST[b.stPdv] ?? -1) - (PESO_ST[a.stPdv] ?? -1);
+    return ordSt === "ok" ? d : -d;
   });
 
   const pdvsDistFiltradosBase = pdvsComDados.filter((p) =>
@@ -508,7 +514,11 @@ export default function Cobertura() {
                         <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
                         <th style={{ ...styles.th, minWidth: "160px" }}>Nome</th>
                         <th style={styles.th}>Cidade</th>
-                        <th style={styles.th} title="Status do PDV: OK = os 9 grupos no mês; demais pelo status que predomina">Status PDV</th>
+                        <th style={{ ...styles.th, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
+                          onClick={() => setOrdSt(ordSt === null ? "ok" : ordSt === "ok" ? "nok" : null)}
+                          title="Clique para ordenar: OK → NOK, NOK → OK, sem ordem. Status do PDV: OK = os 9 grupos no mês; demais pelo status que predomina">
+                          Status PDV{ordSt === "ok" ? " ▼" : ordSt === "nok" ? " ▲" : " ⇅"}
+                        </th>
                         {CATEGORIAS.map((c) => (
                           <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
                         ))}

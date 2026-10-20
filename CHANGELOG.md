@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.110.0** — Cobertura: status do PDV (resumo do PDV inteiro).
+Versão atual: **v3.110.1** — Cobertura: ordenar pelo status do PDV no cabeçalho.
+
+## v3.110.1 — Cobertura: ordenar por status do PDV
+- Clique no cabeçalho **Status PDV**: OK → NOK (▼), NOK → OK (▲), sem ordem (⇅). Vale também para a lista do celular.
 
 ## v3.110.0 — Cobertura: status do PDV
 - **Status do PDV** (um por PDV, além do status por categoria):
