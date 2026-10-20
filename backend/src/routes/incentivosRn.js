@@ -237,7 +237,7 @@ async function montar(inc, mesQ, user) {
 // à parte, como o Deck). TEMPORÁRIO. `ativo` = hoje é dia de envio (DIAS_ENVIO: 1=seg 3=qua 5=sex).
 // Cabeçalho em 2 linhas: `grupos` (KPI com span 3) e `colunas` (Meta · Real · %).
 // Só o GARANTIDO (real de hoje ÷ meta) — sem tendência. Célula: { v, cls: "ok" (bateu) | "nao" | "" }.
-const DIAS_ENVIO = { zeros: [1, 3, 5] };
+const DIAS_ENVIO = { zeros: [1, 3, 5], liga: [1, 3, 5] };
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 router.get("/:id/farol", async (req, res) => {
   try {
@@ -275,7 +275,7 @@ router.get("/:id/farol", async (req, res) => {
     });
     return res.json({
       destinatarios,
-      ativo, titulo: inc.titulo, subtitulo: inc.subtitulo,
+      id: inc.id, emoji: inc.id === "liga" ? "🏆" : "💰", ativo, titulo: inc.titulo, subtitulo: inc.subtitulo,
       data: `${p2(br.getDate())}/${p2(br.getMonth() + 1)}/${br.getFullYear()}`, dia: DIA_LABEL[br.getDay()],
       mes: d.mes, diasUteis: d.diasUteis, grupos, colunas, linhas,
       rodape: inc.id === "zeros"

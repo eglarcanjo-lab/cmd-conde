@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.111.0** — Incentivos: foto/PNG com Meta · Real · % separados, só o garantido.
+Versão atual: **v3.111.1** — Motor: envio de incentivos inclui a LIGA CMD.
+
+## v3.111.1 — Motor: todos os incentivos
+- `/api/incentivos-rn/:id/farol` devolve `id` e `emoji`; **Liga CMD** também vai seg/qua/sex (`DIAS_ENVIO`).
+- Robô: `INCENTIVOS_IDS = ["liga", "zeros"]` — opções 12/13 e o envio de TODOS mandam **1 foto por incentivo** (previews `preview_INCENTIVO_LIGA.png` / `_ZEROS.png`).
 
 ## v3.111.0 — Incentivos: tabela da foto mais clara
 - Foto do motor (`/api/incentivos-rn/:id/farol`) e PNG da aba: cada KPI em **3 colunas — Meta · Real · %** (cabeçalho em 2 linhas: `grupos` + `colunas`).
