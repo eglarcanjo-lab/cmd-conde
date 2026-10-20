@@ -23,6 +23,28 @@ const numBR = (v) => {
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 const diaDe = (v) => { const d = norm(v).split(/[/,\s]+/)[0]; return DIAS.find((x) => d.startsWith(x)) || ""; };
 
+// Chave de "visto" de um PDV anômalo: muda quando entra pedido novo → o sininho avisa de novo.
+const chaveAnomalia = (setor, cod, nPed) => `${setor}|${cod}|${nPed}`;
+const ehInterno = (nome, hl) => /^AMBEV\b/i.test(String(nome || "")) || hl === 0;
+
+// GET /api/anomalia-volume/sininho → { pendentes, chaves } — leve (só anomalia_pedidos), p/ o
+// sininho (consulta a cada 60s). O front compara as chaves com as já vistas (localStorage).
+router.get("/sininho", async (req, res) => {
+  try {
+    if (!["admin", "director", "gv1", "gv3"].includes(req.user.perfil)) return res.json({ pendentes: 0, chaves: [] });
+    const linhas = await readSheet("anomalia_pedidos").catch(() => []);
+    const p = {};
+    linhas.forEach((r) => {
+      const k = `${String(r.setor || "").trim()}|${normCod(r.cod_pdv)}`;
+      const e = (p[k] = p[k] || { nome: r.nome_pdv, hl: 0, peds: new Set() });
+      e.hl += parseFloat(r.volume_hl) || 0; e.peds.add(String(r.num_pedido || ""));
+    });
+    const chaves = Object.entries(p).filter(([, e]) => !ehInterno(e.nome, e.hl))
+      .map(([k, e]) => { const [s, c] = k.split("|"); return chaveAnomalia(s, c, e.peds.size); });
+    return res.json({ pendentes: chaves.length, chaves });
+  } catch { return res.json({ pendentes: 0, chaves: [] }); }
+});
+
 router.get("/", async (req, res) => {
   try {
     if (!["admin", "director", "gv1", "gv3"].includes(req.user.perfil)) return res.status(403).json({ error: "Só gestores." });
@@ -111,11 +133,11 @@ router.get("/", async (req, res) => {
     const lista = Object.values(pdvs).map((p) => {
       const f = foraDe[p.cod_pdv] || {};
       const cidade = f.cidade || p.municipio || "", bairro = f.bairro || "";
-      const interno = /^AMBEV\b/i.test(String(p.nome_pdv || "")) || p.hl === 0;
+      const interno = ehInterno(p.nome_pdv, p.hl);
       return {
         setor: p.setor, cod_pdv: p.cod_pdv, nome_pdv: p.nome_pdv, nome_fantasia: f.nome_fantasia || p.nome_fantasia, cnpj: p.cnpj,
         cidade, bairro, endereco: f.endereco || "", segmento: f.segmento || "", status_base: f.status || "", dia_visita_atual: f.dia_visita || "",
-        na_base: !!foraDe[p.cod_pdv], interno,
+        na_base: !!foraDe[p.cod_pdv], interno, chave: chaveAnomalia(p.setor, p.cod_pdv, Object.keys(p.pedidos).length),
         hl: r2(p.hl), hl_venda: r2(p.hl_venda), valor: Math.round(p.valor * 100) / 100, itens: p.itens,
         n_pedidos: Object.keys(p.pedidos).length, datas: [...p.datas].sort((a, b) => a.split("/").reverse().join("").localeCompare(b.split("/").reverse().join(""))),
         canais: [...p.canais], digitadores: [...p.digitadores], vendedores: [...p.vendedores],

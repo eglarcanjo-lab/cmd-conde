@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.102.4** — Anomalia de Volume: cards sem os internos AMBEV.
+Versão atual: **v3.103.0** — Anomalia de Volume no sininho.
+
+## v3.103.0 — Sininho: Anomalia de Volume
+- O 🔔 (gestores) avisa **🚨 N PDVs com anomalia de volume (102/995/997)** que você **ainda não viu** — clique leva direto à aba (Outros relatórios › Anomalia de Volume). Abrir a aba marca como visto; pedido novo do mesmo PDV faz o aviso voltar. Internos AMBEV não contam.
+- Rota leve `GET /api/anomalia-volume/sininho` (consultada a cada 60s). "Visto" fica no navegador (localStorage).
 
 ## v3.102.4 — Anomalia de Volume (valor)
 - O card **Valor** mostrava ~R$ 997 mil: somava os cadastros internos **AMBEV S.A.** (995, cód 1/2/3) — **remessa de vasilhame/material**, 0 HL, ~R$ 990 mil. Os cards agora contam **só as anomalias reais** (out/26: 3 PDVs · ~R$ 7,5 mil · 8,35 HL) e os internos aparecem numa linha à parte.

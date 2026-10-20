@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { ANOMALIA_VISTAS, anomaliasVistas } from "../../components/Sininho";
 
 const VERDE = "#7DBA3D", VERM = "#f87171", OURO = "#f5c451";
 const fHL = (v) => (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
@@ -18,7 +19,16 @@ export default function AnomaliaVolume() {
   const [verInternos, setVerInternos] = useState(false);
 
   useEffect(() => {
-    api.get("/api/anomalia-volume", { timeout: 60000 }).then((r) => setD(r.data))
+    api.get("/api/anomalia-volume", { timeout: 60000 }).then((r) => {
+      setD(r.data);
+      // abriu a aba = viu: marca as anomalias atuais como vistas e avisa o sininho
+      try {
+        const vistas = anomaliasVistas();
+        (r.data?.pdvs || []).filter((p) => !p.interno && p.chave).forEach((p) => vistas.add(p.chave));
+        localStorage.setItem(ANOMALIA_VISTAS, JSON.stringify([...vistas].slice(-500)));
+        window.dispatchEvent(new Event("anomalia-vista"));
+      } catch { /* sem localStorage: o sininho só continua avisando */ }
+    })
       .catch((e) => setErro(e?.response?.data?.error || "Erro ao carregar."));
   }, []);
 
