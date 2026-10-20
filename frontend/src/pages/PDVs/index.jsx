@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { corStatus } from "../../utils/coberturaStatus"; // cores OK/EST/PEND/IST/NOK
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
 
@@ -374,10 +375,10 @@ export default function PDVs() {
                   {Object.entries(cobPdv).map(([cat, st]) => (
                     <span key={cat} style={{
                       ...styles.cobPill,
-                      background: st === "OK" ? "rgba(34,197,94,0.15)" : st === "PENDENTE" ? "rgba(125,186,61,0.15)" : "rgba(239,68,68,0.15)",
-                      color: st === "OK" ? "#4ade80" : st === "PENDENTE" ? "#7DBA3D" : "#f87171",
-                    }}>
-                      {cat.replace("TRIMARCA RGB HE ", "").replace("CERVEJA ", "C.")} · {st}
+                      background: corStatus(st).bg,
+                      color: corStatus(st).color,
+                    }} title={corStatus(st).desc}>
+                      {cat.replace("TRIMARCA RGB HE ", "").replace("CERVEJA ", "C.")} · {corStatus(st).sigla}
                     </span>
                   ))}
                 </div>

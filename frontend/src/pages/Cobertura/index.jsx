@@ -6,6 +6,8 @@ import ComparativoSku from "../CoberturaSku/Comparativo";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
 import { mesmoSetor } from "../../utils/setor";
+import { STATUS_COB, normStatus } from "../../utils/coberturaStatus";
+import { useMobile } from "../../utils/mobile";
 
 const CATEGORIAS = [
   { key: "GIRO RGB",                   label: "GIRO RGB" },
@@ -36,14 +38,7 @@ const DIAS = [
   { key: "SAB", label: "Sábado" },
 ];
 
-const STATUS_COLORS = {
-  OK:       { bg: "rgba(34,197,94,0.15)",  color: "#4ade80" }, // comprou no mês
-  EST:      { bg: "rgba(232,196,104,0.15)", color: "#e8c468" }, // comprou 1º+2º do tri, falta o atual
-  IST:      { bg: "rgba(251,146,60,0.15)",  color: "#fb923c" }, // comprou só algum mês anterior do tri
-  PENDENTE: { bg: "rgba(125,186,61,0.15)",  color: "#7DBA3D" }, // legado
-  NOK:      { bg: "rgba(239,68,68,0.15)",  color: "#f87171" }, // não comprador no tri
-  "—":      { bg: "transparent",           color: "rgba(255,255,255,0.15)" },
-};
+const STATUS_COLORS = STATUS_COB; // utils/coberturaStatus.js
 
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
@@ -101,6 +96,8 @@ export default function Cobertura() {
   const [loading, setLoading]           = useState(true);
   const [diaFiltro, setDiaFiltro]   = useState(getDiaHoje());
   const [busca, setBusca]           = useState("");
+  const mobile = useMobile();
+  const [pdvAberto, setPdvAberto] = useState(null); // celular: PDV com as categorias abertas
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroRN, setFiltroRN]     = useState("");
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
@@ -172,7 +169,7 @@ export default function Cobertura() {
   const mapaCob = {};
   coberturaSetor.forEach((r) => {
     if (!mapaCob[r.cod_pdv]) mapaCob[r.cod_pdv] = {};
-    mapaCob[r.cod_pdv][r.categoria] = r.status;
+    mapaCob[r.cod_pdv][r.categoria] = normStatus(r.status); // PENDENTE (antigo) → PEND
   });
 
   // ── Map cod_produto → categorias[] usando produtos_base (suporta multi-categoria)
@@ -276,11 +273,11 @@ export default function Cobertura() {
   // ── Resumo cobertura por categoria ───────────────────────────────────────
   function calcResumo(pdvList) {
     const resumo = {};
-    CATEGORIAS.forEach((c) => { resumo[c.key] = { OK: 0, EST: 0, IST: 0, PENDENTE: 0, NOK: 0, total: 0 }; });
+    CATEGORIAS.forEach((c) => { resumo[c.key] = { OK: 0, EST: 0, PEND: 0, IST: 0, NOK: 0, total: 0 }; });
     pdvList.forEach((p) => {
       CATEGORIAS.forEach((c) => {
         const st = mapaCob[p.cod_pdv]?.[c.key];
-        if (st && resumo[c.key]) {
+        if (st && st !== "—" && resumo[c.key]) {
           resumo[c.key][st] = (resumo[c.key][st] || 0) + 1;
           resumo[c.key].total++;
         }
@@ -293,6 +290,7 @@ export default function Cobertura() {
   const totalOk   = Object.values(resumoTotal).reduce((a, b) => a + b.OK, 0);
   const totalEst  = Object.values(resumoTotal).reduce((a, b) => a + b.EST, 0);
   const totalIst  = Object.values(resumoTotal).reduce((a, b) => a + b.IST, 0);
+  const totalPend = Object.values(resumoTotal).reduce((a, b) => a + (b.PEND || 0), 0);
   const totalNok  = Object.values(resumoTotal).reduce((a, b) => a + b.NOK, 0);
 
   return (
@@ -366,18 +364,12 @@ export default function Cobertura() {
                 <p style={styles.dashLabel}>✅ OK (total base)</p>
                 <p style={{ ...styles.dashVal, color: "#4ade80" }}>{totalOk}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(232,196,104,0.3)" }} title="Comprou 1º e 2º mês do tri, falta o atual">
-                <p style={styles.dashLabel}>🟡 EST</p>
-                <p style={{ ...styles.dashVal, color: "#e8c468" }}>{totalEst}</p>
-              </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(251,146,60,0.3)" }} title="Comprou só algum mês anterior do tri (não o atual)">
-                <p style={styles.dashLabel}>🟠 IST</p>
-                <p style={{ ...styles.dashVal, color: "#fb923c" }}>{totalIst}</p>
-              </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(239,68,68,0.3)" }} title="Não comprou em nenhum mês do trimestre">
-                <p style={styles.dashLabel}>❌ NOK</p>
-                <p style={{ ...styles.dashVal, color: "#f87171" }}>{totalNok}</p>
-              </div>
+              {[["EST", totalEst], ["PEND", totalPend], ["IST", totalIst], ["NOK", totalNok]].map(([k, v]) => (
+                <div key={k} style={{ ...styles.dashCard, borderColor: STATUS_COB[k].borda, background: STATUS_COB[k].bg }} title={STATUS_COB[k].desc}>
+                  <p style={styles.dashLabel}>{STATUS_COB[k].sigla} · {STATUS_COB[k].nome}</p>
+                  <p style={{ ...styles.dashVal, color: STATUS_COB[k].color }}>{v}</p>
+                </div>
+              ))}
               <div style={{ ...styles.dashCard, borderColor: "rgba(125,186,61,0.2)" }}>
                 <p style={styles.dashLabel}>📅 Visitas hoje</p>
                 <p style={{ ...styles.dashVal, color: "#7DBA3D" }}>{pdvsDia.length}</p>
@@ -398,11 +390,8 @@ export default function Cobertura() {
                       <div style={styles.catBar}>
                         <div style={{ ...styles.catBarFill, width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 40 ? "#7DBA3D" : "#f87171" }} />
                       </div>
-                      <div style={styles.catCounts} title="OK · EST · IST · NOK">
-                        <span style={{ color: "#4ade80" }}>{r.OK}</span>
-                        <span style={{ color: "#e8c468" }}>{r.EST}</span>
-                        <span style={{ color: "#fb923c" }}>{r.IST}</span>
-                        <span style={{ color: "#f87171" }}>{r.NOK}</span>
+                      <div style={styles.catCounts} title="OK · EST · PEND · IST · NOK">
+                        {["OK", "EST", "PEND", "IST", "NOK"].map((k) => <span key={k} style={{ color: STATUS_COB[k].color }}>{r[k] || 0}</span>)}
                       </div>
                     </div>
                   );
@@ -428,10 +417,9 @@ export default function Cobertura() {
                 <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
                 <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
                   <option value="">Todos os status</option>
-                  <option value="OK">OK — comprou no mês</option>
-                  <option value="EST">EST — 1º+2º do tri, falta atual</option>
-                  <option value="IST">IST — só mês anterior do tri</option>
-                  <option value="NOK">NOK — não comprou no tri</option>
+                  {["OK", "EST", "PEND", "IST", "NOK"].map((k) => (
+                    <option key={k} value={k}>{STATUS_COB[k].sigla} — {STATUS_COB[k].desc}</option>
+                  ))}
                 </select>
                 <select
                   style={{ ...styles.inputFiltro, borderColor: filtroNOKCat ? "rgba(248,113,113,0.5)" : undefined }}
@@ -462,9 +450,50 @@ export default function Cobertura() {
               ) : pdvsFiltrados.length === 0 ? (
                 <p style={styles.msg}>Nenhum PDV encontrado para {diaFiltro}.</p>
               ) : (
+                mobile ? (
+                <div>
+                  {pdvsFiltrados.map((p) => {
+                    const aberto = pdvAberto === p.cod_pdv;
+                    const cont = {};
+                    CATEGORIAS.forEach((c) => { const st = p.cob[c.key]; if (st && st !== "—") cont[st] = (cont[st] || 0) + 1; });
+                    return (
+                      <div key={p.cod_pdv} style={{ border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, marginBottom: 8, background: aberto ? "rgba(125,186,61,0.06)" : "rgba(255,255,255,0.035)" }}>
+                        <div onClick={() => setPdvAberto(aberto ? null : p.cod_pdv)} style={{ padding: "10px 12px", cursor: "pointer", display: "grid", gap: 4 }}>
+                          <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                            <span style={{ color: "rgba(255,255,255,0.5)" }}>{aberto ? "▾" : "▸"}</span>
+                            <span style={styles.codBadge}>{p.cod_pdv}</span>
+                            <span style={{ fontWeight: 700, fontSize: "0.88rem", flex: 1, minWidth: 0 }}>{p.nome_fantasia}</span>
+                          </div>
+                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center", paddingLeft: 18 }}>
+                            {p.cidade && <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", marginRight: 4 }}>{p.cidade}</span>}
+                            {["OK", "EST", "PEND", "IST", "NOK"].filter((k) => cont[k]).map((k) => (
+                              <span key={k} style={{ ...styles.statusPill, background: STATUS_COB[k].bg, color: STATUS_COB[k].color }}>{cont[k]} {STATUS_COB[k].sigla}</span>
+                            ))}
+                          </div>
+                        </div>
+                        {aberto && (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6, padding: "0 12px 12px" }}>
+                            {CATEGORIAS.map((c) => {
+                              const st = p.cob[c.key] || "—";
+                              const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
+                              return (
+                                <div key={c.key} onClick={st !== "—" ? () => abrirDrill(p, c.key) : undefined}
+                                  style={{ display: "flex", justifyContent: "space-between", gap: 6, alignItems: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", cursor: st !== "—" ? "pointer" : "default" }}>
+                                  <span style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.7)", minWidth: 0 }}>{c.label}</span>
+                                  <span style={{ ...styles.statusPill, background: clr.bg, color: clr.color }}>{STATUS_COB[st] ? STATUS_COB[st].sigla : st}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                ) : (
                 <TabelaLupa full={tabelaFull} onToggle={toggleTabelaFull}>
                 <div style={styles.tableWrap}>
-                  <table style={styles.table}>
+                  <table style={styles.table} data-rt="off">
                     <thead>
                       <tr>
                         <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
@@ -493,7 +522,7 @@ export default function Cobertura() {
                                   onClick={st !== "—" ? () => abrirDrill(p, c.key) : undefined}
                                   title={st !== "—" ? "Ver SKUs comprados / não comprados" : undefined}
                                 >
-                                  {st === "PENDENTE" ? "PEN" : st}
+                                  {STATUS_COB[st] ? STATUS_COB[st].sigla : st}
                                 </span>
                               </td>
                             );
@@ -504,6 +533,7 @@ export default function Cobertura() {
                   </table>
                 </div>
                 </TabelaLupa>
+                )
               )}
             </div>
           </>

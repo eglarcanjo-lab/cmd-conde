@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.108.0** — mobile Fases 2 e 3: relatórios e ferramentas de gestão.
+Versão atual: **v3.109.0** — Cobertura: status OK/EST/PEND/IST/NOK com os 3 meses anteriores.
+
+## v3.109.0 — Cobertura por categoria
+- **Status por PDV × categoria** (processador) agora olha o mês atual + os **3 meses anteriores corridos** (antes: trimestre civil — em outubro, 1º mês do tri, não havia mês anterior e todo mundo caía em NOK). Meses anteriores vêm do histórico acumulado (`vendas_cliente_produto`, o CORA só traz o mês atual):
+  - **OK** comprou no mês · **EST** (estável) comprou nos 3 anteriores em sequência · **PEND** (pendente) comprou no mês passado · **IST** (instável) comprou em algum anterior mas não no mês passado, ou mês sim/mês não · **NOK** nada nos 3 anteriores nem no atual.
+- **Cores:** OK verde · EST amarelo · IST amarelo com letra vermelha · NOK vermelho · PEND laranja (`utils/coberturaStatus.js`, usado em Cobertura e PDVs).
+- **Celular, aba Cobertura:** lista de PDVs com o resumo (ex.: 6 OK · 2 PEND · 1 NOK); **toque abre as categorias** (e cada categoria abre os SKUs). No computador segue a tabela.
+- Recalcula no próximo import do CORA.
 
 ## v3.108.0 — Mobile Fases 2 e 3
 - **Relatórios** (Faturados × Buffer, Base × dia, Relatório aberto, Volume Diário, Cobertura, Produtos…): cobertos pelos cartões automáticos da Fase 0; Base × dia sem grade mais larga que a tela.
