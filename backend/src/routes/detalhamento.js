@@ -226,13 +226,15 @@ router.get("/ruptura", async (req, res) => {
       mapMes[m].volume_falta_hl += num(r.volume_falta_hl);
       mapMes[m].qtd_faltas += Math.round(num(r.qtd_faltas));
     });
-    const meses = uniqSort(Object.keys(mapMes));
+    // ruptura_detalhe ACUMULA por mês (v3.103.1) → o quadrimestre = os 4 meses mais recentes
+    const meses = uniqSort(Object.keys(mapMes)).slice(-4);
     const porMes = meses.map((m) => ({ ...mapMes[m], volume_falta_hl: r3(mapMes[m].volume_falta_hl) }));
     const media = porMes.length ? r3(porMes.reduce((s, m) => s + m.volume_falta_hl, 0) / porMes.length) : 0;
 
-    // Escopo: dia (se houver), senão mês, senão consolidado
+    // Escopo: dia (se houver), senão mês, senão consolidado (só os meses do quadrimestre)
+    const mesesSet = new Set(meses);
     const escopo = det.filter((r) =>
-      (!dia || String(r.data).trim() === dia) && (!mes || String(r.mes) === mes)
+      (!dia || String(r.data).trim() === dia) && (mes ? String(r.mes) === mes : (dia || mesesSet.has(String(r.mes))))
     );
 
     const mapProd = {};

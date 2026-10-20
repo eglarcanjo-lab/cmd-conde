@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.103.0** — Anomalia de Volume no sininho.
+Versão atual: **v3.103.1** — Ruptura: quadrimestre volta a ter os meses do Promax.
+
+## v3.103.1 — Ruptura acumula por mês
+- **Causa:** `ruptura_detalhe` era SUBSTITUÍDA a cada import de pedidos → o CORA (só out/26 em diante) apagou jun–set do Promax e o quadrimestre ficou só com outubro. Agora **acumula por mês** (cada import troca só os meses do arquivo; arquivo sem falta não apaga nada).
+- **Pedidos histórico (Promax 03014701)** de volta em Admin › Arquivos: repõe vendas/volume/RV **e agora a ruptura** dos meses **antes de out/26**, sem tocar nos meses do CORA nem nas fotos do mês atual. Reimportar jun–set p/ o quadrimestre voltar.
+- Tela: gráfico e consolidado = os 4 meses mais recentes.
 
 ## v3.103.0 — Sininho: Anomalia de Volume
 - O 🔔 (gestores) avisa **🚨 N PDVs com anomalia de volume (102/995/997)** que você **ainda não viu** — clique leva direto à aba (Outros relatórios › Anomalia de Volume). Abrir a aba marca como visto; pedido novo do mesmo PDV faz o aviso voltar. Internos AMBEV não contam.

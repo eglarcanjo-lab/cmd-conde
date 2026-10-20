@@ -9,6 +9,9 @@ const ARQUIVOS_CONFIG = [
   { id: "produtos_base",    campo: "produtos_base",     rotulo: "Base de Produtos",         numero: "0111",       extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗂️" },
   // 030509 reativado (out/26) p/ reprocessar meses do Promax (ex.: RV de set/26). De out/26 em diante o Mktp vem do CORA.
   { id: "faturamento_mktp", campo: "faturamento_mktp",  rotulo: "Faturamento Marketplace (só meses do Promax)", numero: "030509", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🛒" },
+  // Meses do Promax (antes de out/26): repõe vendas/volume/RV E a ruptura (faltas) desses meses
+  // sem mexer nos dados do CORA nem nas fotos do mês atual.
+  { id: "pedidos_historico", campo: "pedidos_historico", rotulo: "Pedidos histórico (só meses do Promax)", numero: "03014701", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🗄️" },
   { id: "inadimplencia",    campo: "inadimplencia",     rotulo: "Inadimplência",            numero: "120601",     extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "⚠️" },
   { id: "grade",            campo: "grade",             rotulo: "Grade de Estoque (saldo)", numero: "020304", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "📊" },
   { id: "comodatos",        campo: "comodatos",         rotulo: "Comodatos (equipamentos no PDV)", numero: "Comodato", extensoes: ".csv,.inf,.txt", grupo: "promax", icon: "🧊" },
