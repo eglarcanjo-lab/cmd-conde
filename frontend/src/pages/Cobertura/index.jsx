@@ -326,7 +326,7 @@ export default function Cobertura() {
       <div style={styles.content}>
 
         {/* ── Sub-abas ── */}
-        <div style={styles.abas}>
+        <div style={styles.abas} className="hop-abas">
           <button
             style={{ ...styles.abaBtn, ...(aba === "cobertura" ? styles.abaBtnAtivo : {}) }}
             onClick={() => trocarAba("cobertura")}

@@ -103,7 +103,7 @@ export default function ResumoRankings({ mes }) {
 
   const linhasPdv = segPdv === "as" ? (data.pdvsAS || []) : segPdv === "rota" ? (data.pdvsRota || []) : data.pdvs;
   const togglePdv = (
-    <div style={S.seg}>
+    <div style={S.seg} className="hop-abas">
       {[["todos", "Todos"], ["as", "AS"], ["rota", "Rota"]].map(([k, l]) => (
         <button key={k} onClick={() => setSegPdv(k)} style={segPdv === k ? S.segOn : S.segBtn}>{l}</button>
       ))}

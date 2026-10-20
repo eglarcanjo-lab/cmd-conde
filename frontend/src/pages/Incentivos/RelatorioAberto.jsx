@@ -170,7 +170,7 @@ export default function RelatorioAberto({ embutido = false }) {
                 {!produtos.length && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" }}>carregando produtos…</span>}
               </>
             )}
-            <div style={S.seg}>
+            <div style={S.seg} className="hop-abas">
               {Object.entries(IND).map(([k, v]) => (
                 <button key={k} type="button" onClick={() => setInd(k)} style={ind === k ? S.segOn : S.segBtn}>{v.label}</button>
               ))}

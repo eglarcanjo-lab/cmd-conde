@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.105.0** — mobile Fase 0a: Ver como setor + Admin/Home do celular.
+Versão atual: **v3.106.0** — mobile Fase 0b: tabelas viram cartões e abas numa linha.
+
+## v3.106.0 — Mobile Fase 0b (app inteiro)
+- **Fim dos botões gigantes:** a regra do celular que forçava TODO botão a 44px/fonte 16 agora vale só p/ campos (fonte 16 evita o zoom do iPhone); botões ficam com altura mínima de toque (32px) no tamanho de cada tela.
+- **Tabelas → cartões no celular, no app inteiro** (`utils/tabelasMobile.js` + `mobile.css`): toda tabela simples (1 linha de cabeçalho) vira lista de cartões — a coluna de nome (Cliente/PDV/Produto/…) é o título e as demais aparecem rótulo + valor em 2 colunas; células vazias somem. Matrizes (cabeçalho agrupado) seguem com rolagem lateral (tratadas tela a tela). `<table data-rt="off">` mantém uma tabela como tabela.
+- **Abas/chips numa linha só** (classe `hop-abas`, rola para o lado) em 16 telas: Outros relatórios, Devolução × Ruptura, SPO, PDVs, Produtos, Cobertura, Faturados × Buffer, Solicitações, Home (Volumes/Rankings) etc.
 
 ## v3.105.0 — Mobile Fase 0a
 - **👁 Ver como setor** (só admin, na Home do celular e do computador): o app inteiro passa a ser o do RN do setor escolhido — menu, telas e **dados** (o front manda `X-Ver-Como` e o backend trata a requisição como a do RN; `adminReal` fica registrado). Barra amarela fixa no topo com "Sair da visão". Fica salvo no navegador.

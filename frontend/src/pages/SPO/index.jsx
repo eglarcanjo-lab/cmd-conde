@@ -938,7 +938,7 @@ export default function SPO() {
           if (mostra(kpiAtivo, 1)) abasVisiveis = ["operacao", "gv", "detalhe"];
           if (kpiAtivo === 2) abasVisiveis = ["detalhe_rn"];
           return (
-            <div style={styles.abas}>
+            <div style={styles.abas} className="hop-abas">
               {abasVisiveis.map((a) => (
                 <button key={a} style={{ ...styles.abaBtn, ...(aba === a ? styles.abaBtnAtivo : {}) }} onClick={() => setAba(a)}>
                   {a === "operacao" ? "🏭 Operação" : a === "gv" ? "👥 Por GV" : a === "detalhe" ? "📋 Detalhe" : a === "detalhe_rn" ? "👤 Detalhado RN" : `⚠️ Sem Coaching${semCoaching.length > 0 ? ` (${semCoaching.length})` : ""}`}

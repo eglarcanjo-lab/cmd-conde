@@ -23,16 +23,67 @@
 * { -webkit-tap-highlight-color: transparent; }
 img, video { max-width: 100%; }
 
-/* Inputs e botões — tamanho mínimo de toque 44px em mobile */
-@media (max-width: 600px) {
-  input, select, textarea, button {
-    min-height: 44px;
-    font-size: 16px !important; /* evita zoom automático no iOS */
+/* ── Celular (≤ 767px) ─────────────────────────────────────────────────────
+   Antes (até v3.105): TODO <button> ganhava 44px e fonte 16 → abas, chips e filtros viravam
+   botões gigantes empilhados. Agora: fonte 16 só nos CAMPOS (evita o zoom automático do iOS)
+   e botão com altura mínima de toque razoável, sem mexer na fonte. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    min-height: 40px;
+    font-size: 16px !important; /* < 16px o iPhone dá zoom ao focar */
   }
-  input[type="month"],
-  input[type="date"],
-  input[type="text"],
-  input[type="search"] {
-    font-size: 16px !important;
+  input[type="checkbox"], input[type="radio"] { min-height: 0; }
+  button { min-height: 32px; }
+
+  /* Linhas de abas/chips/filtros: uma linha só, rolando para o lado (sem empilhar) */
+  .hop-abas { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .hop-abas::-webkit-scrollbar { display: none; }
+  .hop-abas > * { flex-shrink: 0; }
+
+  /* ── Tabelas → cartões (utils/tabelasMobile.js marca as tabelas simples) ── */
+  table.rt-card, table.rt-card tbody { display: block !important; width: 100% !important; min-width: 0 !important; }
+  table.rt-card thead { display: none !important; }
+  table.rt-card tfoot { display: block; }
+  table.rt-card tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    padding: 10px 12px !important;
+    margin: 0 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.035) !important;
+    height: auto !important;
   }
+  table.rt-card td {
+    display: flex !important;
+    flex-direction: column;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+    background: transparent !important;
+  }
+  table.rt-card td::before {
+    content: attr(data-label);
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 1px;
+  }
+  /* título do cartão = coluna de nome (Cliente/PDV/Produto…) — linha inteira, no topo */
+  table.rt-card td.rt-tit { grid-column: 1 / -1; order: -1; font-weight: 700; font-size: 0.9rem; color: #fff; }
+  table.rt-card td.rt-tit::before { display: none; }
+  table.rt-card td.rt-vazia { display: none !important; }
+  table.rt-card td[data-label=""]::before { display: none; }
+  /* linhas "soltas" (detalhe expandido, totais): ocupam o cartão inteiro */
+  table.rt-card tr.rt-solta { display: block !important; }
+  table.rt-card tr.rt-solta td { display: block !important; }
 }

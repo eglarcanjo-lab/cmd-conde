@@ -77,7 +77,7 @@ export default function Incentivos() {
       </div>
 
       {/* Abas (Auditoria out/26: antes era uma pilha de caixas). Aba fica no endereço (?aba=). */}
-      <div style={S.abas}>
+      <div style={S.abas} className="hop-abas">
         {ABAS_REL.filter((a) => !a.gestor || ["admin", "director", "gv1", "gv3"].includes(usuario?.perfil)).map((a) => (
           <button key={a.id} type="button" onClick={() => setAba(a.id)} style={aba === a.id ? S.abaOn : S.aba}>
             {a.icon} {a.label}{a.id === "campanhas" && lista.length ? ` (${lista.length})` : ""}

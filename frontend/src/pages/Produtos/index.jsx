@@ -26,7 +26,7 @@ export default function Produtos() {
         </div>
       </div>
 
-      <div style={S.abas}>
+      <div style={S.abas} className="hop-abas">
         <button style={{ ...S.tab, ...(aba === "grade" ? S.tabAtiva : {}) }} onClick={() => setAba("grade")}>📊 Grade de Estoque</button>
         <button style={{ ...S.tab, ...(aba === "deck" ? S.tabAtiva : {}) }} onClick={() => setAba("deck")}>🗂️ Deck</button>
         <button style={{ ...S.tab, ...(aba === "shelf" ? S.tabAtiva : {}) }} onClick={() => setAba("shelf")}>🏷️ Shelf</button>

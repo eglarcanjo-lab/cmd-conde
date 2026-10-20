@@ -132,7 +132,7 @@ export default function Refrigeradores() {
           </button>
         </div>
 
-        <div style={styles.abas} className="eq-no-print">
+        <div style={styles.abas} className="eq-no-print hop-abas">
           <button style={{ ...styles.abaBtn, ...(subAba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => trocarSubAba("novo")}>
             {itemEditando ? "✏️ Editando" : "📝 Novo Cadastro"}
           </button>

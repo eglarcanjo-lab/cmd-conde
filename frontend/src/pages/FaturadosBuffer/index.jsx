@@ -170,7 +170,7 @@ export default function FaturadosBuffer() {
           </div>
 
           {/* Sub-abas */}
-          <div style={S.tabs}>
+          <div style={S.tabs} className="hop-abas">
             <button style={aba === "faturados" ? S.tabOn : S.tab} onClick={() => setAba("faturados")}>Faturados</button>
             <button style={aba === "buffer" ? S.tabOn : S.tab} onClick={() => setAba("buffer")}>Buffer</button>
           </div>

@@ -280,7 +280,7 @@ export default function ResumoVolumes({ mes }) {
       <div style={S.title}>
         <span style={{ color: "#7DBA3D" }}>📊</span> Volumes
         {data?.report && (
-          <div style={S.seg}>
+          <div style={S.seg} className="hop-abas">
             {[["barras", "Barras"], ["sintetico", "Curva"], ["analitico", "Analítico"]].map(([k, l]) => (
               <button key={k} onClick={() => setModo(k)} style={modo === k ? { ...S.segBtn, ...S.segOn } : S.segBtn}>{l}</button>
             ))}

@@ -246,7 +246,7 @@ export default function PDVs() {
         </div>
 
         {/* Abas */}
-        <div style={styles.abas} className="pdv-abas">
+        <div style={styles.abas} className="pdv-abas hop-abas">
           {ABAS.map((a) => (
             <button
               key={a.key}

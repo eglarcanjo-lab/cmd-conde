@@ -80,7 +80,7 @@ export default function Incidentes() {
         )}
 
         {/* Abas */}
-        <div style={styles.abas}>
+        <div style={styles.abas} className="hop-abas">
           <button style={{ ...styles.abaBtn, ...(aba === "novo" ? styles.abaBtnAtivo : {}) }} onClick={() => setAba("novo")}>
             📝 Nova Solicitação
           </button>

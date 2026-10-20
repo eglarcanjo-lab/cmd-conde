@@ -42,7 +42,7 @@ export default function Detalhamento() {
           <p style={S.sub}>Relatórios de análise · admin</p>
         </div>
       </div>
-      <div style={S.abas}>
+      <div style={S.abas} className="hop-abas">
         <button style={{ ...S.tab, ...(aba === "entrega" ? S.tabAtiva : {}) }} onClick={() => setAba("entrega")}>📦 Entrega</button>
         <button style={{ ...S.tab, ...(aba === "ruptura" ? S.tabAtiva : {}) }} onClick={() => setAba("ruptura")}>📉 Ruptura de Estoque</button>
         <button style={{ ...S.tab, ...(aba === "pesquisa" ? S.tabAtiva : {}) }} onClick={() => setAba("pesquisa")}>🔎 Pesquisa Pedido</button>
@@ -508,7 +508,7 @@ function Entrega() {
         <button style={S.btnPdf} onClick={abrirPdf}>📄 PDF</button>
       </div>
 
-      <div style={S.subAbas}>
+      <div style={S.subAbas} className="hop-abas">
         {[["motivo", "Por motivo"], ["setor", "Por setor"], ["caminhao", "Por caminhão"], ["dia", "Por dia"], ["produto", "Por produto"], ["pdv", "Por PDV"], ["detalhe", "Detalhe"]].map(([k, t]) => (
           <button key={k} style={{ ...S.subTab, ...(sub === k ? S.subTabAtiva : {}) }} onClick={() => setSub(k)}>{t}</button>
         ))}
@@ -704,7 +704,7 @@ function Ruptura() {
         </>
       )}
 
-      <div style={S.subAbas}>
+      <div style={S.subAbas} className="hop-abas">
         {[["produto", "Por produto"], ["cliente", `Top clientes (${d.clientes_afetados})`], ...(d.pedidos ? [["pedido", `Por pedido (${d.pedidos.com_falta})`]] : [])].map(([k, t]) => (
           <button key={k} style={{ ...S.subTab, ...(sub === k ? S.subTabAtiva : {}) }} onClick={() => { setSub(k); setDrill(null); }}>{t}</button>
         ))}

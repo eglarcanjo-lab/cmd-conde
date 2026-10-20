@@ -206,7 +206,7 @@ export default function Produtos() {
 
   return (
     <div>
-      <div style={styles.abas}>
+      <div style={styles.abas} className="hop-abas">
         <button style={{ ...styles.abaBtn, ...(aba === "base" ? styles.abaBtnAtivo : {}) }} onClick={() => setAba("base")}>
           📦 Base de Produtos
         </button>

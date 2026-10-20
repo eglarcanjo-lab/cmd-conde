@@ -263,7 +263,7 @@ export default function BaseVisita({ embutido = false }) {
                 <div style={S.kpi}><b>{fmtN(linhas.filter((l) => !l.volume).length)}</b><span style={S.kpiL}>PDVs sem venda</span></div>
               </div>
               {!d.tem_bairro && <p style={{ ...S.hint, color: "#fbbf24" }}>⚠️ Bairro ainda vazio — passa a vir na próxima importação da base de clientes (0105070402).</p>}
-              <div style={S.abas}>
+              <div style={S.abas} className="hop-abas">
                 {ABAS.map((a) => <button key={a.id} type="button" onClick={() => setAba(a.id)} style={aba === a.id ? S.abaOn : S.aba}>{a.label}</button>)}
               </div>
 
