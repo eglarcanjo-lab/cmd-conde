@@ -42,12 +42,26 @@ router.get("/mensagens", async (req, res) => {
     const hojeBR = `${p2(br.getDate())}/${p2(br.getMonth() + 1)}/${br.getFullYear()}`;
     const mesAtual = `${br.getFullYear()}-${p2(br.getMonth() + 1)}`;
 
-    const [coraDia, ruptura, usuarios, prodFull] = await Promise.all([
+    const [coraDia, ruptura, usuarios, prodFull, rpAll, rpBaseAll] = await Promise.all([
       readSheet("cora_dia").catch(() => []),
       readSheet("ruptura_detalhe").catch(() => []),
       readSheet("usuarios").catch(() => []),
       readSheet("produtos_full").catch(() => []),
+      readSheet("ruptura_pedidos").catch(() => []),
+      readSheet("ruptura_pedidos_base").catch(() => []),
     ]);
+    // Ruptura POR PEDIDO (motor = só DIA + MÊS; o quadrimestre fica na HOP)
+    const rpMes = rpAll.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
+    const rpDia = rpMes.filter((r) => r.data === hojeBR);
+    const baseMes = rpBaseAll.filter((r) => String(r.mes_referencia || "").startsWith(mesAtual));
+    const baseDia = baseMes.filter((r) => r.data === hojeBR);
+    const rs = (n) => (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+    function pedStats(lista, base) {
+      const tot = lista.filter((r) => r.tipo === "TOTAL"), perd = tot.filter((r) => r.recomprou === "NÃO");
+      const nBase = base.reduce((s2, r) => s2 + num(r.pedidos), 0);
+      return { com: lista.length, nBase, tot: tot.length, totHl: tot.reduce((s2, r) => s2 + num(r.hl_falta), 0), totVl: tot.reduce((s2, r) => s2 + num(r.valor_falta), 0),
+        perd: perd.length, perdVl: perd.reduce((s2, r) => s2 + num(r.valor_falta), 0), totais: tot };
+    }
     const nomeProd = {};
     prodFull.forEach((p) => { const c = normCod(p.cod); if (c && p.nome) nomeProd[c] = String(p.nome).trim(); });
     const nomeDe = (cod, nome) => String(nome || "").trim() || nomeProd[cod] || "";
@@ -75,17 +89,32 @@ router.get("/mensagens", async (req, res) => {
 
     function blocosDe(linhasDia, linhasMes, opts = {}) {
       const a = agregar(linhasDia), m = agregar(linhasMes);
+      const fs2 = opts.filtro || (() => true), noF = (r) => fs2(String(r.setor || "").trim());
+      const pdH = pedStats(rpDia.filter(noF), baseDia.filter(noF)), pdM = pedStats(rpMes.filter(noF), baseMes.filter(noF));
+      const pctP = (n, b) => (b ? ` (${(Math.round((n / b) * 1000) / 10).toLocaleString("pt-BR")}%)` : "");
       const blocos = [
         { titulo: `Ruptura de Estoque · ${opts.rotulo}`, subtitulo: "Resumo", colunas: colRes, linhas: [
           { rn: "Volume em falta (HL)", hoje: hl(a.hl), mes: hl(m.hl), _cores: { hoje: a.hl ? "down" : "up", mes: m.hl ? "down" : "up" } },
           { rn: "Clientes afetados", hoje: a.nPdvs, mes: m.nPdvs },
           { rn: "Produtos afetados", hoje: a.nProds, mes: m.nProds },
+          ...(rpAll.length ? [
+            { rn: "Pedidos com falta", hoje: `${pdH.com}${pctP(pdH.com, pdH.nBase)}`, mes: `${pdM.com}${pctP(pdM.com, pdM.nBase)}` },
+            { rn: "Ruptura TOTAL (cliente não levou nada)", hoje: `${pdH.tot} · ${rs(pdH.totVl)}`, mes: `${pdM.tot} · ${rs(pdM.totVl)}`,
+              _cores: { hoje: pdH.tot ? "down" : "up", mes: pdM.tot ? "down" : "up" } },
+            { rn: "Venda perdida (sem recompra em 7 dias)", hoje: "—", mes: `${pdM.perd} · ${rs(pdM.perdVl)}`, _cores: { mes: pdM.perd ? "down" : "up" } },
+          ] : []),
         ] },
       ];
       if (opts.porRn) blocos.push({ titulo: "Ruptura por RN", subtitulo: "Hoje × mês, por setor", colunas: [
         { key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "hoje", label: "Hoje (HL)" }, { key: "cli_hoje", label: "Clientes hoje" }, { key: "mes", label: "Mês (HL)" }, { key: "cli_mes", label: "Clientes mês" }],
         linhas: opts.porRn });
       blocos.push(
+        ...(rpAll.length ? [{ titulo: "Pedidos com ruptura TOTAL · hoje", subtitulo: `${pdH.tot} pedido(s) em que o cliente não levou nada · recompra = comprou em outro pedido`,
+          colunas: [...(opts.comSetor ? [{ key: "setor", label: "Setor" }] : []), { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "Cliente" }, { key: "pedido", label: "Pedido" },
+            { key: "itens", label: "Itens em falta" }, { key: "hl", label: "HL" }, { key: "valor", label: "R$" }, { key: "recompra", label: "Recompra" }],
+          linhas: pdH.totais.sort((x, y) => num(y.valor_falta) - num(x.valor_falta)).slice(0, TOP_DIA).map((r) => ({
+            setor: r.setor, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv, pedido: r.num_pedido, itens: r.itens_falta, hl: hl(num(r.hl_falta)), valor: rs(r.valor_falta),
+            recompra: r.recomprou === "MESMO DIA" ? "mesmo dia" : r.recomprou === "ATÉ 7 DIAS" ? "até 7 dias" : "ainda não", _cores: { valor: "down", recompra: r.recomprou === "NÃO" ? "down" : "up" } })) }] : []),
         { titulo: "Produtos afetados · hoje", subtitulo: `${a.nProds} produto(s) · ${hl(a.hl)} HL`, colunas: colProd,
           linhas: a.produtos.slice(0, TOP_DIA).map((p) => ({ cod_produto: p.cod_produto, nome_produto: p.nome_produto, pdvs: p.pdvs.size, hl: hl(p.hl), _cores: VERM })) },
         { titulo: "Clientes afetados · hoje", subtitulo: `${a.nPdvs} cliente(s)`, colunas: colCli(opts.comSetor),
@@ -113,7 +142,7 @@ router.get("/mensagens", async (req, res) => {
     const setoresEnvio = [...new Set([...setores, ...Object.keys(telSetor).filter((s) => SET_RN.has(s))])].sort();
 
     const rn = setoresEnvio.map((s) => {
-      const b = blocosDe(dia.filter((l) => l.setor === s), mes.filter((l) => l.setor === s), { rotulo: `Setor ${s}` });
+      const b = blocosDe(dia.filter((l) => l.setor === s), mes.filter((l) => l.setor === s), { rotulo: `Setor ${s}`, filtro: (x) => x === s });
       return { setor: s, nome: nomeSetor[s] || "", telefone: telSetor[s] || "", texto: b.texto, blocos: b.blocos };
     });
 
@@ -129,14 +158,14 @@ router.get("/mensagens", async (req, res) => {
       const uGV = usuarios.find((u) => String(u.perfil || "").toLowerCase() === perfilDoPrefixo[prefixo] && String(u.telefone || "").trim());
       if (!uGV) return null;
       const ss = new Set(sets);
-      const b = blocosDe(dia.filter((l) => ss.has(l.setor)), mes.filter((l) => ss.has(l.setor)), { rotulo: `GV ${uGV.nome || prefixo + "xx"}`, porRn: porRnDe(sets), comSetor: true });
+      const b = blocosDe(dia.filter((l) => ss.has(l.setor)), mes.filter((l) => ss.has(l.setor)), { rotulo: `GV ${uGV.nome || prefixo + "xx"}`, porRn: porRnDe(sets), comSetor: true, filtro: (x) => ss.has(x) });
       return { grupo: `${prefixo}xx`, nome: uGV.nome || "", telefone: String(uGV.telefone).trim(), texto: b.texto, blocos: b.blocos };
     }).filter(Boolean);
 
     const diretores = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "director" && String(u.telefone || "").trim());
     let director = null;
     if (diretores.length) {
-      const b = blocosDe(dia, mes, { rotulo: "Operação (consolidado)", porRn: porRnDe(setores), comSetor: true });
+      const b = blocosDe(dia, mes, { rotulo: "Operação (consolidado)", porRn: porRnDe(setores), comSetor: true, filtro: () => true });
       director = { texto: b.texto, blocos: b.blocos,
         destinatarios: diretores.map((u) => ({ nome: String(u.nome || "").trim() || "Diretoria", telefone: String(u.telefone).trim() })) };
     }

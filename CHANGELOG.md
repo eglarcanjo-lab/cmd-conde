@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.103.1** — Ruptura: quadrimestre volta a ter os meses do Promax.
+Versão atual: **v3.104.0** — Ruptura por pedido no relatório das 17:10.
+
+## v3.104.0 — Motor: ruptura por pedido
+- Relatório **Ruptura de Estoque** (WhatsApp 17:10): o Resumo ganhou **Pedidos com falta** (% dos pedidos), **Ruptura TOTAL — cliente não levou nada** (qtd · R$) e **Venda perdida — sem recompra em 7 dias** (só no mês), **hoje × mês**; e o bloco **Pedidos com ruptura TOTAL · hoje** (cliente, pedido, itens em falta, HL, R$, recompra). Motor = só dia + mês; o quadrimestre fica na HOP.
 
 ## v3.103.1 — Ruptura acumula por mês
 - **Causa:** `ruptura_detalhe` era SUBSTITUÍDA a cada import de pedidos → o CORA (só out/26 em diante) apagou jun–set do Promax e o quadrimestre ficou só com outubro. Agora **acumula por mês** (cada import troca só os meses do arquivo; arquivo sem falta não apaga nada).
