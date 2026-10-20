@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.112.0** — Incentivos: linha de total da operação.
+Versão atual: **v3.112.1** — Incentivos: correção do erro 500 no total.
+
+## v3.112.1 — Correção
+- Total da operação usava `r2` fora do escopo → erro 500 no `/api/incentivos-rn` (tela e motor). Corrigido.
 
 ## v3.112.0 — Incentivos: total da operação
 - Liga CMD e Bateu, Levou: linha **Total operação** abaixo da tabela (soma de meta e real dos setores com meta · % = real ÷ meta) na tela, no PNG e na foto do motor. Zeros mostra também o R$ total. API: `total` no `GET /api/incentivos-rn/:id`.

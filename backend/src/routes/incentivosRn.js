@@ -224,6 +224,7 @@ async function montar(inc, mesQ, user) {
     }
 
     // TOTAL DA OPERAÇÃO: soma meta / real / tendência dos setores com meta em cada KPI
+    const r2 = (x) => Math.round(x * 100) / 100;
     const total = {
       kpis: inc.kpis.map((k, i) => {
         const cm = linhas.map((l) => l.kpis[i]).filter((x) => x.meta != null);
