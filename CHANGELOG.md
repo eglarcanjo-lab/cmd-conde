@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.110.3** — Cobertura: Multipack só conta no OK do PDV se ele for comprador.
+Versão atual: **v3.111.0** — Incentivos: foto/PNG com Meta · Real · % separados, só o garantido.
+
+## v3.111.0 — Incentivos: tabela da foto mais clara
+- Foto do motor (`/api/incentivos-rn/:id/farol`) e PNG da aba: cada KPI em **3 colunas — Meta · Real · %** (cabeçalho em 2 linhas: `grupos` + `colunas`).
+- **Sem tendência**: % = realizado até hoje ÷ meta (verde batida · vermelho ainda não). Liga: **Pontos** e **Prêmio** de hoje, ordem pelo pódio de hoje; Zeros: só **Garantido**.
+- Robô (`enviar.js`) monta o cabeçalho de 2 linhas quando vem `grupos` (formato antigo segue funcionando).
 
 ## v3.110.3 — Cobertura: regra do Multipack no status do PDV
 - **PDV OK** = os 8 grupos OK (Cerveja, Cerv. Zero, HE, NAB, NAB Zero, Match, MKTP, Balanced). **Multipack** só entra se o PDV for comprador dele: Multipack OK ou NOK (não comprador) → segue OK; Multipack EST/PEND/IST → não é OK.

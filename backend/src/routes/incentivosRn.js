@@ -235,7 +235,8 @@ async function montar(inc, mesQ, user) {
 
 // GET /api/incentivos-rn/:id/farol — tabela pronta p/ o motor de WhatsApp (vira FOTO, enviada
 // à parte, como o Deck). TEMPORÁRIO. `ativo` = hoje é dia de envio (DIAS_ENVIO: 1=seg 3=qua 5=sex).
-// Cada célula: { v: texto, cls: "ok" (bateu) | "tend" (tendência bate) | "nao" | "" }.
+// Cabeçalho em 2 linhas: `grupos` (KPI com span 3) e `colunas` (Meta · Real · %).
+// Só o GARANTIDO (real de hoje ÷ meta) — sem tendência. Célula: { v, cls: "ok" (bateu) | "nao" | "" }.
 const DIAS_ENVIO = { zeros: [1, 3, 5] };
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 router.get("/:id/farol", async (req, res) => {
@@ -247,18 +248,22 @@ router.get("/:id/farol", async (req, res) => {
     const ativo = (DIAS_ENVIO[inc.id] || []).includes(br.getDay()) || req.query.forcar === "1";
     const d = await montar(inc, "", req.user);
     const f1 = (v) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
-    const colunas = ["Setor · RN", ...inc.kpis.map((k) => `${k.label} (${k.unidade})`),
-      ...(inc.id === "liga" ? ["Pts hoje", "Pts tendência", "Prêmio (tend.)"] : ["Garantido", "Tendência"])];
-    const linhas = d.linhas.map((l) => [
+    const liga = inc.id === "liga";
+    const finais = liga ? ["Pontos", "Prêmio"] : ["Garantido"];
+    const grupos = [{ v: "Setor · RN", span: 1, rows: 2 }, ...inc.kpis.map((k) => ({ v: `${k.label} (${k.unidade})`, span: 3 })),
+      ...finais.map((v) => ({ v, span: 1, rows: 2 }))];
+    const colunas = inc.kpis.flatMap(() => ["Meta", "Real", "%"]);
+    const ordem = liga ? [...d.linhas].sort((a, b) => a.posicao - b.posicao) : d.linhas;
+    const linhas = ordem.map((l) => [
       { v: `${l.setor}${l.nome ? ` · ${String(l.nome).trim().split(" ").filter(Boolean)[0]}` : ""}`, cls: "lbl" }, // setor + 1º nome do RN
-      ...l.kpis.map((k) => (k.meta == null ? { v: "—", cls: "" } : {
-        v: `${f1(k.real)} / ${f1(k.meta)} · ${f1(k.atingTend)}%`, cls: k.bateu ? "ok" : k.bateTend ? "tend" : "nao",
-      })),
-      ...(inc.id === "liga"
-        ? [{ v: String(l.pontos), cls: "" }, { v: String(l.pontosTend), cls: l.elegivelTend ? "ok" : "" }, { v: l.premioTend || "—", cls: l.premioTend ? "tend" : "" }]
-        : [{ v: `R$ ${f1(l.valor)}`, cls: l.valor ? "ok" : "" }, { v: `R$ ${f1(l.valorTend)}`, cls: l.valorTend ? "tend" : "" }]),
+      ...l.kpis.flatMap((k) => (k.meta == null ? [{ v: "—", cls: "" }, { v: "—", cls: "" }, { v: "—", cls: "" }] : [
+        { v: f1(k.meta), cls: "meta" }, { v: f1(k.real), cls: "" }, { v: `${f1(k.ating)}%`, cls: k.bateu ? "ok" : "nao" },
+      ])),
+      ...(liga
+        ? [{ v: String(l.pontos), cls: l.elegivel ? "ok" : "" }, { v: l.premio || "—", cls: l.premio ? "ok" : "" }]
+        : [{ v: `R$ ${f1(l.valor)}`, cls: l.valor ? "ok" : "" }]),
     ]);
-    const tot = inc.id === "zeros" ? d.linhas.reduce((s, l) => s + l.valorTend, 0) : null;
+    const tot = inc.id === "zeros" ? d.linhas.reduce((s, l) => s + l.valor, 0) : null;
     // Destinatários (envio só-incentivo do motor): todos com telefone — mesma regra do Report Volumes
     const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);
     const vistos = new Set(), destinatarios = [];
@@ -272,10 +277,10 @@ router.get("/:id/farol", async (req, res) => {
       destinatarios,
       ativo, titulo: inc.titulo, subtitulo: inc.subtitulo,
       data: `${p2(br.getDate())}/${p2(br.getMonth() + 1)}/${br.getFullYear()}`, dia: DIA_LABEL[br.getDay()],
-      mes: d.mes, diasUteis: d.diasUteis, colunas, linhas,
+      mes: d.mes, diasUteis: d.diasUteis, grupos, colunas, linhas,
       rodape: inc.id === "zeros"
-        ? `R$ ${f1(inc.valorMeta)} por meta batida · real / meta · % = tendência no ritmo de dias úteis · total na tendência: R$ ${f1(tot)}`
-        : `Tudo ou nada por KPI · elegível com ${inc.minPts} pts · % = tendência no ritmo de dias úteis`,
+        ? `R$ ${f1(inc.valorMeta)} por meta batida · % = realizado até hoje ÷ meta · total garantido: R$ ${f1(tot)}`
+        : `Tudo ou nada por KPI · elegível com ${inc.minPts} pts · % = realizado até hoje ÷ meta`,
     });
   } catch (e) {
     console.error("incentivos-rn farol:", e);
