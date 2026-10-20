@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.110.1** — Cobertura: ordenar pelo status do PDV no cabeçalho.
+Versão atual: **v3.110.2** — Cobertura: cabeçalho da tabela fixo ao rolar.
+
+## v3.110.2 — Cobertura: cabeçalho fixo
+- Tabelas da Cobertura (status e distribuição) rolam dentro da caixa (até ~78% da tela) com o **cabeçalho das categorias fixo** no topo — dá pra descer até o fim sem perder qual coluna é qual.
 
 ## v3.110.1 — Cobertura: ordenar por status do PDV
 - Clique no cabeçalho **Status PDV**: OK → NOK (▼), NOK → OK (▲), sem ordem (⇅). Vale também para a lista do celular.
