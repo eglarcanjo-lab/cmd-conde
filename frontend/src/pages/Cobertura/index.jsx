@@ -117,7 +117,7 @@ export default function Cobertura() {
   const mobile = useMobile();
   const [pdvAberto, setPdvAberto] = useState(null); // celular: PDV com as categorias abertas
   const [filtroStatus, setFiltroStatus] = useState("");
-  const [ordSt, setOrdSt] = useState(null); // null | "ok" (OK primeiro) | "nok" (NOK primeiro)
+  const [ordCob, setOrdCob] = useState({ col: null, dir: 1 }); // ordenação da tabela de status (clique no cabeçalho)
   const [filtroRN, setFiltroRN]     = useState("");
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useAbaUrl("aba", "cobertura");
@@ -274,11 +274,21 @@ export default function Cobertura() {
     const nokCatOk  = !filtroNOKCat  || p.cob[filtroNOKCat] === "NOK";
     return buscaOk && statusOk && rnOk && nokCatOk;
   });
-  // clique no cabeçalho "Status PDV": OK → NOK, depois NOK → OK, depois sem ordem
-  if (ordSt) pdvsFiltrados.sort((a, b) => {
-    const d = (PESO_ST[b.stPdv] ?? -1) - (PESO_ST[a.stPdv] ?? -1);
-    return ordSt === "ok" ? d : -d;
-  });
+  // Clique no cabeçalho: 1º clique (status: OK → NOK · texto: A → Z), 2º inverte, 3º tira a ordem.
+  // Colunas: cod · nome · cidade · stPdv (status do PDV) · categoria (status da categoria)
+  if (ordCob.col) {
+    const c = ordCob.col;
+    const txt = c === "cod" || c === "nome" || c === "cidade";
+    const val = (p) => (txt ? String(p[c === "cod" ? "cod_pdv" : c === "nome" ? "nome_fantasia" : "cidade"] || "")
+      : PESO_ST[c === "stPdv" ? p.stPdv : p.cob[c]] ?? -1);
+    pdvsFiltrados.sort((a, b) => {
+      const d = txt ? val(a).localeCompare(val(b), "pt-BR", { numeric: true }) : val(b) - val(a);
+      return d * ordCob.dir;
+    });
+  }
+  const clicarOrdCob = (col) => setOrdCob((o) => (o.col !== col ? { col, dir: 1 } : o.dir === 1 ? { col, dir: -1 } : { col: null, dir: 1 }));
+  const setaCob = (col) => (ordCob.col === col ? (ordCob.dir === 1 ? " ▼" : " ▲") : "");
+  const thOrd = { cursor: "pointer", userSelect: "none" };
 
   const pdvsDistFiltradosBase = pdvsComDados.filter((p) =>
     !busca
@@ -513,16 +523,16 @@ export default function Cobertura() {
                   <table style={styles.table} data-rt="off">
                     <thead>
                       <tr>
-                        <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
-                        <th style={{ ...styles.th, minWidth: "160px" }}>Nome</th>
-                        <th style={styles.th}>Cidade</th>
-                        <th style={{ ...styles.th, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
-                          onClick={() => setOrdSt(ordSt === null ? "ok" : ordSt === "ok" ? "nok" : null)}
+                        <th style={{ ...styles.th, ...styles.thFixed, ...thOrd }} onClick={() => clicarOrdCob("cod")} title="Ordenar por código">Cód{setaCob("cod")}</th>
+                        <th style={{ ...styles.th, minWidth: "160px", ...thOrd }} onClick={() => clicarOrdCob("nome")} title="Ordenar por nome">Nome{setaCob("nome")}</th>
+                        <th style={{ ...styles.th, ...thOrd }} onClick={() => clicarOrdCob("cidade")} title="Ordenar por cidade">Cidade{setaCob("cidade")}</th>
+                        <th style={{ ...styles.th, ...thOrd, whiteSpace: "nowrap" }} onClick={() => clicarOrdCob("stPdv")}
                           title="Clique para ordenar: OK → NOK, NOK → OK, sem ordem. Status do PDV: OK = os 8 grupos no mês (+ Multipack se for comprador); demais pelo status que predomina">
-                          Status PDV{ordSt === "ok" ? " ▼" : ordSt === "nok" ? " ▲" : " ⇅"}
+                          Status PDV{setaCob("stPdv")}
                         </th>
                         {CATEGORIAS.map((c) => (
-                          <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
+                          <th key={c.key} style={{ ...styles.th, ...styles.thCat, ...thOrd }} onClick={() => clicarOrdCob(c.key)}
+                            title={`Ordenar por ${c.label}: OK → NOK, NOK → OK, sem ordem`}>{c.label}{setaCob(c.key)}</th>
                         ))}
                       </tr>
                     </thead>

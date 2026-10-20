@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.112.1** — Incentivos: correção do erro 500 no total.
+Versão atual: **v3.112.2** — Cobertura: ordenar por qualquer coluna no cabeçalho.
+
+## v3.112.2 — Cobertura: ordenar por todas as colunas
+- Tabela de status: clique em Cód, Nome, Cidade, Status PDV ou em qualquer categoria. 1º clique OK → NOK (texto A → Z), 2º inverte, 3º volta ao normal.
 
 ## v3.112.1 — Correção
 - Total da operação usava `r2` fora do escopo → erro 500 no `/api/incentivos-rn` (tela e motor). Corrigido.
