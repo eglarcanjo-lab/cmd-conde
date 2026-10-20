@@ -118,6 +118,7 @@ export default function Cobertura() {
   const [pdvAberto, setPdvAberto] = useState(null); // celular: PDV com as categorias abertas
   const [filtroStatus, setFiltroStatus] = useState("");
   const [ordCob, setOrdCob] = useState({ col: null, dir: 1 }); // ordenação da tabela de status (clique no cabeçalho)
+  const [catMob, setCatMob] = useState(null); // celular: categoria escolhida → lista só cód · nome · cidade + status dela
   const [filtroRN, setFiltroRN]     = useState("");
   const [filtroNOKCat, setFiltroNOKCat] = useState("");
   const [aba, setAba]               = useAbaUrl("aba", "cobertura");
@@ -289,6 +290,11 @@ export default function Cobertura() {
   const clicarOrdCob = (col) => setOrdCob((o) => (o.col !== col ? { col, dir: 1 } : o.dir === 1 ? { col, dir: -1 } : { col: null, dir: 1 }));
   const setaCob = (col) => (ordCob.col === col ? (ordCob.dir === 1 ? " ▼" : " ▲") : "");
   const thOrd = { cursor: "pointer", userSelect: "none" };
+  const escolherCatMob = (key) => {
+    if (!key) { setCatMob(null); setOrdCob({ col: null, dir: 1 }); return; }
+    if (catMob === key) { setOrdCob((o) => ({ col: key, dir: o.col === key ? -o.dir : 1 })); return; }
+    setCatMob(key); setOrdCob({ col: key, dir: 1 }); setPdvAberto(null);
+  };
 
   const pdvsDistFiltradosBase = pdvsComDados.filter((p) =>
     !busca
@@ -412,7 +418,8 @@ export default function Cobertura() {
                   const r = resumoTotal[c.key] || { OK: 0, EST: 0, IST: 0, NOK: 0, total: 0 };
                   const pct = r.total > 0 ? Math.round((r.OK / r.total) * 100) : 0;
                   return (
-                    <div key={c.key} style={styles.catCard}>
+                    <div key={c.key} onClick={mobile ? () => escolherCatMob(c.key) : undefined}
+                      style={{ ...styles.catCard, ...(mobile ? { cursor: "pointer" } : {}), ...(mobile && catMob === c.key ? { outline: "2px solid #7DBA3D" } : {}) }}>
                       <p style={styles.catLabel}>{c.label}</p>
                       <p style={styles.catPct}>{pct}%</p>
                       <div style={styles.catBar}>
@@ -478,7 +485,34 @@ export default function Cobertura() {
               ) : (
                 mobile ? (
                 <div>
-                  {pdvsFiltrados.map((p) => {
+                  {/* categorias: toque mostra só aquela categoria (cód · nome · cidade + status); toque de novo inverte a ordem */}
+                  <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 6 }}>
+                    {[{ key: null, label: "Todas" }, ...CATEGORIAS].map((c) => {
+                      const ativo = catMob === c.key;
+                      return (
+                        <button key={c.key || "todas"} onClick={() => escolherCatMob(c.key)}
+                          style={{ flex: "0 0 auto", padding: "6px 11px", borderRadius: 16, fontSize: "0.74rem", fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap",
+                            border: `1px solid ${ativo ? "#7DBA3D" : "rgba(255,255,255,0.14)"}`, background: ativo ? "rgba(125,186,61,0.18)" : "rgba(255,255,255,0.04)", color: ativo ? "#fff" : "rgba(255,255,255,0.7)", fontWeight: ativo ? 700 : 500 }}>
+                          {c.label}{ativo && c.key ? (ordCob.dir === 1 ? " ▼" : " ▲") : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {catMob ? pdvsFiltrados.map((p) => {
+                    const st = p.cob[catMob] || "—";
+                    const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
+                    return (
+                      <div key={p.cod_pdv} onClick={st !== "—" ? () => abrirDrill(p, catMob) : undefined}
+                        style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: st !== "—" ? "pointer" : "default" }}>
+                        <span style={styles.codBadge}>{p.cod_pdv}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: "0.84rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome_fantasia}</div>
+                          {p.cidade && <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</div>}
+                        </div>
+                        <span style={{ ...styles.statusPill, background: clr.bg, color: clr.color, fontWeight: 800 }}>{STATUS_COB[st] ? STATUS_COB[st].sigla : st}</span>
+                      </div>
+                    );
+                  }) : pdvsFiltrados.map((p) => {
                     const aberto = pdvAberto === p.cod_pdv;
                     const cont = {};
                     CATEGORIAS.forEach((c) => { const st = p.cob[c.key]; if (st && st !== "—") cont[st] = (cont[st] || 0) + 1; });

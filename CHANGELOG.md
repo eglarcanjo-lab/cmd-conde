@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.112.2** — Cobertura: ordenar por qualquer coluna no cabeçalho.
+Versão atual: **v3.113.0** — Cobertura no celular: ver uma categoria por vez.
+
+## v3.113.0 — Cobertura no celular: visão por categoria
+- Barra de categorias acima da lista (e os cards do resumo também): tocar numa categoria mostra só **cód · nome · cidade + status daquela categoria**, ordenado OK → NOK; tocar de novo inverte; "Todas" volta à lista normal. Tocar no PDV abre os SKUs.
 
 ## v3.112.2 — Cobertura: ordenar por todas as colunas
 - Tabela de status: clique em Cód, Nome, Cidade, Status PDV ou em qualquer categoria. 1º clique OK → NOK (texto A → Z), 2º inverte, 3º volta ao normal.
