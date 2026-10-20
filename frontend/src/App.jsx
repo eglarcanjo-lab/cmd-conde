@@ -25,7 +25,8 @@ import Refrigeradores from "./pages/Refrigeradores";
 import AcoesPreco from "./pages/AcoesPreco";
 import InputTasks from "./pages/InputTasks";
 import RotaEfetiva from "./pages/RotaEfetiva";
-import IncentivosRn from "./pages/IncentivosRn"; // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
+import IncentivosRn from "./pages/IncentivosRn";
+import { BarraVerComo } from "./components/VerComo"; // admin vendo o app como um setor (RN) // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
 import BotaoAjuda from "./components/BotaoAjuda";
@@ -101,6 +102,7 @@ function AppContent() {
 
   return (
     <>
+      {location.pathname !== "/login" && <BarraVerComo />}
       {usuario && location.pathname !== "/login" && <PopupDiario />}
       {usuario && location.pathname !== "/login" && <BotaoAjuda />}
       <Routes>
@@ -133,7 +135,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.104.1";
+export const APP_VERSION = "v3.105.0";
 
 export default function App() {
   return (

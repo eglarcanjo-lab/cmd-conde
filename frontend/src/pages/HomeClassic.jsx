@@ -3,13 +3,21 @@ import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
 import PopupMktp from "../components/PopupMktp"; // incentivo Desafio Marketplace (abre quando o CORA atualiza)
 import { modulosDoPerfil } from "../menu";
+import { useMobile } from "../utils/mobile";
+import { SeletorVerComo } from "../components/VerComo";
 
 export default function HomeClassic() {
-  const { usuario, logout } = useAuth();
+  const { usuario, logout, adminReal, verComo } = useAuth();
   const navigate = useNavigate();
+  const mobile = useMobile();
 
   const perfil = usuario?.perfil;
-  const modulos = modulosDoPerfil(perfil); // menu único (src/menu.js)
+  // No CELULAR o admin (fora da visão de setor) só usa Solicitações + "Ver como setor";
+  // o resto do menu de admin é de computador. Vendo como setor, o menu é o do RN.
+  const soAdminMobile = mobile && adminReal && !verComo;
+  const modulos = soAdminMobile
+    ? [{ icon: "🚨", label: "Solicitações", route: "/admin?tab=incidentes" }]
+    : modulosDoPerfil(perfil); // menu único (src/menu.js)
 
   return (
     <div style={styles.root}>
@@ -22,22 +30,25 @@ export default function HomeClassic() {
         </div>
         <div style={styles.headerRight}>
           <Sininho />
-          {usuario?.perfil === "admin" && (
+          {usuario?.perfil === "admin" && !mobile && (
             <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>
           )}
           <button style={styles.logout} onClick={logout}>Sair</button>
         </div>
       </div>
 
-      <div style={styles.grid}>
+      {adminReal && <div style={{ marginBottom: 14 }}><SeletorVerComo /></div>}
+      {soAdminMobile && <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", margin: "0 0 12px" }}>No celular: Solicitações e a visão de um setor. O restante do Admin fica no computador.</p>}
+
+      <div style={mobile ? styles.gridMobile : styles.grid}>
         {modulos.map((item) => (
           <div
             key={item.label}
-            style={{ ...styles.card, ...styles.cardAtivo }}
+            style={mobile ? styles.cardMobile : { ...styles.card, ...styles.cardAtivo }}
             onClick={() => navigate(item.route)}
           >
-            <span style={styles.cardIcon}>{item.icon}</span>
-            <span style={styles.cardLabel}>{item.label}</span>
+            <span style={mobile ? styles.cardIconMobile : styles.cardIcon}>{item.icon}</span>
+            <span style={mobile ? styles.cardLabelMobile : styles.cardLabel}>{item.label}</span>
           </div>
         ))}
       </div>
@@ -57,6 +68,11 @@ const styles = {
   adminBtn: { background: "rgba(125,186,61,0.12)", border: "1px solid rgba(125,186,61,0.3)", color: "#7DBA3D", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", fontWeight: "600", minHeight: "44px" },
   logout: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontFamily: "inherit", minHeight: "44px" },
   grid: { display: "flex", flexDirection: "column", gap: "10px" },
+  // Celular: cards das abas em grade de 2 colunas (ícone em cima, nome embaixo)
+  gridMobile: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" },
+  cardMobile: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(125,186,61,0.25)", borderRadius: "14px", padding: "14px 12px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px", cursor: "pointer", minHeight: "84px" },
+  cardIconMobile: { fontSize: "1.4rem" },
+  cardLabelMobile: { color: "#fff", fontWeight: "600", fontSize: "0.86rem", lineHeight: 1.25 },
   card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px 20px", display: "flex", flexDirection: "row", alignItems: "center", gap: "16px", transition: "all 0.2s", minHeight: "64px" },
   cardAtivo: { cursor: "pointer", borderColor: "rgba(125,186,61,0.3)" },
   cardInativo: { opacity: 0.5, cursor: "default" },

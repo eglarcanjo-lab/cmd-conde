@@ -40,6 +40,12 @@ function authMiddleware(req, res, next) {
   usuarioAtivo(req.user.cod).then((ok) => {
     if (!ok) return res.status(401).json({ error: "Usuário desativado. Fale com o administrador." });
     req.user = { ...req.user, cod: codHop(req.user.cod) };
+    // "Ver como setor" (só ADMIN): o front manda X-Ver-Como: 108 e a requisição passa a ser
+    // tratada como a do RN daquele setor (mesmo escopo de dados). adminReal fica registrado.
+    const vc = String(req.headers["x-ver-como"] || "").trim();
+    if (vc && req.user.perfil === "admin" && /^\d{3}$/.test(vc)) {
+      req.user = { ...req.user, perfil: "rn", cod: codHop(vc), adminReal: req.user.cod, verComo: true };
+    }
     next();
   });
 }

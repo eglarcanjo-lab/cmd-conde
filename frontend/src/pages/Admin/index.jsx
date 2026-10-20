@@ -20,6 +20,7 @@ import Alertas from "./Alertas";
 import { ADMIN_TABS, ADMIN_GRUPOS } from "../../menu";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
+import { useMobile } from "../../utils/mobile";
 
 
 export default function Admin() {
@@ -31,6 +32,7 @@ export default function Admin() {
   const [msgCache, setMsgCache] = useState("");
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+  const mobile = useMobile();
 
   async function limparCache() {
     setLimpandoCache(true);
@@ -44,6 +46,21 @@ export default function Admin() {
       setLimpandoCache(false);
       setTimeout(() => setMsgCache(""), 4000);
     }
+  }
+
+  // No CELULAR o admin só usa Solicitações (o resto do Admin é de computador). A outra função
+  // do admin no celular é "Ver como setor" (na Home) p/ conferir a visão do RN.
+  if (mobile) {
+    return (
+      <div style={{ ...styles.root, padding: "12px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
+          <h1 style={{ ...styles.title, fontSize: "1.05rem" }}>🚨 Solicitações</h1>
+        </div>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", margin: "0 0 10px" }}>No celular o Admin mostra só as Solicitações. As demais abas ficam no computador.</p>
+        <Incidentes />
+      </div>
+    );
   }
 
   return (

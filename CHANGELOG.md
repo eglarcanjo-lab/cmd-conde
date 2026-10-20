@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.104.1** — Ruptura: leitura sem duplicados.
+Versão atual: **v3.105.0** — mobile Fase 0a: Ver como setor + Admin/Home do celular.
+
+## v3.105.0 — Mobile Fase 0a
+- **👁 Ver como setor** (só admin, na Home do celular e do computador): o app inteiro passa a ser o do RN do setor escolhido — menu, telas e **dados** (o front manda `X-Ver-Como` e o backend trata a requisição como a do RN; `adminReal` fica registrado). Barra amarela fixa no topo com "Sair da visão". Fica salvo no navegador.
+- **Admin no celular:** só **Solicitações** (o resto do Admin é de computador). Home do admin no celular = Solicitações + seletor de setor.
+- **Home no celular:** só os cards das abas, em grade de 2 colunas (a Home de volumes/PDVs/top produtos segue só no computador).
+- `utils/mobile.js` (breakpoint único 767px), `components/VerComo.jsx`.
 
 ## v3.104.1 — Ruptura sem duplicados
 - A prévia do motor mostrou cada pedido 2× (282 pedidos com falta hoje): `ruptura_pedidos` foi gravada em dobro (dois processamentos do CORA ao mesmo tempo — o backend reenvia quando o processador demora). A leitura (tela e motor) agora fica com 1 linha por pedido / por dia×setor / por PDV×produto×dia (`utils/dedupe.js`).

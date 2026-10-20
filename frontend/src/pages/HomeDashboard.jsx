@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Sininho from "../components/Sininho";
+import { SeletorVerComo } from "../components/VerComo";
 import ResumoVolumes from "../components/ResumoVolumes";
 import ResumoMktp from "../components/ResumoMktp"; // incentivo Desafio Marketplace
 import ResumoVerdes from "../components/ResumoVerdes";
@@ -89,6 +90,7 @@ export default function HomeDashboard() {
             <span style={styles.badge}>{usuario?.perfil?.toUpperCase()} · Setor {usuario?.cod}</span>
           </div>
           <div style={styles.headerRight}>
+            <SeletorVerComo compacto />
             <Sininho />
             {perfil === "admin" && <button style={styles.adminBtn} onClick={() => navigate("/admin")}>⚙️ Admin</button>}
             <button style={styles.logout} onClick={logout}>Sair</button>
