@@ -30,15 +30,17 @@ const CATEGORIAS = [
 const CAT_MAIN = CATEGORIAS.slice(0, 11);
 
 // ── STATUS DO PDV (resumo do PDV inteiro, não da categoria) ─────────────────────
-// OK  = comprou no mês TODOS os 9 grupos-chave (Giro RGB, Litrinho e trimarcas não entram).
+// OK  = comprou no mês os 8 grupos-chave (Giro RGB, Litrinho e trimarcas não entram).
+//       Multipack só conta se o PDV for comprador dele: OK ou NOK (não comprador) não atrapalham; EST/PEND/IST tiram o OK.
 // Os demais pela NOTA (0–4) = média dos status das 11 categorias principais (sem trimarcas):
 //   OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0  →  ≥2,5 EST · ≥1,5 PEND · ≥0,5 IST · <0,5 NOK.
 // Ou seja: o status que predomina nas categorias do PDV.
-const GRUPOS_OK = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "HE", "NAB", "NAB ZERO", "MATCH", "MKTP", "BALANCED CHOICE"];
+const GRUPOS_OK = ["CERVEJA", "CERVEJA ZERO", "HE", "NAB", "NAB ZERO", "MATCH", "MKTP", "BALANCED CHOICE"];
 const PESO_ST = { OK: 4, EST: 3, PEND: 2, IST: 1, NOK: 0 };
 function statusPdv(cob) {
   if (!cob) return "—";
-  if (GRUPOS_OK.every((k) => cob[k] === "OK")) return "OK";
+  const multiOk = !cob["CERVEJA MULTIPACK"] || ["OK", "NOK", "—"].includes(cob["CERVEJA MULTIPACK"]);
+  if (multiOk && GRUPOS_OK.every((k) => cob[k] === "OK")) return "OK";
   const notas = CAT_MAIN.map((c) => PESO_ST[cob[c.key]]).filter((v) => v !== undefined);
   if (!notas.length) return "—";
   const nota = notas.reduce((a, b) => a + b, 0) / notas.length;
@@ -381,7 +383,7 @@ export default function Cobertura() {
               </div>
               {[["OK", contPdv.OK], ["EST", contPdv.EST], ["PEND", contPdv.PEND], ["IST", contPdv.IST], ["NOK", contPdv.NOK]].map(([k, v]) => (
                 <div key={k} style={{ ...styles.dashCard, borderColor: STATUS_COB[k].borda, background: STATUS_COB[k].bg }}
-                  title={k === "OK" ? "PDVs que compraram no mês os 9 grupos: Cerveja, Cerv. Zero, Multipack, HE, NAB, NAB Zero, Match, Marketplace e Balanced" : "PDVs em que este status predomina nas categorias (nota média: OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0)"}>
+                  title={k === "OK" ? "PDVs que compraram no mês os 8 grupos: Cerveja, Cerv. Zero, HE, NAB, NAB Zero, Match, Marketplace e Balanced. Multipack só conta se for comprador (EST/PEND/IST tira o OK; NOK não atrapalha)" : "PDVs em que este status predomina nas categorias (nota média: OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0)"}>
                   <p style={styles.dashLabel}>PDVs {STATUS_COB[k].nome}{pdvSetor.length ? ` · ${Math.round(v / pdvSetor.length * 100)}%` : ""}</p>
                   <p style={{ ...styles.dashVal, color: STATUS_COB[k].color }}>{v}</p>
                 </div>
@@ -516,7 +518,7 @@ export default function Cobertura() {
                         <th style={styles.th}>Cidade</th>
                         <th style={{ ...styles.th, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
                           onClick={() => setOrdSt(ordSt === null ? "ok" : ordSt === "ok" ? "nok" : null)}
-                          title="Clique para ordenar: OK → NOK, NOK → OK, sem ordem. Status do PDV: OK = os 9 grupos no mês; demais pelo status que predomina">
+                          title="Clique para ordenar: OK → NOK, NOK → OK, sem ordem. Status do PDV: OK = os 8 grupos no mês (+ Multipack se for comprador); demais pelo status que predomina">
                           Status PDV{ordSt === "ok" ? " ▼" : ordSt === "nok" ? " ▲" : " ⇅"}
                         </th>
                         {CATEGORIAS.map((c) => (

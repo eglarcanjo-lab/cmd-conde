@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.110.2** — Cobertura: cabeçalho da tabela fixo ao rolar.
+Versão atual: **v3.110.3** — Cobertura: Multipack só conta no OK do PDV se ele for comprador.
+
+## v3.110.3 — Cobertura: regra do Multipack no status do PDV
+- **PDV OK** = os 8 grupos OK (Cerveja, Cerv. Zero, HE, NAB, NAB Zero, Match, MKTP, Balanced). **Multipack** só entra se o PDV for comprador dele: Multipack OK ou NOK (não comprador) → segue OK; Multipack EST/PEND/IST → não é OK.
 
 ## v3.110.2 — Cobertura: cabeçalho fixo
 - Tabelas da Cobertura (status e distribuição) rolam dentro da caixa (até ~78% da tela) com o **cabeçalho das categorias fixo** no topo — dá pra descer até o fim sem perder qual coluna é qual.
