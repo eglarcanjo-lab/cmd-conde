@@ -223,13 +223,28 @@ async function montar(inc, mesQ, user) {
       linhas.sort((a, b) => a.posicaoTend - b.posicaoTend);
     }
 
+    // TOTAL DA OPERAÇÃO: soma meta / real / tendência dos setores com meta em cada KPI
+    const total = {
+      kpis: inc.kpis.map((k, i) => {
+        const cm = linhas.map((l) => l.kpis[i]).filter((x) => x.meta != null);
+        if (!cm.length) return { key: k.key, meta: null, real: null, tend: null };
+        const meta = cm.reduce((s, x) => s + x.meta, 0), real = cm.reduce((s, x) => s + x.real, 0), tend = cm.reduce((s, x) => s + x.tend, 0);
+        const ating = meta > 0 ? real / meta : null, atingT = meta > 0 ? tend / meta : null;
+        return { key: k.key, meta: r2(meta), real: r2(real), tend: r2(tend),
+          ating: ating == null ? null : Math.round(ating * 1000) / 10, atingTend: atingT == null ? null : Math.round(atingT * 1000) / 10,
+          bateu: ating != null && ating >= 1, bateTend: atingT != null && atingT >= 1 };
+      }),
+      valor: linhas.reduce((s, l) => s + (l.valor || 0), 0), valorTend: linhas.reduce((s, l) => s + (l.valorTend || 0), 0),
+      pontos: null,
+    };
+
     const f = mesSel ? fatorMes(mesSel) : null;
     return {
       incentivo: { id: inc.id, titulo: inc.titulo, subtitulo: inc.subtitulo, meses: inc.meses, minPts: inc.minPts, premios: inc.premios, valorMeta: inc.valorMeta,
         kpis: inc.kpis.map(({ key, label, pts, unidade, ind }) => ({ key, label, pts, unidade, ind })) },
       mes: mesSel || "tri", mesesCalc, diasUteis: f && f.aberto ? { feitos: f.feitos, total: f.total } : null,
       meuSetor: String(user.cod || ""),
-      metas, linhas,
+      metas, linhas, total,
     };
 }
 
@@ -262,6 +277,14 @@ router.get("/:id/farol", async (req, res) => {
       ...(liga
         ? [{ v: String(l.pontos), cls: l.elegivel ? "ok" : "" }, { v: l.premio || "—", cls: l.premio ? "ok" : "" }]
         : [{ v: `R$ ${f1(l.valor)}`, cls: l.valor ? "ok" : "" }]),
+    ]);
+    // linha final: TOTAL DA OPERAÇÃO
+    linhas.push([
+      { v: "Total operação", cls: "lbl tot" },
+      ...d.total.kpis.flatMap((k) => (k.meta == null ? [{ v: "—", cls: "tot" }, { v: "—", cls: "tot" }, { v: "—", cls: "tot" }] : [
+        { v: f1(k.meta), cls: "tot" }, { v: f1(k.real), cls: "tot" }, { v: `${f1(k.ating)}%`, cls: `tot ${k.bateu ? "ok" : "nao"}` },
+      ])),
+      ...(liga ? [{ v: "", cls: "tot" }, { v: "", cls: "tot" }] : [{ v: `R$ ${f1(d.total.valor)}`, cls: "tot" }]),
     ]);
     const tot = inc.id === "zeros" ? d.linhas.reduce((s, l) => s + l.valor, 0) : null;
     // Destinatários (envio só-incentivo do motor): todos com telefone — mesma regra do Report Volumes

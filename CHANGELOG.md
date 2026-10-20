@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.111.1** — Motor: envio de incentivos inclui a LIGA CMD.
+Versão atual: **v3.112.0** — Incentivos: linha de total da operação.
+
+## v3.112.0 — Incentivos: total da operação
+- Liga CMD e Bateu, Levou: linha **Total operação** abaixo da tabela (soma de meta e real dos setores com meta · % = real ÷ meta) na tela, no PNG e na foto do motor. Zeros mostra também o R$ total. API: `total` no `GET /api/incentivos-rn/:id`.
 
 ## v3.111.1 — Motor: todos os incentivos
 - `/api/incentivos-rn/:id/farol` devolve `id` e `emoji`; **Liga CMD** também vai seg/qua/sex (`DIAS_ENVIO`).

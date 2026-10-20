@@ -26,6 +26,7 @@ const CSS_PNG = `
   .xp th.sub{background:#3f8f3a;font-size:11.5px;padding:5px 6px}
   .xp td.meta{color:#666}
   .xp td.kini{border-left:2px solid #2E7D32}
+  .xp tr.tot td{font-weight:800;border-top:2px solid #2E7D32;background:#eef3e8}
   .xp td.nao{background:#f8d7da;color:#a52834}
   .xp .if{font-size:11px;color:#777;margin-top:8px}`;
 async function exportarPng(d) {
@@ -41,6 +42,12 @@ async function exportarPng(d) {
     ...(liga ? [[l.elegivel ? "ok" : "", l.pontos], [l.premio ? "ok" : "", l.premio || "—"]]
       : [[l.valor ? "ok" : "", `R$ ${f1(l.valor)}`]]),
   ]);
+  const tot = d.total ? [
+    ["lbl", "Total operação"],
+    ...d.total.kpis.flatMap((k) => (k.meta == null ? [["kini", "—"], ["", "—"], ["", "—"]]
+      : [["meta kini", f1(k.meta)], ["", f1(k.real)], [k.bateu ? "ok" : "nao", `${f1(k.ating)}%`]])),
+    ...(liga ? [["", ""], ["", ""]] : [["", `R$ ${f1(d.total.valor)}`]]),
+  ] : null;
   const periodo = d.mes === "tri" ? "Trimestre" : rotMes(d.mes);
   const du = d.diasUteis ? ` · ${d.diasUteis.feitos} de ${d.diasUteis.total} dias úteis` : "";
   const html = `<style>${CSS_PNG}</style><div class="xp">` +
@@ -49,6 +56,7 @@ async function exportarPng(d) {
     `${finais.map((c) => `<th rowspan="2">${escH(c)}</th>`).join("")}</tr>` +
     `<tr>${inc.kpis.map(() => '<th class="sub">Meta</th><th class="sub">Real</th><th class="sub">%</th>').join("")}</tr></thead><tbody>` +
     linhas.map((l) => `<tr>${l.map(([cls, v]) => `<td class="${cls}">${escH(v)}</td>`).join("")}</tr>`).join("") +
+    (tot ? `<tr class="tot">${tot.map(([cls, v]) => `<td class="${cls}">${escH(v)}</td>`).join("")}</tr>` : "") +
     `</tbody></table><div class="if">% = realizado até hoje ÷ meta · verde = meta batida · vermelho = ainda não bateu` +
     `${liga ? ` · tudo ou nada por KPI · elegível com ${inc.minPts} pts` : ` · R$ ${f1(inc.valorMeta)} por meta batida`} · HOP Follow-up</div></div>`;
   const box = document.createElement("div");
@@ -201,6 +209,13 @@ function Liga({ d, meu }) {
                 <td style={{ ...S.td, color: l.premioTend ? OURO : "rgba(255,255,255,0.3)", fontWeight: 700 }}>{l.premioTend || (l.elegivelTend ? "—" : `< ${inc.minPts} pts`)}</td>
               </tr>
             ))}
+            {d.total && (
+              <tr style={S.trTot}>
+                <td style={S.td}></td><td style={{ ...S.td, fontWeight: 800 }}>Total operação</td>
+                {inc.kpis.map((k, i) => <CelKpi key={k.key} k={d.total.kpis[i]} unidade={k.unidade} />)}
+                <td style={S.td} colSpan={4}></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -244,6 +259,14 @@ function Zeros({ d, meu }) {
                 <td style={{ ...S.td, fontWeight: 800, color: l.valorTend ? OURO : "rgba(255,255,255,0.5)" }}>R$ {fmt(l.valorTend)}</td>
               </tr>
             ))}
+            {d.total && (
+              <tr style={S.trTot}>
+                <td style={{ ...S.td, fontWeight: 800 }}>Total operação</td>
+                {inc.kpis.map((k, i) => <CelKpi key={k.key} k={d.total.kpis[i]} unidade={k.unidade} />)}
+                <td style={{ ...S.td, fontWeight: 800 }}>R$ {fmt(d.total.valor)}</td>
+                <td style={{ ...S.td, fontWeight: 800 }}>R$ {fmt(d.total.valorTend)}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -340,6 +363,7 @@ const S = {
   table: { width: "100%", borderCollapse: "collapse" },
   th: { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)", fontSize: "0.72rem", fontWeight: 600, padding: "8px 8px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" },
   tr: { borderBottom: "1px solid rgba(255,255,255,0.05)" },
+  trTot: { borderTop: "2px solid rgba(125,186,61,0.5)", background: "rgba(125,186,61,0.07)" },
   td: { padding: "7px 8px", fontSize: "0.82rem", textAlign: "center", color: "rgba(255,255,255,0.85)" },
   nota: { fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", marginTop: 10, lineHeight: 1.5 },
   modalFundo: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
