@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.109.0** — Cobertura: status OK/EST/PEND/IST/NOK com os 3 meses anteriores.
+Versão atual: **v3.110.0** — Cobertura: status do PDV (resumo do PDV inteiro).
+
+## v3.110.0 — Cobertura: status do PDV
+- **Status do PDV** (um por PDV, além do status por categoria):
+  - **OK** = comprou no mês **os 9 grupos**: Cerveja, Cerv. Zero, Multipack, HE, NAB, NAB Zero, Match, Marketplace e Balanced Choice (Giro RGB, Litrinho e trimarcas não contam p/ OK).
+  - Demais pelo status que **predomina**: nota média das 11 categorias principais (sem trimarcas) com OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0 → ≥2,5 EST · ≥1,5 PEND · ≥0,5 IST · <0,5 NOK.
+- **Cards do topo** = nº e % de PDVs em cada status do PDV; **cards por categoria** mostram só "X PDVs OK".
+- Filtro de status passa a ser o status do PDV; coluna **Status PDV** na tabela e selo na lista do celular.
 
 ## v3.109.0 — Cobertura por categoria
 - **Status por PDV × categoria** (processador) agora olha o mês atual + os **3 meses anteriores corridos** (antes: trimestre civil — em outubro, 1º mês do tri, não havia mês anterior e todo mundo caía em NOK). Meses anteriores vêm do histórico acumulado (`vendas_cliente_produto`, o CORA só traz o mês atual):

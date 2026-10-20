@@ -29,6 +29,22 @@ const CATEGORIAS = [
 // Primeiras 11 categorias (sem os sub-SKUs HE)
 const CAT_MAIN = CATEGORIAS.slice(0, 11);
 
+// ── STATUS DO PDV (resumo do PDV inteiro, não da categoria) ─────────────────────
+// OK  = comprou no mês TODOS os 9 grupos-chave (Giro RGB, Litrinho e trimarcas não entram).
+// Os demais pela NOTA (0–4) = média dos status das 11 categorias principais (sem trimarcas):
+//   OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0  →  ≥2,5 EST · ≥1,5 PEND · ≥0,5 IST · <0,5 NOK.
+// Ou seja: o status que predomina nas categorias do PDV.
+const GRUPOS_OK = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "HE", "NAB", "NAB ZERO", "MATCH", "MKTP", "BALANCED CHOICE"];
+const PESO_ST = { OK: 4, EST: 3, PEND: 2, IST: 1, NOK: 0 };
+function statusPdv(cob) {
+  if (!cob) return "—";
+  if (GRUPOS_OK.every((k) => cob[k] === "OK")) return "OK";
+  const notas = CAT_MAIN.map((c) => PESO_ST[cob[c.key]]).filter((v) => v !== undefined);
+  if (!notas.length) return "—";
+  const nota = notas.reduce((a, b) => a + b, 0) / notas.length;
+  return nota >= 2.5 ? "EST" : nota >= 1.5 ? "PEND" : nota >= 0.5 ? "IST" : "NOK";
+}
+
 const DIAS = [
   { key: "SEG", label: "Segunda" },
   { key: "TER", label: "Terça" },
@@ -243,14 +259,14 @@ export default function Cobertura() {
       distByCat[c.key] = mapaDist[p.cod_pdv]?.[c.key]?.size ?? 0;
     });
     const distTotal = Object.values(distByCat).reduce((s, v) => s + v, 0);
-    return { ...p, cob: mapaCob[p.cod_pdv] || {}, distByCat, distTotal };
+    return { ...p, cob: mapaCob[p.cod_pdv] || {}, stPdv: statusPdv(mapaCob[p.cod_pdv]), distByCat, distTotal };
   });
 
   const pdvsFiltrados = pdvsComDados.filter((p) => {
     const buscaOk   = !busca
       || p.nome_fantasia?.toLowerCase().includes(busca.toLowerCase())
       || p.cod_pdv?.includes(busca);
-    const statusOk  = !filtroStatus  || Object.values(p.cob).includes(filtroStatus);
+    const statusOk  = !filtroStatus  || p.stPdv === filtroStatus; // status do PDV (resumo)
     const rnOk      = !filtroRN      || String(p.setor) === String(filtroRN);
     const nokCatOk  = !filtroNOKCat  || p.cob[filtroNOKCat] === "NOK";
     return buscaOk && statusOk && rnOk && nokCatOk;
@@ -287,11 +303,8 @@ export default function Cobertura() {
   }
 
   const resumoTotal = calcResumo(pdvSetor);
-  const totalOk   = Object.values(resumoTotal).reduce((a, b) => a + b.OK, 0);
-  const totalEst  = Object.values(resumoTotal).reduce((a, b) => a + b.EST, 0);
-  const totalIst  = Object.values(resumoTotal).reduce((a, b) => a + b.IST, 0);
-  const totalPend = Object.values(resumoTotal).reduce((a, b) => a + (b.PEND || 0), 0);
-  const totalNok  = Object.values(resumoTotal).reduce((a, b) => a + b.NOK, 0);
+  const contPdv = { OK: 0, EST: 0, PEND: 0, IST: 0, NOK: 0 };
+  pdvSetor.forEach((p) => { const st = statusPdv(mapaCob[p.cod_pdv]); if (contPdv[st] !== undefined) contPdv[st]++; });
 
   return (
     <div style={styles.root}>
@@ -360,13 +373,10 @@ export default function Cobertura() {
                 <p style={styles.dashLabel}>PDVs na base</p>
                 <p style={styles.dashVal}>{pdvSetor.length}</p>
               </div>
-              <div style={{ ...styles.dashCard, borderColor: "rgba(34,197,94,0.3)" }}>
-                <p style={styles.dashLabel}>✅ OK (total base)</p>
-                <p style={{ ...styles.dashVal, color: "#4ade80" }}>{totalOk}</p>
-              </div>
-              {[["EST", totalEst], ["PEND", totalPend], ["IST", totalIst], ["NOK", totalNok]].map(([k, v]) => (
-                <div key={k} style={{ ...styles.dashCard, borderColor: STATUS_COB[k].borda, background: STATUS_COB[k].bg }} title={STATUS_COB[k].desc}>
-                  <p style={styles.dashLabel}>{STATUS_COB[k].sigla} · {STATUS_COB[k].nome}</p>
+              {[["OK", contPdv.OK], ["EST", contPdv.EST], ["PEND", contPdv.PEND], ["IST", contPdv.IST], ["NOK", contPdv.NOK]].map(([k, v]) => (
+                <div key={k} style={{ ...styles.dashCard, borderColor: STATUS_COB[k].borda, background: STATUS_COB[k].bg }}
+                  title={k === "OK" ? "PDVs que compraram no mês os 9 grupos: Cerveja, Cerv. Zero, Multipack, HE, NAB, NAB Zero, Match, Marketplace e Balanced" : "PDVs em que este status predomina nas categorias (nota média: OK 4 · EST 3 · PEND 2 · IST 1 · NOK 0)"}>
+                  <p style={styles.dashLabel}>PDVs {STATUS_COB[k].nome}{pdvSetor.length ? ` · ${Math.round(v / pdvSetor.length * 100)}%` : ""}</p>
                   <p style={{ ...styles.dashVal, color: STATUS_COB[k].color }}>{v}</p>
                 </div>
               ))}
@@ -390,9 +400,7 @@ export default function Cobertura() {
                       <div style={styles.catBar}>
                         <div style={{ ...styles.catBarFill, width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 40 ? "#7DBA3D" : "#f87171" }} />
                       </div>
-                      <div style={styles.catCounts} title="OK · EST · PEND · IST · NOK">
-                        {["OK", "EST", "PEND", "IST", "NOK"].map((k) => <span key={k} style={{ color: STATUS_COB[k].color }}>{r[k] || 0}</span>)}
-                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "#4ade80", marginTop: 4 }}>{r.OK || 0} PDVs OK</div>
                     </div>
                   );
                 })}
@@ -416,7 +424,7 @@ export default function Cobertura() {
               <div style={styles.filtrosRow}>
                 <input style={styles.inputFiltro} placeholder="Buscar PDV..." value={busca} onChange={(e) => setBusca(e.target.value)} />
                 <select style={styles.inputFiltro} value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
-                  <option value="">Todos os status</option>
+                  <option value="">Status do PDV: todos</option>
                   {["OK", "EST", "PEND", "IST", "NOK"].map((k) => (
                     <option key={k} value={k}>{STATUS_COB[k].sigla} — {STATUS_COB[k].desc}</option>
                   ))}
@@ -463,6 +471,7 @@ export default function Cobertura() {
                             <span style={{ color: "rgba(255,255,255,0.5)" }}>{aberto ? "▾" : "▸"}</span>
                             <span style={styles.codBadge}>{p.cod_pdv}</span>
                             <span style={{ fontWeight: 700, fontSize: "0.88rem", flex: 1, minWidth: 0 }}>{p.nome_fantasia}</span>
+                            {STATUS_COB[p.stPdv] && <span style={{ ...styles.statusPill, background: STATUS_COB[p.stPdv].bg, color: STATUS_COB[p.stPdv].color, fontWeight: 800 }}>{STATUS_COB[p.stPdv].nome}</span>}
                           </div>
                           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center", paddingLeft: 18 }}>
                             {p.cidade && <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", marginRight: 4 }}>{p.cidade}</span>}
@@ -499,6 +508,7 @@ export default function Cobertura() {
                         <th style={{ ...styles.th, ...styles.thFixed }}>Cód</th>
                         <th style={{ ...styles.th, minWidth: "160px" }}>Nome</th>
                         <th style={styles.th}>Cidade</th>
+                        <th style={styles.th} title="Status do PDV: OK = os 9 grupos no mês; demais pelo status que predomina">Status PDV</th>
                         {CATEGORIAS.map((c) => (
                           <th key={c.key} style={{ ...styles.th, ...styles.thCat }}>{c.label}</th>
                         ))}
@@ -512,6 +522,7 @@ export default function Cobertura() {
                           </td>
                           <td style={{ ...styles.td, fontSize: "0.82rem" }}>{p.nome_fantasia}</td>
                           <td style={{ ...styles.td, fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>{p.cidade}</td>
+                          <td style={styles.td}>{STATUS_COB[p.stPdv] && <span style={{ ...styles.statusPill, background: STATUS_COB[p.stPdv].bg, color: STATUS_COB[p.stPdv].color, fontWeight: 800 }}>{STATUS_COB[p.stPdv].nome}</span>}</td>
                           {CATEGORIAS.map((c) => {
                             const st = p.cob[c.key] || "—";
                             const clr = STATUS_COLORS[st] || STATUS_COLORS["—"];
