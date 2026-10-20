@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import AvisoDesktop from "../../components/AvisoDesktop"; // celular: "melhor no computador"
 
 const VERDE = "#7DBA3D";
 const TIPOS = ["SKU/PDV", "NAB", "Cerveja Zero", "Match", "Mktp", "Volume", "Cobertura"];
@@ -118,6 +119,7 @@ export default function InputTasks() {
 
   return (
     <div style={S.root}>
+      <AvisoDesktop />
       <div style={S.header}>
         <button style={S.back} onClick={() => navigate("/")}>← Início</button>
         <h1 style={S.h1}>📋 Imput de Tasks</h1>

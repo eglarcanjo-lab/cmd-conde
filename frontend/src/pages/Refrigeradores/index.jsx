@@ -7,6 +7,7 @@ import RefrigeradorForm from "./RefrigeradorForm";
 import RefrigeradorList from "./RefrigeradorList";
 import MaterialLeveForm from "./MaterialLeveForm";
 import MaterialLeveList from "./MaterialLeveList";
+import AvisoDesktop from "../../components/AvisoDesktop"; // celular: "melhor no computador"
 
 // Módulo inteiro já é restrito a admin/director (ver App.jsx e HomeClassic.jsx) —
 // aqui só decide se mostra o botão de excluir dentro do módulo.
@@ -51,6 +52,7 @@ export default function Refrigeradores() {
 
   return (
     <div style={styles.root} className="eq-page">
+      <AvisoDesktop />
       <style>{`
         @media (max-width: 600px) {
           .eq-export-label { display: none; }

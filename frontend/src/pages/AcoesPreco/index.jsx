@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import AvisoDesktop from "../../components/AvisoDesktop"; // celular: "melhor no computador"
 
 const VERDE = "#7DBA3D";
 const ceilN = (n) => Math.ceil(Number(n) || 0);
@@ -136,6 +137,7 @@ export default function AcoesPreco() {
 
   return (
     <div style={S.root}>
+      <AvisoDesktop />
       <div style={S.header}>
         <button style={S.back} onClick={() => navigate("/")}>← Início</button>
         <div>

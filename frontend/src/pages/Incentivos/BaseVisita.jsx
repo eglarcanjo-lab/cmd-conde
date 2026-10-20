@@ -418,7 +418,7 @@ const S = {
   abas: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 8 },
   aba: { background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem" },
   abaOn: { background: "rgba(125,186,61,0.2)", border: "1px solid rgba(125,186,61,0.6)", color: VERDE, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 700 },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))", gap: 12 },
   blocoTit: { color: "#fff", fontWeight: 700, fontSize: "0.86rem", padding: "8px 10px 4px" },
   tableWrap: { overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" },

@@ -1,6 +1,7 @@
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import RvSimulador from "./RvSimulador";
+import AvisoDesktop from "../../components/AvisoDesktop"; // celular: "melhor no computador"
 
 export default function RvSimuladorPage() {
   const { usuario, logout } = useAuth();
@@ -8,6 +9,7 @@ export default function RvSimuladorPage() {
 
   return (
     <div style={styles.root}>
+      <AvisoDesktop />
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>

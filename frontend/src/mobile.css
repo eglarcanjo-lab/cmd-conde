@@ -106,3 +106,10 @@ img, video { max-width: 100%; }
   /* textos de ajuda/dicas longas: escondidos no celular */
   .hop-dica { display: none !important; }
 }
+
+@media (max-width: 767px) {
+  /* assinatura fixa no rodapé cobria cartões/tabelas (a versão segue em Configurações) */
+  .assinatura { display: none !important; }
+  /* respiro p/ o botão "?" flutuante não cobrir o último cartão */
+  #root { padding-bottom: 64px; }
+}
