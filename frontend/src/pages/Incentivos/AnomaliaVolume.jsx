@@ -65,7 +65,10 @@ export default function AnomaliaVolume() {
           <div key={l} style={S.card}><div style={S.lbl}>{l}</div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{v}</div></div>
         ))}
       </div>
-      {!d.base_fora_importada && <p style={{ ...S.nota, color: OURO }}>⚠️ Reimporte a base de clientes (0105070402) p/ trazer bairro dos PDVs 102/995/997 — sem ela a sugestão usa só a cidade do pedido.</p>}
+      {d.resumo.internos?.pdvs > 0 && (
+        <p style={S.nota}>Fora da conta: {d.resumo.internos.pdvs} cadastro(s) interno(s) da AMBEV ({d.resumo.internos.pedidos} pedidos · {fRS(d.resumo.internos.valor)}) — remessa de vasilhame/material, sem volume. Marque "ver internos" p/ abrir.</p>
+      )}
+      {!d.base_fora_importada &&<p style={{ ...S.nota, color: OURO }}>⚠️ Reimporte a base de clientes (0105070402) p/ trazer bairro dos PDVs 102/995/997 — sem ela a sugestão usa só a cidade do pedido.</p>}
 
       {!lista.length ? <p style={S.nota}>Nenhuma venda nesses setores no mês. 👍</p> : lista.map((p) => {
         const k = `${p.setor}|${p.cod_pdv}`, exp = aberto === k, top = p.sugestao.opcoes[0];

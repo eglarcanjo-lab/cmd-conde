@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.102.3** — Ruptura por pedido: aviso quando não gerada.
+Versão atual: **v3.102.4** — Anomalia de Volume: cards sem os internos AMBEV.
+
+## v3.102.4 — Anomalia de Volume (valor)
+- O card **Valor** mostrava ~R$ 997 mil: somava os cadastros internos **AMBEV S.A.** (995, cód 1/2/3) — **remessa de vasilhame/material**, 0 HL, ~R$ 990 mil. Os cards agora contam **só as anomalias reais** (out/26: 3 PDVs · ~R$ 7,5 mil · 8,35 HL) e os internos aparecem numa linha à parte.
 
 ## v3.102.3 — Aviso da Ruptura por pedido
 - Sem a tabela `ruptura_pedidos`, a tela mostra o aviso "reimporte o CORA" + o último status do processamento (antes o bloco só sumia). O processador grava "Ruptura por pedido (CORA)" em Admin › Arquivos com OK ou o erro.

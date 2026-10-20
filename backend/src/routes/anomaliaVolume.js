@@ -121,7 +121,7 @@ router.get("/", async (req, res) => {
         canais: [...p.canais], digitadores: [...p.digitadores], vendedores: [...p.vendedores],
         pedidos: Object.values(p.pedidos).map((x) => ({ ...x, hl: r2(x.hl), valor: Math.round(x.valor * 100) / 100 }))
           .sort((a, b) => String(a.data).split("/").reverse().join("").localeCompare(String(b.data).split("/").reverse().join(""))),
-        sugestao: interno ? { motivo: "Cliente interno / só itens sem volume (tratamento, material) — não é PDV de rota", opcoes: [] } : sugerir(cidade, bairro),
+        sugestao: interno ? { motivo: "Cadastro interno AMBEV / sem volume (remessa de vasilhame, tratamento, material) — não é PDV de rota", opcoes: [] } : sugerir(cidade, bairro),
       };
     }).sort((a, b) => Number(a.interno) - Number(b.interno) || b.hl - a.hl);
 
@@ -130,9 +130,15 @@ router.get("/", async (req, res) => {
       mes: (linhas[0] && linhas[0].mes_referencia) || "",
       atualizado_em: st ? String(st.atualizado_em || "") : "",
       base_fora_importada: fora.length > 0,
-      resumo: { pdvs: lista.length, pedidos: lista.reduce((s, p) => s + p.n_pedidos, 0), hl: r2(lista.reduce((s, p) => s + p.hl, 0)),
-        valor: Math.round(lista.reduce((s, p) => s + p.valor, 0) * 100) / 100,
-        por_setor: lista.reduce((o, p) => { o[p.setor] = (o[p.setor] || 0) + 1; return o; }, {}) },
+      // Resumo SÓ das anomalias reais. Os internos (AMBEV S.A. — remessa de vasilhame/material,
+      // 0 HL, ~R$ 1 mi/mês) ficam à parte: antes entravam no card "Valor" e inflavam tudo.
+      resumo: (() => {
+        const reais = lista.filter((p) => !p.interno), int = lista.filter((p) => p.interno);
+        return { pdvs: reais.length, pedidos: reais.reduce((s, p) => s + p.n_pedidos, 0), hl: r2(reais.reduce((s, p) => s + p.hl, 0)),
+          valor: Math.round(reais.reduce((s, p) => s + p.valor, 0) * 100) / 100,
+          por_setor: reais.reduce((o, p) => { o[p.setor] = (o[p.setor] || 0) + 1; return o; }, {}),
+          internos: { pdvs: int.length, pedidos: int.reduce((s, p) => s + p.n_pedidos, 0), valor: Math.round(int.reduce((s, p) => s + p.valor, 0) * 100) / 100 } };
+      })(),
       pdvs: lista,
     });
   } catch (e) {
