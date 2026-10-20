@@ -6,6 +6,8 @@ import { useState, useEffect, useMemo } from "react";
 import api from "../../services/api";
 
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX"];
+const PERIODICIDADES = [["SEMANAL", "Semanal"], ["QUINZENAL", "Quinzenal"], ["MENSAL", "Mensal"]];
+const NOME_PER = Object.fromEntries(PERIODICIDADES);
 const NOME_DIA = { SEG: "Segunda", TER: "Terça", QUA: "Quarta", QUI: "Quinta", SEX: "Sexta", "": "Sem dia definido" };
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const rotMes = (m) => ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"][Number(String(m).slice(5, 7)) - 1] || m;
@@ -92,6 +94,12 @@ function PreviaInativar({ p, fontes, justificativa, onJust }) {
   );
 }
 
+// Selo "🔁 Quinzenal" (periodicidade nova) — usado também no admin
+export function TagPer({ per }) {
+  return <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 10, fontSize: "0.72rem", fontWeight: 700,
+    background: "rgba(167,139,250,0.15)", color: "#c4b5fd", whiteSpace: "nowrap" }}>🔁 {NOME_PER[per] || per}</span>;
+}
+
 export default function Migracao({ onEnviado, setor }) {
   const [base, setBase] = useState(null);
   const [erro, setErro] = useState("");
@@ -114,7 +122,7 @@ export default function Migracao({ onEnviado, setor }) {
   const setCampo = (cod, campo, val) =>
     setAlt((a) => {
       const n = { ...a, [cod]: { ...(a[cod] || {}), [campo]: val } };
-      if (!n[cod].setor_novo && !n[cod].dia_novo && !n[cod].inativar && !n[cod].abrirCoord && !(n[cod].coordenadas || "").trim()) delete n[cod];
+      if (!n[cod].setor_novo && !n[cod].dia_novo && !n[cod].periodicidade && !n[cod].inativar && !n[cod].abrirCoord && !(n[cod].coordenadas || "").trim()) delete n[cod];
       return n;
     });
 
@@ -132,14 +140,16 @@ export default function Migracao({ onEnviado, setor }) {
     const a = alt[p.cod_pdv] || {};
     return {
       rn: a.setor_novo && a.setor_novo !== base.setor ? a.setor_novo : "",
-      dia: a.dia_novo && a.dia_novo !== p.dia ? a.dia_novo : "",
+      // com periodicidade o dia é obrigatório e vale mesmo se for o dia atual
+      dia: a.dia_novo && (a.dia_novo !== p.dia || a.periodicidade) ? a.dia_novo : "",
+      per: a.periodicidade || "",
       inat: !!a.inativar,
       coord: !a.inativar && !!(a.coordenadas || "").trim(),
     };
   };
 
   const pdvs = base?.pdvs || [];
-  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia || m.inat || m.coord; }).length;
+  const nAlterados = pdvs.filter((p) => { const m = mudou(p); return m.rn || m.dia || m.per || m.inat || m.coord; }).length;
 
   // Agrupa por dia (SEG–SEX, depois "sem dia"), ordena por nome dentro do dia.
   const grupos = useMemo(() => {
@@ -147,7 +157,7 @@ export default function Migracao({ onEnviado, setor }) {
     const q = busca.trim().toLowerCase();
     const filtro = (p) => {
       if (q && !(`${p.cod_pdv} ${p.nome}`.toLowerCase().includes(q))) return false;
-      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia && !m.inat && !m.coord) return false; }
+      if (soAlterados) { const m = mudou(p); if (!m.rn && !m.dia && !m.per && !m.inat && !m.coord) return false; }
       return true;
     };
     const chave = (d) => (DIAS.includes(d) ? d : "");
@@ -174,8 +184,13 @@ export default function Migracao({ onEnviado, setor }) {
 
   async function enviar() {
     setMsg(""); setErro("");
-    const marcados = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia || m.inat || m.coord);
+    const marcados = pdvs.map((p) => ({ p, m: mudou(p) })).filter(({ m }) => m.rn || m.dia || m.per || m.inat || m.coord);
     if (!marcados.length) { setErro("Nenhuma alteração marcada."); return; }
+    const semDia = marcados.filter(({ m }) => !m.inat && m.per && !m.dia);
+    if (semDia.length) {
+      setErro(`Mudando a periodicidade, o dia de visita é obrigatório: ${semDia.map(({ p }) => p.nome).join(", ")}.`);
+      return;
+    }
     const semJust = marcados.filter(({ p, m }) => m.inat && (alt[p.cod_pdv]?.justificativa || "").trim().length < 5);
     if (semJust.length) {
       setErro(`Escreva a justificativa da inativação: ${semJust.map(({ p }) => p.nome).join(", ")}.`);
@@ -183,7 +198,7 @@ export default function Migracao({ onEnviado, setor }) {
     }
     const itens = marcados.map(({ p, m }) => (m.inat
       ? { cod_pdv: p.cod_pdv, inativar: true, justificativa: alt[p.cod_pdv].justificativa.trim() }
-      : { cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia, coordenadas: m.coord ? alt[p.cod_pdv].coordenadas.trim() : "" }));
+      : { cod_pdv: p.cod_pdv, setor_novo: m.rn, dia_novo: m.dia, periodicidade: m.per, coordenadas: m.coord ? alt[p.cod_pdv].coordenadas.trim() : "" }));
     setEnviando(true);
     try {
       const r = await api.post("/api/solicitacoes/migracao", { motivo, itens, ...(setor ? { setor } : {}) }, { timeout: 60000 });
@@ -226,7 +241,7 @@ export default function Migracao({ onEnviado, setor }) {
               );
             }
             return (
-              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.inat ? S.linhaInat : m.rn || m.dia || m.coord ? S.linhaOn : {}) }}>
+              <div key={p.cod_pdv} style={{ ...S.linha, ...(m.inat ? S.linhaInat : m.rn || m.dia || m.per || m.coord ? S.linhaOn : {}) }}>
                 <div style={S.pdv}>
                   <div style={S.nome}>{p.nome}</div>
                   <div style={S.sub}>{p.cod_pdv} · <b style={{ color: "rgba(255,255,255,0.75)" }}>{fmt(p.media_tri)} HL/mês</b>{p.cidade ? ` · ${p.cidade}` : ""}</div>
@@ -239,9 +254,15 @@ export default function Migracao({ onEnviado, setor }) {
                     <option value="">RN: manter</option>
                     {optSetores.map((s) => <option key={s.setor} value={s.setor}>{s.setor}{s.nome ? ` · ${s.nome.split(" ")[0]}` : ""}</option>)}
                   </select>
-                  <select style={S.sel} value={a.dia_novo || ""} onChange={(e) => setCampo(p.cod_pdv, "dia_novo", e.target.value)} title="Migrar dia de visita">
-                    <option value="">Dia: manter</option>
-                    {DIAS.filter((d) => d !== p.dia).map((d) => <option key={d} value={d}>{d}</option>)}
+                  <select style={S.sel} value={a.periodicidade || ""} onChange={(e) => setCampo(p.cod_pdv, "periodicidade", e.target.value)} title="Mudar periodicidade (exige o dia de visita)">
+                    <option value="">Periodicidade: manter</option>
+                    {PERIODICIDADES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <select style={{ ...S.sel, ...(a.periodicidade && !a.dia_novo ? { border: "1px solid #f87171", color: "#f87171" } : {}) }}
+                    value={a.dia_novo || ""} onChange={(e) => setCampo(p.cod_pdv, "dia_novo", e.target.value)}
+                    title={a.periodicidade ? "Dia de visita (obrigatório com a periodicidade)" : "Migrar dia de visita"}>
+                    <option value="">{a.periodicidade ? "Dia: escolha *" : "Dia: manter"}</option>
+                    {DIAS.filter((d) => a.periodicidade || d !== p.dia).map((d) => <option key={d} value={d}>{d}{d === p.dia ? " (atual)" : ""}</option>)}
                   </select>
                   <button type="button" title="Alterar a coordenada (localização) do PDV"
                     onClick={() => setCampo(p.cod_pdv, "abrirCoord", !a.abrirCoord)}
@@ -250,9 +271,10 @@ export default function Migracao({ onEnviado, setor }) {
                   <div style={S.alt}>
                     {m.inat && <TagInativar />}
                     {m.dia && <Seta de={p.dia} para={m.dia} tipo="dia" />}
+                    {m.per && <TagPer per={m.per} />}
                     {m.rn && <Seta de={base.setor} para={m.rn} tipo="rn" />}
                     {m.coord && <TagCoord />}
-                    {!m.dia && !m.rn && !m.inat && !m.coord && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
+                    {!m.dia && !m.per && !m.rn && !m.inat && !m.coord && <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
                   </div>
                 </div>
                 {!m.inat && (a.abrirCoord || m.coord) && (

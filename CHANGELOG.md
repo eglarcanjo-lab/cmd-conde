@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.113.0** — Cobertura no celular: ver uma categoria por vez.
+Versão atual: **v3.114.0** — Solicitações: mudar periodicidade (com dia de visita obrigatório).
+
+## v3.114.0 — Solicitações: periodicidade
+- Migração de PDVs: novo campo **Periodicidade** (Semanal · Quinzenal · Mensal). Escolhendo a periodicidade, o **dia de visita é obrigatório** (pode ser o dia atual — fica gravado); validado na tela e no backend.
+- Coluna `periodicidade_nova` em `solicitacoes_itens`; admin vê o selo 🔁, contador no card e coluna "Nova periodicidade" no Excel.
 
 ## v3.113.0 — Cobertura no celular: visão por categoria
 - Barra de categorias acima da lista (e os cards do resumo também): tocar numa categoria mostra só **cód · nome · cidade + status daquela categoria**, ordenado OK → NOK; tocar de novo inverte; "Todas" volta à lista normal. Tocar no PDV abre os SKUs.

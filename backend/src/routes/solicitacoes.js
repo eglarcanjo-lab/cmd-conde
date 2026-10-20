@@ -1,5 +1,5 @@
 // Solicitações do RN (aba "Solicitações", antiga Incidentes) — tipos novos além do
-// Incidente. Tipo 1: MIGRAÇÃO DE PDVs (trocar RN e/ou dia de visita).
+// Incidente. Tipo 1: MIGRAÇÃO DE PDVs (trocar RN, dia de visita e/ou periodicidade).
 // O app NÃO altera nada no Promax: só registra o pedido; o admin aprova/recusa por
 // linha e baixa o Excel para fazer a mudança no Promax.
 // Tabelas próprias (criadas no 1º uso, como em services/alertas.js):
@@ -15,6 +15,7 @@ const geo = require("../services/geo");
 router.use(authMiddleware);
 
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX"];
+const PERIODICIDADES = ["SEMANAL", "QUINZENAL", "MENSAL"]; // mudar periodicidade exige o dia de visita
 const GESTORES = ["admin", "director", "gv1", "gv3"];
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const normCod = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
@@ -41,6 +42,8 @@ async function ensureTabelas() {
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS lat_nova NUMERIC`);
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS lng_nova NUMERIC`);
   await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS endereco_novo TEXT`);
+  // Periodicidade (v3.114): SEMANAL | QUINZENAL | MENSAL — sempre com o dia de visita (dia_novo)
+  await query(`ALTER TABLE solicitacoes_itens ADD COLUMN IF NOT EXISTS periodicidade_nova TEXT`);
   _ok = true;
 }
 
@@ -210,8 +213,11 @@ router.post("/migracao", async (req, res) => {
       }
       let setorNovo = String(it.setor_novo || "").trim();
       let diaNovo = String(it.dia_novo || "").trim().toUpperCase();
+      const perNova = String(it.periodicidade || "").trim().toUpperCase();
+      if (perNova && !PERIODICIDADES.includes(perNova)) return res.status(400).json({ error: `Periodicidade ${perNova} inválida.` });
+      if (perNova && !DIAS.includes(diaNovo)) return res.status(400).json({ error: `PDV ${c} (${nomePdv}): mudando a periodicidade, escolha o dia de visita.` });
       if (setorNovo === setor) setorNovo = "";
-      if (diaNovo === diaAtual) diaNovo = "";
+      if (diaNovo === diaAtual && !perNova) diaNovo = ""; // com periodicidade, o dia fica gravado mesmo igual ao atual
       if (setorNovo && !setoresValidos.has(setorNovo)) return res.status(400).json({ error: `Setor ${setorNovo} inválido.` });
       if (diaNovo && !DIAS.includes(diaNovo)) return res.status(400).json({ error: `Dia ${diaNovo} inválido.` });
       // Nova coordenada (opcional): validada e com endereço congelado no pedido
@@ -224,12 +230,12 @@ router.post("/migracao", async (req, res) => {
           return res.status(400).json({ error: `PDV ${c} (${nomePdv}): ${e.message}` });
         }
       }
-      if (!setorNovo && !diaNovo && !coord) continue; // linha sem alteração
+      if (!setorNovo && !diaNovo && !perNova && !coord) continue; // linha sem alteração
       vistos.add(c);
       itens.push({
         cod_pdv: c, nome_pdv: nomePdv,
         setor_atual: setor, dia_atual: diaAtual, setor_novo: setorNovo, dia_novo: diaNovo,
-        media_tri_hl: media, inativar: false,
+        media_tri_hl: media, inativar: false, periodicidade_nova: perNova || null,
         lat_nova: coord?.lat ?? null, lng_nova: coord?.lng ?? null, endereco_novo: coord?.endereco || null,
       });
     }
@@ -247,11 +253,11 @@ router.post("/migracao", async (req, res) => {
     for (const it of itens) {
       await query(
         `INSERT INTO solicitacoes_itens (solicitacao_id, cod_pdv, nome_pdv, setor_atual, dia_atual, setor_novo, dia_novo, media_tri_hl,
-                                         inativar, justificativa, inad_info, comodato_info, lat_nova, lng_nova, endereco_novo)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+                                         inativar, justificativa, inad_info, comodato_info, lat_nova, lng_nova, endereco_novo, periodicidade_nova)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
         [id, it.cod_pdv, it.nome_pdv, it.setor_atual, it.dia_atual, it.setor_novo || null, it.dia_novo || null, it.media_tri_hl,
          !!it.inativar, it.justificativa || null, it.inad_info || null, it.comodato_info || null,
-         it.lat_nova ?? null, it.lng_nova ?? null, it.endereco_novo || null]);
+         it.lat_nova ?? null, it.lng_nova ?? null, it.endereco_novo || null, it.periodicidade_nova || null]);
     }
     return res.json({ success: true, id, itens: itens.length });
   } catch (e) {
