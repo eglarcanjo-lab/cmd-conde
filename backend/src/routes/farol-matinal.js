@@ -300,7 +300,7 @@ router.get("/pi-he", async (req, res) => {
 
 // ─── 4b) MAIS VENDIDOS ZERADOS NA GRADE (logo abaixo do Report de Volumes) ─────
 // Ranking da operação por média HL dos 3 meses anteriores; lista os 20 primeiros que estão
-// com saldo 0 na grade de estoque (ou fora dela). Mesmo bloco p/ todos (RN, GV, diretoria).
+// com saldo 0 na grade (a grade só traz quem tem saldo — não constar = zerado). Mesmo bloco p/ todos (RN, GV, diretoria).
 router.get("/zerados", async (req, res) => {
   try {
     const t = agora();
@@ -331,7 +331,7 @@ router.get("/zerados", async (req, res) => {
       colunas: [{ key: "rank", label: "Pos." }, { key: "cod_produto", label: "Cód" }, { key: "nome_produto", label: "Produto" }, { key: "media", label: "Média 3M (HL)" },
         { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Grade" }, { key: "agend", label: "Agendados D+7 (cx)" }],
       linhas: zerados.map((e) => ({ rank: `${e.rank}º`, cod_produto: e.cod, nome_produto: e.nome, media: f1(e.media), atual: f1(e.atual),
-        estoque: saldo[e.cod] == null ? "fora da grade" : "0", agend: agendDe[e.cod] ? agendDe[e.cod].toLocaleString("pt-BR") : "—", _cores: { estoque: "down" } })),
+        estoque: saldo[e.cod] == null ? "0 (não consta)" : "0", agend: agendDe[e.cod] ? agendDe[e.cod].toLocaleString("pt-BR") : "—", _cores: { estoque: "down" } })),
     };
     return res.json(resposta(t, d, { titulo: "Zerados na grade", emoji: "🚫", legenda: "mais vendidos sem estoque" }, () => [bloco], [bloco]));
   } catch (e) {
