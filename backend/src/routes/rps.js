@@ -71,7 +71,44 @@ const SECOES = {
 // Marcas foco (distribuição) — a confirmar com o diretor
 const MARCAS_FOCO = ["STELLA", "SPATEN", "ORIGINAL", "CORONA", "BUDWEISER", "MICHELOB"];
 GRUPOS.push({ id: "marcas_foco", label: "Marcas foco", f: (p) => ehCerv(p) && MARCAS_FOCO.some((m) => p.nome.includes(m)) });
+GRUPOS.push({ id: "mp", label: "Multipack", f: (p) => ehCerv(p) && (p.cats.has("CERVEJA MULTIPACK") || /MULTIPACK/.test(p.nome)) });
+GRUPOS.push({ id: "lata_cerv", label: "Cerveja lata", f: (p) => ehCerv(p) && ehLata(p) });
 const GRUPO = Object.fromEntries(GRUPOS.map((g) => [g.id, g]));
+
+// ── Deep Dive (materiais MPR / Fast Start / Deep Dive Q1) ──────────────────────
+// Tags de marca × embalagem p/ os cruzamentos de High End (Fast Start p.72/170/171)
+const PG = /PURE\s*GOLD/, ZEROCERO = /\bZERO\b|\bCERO\b|0[.,]0/;
+const TAGS = [
+  { id: "ste_ln", f: (p) => /STELLA/.test(p.nome) && !PG.test(p.nome) && !ZEROCERO.test(p.nome) && ehLN(p) },
+  { id: "spt_ln", f: (p) => /SPATEN/.test(p.nome) && ehLN(p) },
+  { id: "cor_ln", f: (p) => /CORONA/.test(p.nome) && !ZEROCERO.test(p.nome) && ehLN(p) },
+  { id: "bud_ln", f: (p) => /BUDWEISER|\bBUD\b/.test(p.nome) && !ZEROCERO.test(p.nome) && ehLN(p) },
+  { id: "pg", f: (p) => PG.test(p.nome) },
+  { id: "cor_cero", f: (p) => /CORONA/.test(p.nome) && ZEROCERO.test(p.nome) },
+  { id: "cor", f: (p) => /CORONA/.test(p.nome) && !ZEROCERO.test(p.nome) },
+  { id: "ste_600", f: (p) => /STELLA/.test(p.nome) && !PG.test(p.nome) && /\b600\s*ML/.test(p.nome) },
+  { id: "spt_600", f: (p) => /SPATEN/.test(p.nome) && /\b600\s*ML/.test(p.nome) },
+  { id: "ori_600", f: (p) => /ORIGINAL/.test(p.nome) && /\b600\s*ML/.test(p.nome) },
+];
+const tamanhoMl = (nome) => {
+  let m = nome.match(/(\d+(?:[.,]\d+)?)\s*ML\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")));
+  m = nome.match(/(\d+(?:[.,]\d+)?)\s*L\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")) * 1000);
+  return null;
+};
+// Embalagem de cerveja (build-up do MPR / Deep Dive): RGB 300/600/1L · LT 269/350/473 · LN
+function embCerv(p) {
+  if (ehLN(p)) return "LN";
+  const ml = tamanhoMl(p.nome);
+  if (ehLata(p)) return ml ? `LT ${ml}` : "LT outros";
+  if (ehRgb(p)) return ml === 300 ? "RGB 300" : ml === 600 ? "RGB 600" : ml === 1000 ? "RGB 1L" : "RGB outros";
+  return "Outros";
+}
+// Embalagem de NAB (Fast Start p.76): PET 2000/1000/500… · LT 350/269/473
+function embNab(p) {
+  const ml = tamanhoMl(p.nome);
+  const tipo = /\bPET\b/.test(p.nome) ? "PET" : /\bLATA\b|\bLT\b|SLEEK/.test(p.nome) ? "LT" : /GFA|GARRAFA|VD/.test(p.nome) ? "VIDRO" : "OUTROS";
+  return ml ? `${tipo} ${ml}` : tipo;
+}
 
 function mesesAte(br, n) {
   return Array.from({ length: n }, (_, k) => { const d = new Date(br.getFullYear(), br.getMonth() - (n - 1 - k), 1); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; });
@@ -91,6 +128,13 @@ async function montar() {
   const meses = todos.slice(3);              // 13 exibidos (M-12..M)
   const mesAtual = meses[12];
   const du = diasUteis(br);
+  // Deep Dive / YTD: de jan do ano passado até antes do 1º mês de "todos" (só volume por SKU)
+  const anoAtual = br.getFullYear();
+  const extras = [];
+  for (let d = new Date(anoAtual - 1, 0, 1); ; d.setMonth(d.getMonth() + 1)) {
+    const m = `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; if (m >= todos[0]) break; extras.push(m);
+  }
+  const ult4 = todos.slice(-4); // M-3..M — compradores por marca/embalagem p/ os cruzamentos
 
   const [base, full, pdvBase, usuarios, fatMktp] = await Promise.all([
     readSheet("produtos_base").catch(() => []), readSheet("produtos_full").catch(() => []),
@@ -105,7 +149,9 @@ async function montar() {
     if (!nomeDe[c] && p.nome) nomeDe[c] = semAc(p.nome);
   });
   const cidadeDe = {};
-  pdvBase.forEach((p) => { cidadeDe[normCod(p.cod_pdv)] = String(p.cidade || "").trim().toUpperCase() || "—"; });
+  const segDe = {}, nomePdv = {};
+  pdvBase.forEach((p) => { nomePdv[normCod(p.cod_pdv)] = String(p.nome_fantasia || p.razao_social || "").trim(); });
+  pdvBase.forEach((p) => { const c = normCod(p.cod_pdv); cidadeDe[c] = String(p.cidade || "").trim().toUpperCase() || "—"; segDe[c] = String(p.segmento || "").trim().toUpperCase() || "SEM SEGMENTO"; });
   const nomeRn = {};
   usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeRn[c] = String(u.nome || "").trim().split(/\s+/)[0]; });
 
@@ -117,12 +163,21 @@ async function montar() {
     return (gruposDoSku[cod] = GRUPOS.filter((g) => g.f(p)).map((g) => g.id));
   };
   const marcaDe = (nome) => semAc(nome).split(/\s+/)[0] || "—";
+  const tagsDoSku = {};
+  const tagsDe = (cod) => {
+    if (tagsDoSku[cod]) return tagsDoSku[cod];
+    const p = { nome: nomeDe[cod] || "", cats: catDe[cod] || new Set() };
+    return (tagsDoSku[cod] = TAGS.filter((t) => t.f(p)).map((t) => t.id));
+  };
 
   // Agregados por mês (lidos mês a mês p/ poupar memória)
   // vol[g][mes][setor] HL · comp[g][mes] Map pdv→setor · sku[g][mes][setor] Σ SKUs distintos por PDV
   const vol = {}, comp = {}, sku = {}, marca = {}, cidade = {};
   GRUPOS.forEach((g) => { vol[g.id] = {}; comp[g.id] = {}; sku[g.id] = {}; });
-  for (const m of todos) {
+  // Deep Dive: skuM[mes][cod] HL · segM[mes][segmento] HL (cerveja) · tagM[mes][tag] Map pdv→setor
+  const skuM = {}, skuNome = {}, segM = {}, tagM = {};
+  const setTodos = new Set(todos), setUlt4 = new Set(ult4);
+  for (const m of [...extras, ...todos]) {
     const rows = await readSheetMonths("vendas_cliente_produto", "mes_referencia", [m]).catch(() => []);
     const pares = {}; // g|pdv -> Set sku
     rows.forEach((r) => {
@@ -130,6 +185,11 @@ async function montar() {
       const s = String(r.setor || "").trim(), pdv = normCod(r.cod_pdv), cod = normCod(r.cod_produto);
       if (!pdv || !cod) return;
       const gs = gruposDe(cod, r.nome_produto);
+      const sm = (skuM[m] = skuM[m] || {}); sm[cod] = (sm[cod] || 0) + hl;
+      if (!skuNome[cod]) skuNome[cod] = nomeDe[cod] || semAc(r.nome_produto);
+      if (!setTodos.has(m)) return; // meses extras: só volume por SKU (YTD do ano passado)
+      if (gs.includes("cerveja")) { const sg = (segM[m] = segM[m] || {}); const k = segDe[pdv] || "SEM SEGMENTO"; sg[k] = (sg[k] || 0) + hl; }
+      if (setUlt4.has(m)) tagsDe(cod).forEach((t) => { const tm = (tagM[m] = tagM[m] || {}); (tm[t] = tm[t] || new Map()).set(pdv, s); });
       gs.forEach((g) => {
         const vg = (vol[g][m] = vol[g][m] || {}); vg[s] = (vg[s] || 0) + hl;
         (comp[g][m] = comp[g][m] || new Map()).set(pdv, s);
@@ -217,8 +277,93 @@ async function montar() {
     pendente: "Margem por SKU/TT, faturamento e SKUs por indústria e curso de entrega por SKU — entram quando houver relatório com custo e indústria por SKU.",
   };
 
+  // ═══ DEEP DIVE ═══
+  const mesNum = br.getMonth() + 1, frac = du.feitos / du.total;
+  const mesesAno = (ano) => Array.from({ length: 12 }, (_, k) => `${ano}-${p2(k + 1)}`);
+  const ytdAt = mesesAno(anoAtual).slice(0, mesNum), ytdLy = mesesAno(anoAtual - 1).slice(0, mesNum);
+  const prodDe = (cod) => ({ nome: skuNome[cod] || nomeDe[cod] || "", cats: catDe[cod] || new Set() });
+  const somaMes = (m, filtro) => Object.entries(skuM[m] || {}).reduce((a, [c, v]) => a + (filtro(c) ? v : 0), 0);
+  // YTD atual (mês atual parcial) × YTD LY (mês corrente do LY proporcional aos dias úteis feitos)
+  const ytd = (filtro) => {
+    const at = ytdAt.reduce((a, m) => a + somaMes(m, filtro), 0);
+    const ly = ytdLy.reduce((a, m, i) => a + somaMes(m, filtro) * (i === ytdLy.length - 1 ? frac : 1), 0);
+    return { ytd: r1(at), ytd_ly: r1(ly), vs_ly: pct(at, ly) };
+  };
+  const doGrupo = (g) => (c) => (gruposDoSku[c] || []).includes(g);
+  const temLy = ytdLy.some((m) => skuM[m]);
+  const ytdGrupos = SECOES.volumes.map((g) => ({ id: g, label: GRUPO[g].label, ...ytd(doGrupo(g)),
+    ano: mesesAno(anoAtual).map((m, k) => (k < mesNum ? r1(somaMes(m, doGrupo(g))) : null)),
+    ano_ly: mesesAno(anoAtual - 1).map((m) => r1(somaMes(m, doGrupo(g)))) }));
+  // build-up genérico: agrupa SKUs por chave → YTD, YTD LY, vs LY, peso (WGT)
+  const buildUp = (filtro, chave) => {
+    const k = {};
+    const add = (m, peso, campo) => Object.entries(skuM[m] || {}).forEach(([c, v]) => {
+      if (!filtro(c)) return; const kk = chave(prodDe(c), c); const e = (k[kk] = k[kk] || { item: kk, ytd: 0, ytd_ly: 0 }); e[campo] += v * peso;
+    });
+    ytdAt.forEach((m) => add(m, 1, "ytd")); ytdLy.forEach((m, i) => add(m, i === ytdLy.length - 1 ? frac : 1, "ytd_ly"));
+    const tot = Object.values(k).reduce((a, e) => a + e.ytd, 0);
+    return Object.values(k).map((e) => ({ item: e.item, ytd: r1(e.ytd), ytd_ly: r1(e.ytd_ly), vs_ly: pct(e.ytd, e.ytd_ly), wgt: tot ? r1((e.ytd / tot) * 100) : 0 }))
+      .filter((e) => e.ytd > 0 || e.ytd_ly > 0).sort((a, b) => b.ytd - a.ytd);
+  };
+  const ehCervC = doGrupo("cerveja"), ehNabC = doGrupo("nab");
+  const porSku = buildUp(() => true, (p, c) => c).map((e) => ({ ...e, nome: skuNome[e.item] || e.item, delta: r1(e.ytd - e.ytd_ly) }));
+  // Compradores (M-3..M) por tag → Map pdv→setor
+  const compTag = (t) => { const mm = new Map(); ult4.forEach((m) => ((tagM[m] || {})[t] || new Map()).forEach((st, pdv) => mm.set(pdv, st))); return mm; };
+  const T = Object.fromEntries(TAGS.map((t) => [t.id, compTag(t.id)]));
+  const cruzar = (id, label, a, semB, acao) => {
+    const alvo = [...a].filter(([pdv]) => !semB.some((b) => b.has(pdv)));
+    const porRn = SET_RN.map((s) => { const n = [...a].filter(([, st]) => st === s).length, x = alvo.filter(([, st]) => st === s).length; return { setor: s, rn: nomeRn[s] || "", compradores: n, oportunidade: x, pct: n ? r1((x / n) * 100) : null }; }).filter((l) => l.compradores);
+    return { id, label, acao, compradores: a.size, oportunidade: alvo.length, pct: a.size ? r1((alvo.length / a.size) * 100) : null, porRn,
+      pdvs: alvo.slice(0, 400).map(([pdv, st]) => ({ setor: st, cod_pdv: pdv, nome_pdv: nomePdv[pdv] || "" })).sort((x, y) => x.setor.localeCompare(y.setor)) };
+  };
+  const he600 = new Map(); ["ste_600", "spt_600", "ori_600"].forEach((t) => T[t].forEach((st, pdv) => he600.set(pdv, st)));
+  const soUma = (t) => new Map([...T[t]].filter(([pdv]) => ["ste_600", "spt_600", "ori_600"].filter((x) => T[x].has(pdv)).length === 1));
+  const cruzamentos = [
+    cruzar("ste_ln_sem_pg", "Compram Stella LN e não compram Stella Pure Gold", T.ste_ln, [T.pg], "Ofertar Stella PG (LN/600)"),
+    cruzar("spt_ln_sem_pg", "Compram Spaten LN e não compram Stella Pure Gold", T.spt_ln, [T.pg], "Ofertar Stella PG"),
+    cruzar("cor_ln_sem_cero", "Compram Corona LN e não compram Corona Cero", T.cor_ln, [T.cor_cero], "Ofertar Corona Cero"),
+    cruzar("bud_ln_sem_cor", "Compram Budweiser LN e não compram Corona", T.bud_ln, [T.cor], "Ofertar Corona"),
+    cruzar("so_ste_600", "HE 600: compram só Stella 600", soUma("ste_600"), [], "Ofertar Original / Spaten 600"),
+    cruzar("so_spt_600", "HE 600: compram só Spaten 600", soUma("spt_600"), [], "Ofertar Stella 600"),
+    cruzar("so_ori_600", "HE 600: compram só Original 600", soUma("ori_600"), [], "Ofertar Stella / Spaten 600"),
+  ];
+  const he600Uma = [...he600.keys()].filter((pdv) => ["ste_600", "spt_600", "ori_600"].filter((x) => T[x].has(pdv)).length === 1).length;
+  // Cobertura RGB 300 × Cerveja TT por RN (mês atual e M-1) — Litrinho +RGB
+  const cobRazao = (g1, g2, m) => {
+    const a = comp[g1][m] || new Map(), b = comp[g2][m] || new Map();
+    const cont = (mm, s) => { let c = 0; mm.forEach((st) => { if (!s || st === s) c++; }); return c; };
+    const linha = (s) => { const n2 = cont(b, s), n1 = cont(a, s); return { setor: s || "", rn: s ? nomeRn[s] || "" : "Operação", comp_cerv: n2, comp_300: n1, pct: n2 ? r1((n1 / n2) * 100) : null }; };
+    return [...SET_RN.map(linha).filter((l) => l.comp_cerv), linha(null)];
+  };
+  const cob300 = { atual: cobRazao("rgb_300", "cerveja", mesAtual), m1: cobRazao("rgb_300", "cerveja", meses[11]) };
+  // Multipack: peso no volume de lata e cobertura (13 meses)
+  const multipack = {
+    meses, peso: meses.map((m) => { const mp = Object.values(vol.mp[m] || {}).reduce((a, b) => a + b, 0), lt = Object.values(vol.lata_cerv[m] || {}).reduce((a, b) => a + b, 0); return lt ? r1((mp / lt) * 100) : 0; }),
+    volume: meses.map((m) => r1(Object.values(vol.mp[m] || {}).reduce((a, b) => a + b, 0))),
+    compradores: meses.map((m) => (comp.mp[m] || new Map()).size),
+    cobertura_lata: meses.map((m) => { const a = (comp.mp[m] || new Map()).size, b = (comp.lata_cerv[m] || new Map()).size; return b ? r1((a / b) * 100) : 0; }),
+    skus: buildUp(doGrupo("mp"), (p) => p.nome).slice(0, 12),
+  };
+  // Segmento do PDV (cerveja): mês atual (tendência) × M-1 × LY
+  const segmentos = Object.keys(Object.assign({}, ...meses.map((m) => segM[m] || {}))).map((k) => {
+    const sr = meses.map((m) => (segM[m] || {})[k] || 0); return { segmento: k, ...comparar(sr, tend(sr[12])) };
+  }).sort((a, b) => b.l3m - a.l3m);
+  const deepDive = {
+    ano: anoAtual, mesesAno: mesesAno(anoAtual), temLy, ytdGrupos,
+    marcasCerv: buildUp(ehCervC, (p) => marcaDe(p.nome)).slice(0, 15),
+    embCerv: buildUp(ehCervC, embCerv),
+    embNab: buildUp(ehNabC, embNab).slice(0, 15),
+    coreHe: buildUp(ehCervC, (p) => (ehHe(p) ? "HIGH END" : "CORE")),
+    segmentos,
+    topSku: [...porSku].sort((a, b) => b.delta - a.delta).slice(0, 10),
+    bottomSku: [...porSku].sort((a, b) => a.delta - b.delta).slice(0, 10),
+    cruzamentos, he600: { compradores: he600.size, so_uma_marca: he600Uma, pct: he600.size ? r1((he600Uma / he600.size) * 100) : null },
+    cob300, multipack,
+    externos: ["Share Nielsen / Scanntech (total, Core, High End, Score 5)", "NPS (on trade e por motivo)", "DPO / SDPO", "Indústrias parceiras do Marketplace (GMV por indústria, nº de indústrias com fat. ≥ R$ 3 mil)", "Gente"],
+  };
+
   return { meses, mesAtual, diasUteis: { feitos: du.feitos, total: du.total }, gerado_em: br.toISOString(),
-    volumes, marcas, cidades, compradores, distribuicao, marketplace,
+    volumes, marcas, cidades, compradores, distribuicao, marketplace, deepDive,
     regras: {
       tendencia: "Volume e faturamento: realizado ÷ dias úteis feitos × dias úteis do mês. Compradores: realizado + compradores do mês anterior que ainda não compraram × fração do mês que falta.",
       comparacoes: "vs M-1 = mês anterior · vs L3M = média dos 3 meses anteriores · vs LY = mesmo mês do ano anterior (todos contra a tendência do mês atual).",
