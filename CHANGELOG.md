@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.115.0** — Farol matinal (escopo do PDF matinal).
+Versão atual: **v3.116.0** — Acompanhamento Comercial (RPS), pré-escopo.
+
+## v3.116.0 — Acompanhamento Comercial · RPS (pré-escopo)
+- Tela nova `/rps` (gestores) a partir da planilha e do deck do diretor comercial: **Volumes** (grupos e aberturas RGB 300/600/1L, HE RGB/350/LN, OW 350/473/LN, Zero, NAB TT/Zero/Single, Guaraná, Gatorade, Match TT/LN/LT/Senses/Sabores, Mktp + marcas e cidades), **Compradores** (com Estáveis/Instáveis/Novos pelos 3 meses anteriores), **Distribuição** (Σ SKU/PDV e média) e **Marketplace** (faturamento, compradores, distribuição).
+- 13 meses + por RN: real, tendência (dias úteis), M-1, L3M, LY e %. Export **PowerPoint** (pptxgenjs, gráfico nativo + ranking RN por slide).
+- Rota `/api/rps` (cache 30 min). Margem/indústria do Marketplace pendentes (sem dado).
 
 ## v3.115.0 — Farol matinal
 - Rota nova `/api/farol-matinal` (robô WhatsApp — NÃO REMOVER): `/ap` Atendimento Produtivo (painel da operação + por RN, Aderência e Rotina+ com a meta da operação; RN com a linha dele em destaque) · `/tasks` tasks de 1 SKU abertas no mês por categoria (KPIs 10·12·14·15·16; volume fora) + lista do dia do RN · `/score5` PDVs Score 5 com visita hoje (meta/faturado/restante + top 3 SKUs e dias sem comprar) · `/pi-he` Portfólio Ideal HE (KPI 18) com check por SKU · `/fatbuf` Faturados + Buffer. GV recebe igual à diretoria.

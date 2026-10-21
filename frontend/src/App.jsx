@@ -26,6 +26,7 @@ import AcoesPreco from "./pages/AcoesPreco";
 import InputTasks from "./pages/InputTasks";
 import RotaEfetiva from "./pages/RotaEfetiva";
 import IncentivosRn from "./pages/IncentivosRn";
+import Rps from "./pages/Rps";
 import { BarraVerComo } from "./components/VerComo"; // admin vendo o app como um setor (RN) // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
@@ -127,6 +128,7 @@ function AppContent() {
       <Route path="/acoes-preco" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><AcoesPreco /></ErrorBoundary></PrivateRoute>} />
       <Route path="/input-tasks" element={<PrivateRoute perfisPermitidos={["admin"]}><ErrorBoundary><InputTasks /></ErrorBoundary></PrivateRoute>} />
       <Route path="/incentivos-rn" element={<PrivateRoute><ErrorBoundary><IncentivosRn /></ErrorBoundary></PrivateRoute>} />
+      <Route path="/rps" element={<PrivateRoute><ErrorBoundary><Rps /></ErrorBoundary></PrivateRoute>} />
       <Route path="/rota-efetiva" element={<PrivateRoute perfisPermitidos={["admin","director","gv1","gv3"]}><ErrorBoundary><RotaEfetiva /></ErrorBoundary></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -135,7 +137,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.115.0";
+export const APP_VERSION = "v3.116.0";
 
 export default function App() {
   return (

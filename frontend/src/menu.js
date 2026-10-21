@@ -21,6 +21,7 @@ export const MODULOS = [
   { icon: "🧾", label: "Faturados × Buffer",       route: "/faturados-buffer" },
   { icon: "🌿", label: "Devolução × Ruptura",      route: "/detalhamento" },
   { icon: "🛣️", label: "Rota Efetiva",             route: "/rota-efetiva", semRn: true },
+  { icon: "📑", label: "Acomp. Comercial (RPS)",   route: "/rps", perfis: ["admin", "director", "gv1", "gv3"] },
   { icon: "🧊", label: "Equipamentos",             route: "/refrigeradores", perfis: ["admin", "director"] },
   { icon: "🧮", label: "RV Simulador",             route: "/rv-admin", perfis: ["admin", "director"] },
   { icon: "🏷️", label: "Ações de Preço",           route: "/acoes-preco", perfis: ["admin"], grupo: "admin" },
