@@ -108,7 +108,7 @@ function carregarPptx() {
   if (_pptx) return _pptx;
   _pptx = new Promise((ok, erro) => {
     const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js";
+    s.src = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
     s.onload = () => (window.PptxGenJS ? ok(window.PptxGenJS) : erro(new Error("pptxgenjs não carregou")));
     s.onerror = () => { _pptx = null; erro(new Error("Sem internet para carregar o gerador de PowerPoint.")); };
     document.head.appendChild(s);

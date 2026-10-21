@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.116.1** — RPS: TT inclui Marketplace; NAB Single = dose individual.
+Versão atual: **v3.116.2** — RPS: export PowerPoint corrigido.
+
+## v3.116.2 — RPS: PowerPoint
+- pptxgenjs vinha de uma URL do cdnjs que não existe (404) → agora jsDelivr. Testado: 59 slides com os dados reais.
 
 ## v3.116.1 — RPS ajustes
 - TT passa a incluir Marketplace (como o BI — conferido c/ Distribuição set/26 do deck). NAB Single = lata/PET até 600 ml.
