@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.119.0** — Solicitações: Excel consolidado das pendentes + COORDENADAS.CSV (01.31.59).
+Versão atual: **v3.119.1** — RPS: vendas antigas contam p/ o RN que atende o PDV hoje.
+
+## v3.119.1 — RPS por setor atual
+- RPS: cada venda (inclusive 2025) é atribuída ao setor que atende o PDV HOJE (Base de Clientes; 301–305 → 107–111). Comparações por RN (M-1, L3M, LY, YTD) ficam justas mesmo com troca de carteira.
 
 ## v3.119.0 — Solicitações pendentes + coordenadas Promax
 - Admin › Solicitações › Migrações: **📥 Excel pendentes (todas)** — todas as linhas pendentes de todas as solicitações num Excel só, com aba **COORDENADAS 01.31.59** no layout do Promax e aba de instruções.

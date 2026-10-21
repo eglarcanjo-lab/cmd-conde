@@ -215,7 +215,10 @@ async function montar() {
   const cidadeDe = {};
   const segDe = {}, nomePdv = {};
   pdvBase.forEach((p) => { nomePdv[normCod(p.cod_pdv)] = String(p.nome_fantasia || p.razao_social || "").trim(); });
-  pdvBase.forEach((p) => { const c = normCod(p.cod_pdv); cidadeDe[c] = String(p.cidade || "").trim().toUpperCase() || "—"; segDe[c] = String(p.segmento || "").trim().toUpperCase() || "SEM SEGMENTO"; });
+  // setorHoje: quem ATENDE o PDV hoje (Base de Clientes). As vendas de meses antigos (ex.: 2025,
+  // quando os PDVs estavam em outros setores) contam p/ o RN atual — comparação justa por RN.
+  const setorHoje = {};
+  pdvBase.forEach((p) => { const c = normCod(p.cod_pdv); cidadeDe[c] = String(p.cidade || "").trim().toUpperCase() || "—"; segDe[c] = String(p.segmento || "").trim().toUpperCase() || "SEM SEGMENTO"; const st0 = String(p.setor || "").trim(), st = ({ "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" })[st0] || st0; if (c && st) setorHoje[c] = st; });
   const nomeRn = {};
   usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeRn[c] = String(u.nome || "").trim().split(/\s+/)[0]; });
 
@@ -246,8 +249,9 @@ async function montar() {
     const pares = {}; // g|pdv -> Set sku
     rows.forEach((r) => {
       const hl = num(r.volume_hl); if (hl <= 0) return;
-      const s = String(r.setor || "").trim(), pdv = normCod(r.cod_pdv), cod = normCod(r.cod_produto);
+      const pdv = normCod(r.cod_pdv), cod = normCod(r.cod_produto);
       if (!pdv || !cod) return;
+      const s = setorHoje[pdv] || String(r.setor || "").trim(); // setor de HOJE do PDV
       const gs = gruposDe(cod, r.nome_produto);
       const sm = (skuM[m] = skuM[m] || {}); sm[cod] = (sm[cod] || 0) + hl;
       if (!skuNome[cod]) skuNome[cod] = nomeDe[cod] || semAc(r.nome_produto);
