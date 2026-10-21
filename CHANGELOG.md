@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.114.0** — Solicitações: mudar periodicidade (com dia de visita obrigatório).
+Versão atual: **v3.114.1** — Buffer: só o que está aguardando roteirização.
+
+## v3.114.1 — Buffer bate com o PDF do faturista
+- Processador (`processar_cora`): buffer = Tipo buffer REPROGRAMADO **e** Situação pedido AGUARDANDO_ROTEIRIZACAO. Antes só REPROGRAMADO → somava o mês inteiro (entregues, devolvidos, em rota): ~2.700 HL. Conferido em 21/10: 316,79 HL · 202 PDVs, igual por setor. Vale a partir do próximo import do CORA.
 
 ## v3.114.0 — Solicitações: periodicidade
 - Migração de PDVs: novo campo **Periodicidade** (Semanal · Quinzenal · Mensal). Escolhendo a periodicidade, o **dia de visita é obrigatório** (pode ser o dia atual — fica gravado); validado na tela e no backend.
