@@ -22,38 +22,71 @@ const p2 = (n) => String(n).padStart(2, "0");
 const semAc = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
 const SET_RN = ["101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111"];
 
-// ── Grupos (id, rótulo, regra). p = { nome (sem acento, maiúsculo), cats:Set } ──────────
+// ── Grupos (id, rótulo, regra). p = { nome (sem acento, maiúsculo), cats:Set, e: embalagem } ──
+// EMBALAGEM: vem da coluna G "Embalagem" da 0111 (produtos_full.embalagem, ex. "018 - GARRAFA
+// INTEIRA"). Sem ela (produto fora do cadastro), cai na leitura do nome do produto.
 const CERV = ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "LITRINHO", "HE", "GIRO RGB"];
 const ehCerv = (p) => CERV.some((c) => p.cats.has(c)) || [...p.cats].some((c) => c.startsWith("TRIMARCA"));
 const ehMktp = (p) => p.cats.has("MKTP");
 const ehNab = (p) => p.cats.has("NAB") || p.cats.has("NAB ZERO");
 const ehHe = (p) => p.cats.has("HE") || [...p.cats].some((c) => c.startsWith("TRIMARCA"));
-const ehLata = (p) => /\bLATA\b|\bLT\b|SLEEK/.test(p.nome);
-// LN = "LONG NECK"/"LN" no nome ou garrafa one way 330–355 ml (ex.: "BUDWEISER OW 330ML CX C/24")
-const ehLN = (p) => /LONG\s*NECK|\bLN\b/.test(p.nome) || (!ehLata(p) && /\bOW\b|ONE\s*WAY/.test(p.nome) && /\b(330|343|355)\s*ML/.test(p.nome));
-const ehOW = (p) => ehLN(p) || ehLata(p) || /\bOW\b|ONE\s*WAY/.test(p.nome);
-const ehRgb = (p) => !ehOW(p) && !/\bPET\b/.test(p.nome) && /(300|600|1000)\s*ML|\b1\s*L\b|LITRAO|GFA\s*VD|GARRAFA/.test(p.nome);
-const ml = (p, re) => re.test(p.nome);
+// Tamanho em ml a partir de um texto ("LATA 355", "PET 1,5", "GFA VD 300ML", "PET 2")
+function mlDe(txt, padraoLitro) {
+  let m = txt.match(/(\d+(?:[.,]\d+)?)\s*ML\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")));
+  m = txt.match(/(\d+(?:[.,]\d+)?)\s*L\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")) * 1000);
+  m = txt.match(/(\d+(?:[.,]\d+)?)/); if (!m) return null;
+  const v = parseFloat(m[1].replace(",", "."));
+  return padraoLitro && v < 10 ? Math.round(v * 1000) : Math.round(v); // "PET 2" = 2 L · "LATA 355" = 355 ml
+}
+// Classifica a embalagem do Promax → { tipo: LN|LT|RGB|OW|PET|CHOPP|OUTROS, ml }
+function classificaEmb(raw) {
+  const e = String(raw || "").replace(/^\s*\d+\s*-\s*/, "").toUpperCase().trim();
+  if (!e || /NAO CADASTRADO|NÃO CADASTRADO/.test(e)) return null;
+  if (/BARRIL|KEG|PETAINER|SEM EMBALAGEM|POST-MIX|PRE-MIX/.test(e)) return { tipo: "CHOPP", ml: null };
+  if (/LONG|\bLN\b/.test(e)) return { tipo: "LN", ml: mlDe(e) };
+  if (/\bLATA?\b|SLEEK|\bLAT\b/.test(e)) { let v = mlDe(e); if (v === 355 || v === 354) v = 350; return { tipo: "LT", ml: v }; }
+  if (/GARRAFA MEIA/.test(e)) return { tipo: "RGB", ml: 300 };
+  if (/GARRAFA INTEIRA|GARRAFA 630/.test(e)) return { tipo: "RGB", ml: 600 };
+  if (/GARRAFA LITRO|RET\.?\s*1000/.test(e)) return { tipo: "RGB", ml: 1000 };
+  if (/GFA VD 300/.test(e)) return { tipo: "RGB", ml: 300 };
+  if (/\bPET\b|PVC|PRB|TWISTER/.test(e)) return { tipo: "PET", ml: mlDe(e, true) };
+  if (/ONE.?WAY|\bOW\b|DESCARTAV|ALUMINIO/.test(e)) { const v = mlDe(e); return [210, 250, 275, 330, 343, 355].includes(v) ? { tipo: "LN", ml: v } : { tipo: "OW", ml: v }; }
+  if (/GARRAFA|GFA/.test(e)) return { tipo: "RGB", ml: mlDe(e, true) };
+  return { tipo: "OUTROS", ml: mlDe(e) };
+}
+// Reserva pelo nome (produto sem embalagem no cadastro)
+const nLata = (p) => /\bLATA\b|\bLT\b|SLEEK/.test(p.nome);
+const nLN = (p) => /LONG\s*NECK|\bLN\b/.test(p.nome) || (!nLata(p) && /\bOW\b|ONE\s*WAY/.test(p.nome) && /\b(330|343|355)\s*ML/.test(p.nome));
+const ehLata = (p) => (p.e ? p.e.tipo === "LT" : nLata(p));
+const ehLN = (p) => (p.e ? p.e.tipo === "LN" : nLN(p));
+const ehOW = (p) => (p.e ? ["LN", "LT", "OW"].includes(p.e.tipo) : nLN(p) || nLata(p) || /\bOW\b|ONE\s*WAY/.test(p.nome));
+const ehRgb = (p) => (p.e ? p.e.tipo === "RGB" : !ehOW(p) && !/\bPET\b/.test(p.nome) && /(300|600|1000)\s*ML|\b1\s*L\b|LITRAO|GFA\s*VD|GARRAFA/.test(p.nome));
+const tam = (p) => (p.e && p.e.ml ? p.e.ml : tamanhoMl(p.nome));
+const tamanhoMl = (nome) => {
+  let m = nome.match(/(\d+(?:[.,]\d+)?)\s*ML\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")));
+  m = nome.match(/(\d+(?:[.,]\d+)?)\s*L\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")) * 1000);
+  return null;
+};
 const GRUPOS = [
   { id: "tt", label: "Total", f: () => true }, // TT do BI inclui Marketplace (conferido c/ o deck: Distribuição set/26)
   { id: "cerveja", label: "Cerveja", f: ehCerv },
   { id: "rgb", label: "Cerveja RGB", f: (p) => ehCerv(p) && ehRgb(p) },
-  { id: "rgb_300", label: "RGB 300 ml", f: (p) => ehCerv(p) && ehRgb(p) && ml(p, /\b300\s*ML/) },
-  { id: "rgb_600", label: "RGB 600 ml", f: (p) => ehCerv(p) && ehRgb(p) && ml(p, /\b600\s*ML/) },
-  { id: "rgb_1l", label: "RGB 1 L", f: (p) => ehCerv(p) && ehRgb(p) && ml(p, /\b1\s*L\b|1000\s*ML|LITRAO/) },
+  { id: "rgb_300", label: "RGB 300 ml", f: (p) => ehCerv(p) && ehRgb(p) && tam(p) === 300 },
+  { id: "rgb_600", label: "RGB 600 ml", f: (p) => ehCerv(p) && ehRgb(p) && [600, 630].includes(tam(p)) },
+  { id: "rgb_1l", label: "RGB 1 L", f: (p) => ehCerv(p) && ehRgb(p) && tam(p) >= 900 },
   { id: "he", label: "High End", f: ehHe },
   { id: "he_rgb", label: "High End RGB", f: (p) => ehHe(p) && ehRgb(p) },
-  { id: "he_350", label: "High End 350", f: (p) => ehHe(p) && ml(p, /\b350\s*ML/) },
+  { id: "he_350", label: "High End 350", f: (p) => ehHe(p) && ehLata(p) && tam(p) === 350 },
   { id: "he_ln", label: "High End LN", f: (p) => ehHe(p) && ehLN(p) },
   { id: "ow", label: "One Way (OW)", f: (p) => ehCerv(p) && ehOW(p) },
-  { id: "ow_350", label: "OW 350", f: (p) => ehCerv(p) && ehOW(p) && ml(p, /\b350\s*ML/) },
-  { id: "ow_473", label: "OW 473", f: (p) => ehCerv(p) && ehOW(p) && ml(p, /\b473\s*ML/) },
+  { id: "ow_350", label: "OW 350", f: (p) => ehCerv(p) && ehLata(p) && tam(p) === 350 },
+  { id: "ow_473", label: "OW 473", f: (p) => ehCerv(p) && ehOW(p) && tam(p) === 473 },
   { id: "ow_ln", label: "OW LN", f: (p) => ehCerv(p) && ehLN(p) },
   { id: "zero", label: "Cerveja Zero", f: (p) => p.cats.has("CERVEJA ZERO") },
   { id: "nab", label: "NAB TT", f: ehNab },
   { id: "nab_zero", label: "NAB Zero", f: (p) => p.cats.has("NAB ZERO") },
   // Single = dose individual (lata / PET até 600 ml), mesmo vendida em caixa — a confirmar c/ o diretor
-  { id: "nab_single", label: "NAB Single", f: (p) => ehNab(p) && ml(p, /\b(200|220|237|250|269|310|330|350|355|473|500|510|600)\s*ML/) },
+  { id: "nab_single", label: "NAB Single", f: (p) => ehNab(p) && tam(p) != null && tam(p) <= 600 },
   { id: "guarana", label: "Guaraná", f: (p) => ehNab(p) && /GUARANA/.test(p.nome) },
   { id: "gatorade", label: "Gatorade", f: (p) => /GATORADE/.test(p.nome) },
   { id: "match", label: "Match TT", f: (p) => p.cats.has("MATCH") },
@@ -87,28 +120,26 @@ const TAGS = [
   { id: "pg", f: (p) => PG.test(p.nome) },
   { id: "cor_cero", f: (p) => /CORONA/.test(p.nome) && ZEROCERO.test(p.nome) },
   { id: "cor", f: (p) => /CORONA/.test(p.nome) && !ZEROCERO.test(p.nome) },
-  { id: "ste_600", f: (p) => /STELLA/.test(p.nome) && !PG.test(p.nome) && /\b600\s*ML/.test(p.nome) },
-  { id: "spt_600", f: (p) => /SPATEN/.test(p.nome) && /\b600\s*ML/.test(p.nome) },
-  { id: "ori_600", f: (p) => /ORIGINAL/.test(p.nome) && /\b600\s*ML/.test(p.nome) },
+  { id: "ste_600", f: (p) => /STELLA/.test(p.nome) && !PG.test(p.nome) && tam(p) === 600 },
+  { id: "spt_600", f: (p) => /SPATEN/.test(p.nome) && tam(p) === 600 },
+  { id: "ori_600", f: (p) => /ORIGINAL/.test(p.nome) && tam(p) === 600 },
 ];
-const tamanhoMl = (nome) => {
-  let m = nome.match(/(\d+(?:[.,]\d+)?)\s*ML\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")));
-  m = nome.match(/(\d+(?:[.,]\d+)?)\s*L\b/); if (m) return Math.round(parseFloat(m[1].replace(",", ".")) * 1000);
-  return null;
-};
 // Embalagem de cerveja (build-up do MPR / Deep Dive): RGB 300/600/1L · LT 269/350/473 · LN
 function embCerv(p) {
   if (ehLN(p)) return "LN";
-  const ml = tamanhoMl(p.nome);
-  if (ehLata(p)) return ml ? `LT ${ml}` : "LT outros";
-  if (ehRgb(p)) return ml === 300 ? "RGB 300" : ml === 600 ? "RGB 600" : ml === 1000 ? "RGB 1L" : "RGB outros";
+  const v = tam(p);
+  if (ehLata(p)) return v ? `LT ${v}` : "LT outros";
+  if (ehRgb(p)) return v === 300 ? "RGB 300" : [600, 630].includes(v) ? "RGB 600" : v >= 900 ? "RGB 1L" : "RGB outros";
+  if (p.e && p.e.tipo === "OW") return v ? `OW ${v}` : "OW outros";
+  if (p.e && p.e.tipo === "CHOPP") return "Chopp";
   return "Outros";
 }
 // Embalagem de NAB (Fast Start p.76): PET 2000/1000/500… · LT 350/269/473
 function embNab(p) {
-  const ml = tamanhoMl(p.nome);
-  const tipo = /\bPET\b/.test(p.nome) ? "PET" : /\bLATA\b|\bLT\b|SLEEK/.test(p.nome) ? "LT" : /GFA|GARRAFA|VD/.test(p.nome) ? "VIDRO" : "OUTROS";
-  return ml ? `${tipo} ${ml}` : tipo;
+  const v = tam(p);
+  const tipo = p.e ? ({ RGB: "VIDRO", LN: "VIDRO", OW: "VIDRO" }[p.e.tipo] || p.e.tipo)
+    : /\bPET\b/.test(p.nome) ? "PET" : /\bLATA\b|\bLT\b|SLEEK/.test(p.nome) ? "LT" : /GFA|GARRAFA|VD/.test(p.nome) ? "VIDRO" : "OUTROS";
+  return v ? `${tipo} ${v}` : tipo;
 }
 
 // O que aparece nos materiais de reunião (MPR fev/26 e set/25, Deep Dive Q1 Supercom, Fast Start 2026)
@@ -174,8 +205,8 @@ async function montar() {
     readSheet("pdv_base").catch(() => []), readSheet("usuarios").catch(() => []),
     readSheet("rv_faturamento_mktp").catch(() => []),
   ]);
-  const catDe = {}, nomeDe = {};
-  full.forEach((p) => { const c = normCod(p.cod); if (c) nomeDe[c] = semAc(p.nome); });
+  const catDe = {}, nomeDe = {}, embDe = {};
+  full.forEach((p) => { const c = normCod(p.cod); if (!c) return; nomeDe[c] = semAc(p.nome); embDe[c] = classificaEmb(semAc(p.embalagem)); });
   base.forEach((p) => {
     const c = normCod(p.cod); if (!c) return;
     catDe[c] = new Set(String(p.categorias || p.categoria || "").split(/[,;|]/).map((x) => x.trim().toUpperCase()).filter((x) => x && x !== "NONE" && x !== "NAN"));
@@ -192,14 +223,14 @@ async function montar() {
   const gruposDoSku = {};
   const gruposDe = (cod, nomeVenda) => {
     if (gruposDoSku[cod]) return gruposDoSku[cod];
-    const p = { nome: nomeDe[cod] || semAc(nomeVenda), cats: catDe[cod] || new Set() };
+    const p = { nome: nomeDe[cod] || semAc(nomeVenda), cats: catDe[cod] || new Set(), e: embDe[cod] || null };
     return (gruposDoSku[cod] = GRUPOS.filter((g) => g.f(p)).map((g) => g.id));
   };
   const marcaDe = (nome) => semAc(nome).split(/\s+/)[0] || "—";
   const tagsDoSku = {};
   const tagsDe = (cod) => {
     if (tagsDoSku[cod]) return tagsDoSku[cod];
-    const p = { nome: nomeDe[cod] || "", cats: catDe[cod] || new Set() };
+    const p = { nome: nomeDe[cod] || "", cats: catDe[cod] || new Set(), e: embDe[cod] || null };
     return (tagsDoSku[cod] = TAGS.filter((t) => t.f(p)).map((t) => t.id));
   };
 
@@ -314,7 +345,7 @@ async function montar() {
   const mesNum = br.getMonth() + 1, frac = du.feitos / du.total;
   const mesesAno = (ano) => Array.from({ length: 12 }, (_, k) => `${ano}-${p2(k + 1)}`);
   const ytdAt = mesesAno(anoAtual).slice(0, mesNum), ytdLy = mesesAno(anoAtual - 1).slice(0, mesNum);
-  const prodDe = (cod) => ({ nome: skuNome[cod] || nomeDe[cod] || "", cats: catDe[cod] || new Set() });
+  const prodDe = (cod) => ({ nome: skuNome[cod] || nomeDe[cod] || "", cats: catDe[cod] || new Set(), e: embDe[cod] || null });
   const somaMes = (m, filtro) => Object.entries(skuM[m] || {}).reduce((a, [c, v]) => a + (filtro(c) ? v : 0), 0);
   // YTD atual (mês atual parcial) × YTD LY (mês corrente do LY proporcional aos dias úteis feitos)
   const ytd = (filtro) => {

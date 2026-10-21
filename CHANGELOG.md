@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.118.1** — RPS: relação do que a HOP não entrega + slides vazios no PPT.
+Versão atual: **v3.118.2** — RPS: embalagem pela coluna G da 0111.
+
+## v3.118.2 — RPS · embalagem do Promax
+- Aberturas por embalagem (RGB 300/600/1L, LT 269/350/473/410/310, LN, OW, PET…) passam a usar a coluna G "Embalagem" da 0111 (já salva em `produtos_full.embalagem`: GARRAFA MEIA = 300, GARRAFA INTEIRA/630 = 600, GARRAFA LITRO/RET.1000 = 1L, LATA 355/SLEEK = LT 350, LONG-NECK e ONE-WAY 330/355 = LN…). O nome do produto fica só de reserva p/ quem não tem embalagem no cadastro.
 
 ## v3.118.1 — RPS · dados externos
 - Relação completa (26 itens, por bloco: Mercado, Resultado, Nível de serviço, Execução e trade, Marketplace, Pessoas, Já existe na HOP) do que aparece nos materiais de reunião e a HOP não entrega, com fonte e onde aparece. No PowerPoint cada item vira slide vazio no mesmo tema (título, fonte, área tracejada p/ colar o print).
