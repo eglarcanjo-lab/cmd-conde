@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.119.2** — Solicitações: periodicidade logo após o Novo dia no Excel.
+Versão atual: **v3.120.0** — RPS removida da HOP (vira planilha).
+
+## v3.120.0 — RPS removida
+- A pedido: tela `/rps`, rota `/api/rps`, aba Deep Dive e item de menu removidos (v3.116–3.119.1). O acompanhamento da RPS passa a ser uma planilha formatada fora da HOP.
 
 ## v3.119.2 — Excel de solicitações
 - "Nova periodicidade" passa a vir logo depois de "Novo dia" (antes era a última coluna). Coluna Ação diz o que a linha pede (SETOR / DIA / PERIODICIDADE / COORDENADA / INATIVAR) e o Excel já abre com filtro.

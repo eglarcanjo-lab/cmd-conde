@@ -65,7 +65,6 @@ app.use("/api/farol-queda", require("./routes/farol-queda"));     // queda de vo
 app.use("/api/farol-volumes", require("./routes/farol-volumes")); // volumes meta×real×tendência (por RN + operação)
 app.use("/api/farol-ruptura", require("./routes/farol-ruptura")); // robô WhatsApp 17:10 — NÃO REMOVER
 app.use("/api/farol-matinal", require("./routes/farol-matinal")); // robô WhatsApp 8h (AP, tasks, S5, PI HE, fat+buffer) — NÃO REMOVER
-app.use("/api/rps", require("./routes/rps"));                     // Acompanhamento Comercial RPS (gestores)
 app.use("/api/rota-efetiva", require("./routes/rota-efetiva"));
 app.use("/api/incentivos-rn", require("./routes/incentivosRn")); // aba Incentivos (Liga CMD, Zeros)
 app.use("/api/anomalia-volume", require("./routes/anomaliaVolume")); // Outros relatórios › Anomalia de Volume
