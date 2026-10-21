@@ -40,10 +40,19 @@ router.get("/", async (req, res) => {
 // GET /api/admin/produtos/sem-categoria
 router.get("/sem-categoria", async (req, res) => {
   try {
-    const dados = await readSheet("produtos_sem_categoria");
+    const [dados, grade, base, reserva] = await Promise.all([
+      readSheet("produtos_sem_categoria"), readSheet("grade_estoque").catch(() => []),
+      readSheet("produtos_base").catch(() => []), nomesReserva(),
+    ]);
+    // + produtos da GRADE DE ESTOQUE sem categoria — só entram no Deck depois de categorizados
+    const comCat = new Set(base.filter((p) => limpo(p.categorias || p.categoria)).map((p) => normCod(p.cod)));
+    const ja = new Set(dados.map((s) => normCod(s.cod_prod)));
+    const daGrade = grade.map((g) => normCod(g.cod)).filter((c) => c && !comCat.has(c) && !ja.has(c))
+      .map((c) => ({ cod_prod: c, nome_prod: reserva[c] || "", categoria: "", origem: "grade" }));
+    const todos = [...daGrade, ...dados];
     // ?contagem=1 → só o nº pendente (o sininho consulta a cada 60s; não precisa da lista)
-    if (req.query.contagem) return res.json({ pendentes: dados.filter((p) => !limpo(p.categoria)).length });
-    return res.json(dados);
+    if (req.query.contagem) return res.json({ pendentes: todos.filter((p) => !limpo(p.categoria)).length });
+    return res.json(todos);
   } catch {
     return res.json([]);
   }

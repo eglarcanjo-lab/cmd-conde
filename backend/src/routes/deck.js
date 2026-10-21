@@ -50,14 +50,14 @@ router.get("/", async (req, res) => {
       readSheet("status_arquivos").catch(() => []),
     ]);
 
-    // cod → categorias (uma ou mais)
-    const catDe = {};
+    // cod → categorias (uma ou mais). Produto com categoria Marketplace NUNCA entra no Deck,
+    // mesmo que tenha outra categoria junto.
+    const catDe = {}, ehMktp = new Set();
     base.forEach((p) => {
       const c = normCod(p.cod);
-      const cats = [...new Set(
-        String(p.categorias || p.categoria || "")
-          .split(/[,;|]/).map((x) => grupoDeCat(x)).filter(Boolean)
-      )];
+      const brutas = String(p.categorias || p.categoria || "").split(/[,;|]/).map((x) => String(x).toUpperCase().trim());
+      if (brutas.some((x) => CAT_FORA.has(x))) ehMktp.add(c);
+      const cats = [...new Set(brutas.map((x) => grupoDeCat(x)).filter(Boolean))];
       if (c) catDe[c] = cats;
     });
 
@@ -71,10 +71,15 @@ router.get("/", async (req, res) => {
     agendados.forEach((r) => { const c = normCod(r.cod_produto); agendDe[c] = int(r.caixas); if (r.nome_produto) nomeAg[c] = String(r.nome_produto).trim(); });
     const vencDe = {}; vencimento.forEach((r) => { vencDe[normCod(r.cod_produto)] = String(r.validade || "").trim(); });
 
-    // Universo: produtos COM categoria que aparecem em alguma das 3 fontes.
-    const universo = new Set();
-    [Object.keys(gradeDe), Object.keys(agendDe), Object.keys(vencDe)].forEach((ks) =>
-      ks.forEach((c) => { if (catDe[c] && catDe[c].length) universo.add(c); }));
+    // Universo = produtos da GRADE DE ESTOQUE com categoria (fora Marketplace). Saiu da grade →
+    // sai do Deck. Produto da grade sem categoria fica de fora e é sinalizado (sem_categoria)
+    // p/ cadastrar na guia Produtos.
+    const universo = new Set(), semCategoria = [];
+    Object.keys(gradeDe).forEach((c) => {
+      if (ehMktp.has(c)) return;
+      if (catDe[c] && catDe[c].length) universo.add(c);
+      else semCategoria.push({ cod: c, nome: nomeDe[c] || nomeAg[c] || c, saldo: gradeDe[c] });
+    });
 
     // Monta produtos por categoria
     const porCat = {};
@@ -116,6 +121,7 @@ router.get("/", async (req, res) => {
     return res.json({
       atualizado_em: st ? String(st.atualizado_em || "").trim() : "",
       total_produtos: universo.size,
+      sem_categoria: semCategoria.sort((a, b) => b.saldo - a.saldo),
       secoes,
     });
   } catch (e) {

@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.114.2** — Faturados × Buffer: faturados do dia, como o PDF do faturista.
+Versão atual: **v3.115.0** — Farol matinal (escopo do PDF matinal).
+
+## v3.115.0 — Farol matinal
+- Rota nova `/api/farol-matinal` (robô WhatsApp — NÃO REMOVER): `/ap` Atendimento Produtivo (painel da operação + por RN, Aderência e Rotina+ com a meta da operação; RN com a linha dele em destaque) · `/tasks` tasks de 1 SKU abertas no mês por categoria (KPIs 10·12·14·15·16; volume fora) + lista do dia do RN · `/score5` PDVs Score 5 com visita hoje (meta/faturado/restante + top 3 SKUs e dias sem comprar) · `/pi-he` Portfólio Ideal HE (KPI 18) com check por SKU · `/fatbuf` Faturados + Buffer. GV recebe igual à diretoria.
+- Conversão Pure Gold: PDV que já comprou a PG600 no mês sai da lista de foco (batia diferente da Home).
+- Deck: só produtos da **grade de estoque** com categoria; nunca Marketplace; produto da grade sem categoria aparece em Admin › Produtos › sem categoria.
+- Processador: `vendas_cliente_produto.ultima_compra`; Portfólio Ideal guarda `categorias_meta`/`skus_comprados`; `sobrescrever_por_mes` cria coluna nova sozinho.
 
 ## v3.114.2 — Faturados do dia
 - Processador: `faturados_detalhe` = NFs da **última data de emissão** do CORA (o PDF "FATURADAS" do faturista), HL só dos itens ATENDIDOS (FALTA não vai na NF), operação = Desc. operação. Antes: todas as NFs do mês + volume da `pedido_chave` (Promax). Conferido 21/10: 235 NFs · 247 pedidos · 130 PDVs · 278,7 HL. `faturado_nf` (mês, usado no detalhamento) não muda.

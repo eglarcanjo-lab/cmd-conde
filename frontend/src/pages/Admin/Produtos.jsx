@@ -144,8 +144,9 @@ export default function Produtos() {
     }
   }
 
+  // origem "grade" = está na grade de estoque e não tem categoria → fora do Deck até categorizar
   const lista = aba === "base" ? produtos : semCat.map(s => ({
-    cod: s.cod_prod, nome: s.nome_prod, categorias: s.categoria || ""
+    cod: s.cod_prod, nome: s.origem === "grade" ? `📦 ${s.nome_prod || s.cod_prod} · na grade (fora do Deck)` : s.nome_prod, categorias: s.categoria || ""
   }));
 
   function exportar() {

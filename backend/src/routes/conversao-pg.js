@@ -37,13 +37,20 @@ router.use(authMiddleware);
 // Núcleo reutilizável: calcula os PDVs-alvo (PG600 e PGLN) no escopo do usuário.
 async function computeConversao(user) {
     const { meses, label } = trimestreAnterior();
-    const [vendasRaw, prodFull, pdvBase, vdPdv] = await Promise.all([
+    // Mês atual: quem JÁ comprou a PG600 (33857/38172) neste mês sai da lista de foco —
+    // senão o farol pedia p/ converter PDV que a Home já conta como comprador (21/10/2026).
+    const brM = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const mesAtual = `${brM.getFullYear()}-${String(brM.getMonth() + 1).padStart(2, "0")}`;
+    const [vendasRaw, prodFull, pdvBase, vdPdv, vendasMes] = await Promise.all([
       readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
       readSheet("produtos_full").catch(() => []),
       readSheet("pdv_base").catch(() => []),
       readSheet("vd_pdv").catch(() => []),
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", [mesAtual]).catch(() => []),
     ]);
     const vendas = filtrarPorPerfil(vendasRaw, user, "setor");
+    const compraPgMes = new Set(vendasMes.filter((r) => num(r.volume_hl) > 0 && [PG600, PG600_OW].includes(normCod(r.cod_produto)))
+      .map((r) => normCod(r.cod_pdv)));
 
     // Dia de visita (pdv_base) e última compra (maior data em vd_pdv) por PDV.
     const diaMap = {};
@@ -78,7 +85,8 @@ async function computeConversao(user) {
 
     // PG600: NÃO comprou 33857 nem 38172 e comprou ≥1 base 600ml.
     const pg600 = arr
-      .filter((e) => !e.comprou.has(PG600) && !e.comprou.has(PG600_OW) && BASE600.some((b) => e.comprou.has(b.cod)))
+      .filter((e) => !e.comprou.has(PG600) && !e.comprou.has(PG600_OW) && BASE600.some((b) => e.comprou.has(b.cod))
+        && !compraPgMes.has(normCod(e.cod_pdv)))
       .map((e) => ({
         cod_pdv: e.cod_pdv, nome_pdv: e.nome_pdv, setor: e.setor,
         dia_visita: diaMap[normCod(e.cod_pdv)] || "", ultima_compra: fmtBR(ultMap[normCod(e.cod_pdv)]),
