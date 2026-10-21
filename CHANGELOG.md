@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.120.0** — RPS removida da HOP (vira planilha).
+Versão atual: **v3.120.1** — Farol 8h: devoluções no PDF de Faturados + Buffer.
+
+## v3.120.1 — Devoluções no PDF de Faturados + Buffer
+- `/api/farol-matinal/fatbuf` ganha as devoluções (entregas_frustradas): resumo dia × mês, NFs do último dia com devolução (PDV, NF, motivo, HL, R$), mês por motivo e, na diretoria, por RN. Robô: blocos sem título usam o título do farol (Pure Gold / Sem visita apareciam como "HOP · Faróis do dia").
 
 ## v3.120.0 — RPS removida
 - A pedido: tela `/rps`, rota `/api/rps`, aba Deep Dive e item de menu removidos (v3.116–3.119.1). O acompanhamento da RPS passa a ser uma planilha formatada fora da HOP.

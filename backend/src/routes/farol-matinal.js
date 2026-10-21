@@ -344,7 +344,8 @@ router.get("/zerados", async (req, res) => {
 router.get("/fatbuf", async (req, res) => {
   try {
     const t = agora();
-    const [fat, buf, d] = await Promise.all([readSheet("faturados_detalhe").catch(() => []), readSheet("buffer_detalhe").catch(() => []), destinos()]);
+    const [fat, buf, d, dev] = await Promise.all([readSheet("faturados_detalhe").catch(() => []), readSheet("buffer_detalhe").catch(() => []), destinos(),
+      readSheet("entregas_frustradas").catch(() => [])]);
     const porPdv = (rows) => {
       const m = {};
       rows.forEach((r) => {
@@ -369,16 +370,53 @@ router.get("/fatbuf", async (req, res) => {
     const porRn = SET_RN.map((s) => { const f = F.filter((x) => x.setor === s), b = B.filter((x) => x.setor === s);
       return { setor: s, rn: primeiro(d.nome[s]), fat: f1(somaHl(f)), buf: f1(somaHl(b)), pdv_buf: b.length, _hb: somaHl(b), _cores: { buf: somaHl(b) ? "down" : "up" } }; })
       .filter((l) => l.fat !== "0" || l._hb).sort((a, b) => b._hb - a._hb);
+    // ── DEVOLUÇÕES (mesmo PDF, depois de Faturados + Buffer) — entregas_frustradas (CORA) ──
+    // Dia = último dia com devolução no mês (data da NF) · Mês = acumulado do mês atual.
+    const dmy = (s) => { const m = String(s || "").match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; };
+    const vistasNf = new Set();
+    const devMes = dev.filter((r) => String(r.mes_referencia || "").slice(0, 7) === t.mes).filter((r) => {
+      const k = String(r.nota || "").trim(); if (!k || vistasNf.has(k)) return false; vistasNf.add(k); return true;
+    }).map((r) => ({ setor: String(r.setor || "").trim(), cod_pdv: normCod(r.cod_pdv), nome_pdv: String(r.nome_pdv || "").trim(), nota: String(r.nota || "").trim(),
+      motivo: String(r.desc_motivo || "").trim() || "SEM MOTIVO", hl: num(r.volume_hl), valor: num(r.valor), iso: dmy(r.data), data: String(r.data || "").slice(0, 10) }));
+    const ultDia = devMes.map((x) => x.iso).filter(Boolean).sort().pop() || "";
+    const rotDia = ultDia ? `${ultDia.slice(8, 10)}/${ultDia.slice(5, 7)}` : "—";
+    const tot = (l) => ({ n: l.length, hl: l.reduce((a, x) => a + x.hl, 0), vl: l.reduce((a, x) => a + x.valor, 0) });
+    const devBlocos = (lista, comSetor, rotulo) => {
+      const dia = lista.filter((x) => x.iso === ultDia), td = tot(dia), tm = tot(lista);
+      const mot = {};
+      lista.forEach((x) => { const e = (mot[x.motivo] = mot[x.motivo] || { motivo: x.motivo, n: 0, hl: 0, vl: 0 }); e.n++; e.hl += x.hl; e.vl += x.valor; });
+      const blocos = [
+        { titulo: `Devoluções · ${rotulo}`, subtitulo: `Último dia com devolução: ${rotDia} · mês: acumulado de ${t.mes.slice(5, 7)}/${t.mes.slice(0, 4)}`,
+          colunas: [{ key: "rn", label: "Indicador" }, { key: "dia", label: `Dia ${rotDia}` }, { key: "mes", label: "No mês" }],
+          linhas: [{ rn: "NFs devolvidas", dia: td.n, mes: tm.n, _cores: { dia: td.n ? "down" : "up", mes: tm.n ? "down" : "up" } },
+            { rn: "Volume (HL)", dia: f1(td.hl), mes: f1(tm.hl) }, { rn: "Valor (R$)", dia: rs(td.vl), mes: rs(tm.vl) }] },
+        { titulo: `Devoluções do dia ${rotDia} · PDVs`, subtitulo: `${dia.length} NF(s)`,
+          colunas: [...(comSetor ? [{ key: "setor", label: "Setor" }] : []), { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" }, { key: "nota", label: "NF" }, { key: "situacao", label: "Motivo" }, { key: "hl", label: "HL" }, { key: "valor", label: "R$" }],
+          linhas: dia.sort((a, b) => b.valor - a.valor).map((x) => ({ setor: x.setor, cod_pdv: x.cod_pdv, nome_pdv: x.nome_pdv, nota: x.nota, situacao: x.motivo, hl: f1(x.hl), valor: rs(x.valor), _cores: { valor: "down" } })) },
+        { titulo: "Devoluções do mês · por motivo", subtitulo: `${tm.n} NF(s) · ${rs(tm.vl)}`,
+          colunas: [{ key: "situacao", label: "Motivo" }, { key: "n", label: "NFs" }, { key: "hl", label: "HL" }, { key: "valor", label: "R$" }],
+          linhas: Object.values(mot).sort((a, b) => b.vl - a.vl).map((m) => ({ situacao: m.motivo, n: m.n, hl: f1(m.hl), valor: rs(m.vl) })) },
+      ];
+      if (comSetor) {
+        blocos.splice(1, 0, { titulo: "Devoluções por RN", subtitulo: `Dia ${rotDia} × mês`, colunas: [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "dia", label: `NFs dia ${rotDia}` }, { key: "mes", label: "NFs mês" }, { key: "valor", label: "R$ mês" }],
+          linhas: SET_RN.map((s) => { const l = lista.filter((x) => x.setor === s); const m = tot(l); return { setor: s, rn: primeiro(d.nome[s]), dia: l.filter((x) => x.iso === ultDia).length, mes: m.n, valor: rs(m.vl), _v: m.vl }; })
+            .filter((x) => x.mes).sort((a, b) => b._v - a._v) });
+      }
+      return blocos;
+    };
+
     const blocosDir = [resumoDe(F, B),
       { titulo: "Por RN", subtitulo: "HL faturado × HL em buffer", colunas: [{ key: "setor", label: "Setor" }, { key: "rn", label: "RN" }, { key: "fat", label: "Faturado (HL)" }, { key: "buf", label: "Buffer (HL)" }, { key: "pdv_buf", label: "PDVs no buffer" }], linhas: porRn },
-      { titulo: "Buffer · PDVs", subtitulo: `${B.length} PDV(s) aguardando roteirização`, colunas: colPdv(true), linhas: B.map(linhaPdv) }];
+      { titulo: "Buffer · PDVs", subtitulo: `${B.length} PDV(s) aguardando roteirização`, colunas: colPdv(true), linhas: B.map(linhaPdv) },
+      ...devBlocos(devMes, true, "Operação")];
     const blocosRn = (s) => {
       const f = F.filter((x) => x.setor === s), b = B.filter((x) => x.setor === s);
       return [resumoDe(f, b),
         { titulo: `Buffer · PDVs · Setor ${s}`, subtitulo: `${b.length} PDV(s) aguardando roteirização`, colunas: colPdv(false), linhas: b.map(linhaPdv) },
-        { titulo: `Faturados · PDVs · Setor ${s}`, subtitulo: `${f.length} PDV(s) faturados`, colunas: colPdv(false), linhas: f.map(linhaPdv) }];
+        { titulo: `Faturados · PDVs · Setor ${s}`, subtitulo: `${f.length} PDV(s) faturados`, colunas: colPdv(false), linhas: f.map(linhaPdv) },
+        ...devBlocos(devMes.filter((x) => x.setor === s), false, `Setor ${s}`)];
     };
-    return res.json(resposta(t, d, { titulo: "Faturados + Buffer", emoji: "🚚", legenda: "buffer = pedido parado aguardando roteirização" }, blocosRn, blocosDir));
+    return res.json(resposta(t, d, { titulo: "Faturados + Buffer + Devoluções", emoji: "🚚", legenda: "buffer = pedido parado aguardando roteirização" }, blocosRn, blocosDir));
   } catch (e) {
     console.error("farol-matinal/fatbuf:", e);
     return res.status(500).json({ error: "Erro ao montar Faturados + Buffer." });
