@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.116.0** — Acompanhamento Comercial (RPS), pré-escopo.
+Versão atual: **v3.116.1** — RPS: TT inclui Marketplace; NAB Single = dose individual.
+
+## v3.116.1 — RPS ajustes
+- TT passa a incluir Marketplace (como o BI — conferido c/ Distribuição set/26 do deck). NAB Single = lata/PET até 600 ml.
 
 ## v3.116.0 — Acompanhamento Comercial · RPS (pré-escopo)
 - Tela nova `/rps` (gestores) a partir da planilha e do deck do diretor comercial: **Volumes** (grupos e aberturas RGB 300/600/1L, HE RGB/350/LN, OW 350/473/LN, Zero, NAB TT/Zero/Single, Guaraná, Gatorade, Match TT/LN/LT/Senses/Sabores, Mktp + marcas e cidades), **Compradores** (com Estáveis/Instáveis/Novos pelos 3 meses anteriores), **Distribuição** (Σ SKU/PDV e média) e **Marketplace** (faturamento, compradores, distribuição).

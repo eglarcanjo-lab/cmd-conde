@@ -34,7 +34,7 @@ const ehOW = (p) => ehLN(p) || ehLata(p) || /\bOW\b|ONE\s*WAY/.test(p.nome);
 const ehRgb = (p) => !ehOW(p) && !/\bPET\b/.test(p.nome) && /(300|600|1000)\s*ML|\b1\s*L\b|LITRAO|GFA\s*VD|GARRAFA/.test(p.nome);
 const ml = (p, re) => re.test(p.nome);
 const GRUPOS = [
-  { id: "tt", label: "Total (sem Marketplace)", f: (p) => !ehMktp(p) },
+  { id: "tt", label: "Total", f: () => true }, // TT do BI inclui Marketplace (conferido c/ o deck: Distribuição set/26)
   { id: "cerveja", label: "Cerveja", f: ehCerv },
   { id: "rgb", label: "Cerveja RGB", f: (p) => ehCerv(p) && ehRgb(p) },
   { id: "rgb_300", label: "RGB 300 ml", f: (p) => ehCerv(p) && ehRgb(p) && ml(p, /\b300\s*ML/) },
@@ -51,7 +51,8 @@ const GRUPOS = [
   { id: "zero", label: "Cerveja Zero", f: (p) => p.cats.has("CERVEJA ZERO") },
   { id: "nab", label: "NAB TT", f: ehNab },
   { id: "nab_zero", label: "NAB Zero", f: (p) => p.cats.has("NAB ZERO") },
-  { id: "nab_single", label: "NAB Single", f: (p) => ehNab(p) && ml(p, /\b(200|220|237|250|269|310|330|350|355|473|500|510|600)\s*ML/) && !/\bC\/?\s*\d|CX|FD|PACK|SH\b/.test(p.nome) },
+  // Single = dose individual (lata / PET até 600 ml), mesmo vendida em caixa — a confirmar c/ o diretor
+  { id: "nab_single", label: "NAB Single", f: (p) => ehNab(p) && ml(p, /\b(200|220|237|250|269|310|330|350|355|473|500|510|600)\s*ML/) },
   { id: "guarana", label: "Guaraná", f: (p) => ehNab(p) && /GUARANA/.test(p.nome) },
   { id: "gatorade", label: "Gatorade", f: (p) => /GATORADE/.test(p.nome) },
   { id: "match", label: "Match TT", f: (p) => p.cats.has("MATCH") },
