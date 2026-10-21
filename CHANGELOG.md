@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.119.1** — RPS: vendas antigas contam p/ o RN que atende o PDV hoje.
+Versão atual: **v3.119.2** — Solicitações: periodicidade logo após o Novo dia no Excel.
+
+## v3.119.2 — Excel de solicitações
+- "Nova periodicidade" passa a vir logo depois de "Novo dia" (antes era a última coluna). Coluna Ação diz o que a linha pede (SETOR / DIA / PERIODICIDADE / COORDENADA / INATIVAR) e o Excel já abre com filtro.
 
 ## v3.119.1 — RPS por setor atual
 - RPS: cada venda (inclusive 2025) é atribuída ao setor que atende o PDV HOJE (Base de Clientes; 301–305 → 107–111). Comparações por RN (M-1, L3M, LY, YTD) ficam justas mesmo com troca de carteira.

@@ -72,22 +72,35 @@ function exportarPendentes(sols, nomeArq) {
   });
 }
 
+// O que a linha pede (coluna "Ação"): deixa claro quando é SÓ periodicidade (mesmo dia/setor)
+function acaoDe(it) {
+  if (it.inativar) return "INATIVAR";
+  const p = [];
+  if (it.setor_novo) p.push("SETOR");
+  if (it.dia_novo && it.dia_novo !== it.dia_atual) p.push("DIA");
+  if (it.periodicidade_nova) p.push("PERIODICIDADE");
+  if (it.lat_nova != null) p.push("COORDENADA");
+  return p.join(" + ") || "—";
+}
+
 function exportar(sols, nomeArq, soAprovados, soPendentes, extra) {
   const cab = ["Solicitação", "Data pedido", "RN solicitante", "Cód PDV", "PDV", "Média tri (HL/mês)",
-    "Setor atual", "Novo setor", "Dia atual", "Novo dia", "Status", "Decidido em", "Motivo",
-    "Ação", "Justificativa (inativação)", "Inadimplência", "Comodato", "Latitude nova", "Longitude nova", "Endereço (coordenada nova)", "Mapa", "Nova periodicidade"];
+    "Setor atual", "Novo setor", "Dia atual", "Novo dia", "Nova periodicidade", "Status", "Decidido em", "Motivo",
+    "Ação", "Justificativa (inativação)", "Inadimplência", "Comodato", "Latitude nova", "Longitude nova", "Endereço (coordenada nova)", "Mapa"];
+  // índices das colunas (p/ cor e formato)
+  const C = { setorAt: 6, setorNovo: 7, diaAt: 8, diaNovo: 9, per: 10, acao: 14, lat: 18, lng: 19 };
   const linhas = [];
   sols.forEach((s) => s.itens.forEach((it) => {
     if (soAprovados && it.status !== "Aprovado") return;
     if (soPendentes && it.status !== "Pendente") return;
     linhas.push([s.id, dataBR(s.criado_em), `${s.setor} · ${s.nome_rn || ""}`, it.cod_pdv, it.nome_pdv, it.media_tri_hl,
       it.setor_atual, it.setor_novo || it.setor_atual, it.dia_atual, it.dia_novo || it.dia_atual,
+      it.periodicidade_nova ? it.periodicidade_nova.charAt(0) + it.periodicidade_nova.slice(1).toLowerCase() : "",
       it.status === "Pendente" ? "Em aprovação" : it.status, dataBR(s.decidido_em), s.motivo || "",
-      it.inativar ? "INATIVAR" : (it.setor_novo || it.dia_novo || it.periodicidade_nova) ? (it.lat_nova != null ? "MIGRAR + COORDENADA" : "MIGRAR") : "COORDENADA",
+      acaoDe(it),
       it.justificativa || "", it.inad_info || "", it.comodato_info || "",
       coord6(it.lat_nova), coord6(it.lng_nova), it.endereco_novo || "",
-      it.lat_nova != null ? `https://www.google.com/maps?q=${coord6(it.lat_nova)},${coord6(it.lng_nova)}` : "",
-      it.periodicidade_nova ? it.periodicidade_nova.charAt(0) + it.periodicidade_nova.slice(1).toLowerCase() : ""]);
+      it.lat_nova != null ? `https://www.google.com/maps?q=${coord6(it.lat_nova)},${coord6(it.lng_nova)}` : ""]);
   }));
   if (!linhas.length) { alert("Nenhuma linha para exportar."); return; }
   const ws = XLSX.utils.aoa_to_sheet([cab, ...linhas]);
@@ -96,15 +109,17 @@ function exportar(sols, nomeArq, soAprovados, soPendentes, extra) {
   cab.forEach((_, c) => { const r = XLSX.utils.encode_cell({ r: 0, c }); ws[r].s = head; });
   const inat = { font: { bold: true, color: { rgb: "A52834" } }, fill: { fgColor: { rgb: "F8D7DA" } } };
   linhas.forEach((l, i) => {
-    if (l[13] === "INATIVAR") ws[XLSX.utils.encode_cell({ r: i + 1, c: 13 })].s = inat;
-    if (l[7] !== l[6]) ws[XLSX.utils.encode_cell({ r: i + 1, c: 7 })].s = muda;  // novo setor ≠ atual
-    if (l[9] !== l[8]) ws[XLSX.utils.encode_cell({ r: i + 1, c: 9 })].s = muda;  // novo dia ≠ atual
-    if (l[21]) ws[XLSX.utils.encode_cell({ r: i + 1, c: 21 })].s = muda;         // nova periodicidade
+    const cel = (c) => ws[XLSX.utils.encode_cell({ r: i + 1, c })];
+    if (l[C.acao] === "INATIVAR") cel(C.acao).s = inat;
+    if (l[C.setorNovo] !== l[C.setorAt]) cel(C.setorNovo).s = muda;  // novo setor ≠ atual
+    if (l[C.diaNovo] !== l[C.diaAt]) cel(C.diaNovo).s = muda;        // novo dia ≠ atual
+    if (l[C.per]) cel(C.per).s = muda;                               // nova periodicidade
   });
-  ws["!cols"] = [10, 11, 22, 10, 30, 10, 9, 9, 8, 8, 12, 11, 30, 14, 40, 45, 55, 12, 12, 45, 40, 16].map((wch) => ({ wch }));
+  ws["!cols"] = [10, 11, 22, 10, 30, 10, 9, 9, 8, 8, 14, 12, 11, 30, 22, 40, 45, 55, 12, 12, 45, 40].map((wch) => ({ wch }));
   ws["!rows"] = [{ hpt: 30 }];
+  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: linhas.length, c: cab.length - 1 } }) };
   // latitude/longitude como texto (6 casas, ponto) — o Excel não arredonda nem troca p/ vírgula
-  linhas.forEach((_, i) => [17, 18].forEach((c) => { const k = XLSX.utils.encode_cell({ r: i + 1, c }); if (ws[k] && ws[k].v !== "") { ws[k].t = "s"; ws[k].z = "@"; } }));
+  linhas.forEach((_, i) => [C.lat, C.lng].forEach((c) => { const k = XLSX.utils.encode_cell({ r: i + 1, c }); if (ws[k] && ws[k].v !== "") { ws[k].t = "s"; ws[k].z = "@"; } }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, soPendentes ? "Pendentes" : "Migrações");
   if (extra) extra(wb);
