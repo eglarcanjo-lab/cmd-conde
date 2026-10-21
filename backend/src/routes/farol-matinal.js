@@ -298,6 +298,48 @@ router.get("/pi-he", async (req, res) => {
   }
 });
 
+// ─── 4b) MAIS VENDIDOS ZERADOS NA GRADE (logo abaixo do Report de Volumes) ─────
+// Ranking da operação por média HL dos 3 meses anteriores; lista os 20 primeiros que estão
+// com saldo 0 na grade de estoque (ou fora dela). Mesmo bloco p/ todos (RN, GV, diretoria).
+router.get("/zerados", async (req, res) => {
+  try {
+    const t = agora();
+    const ant = [3, 2, 1].map((k) => { const x = new Date(t.br.getFullYear(), t.br.getMonth() - k, 1); return `${x.getFullYear()}-${p2(x.getMonth() + 1)}`; });
+    const [vendas, grade, agend, full, d] = await Promise.all([
+      readSheetMonths("vendas_cliente_produto", "mes_referencia", [...ant, t.mes]).catch(() => []),
+      readSheet("grade_estoque").catch(() => []), readSheet("deck_agendados").catch(() => []),
+      readSheet("produtos_full").catch(() => []), destinos(),
+    ]);
+    const nome = {};
+    full.forEach((p) => { const c = normCod(p.cod); if (c) nome[c] = String(p.nome || "").trim(); });
+    const saldo = {};
+    grade.forEach((g) => { const c = normCod(g.cod); if (c) saldo[c] = (saldo[c] || 0) + (parseInt(g.saldo) || 0); });
+    const agendDe = {};
+    agend.forEach((r) => { agendDe[normCod(r.cod_produto)] = Math.round(num(r.caixas)); });
+    const prod = {};
+    vendas.forEach((v) => {
+      const c = normCod(v.cod_produto), hl = num(v.volume_hl); if (!c || hl <= 0) return;
+      const e = (prod[c] = prod[c] || { cod: c, nome: nome[c] || String(v.nome_produto || "").trim(), ant: 0, atual: 0 });
+      if (String(v.mes_referencia || "").slice(0, 7) === t.mes) e.atual += hl; else e.ant += hl;
+    });
+    const ranking = Object.values(prod).map((e) => ({ ...e, media: e.ant / 3 })).sort((a, b) => b.media - a.media);
+    ranking.forEach((e, i) => { e.rank = i + 1; });
+    const zerados = ranking.filter((e) => e.media > 0 && (saldo[e.cod] == null || saldo[e.cod] <= 0)).slice(0, 20);
+    const bloco = {
+      titulo: "Mais vendidos ZERADOS na grade de estoque",
+      subtitulo: `Os 20 mais vendidos (média ${ant.map((m) => m.slice(5, 7) + "/" + m.slice(2, 4)).join("–")}) com saldo 0 na grade · posição = ranking de vendas da operação`,
+      colunas: [{ key: "rank", label: "Pos." }, { key: "cod_produto", label: "Cód" }, { key: "nome_produto", label: "Produto" }, { key: "media", label: "Média 3M (HL)" },
+        { key: "atual", label: "Mês atual (HL)" }, { key: "estoque", label: "Grade" }, { key: "agend", label: "Agendados D+7 (cx)" }],
+      linhas: zerados.map((e) => ({ rank: `${e.rank}º`, cod_produto: e.cod, nome_produto: e.nome, media: f1(e.media), atual: f1(e.atual),
+        estoque: saldo[e.cod] == null ? "fora da grade" : "0", agend: agendDe[e.cod] ? agendDe[e.cod].toLocaleString("pt-BR") : "—", _cores: { estoque: "down" } })),
+    };
+    return res.json(resposta(t, d, { titulo: "Zerados na grade", emoji: "🚫", legenda: "mais vendidos sem estoque" }, () => [bloco], [bloco]));
+  } catch (e) {
+    console.error("farol-matinal/zerados:", e);
+    return res.status(500).json({ error: "Erro ao montar os zerados na grade." });
+  }
+});
+
 // ─── 5) FATURADOS + BUFFER (PDF separado) ──────────────────────────────────────
 router.get("/fatbuf", async (req, res) => {
   try {

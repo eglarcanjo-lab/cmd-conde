@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.116.2** — RPS: export PowerPoint corrigido.
+Versão atual: **v3.117.0** — Farol matinal: mais vendidos zerados na grade.
+
+## v3.117.0 — Mais vendidos zerados na grade
+- `/api/farol-matinal/zerados`: os 20 mais vendidos (média HL dos 3 meses anteriores, ranking da operação) com saldo 0 na grade de estoque (ou fora dela) + agendados D+7. No envio das 8h, logo abaixo do Report de Volumes, p/ todos.
 
 ## v3.116.2 — RPS: PowerPoint
 - pptxgenjs vinha de uma URL do cdnjs que não existe (404) → agora jsDelivr. Testado: 59 slides com os dados reais.
