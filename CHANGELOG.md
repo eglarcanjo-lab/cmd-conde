@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.114.1** — Buffer: só o que está aguardando roteirização.
+Versão atual: **v3.114.2** — Faturados × Buffer: faturados do dia, como o PDF do faturista.
+
+## v3.114.2 — Faturados do dia
+- Processador: `faturados_detalhe` = NFs da **última data de emissão** do CORA (o PDF "FATURADAS" do faturista), HL só dos itens ATENDIDOS (FALTA não vai na NF), operação = Desc. operação. Antes: todas as NFs do mês + volume da `pedido_chave` (Promax). Conferido 21/10: 235 NFs · 247 pedidos · 130 PDVs · 278,7 HL. `faturado_nf` (mês, usado no detalhamento) não muda.
 
 ## v3.114.1 — Buffer bate com o PDF do faturista
 - Processador (`processar_cora`): buffer = Tipo buffer REPROGRAMADO **e** Situação pedido AGUARDANDO_ROTEIRIZACAO. Antes só REPROGRAMADO → somava o mês inteiro (entregues, devolvidos, em rota): ~2.700 HL. Conferido em 21/10: 316,79 HL · 202 PDVs, igual por setor. Vale a partir do próximo import do CORA.
