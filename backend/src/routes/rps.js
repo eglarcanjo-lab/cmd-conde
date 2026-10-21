@@ -111,6 +111,38 @@ function embNab(p) {
   return ml ? `${tipo} ${ml}` : tipo;
 }
 
+// O que aparece nos materiais de reunião (MPR fev/26 e set/25, Deep Dive Q1 Supercom, Fast Start 2026)
+// e a HOP NÃO entrega. Viram slides vazios no PowerPoint (mesmo tema) p/ colar o print da fonte.
+// tipo "externo" = dado fora da HOP · "na_hop" = existe em outra tela da HOP, ainda fora da RPS.
+const EXTERNOS = [
+  { secao: "Mercado", titulo: "Share Nielsen · Total, Core e High End", fonte: "Nielsen", tipo: "externo", onde: "MPR fev/26 (sl. 24) · MPR set/25 (sl. 15–17) · Fast Start p. 63–65" },
+  { secao: "Mercado", titulo: "Share Nielsen · build-up por segmento, embalagem e marca (MS, WGT e PI)", fonte: "Nielsen", tipo: "externo", onde: "Deep Dive Q1 (sl. 40–48) · Fast Start p. 64–67" },
+  { secao: "Mercado", titulo: "Share Nielsen · Cerveja Zero e mix packs (Top / Bottom SKU de mercado)", fonte: "Nielsen", tipo: "externo", onde: "Deep Dive Q1 (sl. 46–48)" },
+  { secao: "Mercado", titulo: "Share Scanntech · Total, Score 5 Total e Score 5 High End", fonte: "Scanntech", tipo: "externo", onde: "MPR fev/26 (sl. 23) · MPR set/25 (sl. 18–19)" },
+  { secao: "Mercado", titulo: "Scanntech · positivação, expansão e base de ressarcimento", fonte: "Scanntech", tipo: "externo", onde: "Deep Dive Q1 (sl. 35–36) · Fast Start p. 91–92" },
+  { secao: "Mercado", titulo: "Volume sell-out", fonte: "BI / Scanntech", tipo: "externo", onde: "Fast Start p. 68–78" },
+  { secao: "Resultado", titulo: "Orçamento (BGT) e FY · volume vs BGT", fonte: "Orçamento / BI", tipo: "externo", onde: "Deep Dive Q1 (sl. 10–34)" },
+  { secao: "Resultado", titulo: "Meta Bônus", fonte: "Supercom / GEO", tipo: "externo", onde: "Deep Dive Q1 (sl. 7–8)" },
+  { secao: "Resultado", titulo: "Ranking PEX / SPO das operações e comerciais", fonte: "BI oficial", tipo: "externo", onde: "Fast Start p. 143–146" },
+  { secao: "Nível de serviço", titulo: "NPS · total, on trade, off trade e ranking", fonte: "BI NPS", tipo: "externo", onde: "MPR fev/26 (sl. 19) · Deep Dive Q1 (sl. 38) · Fast Start p. 127, 179–180" },
+  { secao: "Nível de serviço", titulo: "NPS · motivos neutros e detratores", fonte: "BI NPS", tipo: "externo", onde: "Deep Dive Q1 (sl. 38) · Fast Start p. 179" },
+  { secao: "Nível de serviço", titulo: "OTIF, falta teórica (TOOS) e entregas sem falhas", fonte: "Logística", tipo: "externo", onde: "Fast Start p. 128, 174, 178" },
+  { secao: "Nível de serviço", titulo: "DPO / SDPO · status e itens críticos", fonte: "DPO", tipo: "externo", onde: "MPR fev/26 (sl. 22) · Deep Dive Q1 (sl. 5) · Fast Start p. 144" },
+  { secao: "Execução e trade", titulo: "Score 5 · cooler, execução de preço, materiais e cupons", fonte: "BI Score 5", tipo: "externo", onde: "MPR fev/26 (sl. 20–21) · Deep Dive Q1 (sl. 26–27)" },
+  { secao: "Execução e trade", titulo: "Cobertura de coolers e promotores (vizinhança)", fonte: "Trade", tipo: "externo", onde: "Deep Dive Q1 (sl. 35–37)" },
+  { secao: "Execução e trade", titulo: "Trade · CTS, exclusivos, chopp e SOPI / venda zero", fonte: "Trade", tipo: "externo", onde: "Deep Dive Q1 (sl. 36–37) · Fast Start p. 89–90" },
+  { secao: "Execução e trade", titulo: "Contratos · investimento e ROI", fonte: "Contratos / Financeiro", tipo: "externo", onde: "Fast Start p. 164–166" },
+  { secao: "Marketplace", titulo: "Marketplace · GMV e SKUs por indústria, nº de indústrias (fat. ≥ R$ 3 mil)", fonte: "Relatório Marketplace", tipo: "externo", onde: "MPR fev/26 (sl. 14) · Fast Start p. 78–79" },
+  { secao: "Marketplace", titulo: "Marketplace · margem por SKU e total", fonte: "Custo por SKU", tipo: "externo", onde: "Deck do diretor (sl. 3)" },
+  { secao: "Pessoas", titulo: "Gente · estrutura e movimentações", fonte: "RH", tipo: "externo", onde: "Deep Dive Q1 (sl. 49) · Fast Start" },
+  { secao: "Pessoas", titulo: "Destaques do time (slide livre)", fonte: "Gestor", tipo: "externo", onde: "MPR fev/26 (sl. 25)" },
+  { secao: "Pessoas", titulo: "Sonho e plano do ano (volume e share)", fonte: "Gestor", tipo: "externo", onde: "MPR fev/26 (sl. 26) · Fast Start p. 195" },
+  { secao: "Já existe na HOP (fora da RPS)", titulo: "SPO · pontuação por KPI e ranking", fonte: "HOP › SPO", tipo: "na_hop", onde: "Deep Dive Q1 (sl. 4) · MPR fev/26 (sl. 22)" },
+  { secao: "Já existe na HOP (fora da RPS)", titulo: "Atendimento Produtivo · % RNs com os pilares, GPS e Rota Efetiva", fonte: "HOP › SPO / Rota Efetiva", tipo: "na_hop", onde: "Fast Start p. 84–86" },
+  { secao: "Já existe na HOP (fora da RPS)", titulo: "Score 5 · compradores, visitação, tasks e portfólio ideal", fonte: "HOP › SPO", tipo: "na_hop", onde: "MPR fev/26 (sl. 20–21) · Deep Dive Q1 (sl. 27)" },
+  { secao: "Já existe na HOP (fora da RPS)", titulo: "Tarefas de portfólio (Cerveja / NAB) e Bees alone · cupons", fonte: "HOP › Tasks / SPO", tipo: "na_hop", onde: "Fast Start p. 87–88" },
+];
+
 function mesesAte(br, n) {
   return Array.from({ length: n }, (_, k) => { const d = new Date(br.getFullYear(), br.getMonth() - (n - 1 - k), 1); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; });
 }
@@ -360,7 +392,7 @@ async function montar() {
     bottomSku: [...porSku].sort((a, b) => a.delta - b.delta).slice(0, 10),
     cruzamentos, he600: { compradores: he600.size, so_uma_marca: he600Uma, pct: he600.size ? r1((he600Uma / he600.size) * 100) : null },
     cob300, multipack,
-    externos: ["Share Nielsen / Scanntech (total, Core, High End, Score 5)", "NPS (on trade e por motivo)", "DPO / SDPO", "Indústrias parceiras do Marketplace (GMV por indústria, nº de indústrias com fat. ≥ R$ 3 mil)", "Gente"],
+    externos: EXTERNOS,
   };
 
   return { meses, mesAtual, diasUteis: { feitos: du.feitos, total: du.total }, gerado_em: br.toISOString(),

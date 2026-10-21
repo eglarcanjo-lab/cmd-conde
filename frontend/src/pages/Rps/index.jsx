@@ -201,7 +201,16 @@ async function exportarPptx(d) {
       [cel("Peso MP na lata", { align: "left" }), ...dd.multipack.peso.map((v) => cel(`${fmt(v, 1)}%`))],
       [cel("PDVs compradores MP", { align: "left" }), ...dd.multipack.compradores.map((v) => cel(fmt(v)))],
       [cel("% compr. lata c/ MP", { align: "left" }), ...dd.multipack.cobertura_lata.map((v) => cel(`${fmt(v, 1)}%`))]]);
-    dd.externos.forEach((t) => { const s = p.addSlide(); s.addText(t, { x: 0.4, y: 0.2, w: 12.5, h: 0.6, fontSize: 22, bold: true, color: CINZA }); s.addText("(colar aqui o print do BI / Nielsen / Scanntech)", { x: 0.4, y: 3.4, w: 12.5, h: 0.5, fontSize: 14, color: "AAAAAA", align: "center" }); });
+    // Slides VAZIOS no mesmo tema (título + espaço p/ colar) p/ o que a HOP não entrega
+    capa("DADOS EXTERNOS", "Slides para colar os prints das fontes (Nielsen, Scanntech, NPS, DPO, Trade…)");
+    (dd.externos || []).forEach((e) => {
+      const it = typeof e === "string" ? { titulo: e, secao: "", fonte: "", onde: "" } : e;
+      const s = p.addSlide();
+      s.addText(`${it.secao ? it.secao + " · " : ""}${it.titulo}`, { x: 0.4, y: 0.2, w: 12.5, h: 0.6, fontSize: 22, bold: true, color: CINZA });
+      s.addText(`Fonte: ${it.fonte || "—"}${it.onde ? "  ·  referência: " + it.onde : ""}`, { x: 0.4, y: 0.8, w: 12.5, h: 0.35, fontSize: 10, color: "888888" });
+      s.addShape(p.ShapeType.rect, { x: 0.4, y: 1.3, w: 12.5, h: 5.8, line: { color: "BBBBBB", width: 1, dashType: "dash" }, fill: { color: "FFFFFF" } });
+      s.addText(it.tipo === "na_hop" ? `Disponível na HOP: ${it.fonte}` : `Colar aqui o print · ${it.fonte || "fonte externa"}`, { x: 0.4, y: 3.9, w: 12.5, h: 0.5, fontSize: 14, color: "AAAAAA", align: "center" });
+    });
   }
   await p.writeFile({ fileName: `Acompanhamento_Comercial_RPS_${d.mesAtual}.pptx` });
 }

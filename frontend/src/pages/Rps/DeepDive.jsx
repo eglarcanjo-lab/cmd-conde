@@ -163,9 +163,11 @@ export default function DeepDive({ dd, mesAtual }) {
 
       {sub === "ext" && (
         <div style={S.card}>
-          <b>Presentes nos materiais, mas sem dado na HOP</b>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: "0.85rem", lineHeight: 1.8 }}>{dd.externos.map((x) => <li key={x}>{x}</li>)}</ul>
-          <p style={S.nota}>No PowerPoint esses temas saem como slides em branco com o título, para colar os prints do BI / Nielsen / Scanntech.</p>
+          <b>Presentes nos materiais de reunião, mas a HOP não entrega na RPS</b>
+          <Tabela cols={[{ k: "secao", l: "Bloco", esq: true }, { k: "titulo", l: "Análise", esq: true }, { k: "fonte", l: "Fonte", esq: true },
+            { k: "tipo", l: "Situação", esq: true, f: (r) => (r.tipo === "na_hop" ? "existe em outra tela da HOP" : "externo") }, { k: "onde", l: "Onde aparece nos materiais", esq: true }]}
+            rows={dd.externos.map((x) => (typeof x === "string" ? { titulo: x } : x))} destaque={(r) => r.tipo === "na_hop"} />
+          <p style={S.nota}>No PowerPoint, cada linha vira um slide vazio no mesmo tema (título, fonte e espaço tracejado) para colar o print. As linhas em verde já existem na HOP e podem entrar na RPS depois.</p>
         </div>
       )}
     </div>

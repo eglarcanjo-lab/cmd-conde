@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.118.0** — RPS: Deep Dive (materiais MPR / Fast Start / Deep Dive Q1).
+Versão atual: **v3.118.1** — RPS: relação do que a HOP não entrega + slides vazios no PPT.
+
+## v3.118.1 — RPS · dados externos
+- Relação completa (26 itens, por bloco: Mercado, Resultado, Nível de serviço, Execução e trade, Marketplace, Pessoas, Já existe na HOP) do que aparece nos materiais de reunião e a HOP não entrega, com fonte e onde aparece. No PowerPoint cada item vira slide vazio no mesmo tema (título, fonte, área tracejada p/ colar o print).
 
 ## v3.118.0 — RPS · Deep Dive
 - Aba nova **🔎 Deep Dive** na RPS (e no PowerPoint), com o que se repete nos materiais de reunião: **YTD × YTD LY** por categoria (barras mês a mês dos 2 anos), **build-up** Core × High End, marca, embalagem (RGB 300/600/1L, LT 269/350/473, LN), NAB por embalagem e segmento do PDV, **Top/Bottom SKU** (ganhos/perdas vs LY), **oportunidades High End** (Stella/Spaten LN sem Stella PG, Corona LN sem Cero, Bud LN sem Corona, HE 600 de 1 marca só — por RN + Excel dos PDVs), **cobertura RGB 300 × Cerveja TT** por RN e **Multipack** (peso na lata, compradores). Share/NPS/DPO/indústrias saem como slides em branco p/ colar o BI.
