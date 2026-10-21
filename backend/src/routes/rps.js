@@ -28,8 +28,9 @@ const ehCerv = (p) => CERV.some((c) => p.cats.has(c)) || [...p.cats].some((c) =>
 const ehMktp = (p) => p.cats.has("MKTP");
 const ehNab = (p) => p.cats.has("NAB") || p.cats.has("NAB ZERO");
 const ehHe = (p) => p.cats.has("HE") || [...p.cats].some((c) => c.startsWith("TRIMARCA"));
-const ehLN = (p) => /LONG\s*NECK|\bLN\b/.test(p.nome);
 const ehLata = (p) => /\bLATA\b|\bLT\b|SLEEK/.test(p.nome);
+// LN = "LONG NECK"/"LN" no nome ou garrafa one way 330–355 ml (ex.: "BUDWEISER OW 330ML CX C/24")
+const ehLN = (p) => /LONG\s*NECK|\bLN\b/.test(p.nome) || (!ehLata(p) && /\bOW\b|ONE\s*WAY/.test(p.nome) && /\b(330|343|355)\s*ML/.test(p.nome));
 const ehOW = (p) => ehLN(p) || ehLata(p) || /\bOW\b|ONE\s*WAY/.test(p.nome);
 const ehRgb = (p) => !ehOW(p) && !/\bPET\b/.test(p.nome) && /(300|600|1000)\s*ML|\b1\s*L\b|LITRAO|GFA\s*VD|GARRAFA/.test(p.nome);
 const ml = (p, re) => re.test(p.nome);

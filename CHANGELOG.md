@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.117.0** — Farol matinal: mais vendidos zerados na grade.
+Versão atual: **v3.118.0** — RPS: Deep Dive (materiais MPR / Fast Start / Deep Dive Q1).
+
+## v3.118.0 — RPS · Deep Dive
+- Aba nova **🔎 Deep Dive** na RPS (e no PowerPoint), com o que se repete nos materiais de reunião: **YTD × YTD LY** por categoria (barras mês a mês dos 2 anos), **build-up** Core × High End, marca, embalagem (RGB 300/600/1L, LT 269/350/473, LN), NAB por embalagem e segmento do PDV, **Top/Bottom SKU** (ganhos/perdas vs LY), **oportunidades High End** (Stella/Spaten LN sem Stella PG, Corona LN sem Cero, Bud LN sem Corona, HE 600 de 1 marca só — por RN + Excel dos PDVs), **cobertura RGB 300 × Cerveja TT** por RN e **Multipack** (peso na lata, compradores). Share/NPS/DPO/indústrias saem como slides em branco p/ colar o BI.
+- LN passa a reconhecer garrafa OW 330–355 ml (Budweiser OW 330).
 
 ## v3.117.0 — Mais vendidos zerados na grade
 - `/api/farol-matinal/zerados`: os 20 mais vendidos (média HL dos 3 meses anteriores, ranking da operação) com saldo 0 na grade de estoque (ou fora dela) + agendados D+7. No envio das 8h, logo abaixo do Report de Volumes, p/ todos.

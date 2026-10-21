@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { useAbaUrl } from "../../utils/abaUrl";
 import { useContarAba } from "../../utils/uso";
+import DeepDive from "./DeepDive";
 
 const VERDE = "#7DBA3D", VERM = "#f87171", OK = "#4ade80";
 const MES_ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -21,6 +22,7 @@ const ABAS = [
   { id: "compradores", label: "🛒 Compradores" },
   { id: "distribuicao", label: "🧩 Distribuição" },
   { id: "marketplace", label: "🏪 Marketplace" },
+  { id: "deepdive", label: "🔎 Deep Dive" },
   { id: "regras", label: "ℹ️ Regras" },
 ];
 
@@ -163,6 +165,44 @@ async function exportarPptx(d) {
   d.compradores.forEach((ind) => slideInd("Compradores", ind, [["Estáveis", ind.quebra.map((q) => fmt(q.est))], ["Instáveis", ind.quebra.map((q) => fmt(q.inst))], ["Novos", ind.quebra.map((q) => fmt(q.novo))]]));
   capa("DISTRIBUIÇÃO");
   d.distribuicao.forEach((ind) => slideInd("Distribuição", ind, [["Σ SKU/PDV", ind.serie.map((v) => fmt(v))], ["Média", ind.media.map((v) => fmt(v, 2))]]));
+  // ── DEEP DIVE (tabelas) + slides em branco p/ os dados externos ──
+  const dd = d.deepDive;
+  if (dd) {
+    capa("DEEP DIVE");
+    const slideTab = (titulo, colunas, linhas, opt = {}) => {
+      const s = p.addSlide();
+      s.addText(titulo, { x: 0.4, y: 0.2, w: 12.5, h: 0.6, fontSize: 22, bold: true, color: CINZA });
+      s.addTable([cab(colunas), ...linhas], { x: 0.4, y: 0.9, w: opt.w || 12.5, border: { type: "solid", color: "DDDDDD", pt: 0.5 }, autoPage: true, autoPageRepeatHeader: true });
+      return s;
+    };
+    const buLinhas = (rows) => rows.map((r) => [cel(r.item, { align: "left" }), cel(fmt(r.ytd, 1)), cel(fmt(r.ytd_ly, 1)), pc(r.vs_ly), cel(`${fmt(r.wgt, 1)}%`)]);
+    const s1 = p.addSlide();
+    s1.addText(`YTD ${dd.ano} × YTD ${dd.ano - 1} · Volume (HL)`, { x: 0.4, y: 0.2, w: 12.5, h: 0.6, fontSize: 22, bold: true, color: CINZA });
+    const tt = dd.ytdGrupos[0];
+    s1.addChart(p.ChartType.bar, [{ name: String(dd.ano - 1), labels: MES_ROT, values: tt.ano_ly }, { name: String(dd.ano), labels: MES_ROT, values: tt.ano.map((v) => v ?? 0) }],
+      { x: 0.4, y: 0.9, w: 7.6, h: 3.4, barDir: "col", barGrouping: "clustered", chartColors: ["BBBBBB", "7DBA3D"], showLegend: true, legendPos: "t", showValue: false, catAxisLabelFontSize: 9, valGridLine: { style: "none" } });
+    s1.addTable([cab(["Categoria", `YTD ${dd.ano}`, `YTD ${dd.ano - 1}`, "vs LY"]), ...dd.ytdGrupos.map((r) => [cel(r.label, { align: "left" }), cel(fmt(r.ytd, 1)), cel(fmt(r.ytd_ly, 1)), pc(r.vs_ly)])],
+      { x: 8.2, y: 0.9, w: 4.8, colW: [1.9, 1.0, 1.0, 0.9], fontSize: 7, border: { type: "solid", color: "DDDDDD", pt: 0.5 }, autoPage: true });
+    const colBu = (r) => [r, "YTD", "YTD LY", "vs LY", "Peso"];
+    slideTab("Cerveja · Core × High End e por marca (YTD)", colBu("Segmento / Marca"), [...buLinhas(dd.coreHe), ...buLinhas(dd.marcasCerv)]);
+    slideTab("Cerveja · por embalagem (YTD)", colBu("Embalagem"), buLinhas(dd.embCerv));
+    slideTab("NAB · por embalagem (YTD)", colBu("Embalagem"), buLinhas(dd.embNab));
+    slideTab("Cerveja · por segmento do PDV", ["Segmento", "M-1", "Tend", "vs M-1", "vs L3M", "vs LY"], dd.segmentos.map((r) => [cel(r.segmento, { align: "left" }), cel(fmt(r.m1, 1)), cel(fmt(r.tend, 1)), pc(r.vs_m1), pc(r.vs_l3m), pc(r.vs_ly)]));
+    const skuL = (rows) => rows.map((r) => [cel(r.nome, { align: "left" }), cel(fmt(r.ytd, 1)), cel(fmt(r.ytd_ly, 1)), cel(`${r.delta > 0 ? "+" : ""}${fmt(r.delta, 1)}`), pc(r.vs_ly)]);
+    slideTab("Top 10 SKU · ganhos vs LY (YTD)", ["SKU", "YTD", "YTD LY", "Δ HL", "vs LY"], skuL(dd.topSku));
+    slideTab("Bottom 10 SKU · perdas vs LY (YTD)", ["SKU", "YTD", "YTD LY", "Δ HL", "vs LY"], skuL(dd.bottomSku));
+    slideTab(`Oportunidades High End · HE 600: ${fmt(dd.he600.pct, 1)}% dos compradores só compram 1 marca`, ["Oportunidade", "Compradores", "PDVs alvo", "%", "Ação"],
+      dd.cruzamentos.map((c) => [cel(c.label, { align: "left" }), cel(fmt(c.compradores)), cel(fmt(c.oportunidade)), cel(`${fmt(c.pct, 1)}%`), cel(c.acao, { align: "left" })]));
+    slideTab("Cobertura RGB 300 × Cerveja TT por RN (mês atual)", ["Setor", "RN", "Comp. Cerveja", "Comp. 300", "% 300"],
+      [...dd.cob300.atual].sort((a, b) => (a.rn === "Operação") - (b.rn === "Operação") || (b.pct ?? 0) - (a.pct ?? 0)).map((r) => [cel(r.setor), cel(r.rn), cel(fmt(r.comp_cerv)), cel(fmt(r.comp_300)), cel(`${fmt(r.pct, 1)}%`, { bold: true })]), { w: 8 });
+    const rotM = dd.multipack.meses.map(rotMes);
+    slideTab("Multipack · peso no volume de lata e cobertura", ["", ...rotM], [
+      [cel("Volume MP (HL)", { align: "left" }), ...dd.multipack.volume.map((v) => cel(fmt(v, 1)))],
+      [cel("Peso MP na lata", { align: "left" }), ...dd.multipack.peso.map((v) => cel(`${fmt(v, 1)}%`))],
+      [cel("PDVs compradores MP", { align: "left" }), ...dd.multipack.compradores.map((v) => cel(fmt(v)))],
+      [cel("% compr. lata c/ MP", { align: "left" }), ...dd.multipack.cobertura_lata.map((v) => cel(`${fmt(v, 1)}%`))]]);
+    dd.externos.forEach((t) => { const s = p.addSlide(); s.addText(t, { x: 0.4, y: 0.2, w: 12.5, h: 0.6, fontSize: 22, bold: true, color: CINZA }); s.addText("(colar aqui o print do BI / Nielsen / Scanntech)", { x: 0.4, y: 3.4, w: 12.5, h: 0.5, fontSize: 14, color: "AAAAAA", align: "center" }); });
+  }
   await p.writeFile({ fileName: `Acompanhamento_Comercial_RPS_${d.mesAtual}.pptx` });
 }
 
@@ -243,6 +283,8 @@ export default function Rps() {
             <p style={{ fontSize: "0.8rem", color: "#f5c451" }}>⏳ {d.marketplace.pendente}</p>
           </div>
         )}
+
+        {d && aba === "deepdive" && <DeepDive dd={d.deepDive} mesAtual={d.mesAtual} />}
 
         {d && aba === "regras" && (
           <div style={S.card}>
