@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.118.2** — RPS: embalagem pela coluna G da 0111.
+Versão atual: **v3.119.0** — Solicitações: Excel consolidado das pendentes + COORDENADAS.CSV (01.31.59).
+
+## v3.119.0 — Solicitações pendentes + coordenadas Promax
+- Admin › Solicitações › Migrações: **📥 Excel pendentes (todas)** — todas as linhas pendentes de todas as solicitações num Excel só, com aba **COORDENADAS 01.31.59** no layout do Promax e aba de instruções.
+- **📍 COORDENADAS.CSV** (aprovadas ou pendentes): layout da rotina 01.31.59 — `FILIAL+CLIENTE(5 dígitos);LATITUDE;LONGITUDE` com 6 casas e ponto, sem cabeçalho, p/ salvar em int\dvs. Filial pedida 1x (⚙️ Filial p/ trocar; conferir na 01.04.09).
+- Lat/long no Excel saem como texto com 6 casas (o Excel não arredonda nem troca o ponto por vírgula).
 
 ## v3.118.2 — RPS · embalagem do Promax
 - Aberturas por embalagem (RGB 300/600/1L, LT 269/350/473/410/310, LN, OW, PET…) passam a usar a coluna G "Embalagem" da 0111 (já salva em `produtos_full.embalagem`: GARRAFA MEIA = 300, GARRAFA INTEIRA/630 = 600, GARRAFA LITRO/RET.1000 = 1L, LATA 355/SLEEK = LT 350, LONG-NECK e ONE-WAY 330/355 = LN…). O nome do produto fica só de reserva p/ quem não tem embalagem no cadastro.

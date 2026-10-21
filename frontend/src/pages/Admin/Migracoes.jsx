@@ -11,20 +11,82 @@ const COR = {
 const dataBR = (v) => (v ? new Date(v).toLocaleDateString("pt-BR") : "");
 const fmt = (n) => (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-function exportar(sols, nomeArq, soAprovados) {
+// Coordenada sempre com 6 casas e PONTO decimal, como TEXTO (o Excel não arredonda nem troca p/ vírgula)
+const coord6 = (v) => (v == null || v === "" || isNaN(Number(v)) ? "" : Number(v).toFixed(6));
+
+// Código da filial no Promax (rotina 01.31.59) — algumas unidades usam o código antigo (01.04.09).
+// Pedido 1x e guardado neste navegador.
+function filialPromax(trocar) {
+  let f = "";
+  try { f = localStorage.getItem("hop_filial_promax") || ""; } catch { /* sem storage */ }
+  if (!f || trocar) {
+    f = String(window.prompt("Código da FILIAL no Promax para o arquivo de coordenadas (rotina 01.31.59).\nConfira na 01.04.09 (binóculo) — algumas unidades usam o código antigo.", f) || "").trim();
+    if (!/^\d+$/.test(f)) { if (f) alert("O código da filial deve ter só números."); return ""; }
+    try { localStorage.setItem("hop_filial_promax", f); } catch { /* sem storage */ }
+  }
+  return f;
+}
+// Linhas no layout da 01.31.59: FILIAL + CLIENTE(5 dígitos, zero à esquerda);LATITUDE;LONGITUDE (6 casas)
+function linhasCoordenadas(itens, filial) {
+  return itens.filter((it) => it.lat_nova != null && it.lng_nova != null).map((it) => {
+    const cli = String(it.cod_pdv || "").replace(/\D/g, "").padStart(5, "0");
+    return { codigo: `${filial}${cli}`, lat: coord6(it.lat_nova), lng: coord6(it.lng_nova), it };
+  });
+}
+// COORDENADAS.CSV (sem cabeçalho, ";" e quebra de linha do Windows) p/ salvar em int\dvs
+function baixarCoordenadasCsv(itens, origem) {
+  const filial = filialPromax(false); if (!filial) return;
+  const ls = linhasCoordenadas(itens, filial);
+  if (!ls.length) { alert(`Nenhuma coordenada ${origem} para gerar.`); return; }
+  const longos = ls.filter((l) => String(l.it.cod_pdv).replace(/\D/g, "").length > 5);
+  if (longos.length) alert(`Atenção: ${longos.length} PDV(s) com código maior que 5 dígitos (${longos.slice(0, 5).map((l) => l.it.cod_pdv).join(", ")}). Confira o layout antes de importar.`);
+  const txt = ls.map((l) => `${l.codigo};${l.lat};${l.lng}`).join("\r\n") + "\r\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv" }));
+  a.download = "COORDENADAS.CSV";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// Consolidado de TODAS as linhas pendentes (todas as solicitações), num Excel só,
+// + aba "COORDENADAS 01.31.59" já no layout do Promax.
+function exportarPendentes(sols, nomeArq) {
+  const itens = sols.flatMap((s) => s.itens.filter((it) => it.status === "Pendente").map((it) => ({ ...it, _s: s })));
+  if (!itens.length) { alert("Nenhuma linha pendente."); return; }
+  exportar(sols, nomeArq, false, true, (wb) => {
+    const filial = filialPromax(false);
+    const ls = linhasCoordenadas(itens, filial || "?");
+    const ws = XLSX.utils.aoa_to_sheet([["Código (filial + cliente 5 díg.)", "Latitude", "Longitude", "Linha p/ COORDENADAS.CSV", "Cód PDV", "PDV", "Setor", "Solicitação", "Endereço", "Mapa"],
+      ...ls.map((l) => [l.codigo, l.lat, l.lng, `${l.codigo};${l.lat};${l.lng}`, l.it.cod_pdv, l.it.nome_pdv, l.it._s.setor, l.it._s.id, l.it.endereco_novo || "", `https://www.google.com/maps?q=${l.lat},${l.lng}`])]);
+    // tudo como texto (t:"s") p/ não perder zeros à esquerda nem casas decimais
+    Object.keys(ws).filter((k) => !k.startsWith("!")).forEach((k) => { ws[k].t = "s"; ws[k].v = String(ws[k].v); ws[k].z = "@"; });
+    ws["!cols"] = [16, 12, 12, 34, 10, 32, 8, 14, 45, 40].map((wch) => ({ wch }));
+    XLSX.utils.book_append_sheet(wb, ws, "COORDENADAS 01.31.59");
+    const inst = XLSX.utils.aoa_to_sheet([["Importação de coordenadas no Promax — rotina 01.31.59"], [""],
+      ["Layout: FILIAL + CLIENTE(5 dígitos);LATITUDE;LONGITUDE — ex.: 122222;-33.333333;-44.444444"],
+      ["Cliente com menos de 5 dígitos: completar com 0 à esquerda. Latitude/longitude com 6 casas e ponto."],
+      [`Filial usada: ${filial || "(não informada)"} — conferir na 01.04.09 (algumas unidades usam o código antigo).`],
+      ["Arquivo: COORDENADAS.CSV (botão 📍 na HOP) salvo na pasta int\\dvs."]]);
+    inst["!cols"] = [{ wch: 110 }];
+    XLSX.utils.book_append_sheet(wb, inst, "Instruções Promax");
+  });
+}
+
+function exportar(sols, nomeArq, soAprovados, soPendentes, extra) {
   const cab = ["Solicitação", "Data pedido", "RN solicitante", "Cód PDV", "PDV", "Média tri (HL/mês)",
     "Setor atual", "Novo setor", "Dia atual", "Novo dia", "Status", "Decidido em", "Motivo",
     "Ação", "Justificativa (inativação)", "Inadimplência", "Comodato", "Latitude nova", "Longitude nova", "Endereço (coordenada nova)", "Mapa", "Nova periodicidade"];
   const linhas = [];
   sols.forEach((s) => s.itens.forEach((it) => {
     if (soAprovados && it.status !== "Aprovado") return;
+    if (soPendentes && it.status !== "Pendente") return;
     linhas.push([s.id, dataBR(s.criado_em), `${s.setor} · ${s.nome_rn || ""}`, it.cod_pdv, it.nome_pdv, it.media_tri_hl,
       it.setor_atual, it.setor_novo || it.setor_atual, it.dia_atual, it.dia_novo || it.dia_atual,
       it.status === "Pendente" ? "Em aprovação" : it.status, dataBR(s.decidido_em), s.motivo || "",
       it.inativar ? "INATIVAR" : (it.setor_novo || it.dia_novo || it.periodicidade_nova) ? (it.lat_nova != null ? "MIGRAR + COORDENADA" : "MIGRAR") : "COORDENADA",
       it.justificativa || "", it.inad_info || "", it.comodato_info || "",
-      it.lat_nova ?? "", it.lng_nova ?? "", it.endereco_novo || "",
-      it.lat_nova != null ? `https://www.google.com/maps?q=${it.lat_nova},${it.lng_nova}` : "",
+      coord6(it.lat_nova), coord6(it.lng_nova), it.endereco_novo || "",
+      it.lat_nova != null ? `https://www.google.com/maps?q=${coord6(it.lat_nova)},${coord6(it.lng_nova)}` : "",
       it.periodicidade_nova ? it.periodicidade_nova.charAt(0) + it.periodicidade_nova.slice(1).toLowerCase() : ""]);
   }));
   if (!linhas.length) { alert("Nenhuma linha para exportar."); return; }
@@ -41,8 +103,11 @@ function exportar(sols, nomeArq, soAprovados) {
   });
   ws["!cols"] = [10, 11, 22, 10, 30, 10, 9, 9, 8, 8, 12, 11, 30, 14, 40, 45, 55, 12, 12, 45, 40, 16].map((wch) => ({ wch }));
   ws["!rows"] = [{ hpt: 30 }];
+  // latitude/longitude como texto (6 casas, ponto) — o Excel não arredonda nem troca p/ vírgula
+  linhas.forEach((_, i) => [17, 18].forEach((c) => { const k = XLSX.utils.encode_cell({ r: i + 1, c }); if (ws[k] && ws[k].v !== "") { ws[k].t = "s"; ws[k].z = "@"; } }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Migrações");
+  XLSX.utils.book_append_sheet(wb, ws, soPendentes ? "Pendentes" : "Migrações");
+  if (extra) extra(wb);
   XLSX.writeFile(wb, nomeArq);
 }
 
@@ -100,6 +165,13 @@ export default function Migracoes() {
             {["Em aprovação", "Aprovado", "Parcial", "Recusado"].map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <button style={S.xls} onClick={() => exportar(lista, `Migracoes_aprovadas_${hoje}.xlsx`, true)} title="Linhas APROVADAS das solicitações listadas">📥 Excel aprovados</button>
+          <button style={S.xls} onClick={() => exportarPendentes(sols, `Solicitacoes_pendentes_${hoje}.xlsx`)}
+            title="TODAS as linhas pendentes de TODAS as solicitações num Excel só (+ aba de coordenadas no layout do Promax 01.31.59)">📥 Excel pendentes (todas)</button>
+          <button style={S.xls} onClick={() => baixarCoordenadasCsv(sols.flatMap((s) => s.itens.filter((it) => it.status === "Aprovado")), "aprovada")}
+            title="COORDENADAS.CSV (01.31.59) com as coordenadas APROVADAS — salvar em int\dvs">📍 COORDENADAS.CSV aprovadas</button>
+          <button style={S.xls} onClick={() => baixarCoordenadasCsv(sols.flatMap((s) => s.itens.filter((it) => it.status === "Pendente")), "pendente")}
+            title="COORDENADAS.CSV (01.31.59) com as coordenadas PENDENTES">📍 CSV pendentes</button>
+          <button style={{ ...S.xls, opacity: 0.7 }} onClick={() => filialPromax(true)} title="Trocar o código da filial usado no arquivo de coordenadas">⚙️ Filial</button>
         </div>
       </div>
 
