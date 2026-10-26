@@ -365,7 +365,7 @@ function MotivosPendentes() {
     if (!d) { setMsg(`Escreva a descrição do código ${cod}.`); return; }
     try {
       await api.put(`/api/admin/motivos-devolucao/${cod}`, { descricao: d });
-      setMsg(`Motivo ${cod} cadastrado — vale a partir do próximo import do CORA.`); carregar();
+      setMsg(`Motivo ${cod} cadastrado — já aparece nas devoluções (todos os meses).`); carregar();
     } catch (e) { setMsg(e.response?.data?.error || "Erro ao salvar."); }
   }
   if (!pend.length) return null;

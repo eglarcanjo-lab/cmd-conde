@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.124.0** — Outros relatórios: Não compradores do mês (com o SKU top do tri) e Novos cadastros sem compra.
+Versão atual: **v3.124.1** — Motivo de devolução cadastrado aparece na hora (todos os meses).
+
+## v3.124.1 — Motivo de devolução cadastrado aparece na hora
+- **Bug:** cadastrar o motivo em Admin › Arquivos não mudava as devoluções ("MOTIVO 30 (NÃO CADASTRADO)" continuava). A descrição era gravada no import do CORA; só o próximo import — e só nos meses do arquivo — corrigia.
+- Agora a descrição é resolvida **na leitura** pelo cadastro atual (`utils/motivosDevolucao.js`): aba Entrega (resumo, por motivo, notas), Pesquisa Pedido (documento e devolução) e farol de Faturados + Buffer. Vale para todos os meses, sem reimportar.
+- Devolução **sem código** no CORA continua sem motivo (não há o que cadastrar).
 
 ## v3.124.0 — Não compradores do mês e Novos cadastros
 - **Outros relatórios › 🛒 Não compradores do mês** (mês atual ou 2 anteriores): PDVs ATIVOS da base sem compra no mês, com o **SKU que cada um mais comprou no tri anterior** (M-3..M-1, por HL; empate → mais meses), HL e meses com o SKU. Quem não comprou nada no tri fica sem SKU. Cards: base, compraram, ainda não compraram, sem compra no tri. Filtro de setor, busca e Excel. `GET /api/relatorios/nao-compradores?mes=`.

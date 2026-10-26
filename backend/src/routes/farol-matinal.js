@@ -11,6 +11,7 @@ const express = require("express");
 const router = express.Router();
 const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
+const { mapaMotivos, aplicarMotivos } = require("../utils/motivosDevolucao");
 
 router.use(authMiddleware);
 
@@ -344,8 +345,9 @@ router.get("/zerados", async (req, res) => {
 router.get("/fatbuf", async (req, res) => {
   try {
     const t = agora();
-    const [fat, buf, d, dev] = await Promise.all([readSheet("faturados_detalhe").catch(() => []), readSheet("buffer_detalhe").catch(() => []), destinos(),
-      readSheet("entregas_frustradas").catch(() => [])]);
+    const [fat, buf, d, devRaw, motivos] = await Promise.all([readSheet("faturados_detalhe").catch(() => []), readSheet("buffer_detalhe").catch(() => []), destinos(),
+      readSheet("entregas_frustradas").catch(() => []), mapaMotivos()]);
+    const dev = aplicarMotivos(devRaw, motivos); // motivo pelo cadastro atual
     const porPdv = (rows) => {
       const m = {};
       rows.forEach((r) => {

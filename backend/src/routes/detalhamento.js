@@ -7,6 +7,7 @@ const { authMiddleware } = require("../middleware/auth");
 router.use(authMiddleware);
 
 const { filtrarPorPerfil } = require("../utils/perfil");
+const { mapaMotivos, aplicarMotivos } = require("../utils/motivosDevolucao");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const r2 = (n) => Math.round(n * 100) / 100;
@@ -55,13 +56,15 @@ router.get("/entrega", async (req, res) => {
     const pdv = String(req.query.pdv || "").trim().toLowerCase();
     const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
 
-    const [frustradasRaw, efetivadasRaw, notaItensRaw] = await Promise.all([
+    const [frustradasRaw, efetivadasRaw, notaItensRaw, motivos] = await Promise.all([
       readSheet("entregas_frustradas").catch(() => []),
       readSheet("entregas_efetivadas").catch(() => []),
       readSheet("nota_itens").catch(() => []),
+      mapaMotivos(),
     ]);
 
-    const frustradas = filtrarPorPerfil(frustradasRaw, req.user);
+    // descrição do motivo pelo cadastro ATUAL (Admin › Arquivos) — não a gravada no import
+    const frustradas = filtrarPorPerfil(aplicarMotivos(frustradasRaw, motivos), req.user);
     const efetivadas = filtrarPorPerfil(efetivadasRaw, req.user);
 
     const opcoes = {
@@ -387,11 +390,16 @@ async function itensDosPedidos(bees) {
   return por;
 }
 
-const lerBasesPedido = () => Promise.all([
-  readSheet("pedido_bees").catch(() => []),
-  readSheet("faturado_nf").catch(() => []),
-  readSheet("entregas_frustradas").catch(() => []),
-]);
+const lerBasesPedido = async () => {
+  const [peds, fat, dev, motivos] = await Promise.all([
+    readSheet("pedido_bees").catch(() => []),
+    readSheet("faturado_nf").catch(() => []),
+    readSheet("entregas_frustradas").catch(() => []),
+    mapaMotivos(),
+  ]);
+  // motivo pelo cadastro atual (pedido_bees só tem o texto: "MOTIVO 30 (NÃO CADASTRADO)")
+  return [aplicarMotivos(peds, motivos, "motivo", null), fat, aplicarMotivos(dev, motivos)];
+};
 
 // GET /api/detalhamento/pedido-bees?q=<pedido BEES | NF | nº pedido>
 router.get("/pedido-bees", async (req, res) => {
