@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.124.1** — Motivo de devolução cadastrado aparece na hora (todos os meses).
+Versão atual: **v3.125.0** — WhatsApp 17:10: Não compradores do mês e Novos cadastros das visitas de amanhã.
+
+## v3.125.0 — Não compradores e Novos cadastros no WhatsApp das 17:10
+- Rotas novas do farol (motor de WhatsApp): `/api/farol-matinal/nao-compradores` e `/api/farol-matinal/novos-cadastros`. Filtram os PDVs pelo **dia de visita de AMANHÃ** (domingo pula p/ segunda; `?dia=QUI` força) e o título do bloco traz **"Visitas do dia DD/MM (amanhã)"**. RN recebe os PDVs dele; GV e Diretoria o consolidado (com setor).
+  - Não compradores: PDV, bairro, **SKU que o PDV mais comprou no tri** e HL (sem compra no tri → "— sem compra no tri").
+  - Novos cadastros: cadastrados no mês sem compra registrada (data de cadastro).
+- Cálculo único em `utils/compradores.js` — Outros relatórios e o WhatsApp saem do mesmo código.
+- Robô (`cmd-conde-whatsapp/enviar.js`, fora do git; backup `enviar.backup_antes_naocomp_2026-10-26.js`): modo **tarde** (17:10) passa a ter Ruptura → Não compradores → Novos cadastros; bloco vazio mostra a mensagem do próprio farol.
 
 ## v3.124.1 — Motivo de devolução cadastrado aparece na hora
 - **Bug:** cadastrar o motivo em Admin › Arquivos não mudava as devoluções ("MOTIVO 30 (NÃO CADASTRADO)" continuava). A descrição era gravada no import do CORA; só o próximo import — e só nos meses do arquivo — corrigia.

@@ -341,6 +341,71 @@ router.get("/zerados", async (req, res) => {
   }
 });
 
+// ─── 6) NÃO COMPRADORES DO MÊS · NOVOS CADASTROS (envio das 17:10, visitas de AMANHÃ) ──
+// Mesmo cálculo de Outros relatórios (utils/compradores.js), filtrado pelo dia de visita do
+// PRÓXIMO dia (domingo pula p/ segunda). ?dia=QUI força o dia (próxima data com esse dia).
+const C = require("../utils/compradores");
+function visitaAlvo(t, diaQ) {
+  const d = new Date(t.br); d.setHours(12, 0, 0, 0);
+  const cod = String(diaQ || "").trim().toUpperCase().slice(0, 3);
+  do { d.setDate(d.getDate() + 1); } while (cod && DIA_COD.includes(cod) ? DIA_COD[d.getDay()] !== cod : d.getDay() === 0);
+  const dias = Math.round((d - new Date(new Date(t.br).setHours(12, 0, 0, 0))) / 86400000);
+  return { cod: DIA_COD[d.getDay()], label: DIA_LABEL[d.getDay()], dataBR: `${p2(d.getDate())}/${p2(d.getMonth() + 1)}`,
+    quando: dias === 1 ? "amanhã" : DIA_LABEL[d.getDay()].split("-")[0].toLowerCase() };
+}
+async function lerCompradores(meses) {
+  const [baseAll, vendas, usuarios, prodFull] = await Promise.all([
+    readSheet("pdv_base").catch(() => []),
+    readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
+    readSheet("usuarios").catch(() => []),
+    readSheet("produtos_full").catch(() => []),
+  ]);
+  const nomeProd = {}; prodFull.forEach((p) => { const c = C.normCod(p.cod); if (c && C.limpo(p.nome)) nomeProd[c] = C.limpo(p.nome); });
+  return { pdvs: C.pdvsDaBase(baseAll, usuarios), vendas, nomeProd };
+}
+const cabVisitas = (v) => `Visitas do dia ${v.dataBR} (${v.quando})`;
+
+router.get("/nao-compradores", async (req, res) => {
+  try {
+    const t = agora(), v = visitaAlvo(t, req.query.dia);
+    const [{ pdvs, vendas, nomeProd }, d] = await Promise.all([lerCompradores([...C.triDe(t.mes), t.mes]), destinos()]);
+    const r = C.naoCompradores(pdvs, vendas, nomeProd, t.mes);
+    const linhas = r.linhas.filter((l) => l.dia_visita === v.cod).map((l) => ({
+      setor: l.setor, cod_pdv: l.cod_pdv, nome_pdv: l.nome, bairro: l.bairro || "—",
+      nome_produto: l.sku_cod ? l.sku_nome : "— sem compra no tri", hl: l.sku_cod ? f1(l.sku_hl_tri) : "—" }));
+    const colunas = (comSetor) => [...(comSetor ? [{ key: "setor", label: "Setor" }] : []), { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" },
+      { key: "bairro", label: "Bairro" }, { key: "nome_produto", label: "SKU mais comprado no tri" }, { key: "hl", label: "HL tri" }];
+    const sub = `PDVs que ainda não compraram em ${t.mes.slice(5)}/${t.mes.slice(0, 4)} · SKU que o PDV mais comprou no tri (${r.tri.map((m) => m.slice(5)).join("·")})`;
+    const blocosRn = (s) => [{ titulo: `Não compradores do mês · ${cabVisitas(v)} · Setor ${s}`, subtitulo: sub, colunas: colunas(false),
+      linhas: linhas.filter((l) => l.setor === s), vazio: "Todos os PDVs de amanhã já compraram no mês 👍" }];
+    const blocosDir = [{ titulo: `Não compradores do mês · ${cabVisitas(v)}`, subtitulo: sub, colunas: colunas(true), linhas, vazio: "Todos os PDVs de amanhã já compraram no mês 👍" }];
+    return res.json(resposta(t, d, { titulo: "Não compradores do mês", emoji: "🛒", legenda: `${cabVisitas(v)} · SKU = argumento de venda` }, blocosRn, blocosDir));
+  } catch (e) {
+    console.error("farol-matinal/nao-compradores:", e);
+    return res.status(500).json({ error: "Erro ao montar os não compradores." });
+  }
+});
+
+router.get("/novos-cadastros", async (req, res) => {
+  try {
+    const t = agora(), v = visitaAlvo(t, req.query.dia);
+    const [{ pdvs, vendas }, d] = await Promise.all([lerCompradores([t.mes]), destinos()]);
+    const r = C.novosCadastros(pdvs, vendas, t.mes);
+    const linhas = r.linhas.filter((l) => l.dia_visita === v.cod).map((l) => ({
+      setor: l.setor, cod_pdv: l.cod_pdv, nome_pdv: l.nome, bairro: l.bairro || "—", cadastro: l.data_cadastro }));
+    const colunas = (comSetor) => [...(comSetor ? [{ key: "setor", label: "Setor" }] : []), { key: "cod_pdv", label: "Cód" }, { key: "nome_pdv", label: "PDV" },
+      { key: "bairro", label: "Bairro" }, { key: "cadastro", label: "Cadastro" }];
+    const sub = `Cadastrados em ${t.mes.slice(5)}/${t.mes.slice(0, 4)} ainda sem compra registrada`;
+    const vazio = r.tem_data_cadastro ? "Nenhum cadastro novo sem compra p/ amanhã 👍" : "Base de clientes sem Data de Cadastro — reimportar a 0105070402";
+    const blocosRn = (s) => [{ titulo: `Novos cadastros · ${cabVisitas(v)} · Setor ${s}`, subtitulo: sub, colunas: colunas(false), linhas: linhas.filter((l) => l.setor === s), vazio }];
+    const blocosDir = [{ titulo: `Novos cadastros · ${cabVisitas(v)}`, subtitulo: sub, colunas: colunas(true), linhas, vazio }];
+    return res.json(resposta(t, d, { titulo: "Novos cadastros", emoji: "🆕", legenda: `${cabVisitas(v)} · 1ª compra` }, blocosRn, blocosDir));
+  } catch (e) {
+    console.error("farol-matinal/novos-cadastros:", e);
+    return res.status(500).json({ error: "Erro ao montar os novos cadastros." });
+  }
+});
+
 // ─── 5) FATURADOS + BUFFER (PDF separado) ──────────────────────────────────────
 router.get("/fatbuf", async (req, res) => {
   try {
