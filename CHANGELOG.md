@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.120.1** — Farol 8h: devoluções no PDF de Faturados + Buffer.
+Versão atual: **v3.121.0** — Liga CMD: bala, Halls e Trident (0,00 HL) contam na distribuição de Marketplace.
+
+## v3.121.0 — Itens de 0,00 HL contam como compra (Liga CMD / MKTP)
+- **Problema:** o CORA manda o volume com 2 casas, e bala, pirulito, Halls e Trident chegam com **0,00 HL**. O processador só gravava em `vendas_cliente_produto` linhas com volume > 0, e a Liga também descartava HL ≤ 0. Esses SKUs **nunca contavam** na Distribuição de Marketplace (ex.: Allan 108 em out/26: 236 PDV×SKU no CORA × 185 na HOP — 43 só de itens com 0 HL).
+- **Processador:** o CORA passa a mandar a quantidade (`Qtde Entrega` = só venda efetiva, `Qtde Marcacao` = dia atual). `vendas_cliente_produto` grava também a linha com volume 0 e quantidade > 0. Promax (sem quantidade) segue igual.
+- **Liga CMD:** distribuição e cobertura contam qualquer linha vendida; o HL > 0 só é exigido no KPI de volume. Telas que já filtram HL > 0 ou somam volume não mudam.
+- Vale a partir do próximo import do CORA (regrava o mês inteiro).
 
 ## v3.120.1 — Devoluções no PDF de Faturados + Buffer
 - `/api/farol-matinal/fatbuf` ganha as devoluções (entregas_frustradas): resumo dia × mês, NFs do último dia com devolução (PDV, NF, motivo, HL, R$), mês por motivo e, na diretoria, por RN. Robô: blocos sem título usam o título do farol (Pure Gold / Sem visita apareciam como "HOP · Faróis do dia").

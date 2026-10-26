@@ -108,11 +108,15 @@ async function realizados(inc, meses) {
   for (const v of vendas) {
     const mes = String(v.mes_referencia || "").slice(0, 7);
     if (!meses.includes(mes)) continue;
-    const hl = num(v.volume_hl); if (hl <= 0) continue;
+    // Linha em vendas_cliente_produto = venda efetiva. Item de marketplace que pesa 0,00 HL
+    // (bala, pirulito, Halls…) vem com volume 0 (quantidade > 0 no processador) e conta na
+    // distribuição/cobertura; o HL só é exigido no KPI de volume.
+    const hl = num(v.volume_hl); if (hl < 0) continue;
     const sku = normCod(v.cod_produto), setor = setorHop(v.setor), pdv = normCod(v.cod_pdv);
     if (!setor) continue;
     for (const k of inc.kpis) {
       if (!skusKpi[k.key].has(sku)) continue;
+      if (k.ind === "vol" && hl <= 0) continue;
       const c = (((agg[mes] = agg[mes] || {})[setor] = agg[mes][setor] || {})[k.key] =
         agg[mes][setor][k.key] || { pdvs: new Set(), hl: 0, sk: new Map() });
       c.pdvs.add(pdv); c.hl += hl;
