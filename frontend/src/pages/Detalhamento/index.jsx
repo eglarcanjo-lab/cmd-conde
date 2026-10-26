@@ -3,12 +3,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx-js-style";
 import api from "../../services/api";
+import { rotOperacao } from "../IncentivosRn/mapaExcel";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
 
 const VERDE = "#7DBA3D";
 const VERMELHO = "#ef6f6f";
 const AMARELO = "#f5c451";
+const OURO_OP = "#f5c451"; // operação que não é venda (bonificação, remessa…) em destaque
 const BG = "#0c1410";
 
 function rotuloMes(m) {
@@ -228,7 +230,7 @@ function DocPedido({ d }) {
           <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
               <thead>
-                <tr>{["Cód.", "Produto", "HL marcado", "HL entregue", "Ruptura"].map((h) => (
+                <tr>{["Cód.", "Produto", "Operação", "HL marcado", "HL entregue", "Ruptura"].map((h) => (
                   <th key={h} style={{ padding: "7px 10px", color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", textAlign: h === "Produto" ? "left" : "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
                 ))}</tr>
               </thead>
@@ -241,6 +243,7 @@ function DocPedido({ d }) {
                     <tr key={`${it.cod_produto}-${i}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       <td style={{ ...td, color: "rgba(255,255,255,0.5)" }}>{it.cod_produto}</td>
                       <td style={{ ...td, textAlign: "left", color: "rgba(255,255,255,0.85)", whiteSpace: "normal" }}>{it.nome_produto}</td>
+                      <td style={{ ...td, color: /^venda/i.test(it.operacao || "") ? "rgba(255,255,255,0.6)" : OURO_OP }}>{rotOperacao(it.operacao)}</td>
                       <td style={td}>{fmt(it.hl_marcacao, 3)}</td>
                       <td style={{ ...td, color: falta ? AMARELO : "#4ade80" }}>{fmt(it.hl_entrega, 3)}</td>
                       <td style={{ ...td, color: falta ? VERMELHO : "rgba(255,255,255,0.35)", fontWeight: falta ? 700 : 400 }}>{falta ? fmt(dif, 3) : "—"}</td>

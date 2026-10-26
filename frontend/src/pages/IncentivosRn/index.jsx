@@ -9,6 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAbaUrl } from "../../utils/abaUrl";
 import { useContarAba } from "../../utils/uso";
 import { carregarHtml2canvas } from "../SPO/FechamentoSpo";
+import { exportarMapa } from "./mapaExcel";
 
 // Export PNG (p/ o GV colar no PowerPoint): tabela clara, mesmo visual da foto do motor de
 // WhatsApp. Monta um HTML fora da tela e captura com html2canvas (cdnjs, só na hora).
@@ -287,6 +288,19 @@ export default function IncentivosRn() {
   const [erro, setErro] = useState("");
   const [editar, setEditar] = useState(false);
   const [recarga, setRecarga] = useState(0);
+  const [setorMapa, setSetorMapa] = useState("");
+  const [gerandoMapa, setGerandoMapa] = useState(false);
+
+  // 📥 Mapa MKTP: Excel do setor com os PDV × SKU que contaram na Distribuição de Marketplace
+  async function baixarMapa(setor) {
+    setGerandoMapa(true);
+    try {
+      const r = await api.get(`/api/incentivos-rn/${incId}/mapa`, { params: { kpi: "dist_mktp", setor, mes: d.mes }, timeout: 60000 });
+      exportarMapa(r.data);
+    } catch (e) {
+      alert("Não foi possível gerar o mapa: " + (e?.response?.data?.error || e?.message || "falha"));
+    } finally { setGerandoMapa(false); }
+  }
 
   useEffect(() => { api.get("/api/incentivos-rn").then((r) => setLista(r.data || [])).catch(() => setLista([])); }, []);
   useEffect(() => {
@@ -332,6 +346,20 @@ export default function IncentivosRn() {
                   <button key={m} onClick={() => setMes(m)} style={S.chip(d.mes === m)}>{rotMes(m)}</button>
                 ))}
                 {d.linhas.length > 0 && <button className="so-desktop" onClick={() => exportarPng(d)} style={S.chip(false)} title="Baixa a tabela em PNG (fundo branco) p/ PowerPoint">📸 PNG</button>}
+                {d.incentivo.id === "liga" && d.mes !== "tri" && d.linhas.length > 0 && (() => {
+                  const sel = setorMapa || (d.linhas.some((l) => l.setor === meu) ? meu : d.linhas[0].setor);
+                  return (
+                    <span style={{ display: "inline-flex", gap: 4 }}>
+                      <select value={sel} onChange={(e) => setSetorMapa(e.target.value)} style={S.sel} title="Setor do mapa">
+                        {d.linhas.map((l) => <option key={l.setor} value={l.setor}>{rotSetor(l)}</option>)}
+                      </select>
+                      <button onClick={() => baixarMapa(sel)} disabled={gerandoMapa} style={S.chip(false)}
+                        title="Excel do setor: PDV × SKU que contaram na Distribuição de Marketplace (mesmo número da tela), base de PDVs e pedidos">
+                        {gerandoMapa ? "Gerando…" : "📥 Mapa MKTP"}
+                      </button>
+                    </span>
+                  );
+                })()}
                 {isAdmin && <button onClick={() => setEditar(true)} style={{ ...S.chip(false), borderColor: OURO, color: OURO }}>🎯 Metas</button>}
               </div>
             </div>
@@ -354,6 +382,7 @@ const S = {
   content: { padding: "16px 20px", maxWidth: 1400, margin: "0 auto" },
   cards: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 },
   card: { textAlign: "left", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(125,186,61,0.3)", borderRadius: 14, padding: 18, cursor: "pointer", color: "#fff", fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 6 },
+  sel: { fontSize: "0.8rem", fontFamily: "inherit", color: "#fff", background: "#13231a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 8px" },
   chip: (on) => ({ fontSize: "0.8rem", fontFamily: "inherit", color: on ? "#0c1410" : "rgba(255,255,255,0.6)", background: on ? VERDE : "transparent", border: `1px solid ${on ? VERDE : "rgba(255,255,255,0.15)"}`, borderRadius: 20, padding: "5px 13px", cursor: "pointer", fontWeight: on ? 700 : 500 }),
   podio: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 12 },
   premio: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "10px 12px", textAlign: "center" },

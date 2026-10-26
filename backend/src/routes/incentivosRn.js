@@ -93,8 +93,9 @@ function fatorMes(mes) {
   return { fator: total / feitos, feitos, total, aberto: true };
 }
 
-// Realizado por mês × setor × KPI: { mes: { setor: { kpi: valor } } }
-async function realizados(inc, meses) {
+// Agregado bruto por mês × setor × KPI ({ pdvs, hl, sk: Map pdv → Set sku }) — usado pela
+// tela (realizados) e pelo Excel do Mapa MKTP, p/ os dois saírem SEMPRE do mesmo cálculo.
+async function agregar(inc, meses) {
   const [base, vendas] = await Promise.all([
     readSheet("produtos_base").catch(() => []),
     readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
@@ -122,8 +123,19 @@ async function realizados(inc, meses) {
       c.pdvs.add(pdv); c.hl += hl;
       if (!c.sk.has(pdv)) c.sk.set(pdv, new Set());
       c.sk.get(pdv).add(sku);
+      if (k.ind === "dist") {   // detalhe p/ o Mapa MKTP (nome, HL e última compra do SKU no PDV)
+        c.det = c.det || [];
+        c.det.push({ pdv, nome_pdv: String(v.nome_pdv || "").trim(), sku, nome_produto: String(v.nome_produto || "").trim(),
+          hl, ultima_compra: String(v.ultima_compra || "").trim(), mes });
+      }
     }
   }
+  return agg;
+}
+
+// Realizado por mês × setor × KPI: { mes: { setor: { kpi: valor } } }
+async function realizados(inc, meses) {
+  const agg = await agregar(inc, meses);
   const out = {};
   for (const mes of meses) {
     out[mes] = {};
@@ -313,6 +325,73 @@ router.get("/:id/farol", async (req, res) => {
   } catch (e) {
     console.error("incentivos-rn farol:", e);
     return res.status(500).json({ error: "Erro ao montar o farol do incentivo." });
+  }
+});
+
+// GET /api/incentivos-rn/:id/mapa?kpi=dist_mktp&setor=108&mes=2026-10 — Excel "Mapa" de um KPI de
+// distribuição p/ 1 setor: PDV × SKU que CONTARAM no realizado (mesmo agregar() da tela — o total
+// bate sempre), a base de PDVs do setor (quem não comprou = oportunidade) e os pedidos dos itens.
+router.get("/:id/mapa", async (req, res) => {
+  try {
+    const inc = INCENTIVOS[req.params.id];
+    const kpi = inc && inc.kpis.find((k) => k.key === String(req.query.kpi || "dist_mktp"));
+    if (!inc || !kpi || kpi.ind !== "dist") return res.status(404).json({ error: "KPI de distribuição não encontrado." });
+    const setor = setorHop(req.query.setor || req.user.cod);
+    const br = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const atual = `${br.getFullYear()}-${String(br.getMonth() + 1).padStart(2, "0")}`;
+    const mes = inc.meses.includes(String(req.query.mes)) ? String(req.query.mes) : (inc.meses.includes(atual) ? atual : inc.meses[0]);
+
+    const [agg, metas, pdvBase, pedBees, usuarios] = await Promise.all([
+      agregar(inc, [mes]), metasDe(inc.id, [mes]), readSheet("pdv_base").catch(() => []),
+      readSheet("pedido_bees").catch(() => []), readSheet("usuarios").catch(() => []),
+    ]);
+    const c = agg[mes]?.[setor]?.[kpi.key];
+    const det = c?.det || [];
+    const pares = new Set(det.map((d) => `${d.pdv}|${d.sku}`));
+    let real = 0; (c?.sk || new Map()).forEach((s) => { real += s.size; });
+
+    // Base do setor (cadastro) + quem comprou e não está mais na base
+    const pdvs = {};
+    pdvBase.filter((p) => setorHop(p.setor) === setor).forEach((p) => {
+      const cod = normCod(p.cod_pdv);
+      if (cod) pdvs[cod] = { cod_pdv: cod, nome: String(p.nome_fantasia || p.razao_social || "").trim(), razao: String(p.razao_social || "").trim(), na_base: true, skus: new Map() };
+    });
+    det.forEach((d) => {
+      const p = (pdvs[d.pdv] = pdvs[d.pdv] || { cod_pdv: d.pdv, nome: d.nome_pdv, razao: "", na_base: false, skus: new Map() });
+      p.skus.set(d.sku, { sku: d.sku, nome: d.nome_produto, hl: d.hl, ultima_compra: d.ultima_compra });
+    });
+
+    // Pedidos (nº, data, NF) dos itens que contaram — pedido_bees (snapshot do último CORA) × itens
+    const peds = pedBees.filter((p) => setorHop(p.setor) === setor && String(p.data_pedido || "").slice(3, 10) === `${mes.slice(5, 7)}/${mes.slice(0, 4)}`);
+    const porBees = Object.fromEntries(peds.map((p) => [normCod(p.bees), p]));
+    const itens = Object.keys(porBees).length
+      ? await readSheetMonths("pedido_bees_itens", "bees", Object.keys(porBees)).catch(() => []) : [];
+    const pedidos = [];
+    itens.forEach((it) => {
+      const p = porBees[normCod(it.bees)]; if (!p) return;
+      const pdv = normCod(p.cod_pdv), sku = normCod(it.cod_produto);
+      if (!pares.has(`${pdv}|${sku}`)) return;
+      pedidos.push({ data: p.data_pedido, pedido: String(p.pedido || "").trim(), bees: p.bees, nf: String(p.nf || "").trim(),
+        situacao: String(p.motivo || "").trim() ? `Devolvido (${String(p.motivo).trim()})` : (String(p.nf || "").trim() ? "Faturado" : "Sem NF ainda"),
+        cod_pdv: pdv, nome_pdv: p.nome_pdv, cod_produto: sku, nome_produto: it.nome_produto, operacao: String(it.operacao || "").trim(),
+        hl_marcacao: num(it.hl_marcacao), hl_entrega: num(it.hl_entrega) });
+    });
+    pedidos.sort((a, b) => String(a.data).split("/").reverse().join("").localeCompare(String(b.data).split("/").reverse().join("")) || String(a.pedido).localeCompare(String(b.pedido)));
+
+    const nome = (usuarios.find((u) => String(u.cod || "").trim() === setor) || {}).nome || "";
+    const base = Object.values(pdvs).map((p) => ({ ...p, skus: [...p.skus.values()].sort((a, b) => a.nome.localeCompare(b.nome)) }))
+      .sort((a, b) => b.skus.length - a.skus.length || a.nome.localeCompare(b.nome));
+    const porSku = {};
+    det.forEach((d) => { (porSku[d.sku] = porSku[d.sku] || { sku: d.sku, nome: d.nome_produto, pdvs: new Set() }).pdvs.add(d.pdv); });
+    return res.json({
+      incentivo: inc.titulo, kpi: { key: kpi.key, label: kpi.label, unidade: kpi.unidade }, mes, setor, nome: String(nome).trim(),
+      meta: metas[mes]?.[setor]?.[kpi.key] ?? null, real, base,
+      skus: Object.values(porSku).map((s) => ({ sku: s.sku, nome: s.nome, pdvs: s.pdvs.size })).sort((a, b) => b.pdvs - a.pdvs),
+      pedidos,
+    });
+  } catch (e) {
+    console.error("incentivos-rn mapa:", e);
+    return res.status(500).json({ error: "Erro ao montar o mapa." });
   }
 });
 

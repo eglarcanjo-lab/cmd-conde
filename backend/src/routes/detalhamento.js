@@ -379,7 +379,7 @@ async function itensDosPedidos(bees) {
   for (const r of rows) {
     const k = normNota(r.bees);
     (por[k] = por[k] || []).push({
-      cod_produto: r.cod_produto, nome_produto: r.nome_produto,
+      cod_produto: r.cod_produto, nome_produto: r.nome_produto, operacao: String(r.operacao || "").trim(),
       hl_marcacao: r3(num(r.hl_marcacao)), hl_entrega: r3(num(r.hl_entrega)),
     });
   }

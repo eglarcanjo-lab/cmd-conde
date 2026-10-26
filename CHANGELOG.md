@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.121.0** — Liga CMD: bala, Halls e Trident (0,00 HL) contam na distribuição de Marketplace.
+Versão atual: **v3.122.0** — Liga CMD: 📥 Mapa MKTP (Excel do setor = número da tela), bonificação de combo conta em cobertura/distribuição e operação do item na Pesquisa Pedido.
+
+## v3.122.0 — Mapa MKTP, bonificação de combo e operação no rastreio
+- **Liga CMD › 📥 Mapa MKTP** (escolhe o setor): Excel com **Resumo por PDV** (base inteira do setor — quem tem 0 é oportunidade), **Matriz PDV × SKU**, **Itens PDV × SKU** (HL do mês; bala/Halls aparecem com 0), **Por SKU** e **Pedidos** (data, nº pedido, BEES, NF, situação, item, operação). Sai de `GET /api/incentivos-rn/:id/mapa`, que usa a MESMA agregação da tela (`agregar()`) — o realizado do Excel é sempre o da Liga.
+- **Bonificação de combo (BONIF DES BALZ/COMBO)** conta como compra do PDV em **cobertura e distribuição** (pela quantidade, volume 0). **Não entra em volume**/RV — Volume Entrega segue só venda.
+- **Pesquisa Pedido:** coluna **Operação** por item (Venda, Bonificação (combo), Remessa de vasilhame, Troca…). HL entregue do rastreio = item **atendido** de qualquer operação — bonificação/remessa entregues não aparecem mais como ruptura falsa.
+- Vale a partir do próximo import do CORA.
 
 ## v3.121.0 — Itens de 0,00 HL contam como compra (Liga CMD / MKTP)
 - **Problema:** o CORA manda o volume com 2 casas, e bala, pirulito, Halls e Trident chegam com **0,00 HL**. O processador só gravava em `vendas_cliente_produto` linhas com volume > 0, e a Liga também descartava HL ≤ 0. Esses SKUs **nunca contavam** na Distribuição de Marketplace (ex.: Allan 108 em out/26: 236 PDV×SKU no CORA × 185 na HOP — 43 só de itens com 0 HL).
