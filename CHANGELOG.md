@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.122.0** — Liga CMD: 📥 Mapa MKTP (Excel do setor = número da tela), bonificação de combo conta em cobertura/distribuição e operação do item na Pesquisa Pedido.
+Versão atual: **v3.123.0** — Cobertura & Distribuição: item entregue conta mesmo com 0 HL (bala, Halls, bonificação de combo).
+
+## v3.123.0 — Cobertura & Distribuição com a mesma regra da Liga
+- Item **entregue** conta como compra do PDV mesmo com **0,00 HL** (bala, Halls, Trident, bonificação de combo), igual à Liga CMD (v3.121/122):
+  - **Status do PDV** por categoria (OK/EST/PEND/IST/NOK) — processador (`_processar_cobertura`): arquivo usa volume **ou** quantidade > 0; histórico M-3..M-1 aceita as linhas de 0 HL de `vendas_cliente_produto`.
+  - **Mix do PDV** (`pdv_mix`) — itens de 0 HL entram (ordem por volume, ficam no fim).
+  - **SKUs do PDV** (`/api/cobertura/sku-pdv`), **Cobertura por SKU** (`/api/cobertura-sku`) e **Comparativo** — 0 HL conta.
+- Volume, HL e caixas não mudam (rank, entregas efetivadas, RV seguem só com volume > 0). Vale a partir do próximo import do CORA.
 
 ## v3.122.0 — Mapa MKTP, bonificação de combo e operação no rastreio
 - **Liga CMD › 📥 Mapa MKTP** (escolhe o setor): Excel com **Resumo por PDV** (base inteira do setor — quem tem 0 é oportunidade), **Matriz PDV × SKU**, **Itens PDV × SKU** (HL do mês; bala/Halls aparecem com 0), **Por SKU** e **Pedidos** (data, nº pedido, BEES, NF, situação, item, operação). Sai de `GET /api/incentivos-rn/:id/mapa`, que usa a MESMA agregação da tela (`agregar()`) — o realizado do Excel é sempre o da Liga.

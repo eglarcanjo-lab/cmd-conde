@@ -162,8 +162,8 @@ router.get("/", async (req, res) => {
     });
     const porPdv = Object.values(mapPdv)
       .map((p) => ({ ...p, volume_hl: r3(p.volume_hl), caixas: hlCaixa > 0 ? r1(p.volume_hl / hlCaixa) : 0 }))
-      .filter((p) => p.volume_hl > 0)
-      .sort((a, b) => b.caixas - a.caixas);
+      .filter((p) => p.volume_hl >= 0)   // linha = compra (bala/Halls/bonificação vêm com 0 HL — v3.121/122)
+      .sort((a, b) => b.caixas - a.caixas || b.volume_hl - a.volume_hl);
 
     // Por RN (setor)
     const mapRn = {};
@@ -254,10 +254,10 @@ router.get("/comparativo", async (req, res) => {
     const rnMap = {};
     usuarios.forEach((u) => { if (u.cod) rnMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
 
-    // Agrega compras (volume > 0) por PDV × SKU × mês do tri.
+    // Agrega compras por PDV × SKU × mês do tri (linha = compra; 0 HL conta — v3.121/122).
     const pdvs = {};
     vendas.forEach((r) => {
-      if (num(r.volume_hl) <= 0) return;
+      if (num(r.volume_hl) < 0) return;
       const sku = normCod(r.cod_produto);
       if (!skuSet.has(sku)) return;
       const cod = String(r.cod_pdv || "").trim(); if (!cod) return;

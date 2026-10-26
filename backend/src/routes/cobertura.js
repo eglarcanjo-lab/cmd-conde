@@ -92,7 +92,7 @@ router.get("/sku-pdv", async (req, res) => {
     });
     const comprou = Object.values(map)
       .map((s) => ({ cod: s.cod, nome: s.nome, volume_hl: r3(s.volume_hl), caixas: hlCaixa[s.cod] > 0 ? r1(s.volume_hl / hlCaixa[s.cod]) : null }))
-      .filter((s) => s.volume_hl > 0)
+      .filter((s) => s.volume_hl >= 0)   // linha = compra (bala/Halls/bonificação vêm com 0 HL — v3.121/122)
       .sort((a, b) => b.volume_hl - a.volume_hl);
 
     // SKUs da categoria vendidos no MESMO setor que este PDV NÃO comprou (oportunidade)
