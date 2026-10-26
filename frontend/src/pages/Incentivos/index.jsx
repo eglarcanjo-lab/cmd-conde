@@ -7,6 +7,7 @@ import ConversaoPG from "./ConversaoPG"; // acompanhamento temporário Pure Gold
 import RelatorioAberto from "./RelatorioAberto"; // cobertura/volume/distribuição por setor × mês
 import BaseVisita from "./BaseVisita"; // base de PDVs × dia de visita (estudo de rota)
 import AnomaliaVolume from "./AnomaliaVolume"; // PDVs 102/995/997 com venda no mês (gestores)
+import NaoCompradores from "./NaoCompradores"; // não compradores do mês + novos cadastros sem compra
 import { useAbaUrl } from "../../utils/abaUrl";
 import { useContarAba } from "../../utils/uso";
 
@@ -24,6 +25,8 @@ function fmtValor(v, unidade) {
 const ABAS_REL = [
   { id: "relatorio", icon: "📊", label: "Relatório aberto" },
   { id: "base",      icon: "🗺️", label: "Base de PDVs × dia" },
+  { id: "naocomp",   icon: "🛒", label: "Não compradores do mês" },
+  { id: "novos",     icon: "🆕", label: "Novos cadastros" },
   { id: "conversao", icon: "🎯", label: "Conversão Pure Gold" },
   { id: "campanhas", icon: "🏆", label: "Campanhas" },
   { id: "anomalia",  icon: "🚨", label: "Anomalia de Volume", gestor: true },
@@ -87,6 +90,8 @@ export default function Incentivos() {
 
       {aba === "relatorio" && <RelatorioAberto embutido />}
       {aba === "base" && <BaseVisita embutido />}
+      {aba === "naocomp" && <NaoCompradores modo="nao" />}
+      {aba === "novos" && <NaoCompradores key="novos" modo="novos" />}
       {aba === "conversao" && <ConversaoPG embutido />}
       {aba === "anomalia" && <AnomaliaVolume />}
 

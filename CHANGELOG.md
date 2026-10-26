@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.123.0** — Cobertura & Distribuição: item entregue conta mesmo com 0 HL (bala, Halls, bonificação de combo).
+Versão atual: **v3.124.0** — Outros relatórios: Não compradores do mês (com o SKU top do tri) e Novos cadastros sem compra.
+
+## v3.124.0 — Não compradores do mês e Novos cadastros
+- **Outros relatórios › 🛒 Não compradores do mês** (mês atual ou 2 anteriores): PDVs ATIVOS da base sem compra no mês, com o **SKU que cada um mais comprou no tri anterior** (M-3..M-1, por HL; empate → mais meses), HL e meses com o SKU. Quem não comprou nada no tri fica sem SKU. Cards: base, compraram, ainda não compraram, sem compra no tri. Filtro de setor, busca e Excel. `GET /api/relatorios/nao-compradores?mes=`.
+- **Outros relatórios › 🆕 Novos cadastros** (últimos 6 meses): PDVs com **Data de Cadastro** no mês e **sem compra registrada** desde o cadastro (vendas do mês do cadastro até hoje + "Data da Última Compra" da base vazia). `GET /api/relatorios/novos-cadastros?mes=`.
+- **Processador:** `pdv_base` grava `data_cadastro` ("Data de Cadastro" da base de clientes 0105070402) — vale após reimportar a Base de Clientes.
+- Compra = qualquer linha de `vendas_cliente_produto` (venda/bonificação entregue, inclusive 0 HL — mesma regra da Liga e da Cobertura). Setores 301–305 entram como 107–111.
 
 ## v3.123.0 — Cobertura & Distribuição com a mesma regra da Liga
 - Item **entregue** conta como compra do PDV mesmo com **0,00 HL** (bala, Halls, Trident, bonificação de combo), igual à Liga CMD (v3.121/122):

@@ -261,4 +261,92 @@ router.get("/base-visita", async (req, res) => {
   }
 });
 
+// ── Não compradores do mês × Novos cadastros ─────────────────────────────────────────────
+// Compra = qualquer linha em vendas_cliente_produto (venda/bonificação entregue, inclusive
+// itens de 0 HL — v3.121–3.123). Base = pdv_base (PDVs ATIVOS da base de clientes).
+const mesBR = () => { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+const mesMenos = (ym, k) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 - k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+const ymDeData = (s) => { const m = String(s || "").trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? `${m[3]}-${m[2].padStart(2, "0")}` : ""; };
+
+async function baseEVendas(req, meses) {
+  const [baseAll, vendas, usuarios, prodFull] = await Promise.all([
+    readSheet("pdv_base").catch(() => []),
+    readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
+    readSheet("usuarios").catch(() => []),
+    readSheet("produtos_full").catch(() => []),
+  ]);
+  const base = filtrarPorPerfil(baseAll.map((p) => ({ ...p, setor: setorHop(p.setor) })), req.user, "setor");
+  const rnDe = {}; usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) rnDe[c] = String(u.nome || "").trim(); });
+  const nomeProd = {}; prodFull.forEach((p) => { const c = normCod(p.cod); if (c && limpo(p.nome)) nomeProd[c] = limpo(p.nome); });
+  const vistos = new Set();
+  const pdvs = [];
+  base.forEach((p) => {
+    const cod = normCod(p.cod_pdv || p.cod);
+    if (!cod || vistos.has(cod)) return;
+    vistos.add(cod);
+    const setor = String(p.setor || "").trim();
+    pdvs.push({ cod_pdv: cod, nome: limpo(p.nome_fantasia) || limpo(p.razao_social), razao: limpo(p.razao_social), setor, rn: rnDe[setor] || "",
+      cidade: limpo(p.cidade).toUpperCase(), bairro: limpo(p.bairro), dia_visita: limpo(p.dia_visita).toUpperCase().slice(0, 3),
+      ultima_compra: limpo(p.ultima_compra), data_cadastro: limpo(p.data_cadastro) });
+  });
+  return { pdvs, vendas, nomeProd };
+}
+const setoresDe = (linhas) => [...new Set(linhas.map((l) => l.setor))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+// GET /api/relatorios/nao-compradores?mes=2026-10 → PDVs da base SEM compra no mês + o SKU que
+// o PDV mais comprou no tri anterior (M-3..M-1, por HL; empate → mais meses). Sem compra no
+// tri → SKU vazio.
+router.get("/nao-compradores", async (req, res) => {
+  try {
+    const mes = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : mesBR();
+    const tri = [mesMenos(mes, 3), mesMenos(mes, 2), mesMenos(mes, 1)];
+    const { pdvs, vendas, nomeProd } = await baseEVendas(req, [...tri, mes]);
+    const comprouMes = new Set();
+    const triPdv = {}; // pdv → sku → { hl, meses:Set, nome }
+    vendas.forEach((v) => {
+      const m = String(v.mes_referencia || "").slice(0, 7), pdv = normCod(v.cod_pdv), sku = normCod(v.cod_produto);
+      if (!pdv || num(v.volume_hl) < 0) return;
+      if (m === mes) { comprouMes.add(pdv); return; }
+      if (!tri.includes(m) || !sku) return;
+      const e = ((triPdv[pdv] = triPdv[pdv] || {})[sku] = triPdv[pdv][sku] || { hl: 0, meses: new Set(), nome: limpo(v.nome_produto) });
+      e.hl += num(v.volume_hl); e.meses.add(m);
+    });
+    const linhas = pdvs.filter((p) => !comprouMes.has(p.cod_pdv)).map((p) => {
+      const skus = Object.entries(triPdv[p.cod_pdv] || {});
+      let top = null;
+      skus.forEach(([sku, e]) => { if (!top || e.hl > top.hl || (e.hl === top.hl && e.meses.size > top.meses)) top = { sku, hl: e.hl, meses: e.meses.size, nome: e.nome }; });
+      const mesesComCompra = new Set(skus.flatMap(([, e]) => [...e.meses])).size;
+      return { ...p, sku_cod: top ? top.sku : "", sku_nome: top ? (nomeProd[top.sku] || top.nome || top.sku) : "",
+        sku_hl_tri: top ? Math.round(top.hl * 1000) / 1000 : null, sku_meses: top ? top.meses : 0, meses_com_compra_tri: mesesComCompra };
+    }).sort((a, b) => a.setor.localeCompare(b.setor, undefined, { numeric: true }) || (b.sku_hl_tri || 0) - (a.sku_hl_tri || 0));
+    return res.json({ mes, tri, base: pdvs.length, compraram: pdvs.filter((p) => comprouMes.has(p.cod_pdv)).length,
+      setores: setoresDe(linhas), linhas });
+  } catch (e) {
+    console.error("relatorios/nao-compradores:", e);
+    return res.status(500).json({ error: "Erro ao montar os não compradores." });
+  }
+});
+
+// GET /api/relatorios/novos-cadastros?mes=2026-10 → PDVs com Data de Cadastro no mês (base de
+// clientes) SEM compra registrada desde o cadastro (vendas_cliente_produto do mês do cadastro
+// até hoje + "Data da Última Compra" da base vazia).
+router.get("/novos-cadastros", async (req, res) => {
+  try {
+    const mes = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : mesBR();
+    const atual = mesBR();
+    const meses = []; for (let m = mes; m <= atual; m = mesMenos(m, -1)) meses.push(m);
+    const { pdvs, vendas } = await baseEVendas(req, meses);
+    const temData = pdvs.some((p) => p.data_cadastro);
+    const comprou = new Set(vendas.filter((v) => num(v.volume_hl) >= 0).map((v) => normCod(v.cod_pdv)));
+    const novos = pdvs.filter((p) => ymDeData(p.data_cadastro) === mes);
+    const sem = novos.filter((p) => !comprou.has(p.cod_pdv) && !/\d/.test(p.ultima_compra))
+      .sort((a, b) => a.setor.localeCompare(b.setor, undefined, { numeric: true }) || a.data_cadastro.split("/").reverse().join("").localeCompare(b.data_cadastro.split("/").reverse().join("")));
+    return res.json({ mes, tem_data_cadastro: temData, novos: novos.length, com_compra: novos.length - sem.length,
+      setores: setoresDe(sem), linhas: sem });
+  } catch (e) {
+    console.error("relatorios/novos-cadastros:", e);
+    return res.status(500).json({ error: "Erro ao montar os novos cadastros." });
+  }
+});
+
 module.exports = router;
