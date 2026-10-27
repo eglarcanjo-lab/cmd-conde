@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.125.0** — WhatsApp 17:10: Não compradores do mês e Novos cadastros das visitas de amanhã.
+Versão atual: **v3.125.1** — Import do Rotina+ passa a mostrar erro (antes ✅ sem gravar).
+
+## v3.125.1 — Rotina+ não aparecia nos faróis
+- **Sintoma:** farol matinal (Atendimento Produtivo) com **Rotina+ Real = —** em todos os setores; tabelas `spo_rotina_mais_resumo`/`_detalhe` vazias no banco.
+- **Causa:** `processar_rotina_mais` engolia qualquer erro de leitura do arquivo e o import mostrava **✅ Rotina+ processado** sem gravar nada.
+- Agora o erro sobe para a tela de importação (e para o status do arquivo) com o motivo; arquivo sem nenhuma visita GPS = OK também vira erro, listando os valores de GPS encontrados.
+- **Ação:** reimportar o Rotina+ (aba Arquivos, item 5) — o farol e o SPO leem o resultado na hora.
 
 ## v3.125.0 — Não compradores e Novos cadastros no WhatsApp das 17:10
 - Rotas novas do farol (motor de WhatsApp): `/api/farol-matinal/nao-compradores` e `/api/farol-matinal/novos-cadastros`. Filtram os PDVs pelo **dia de visita de AMANHÃ** (domingo pula p/ segunda; `?dia=QUI` força) e o título do bloco traz **"Visitas do dia DD/MM (amanhã)"**. RN recebe os PDVs dele; GV e Diretoria o consolidado (com setor).
