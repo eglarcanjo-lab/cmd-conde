@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.125.1** — Import do Rotina+ passa a mostrar erro (antes ✅ sem gravar).
+Versão atual: **v3.125.2** — Não compradores / Novos cadastros: ordenação clicando no cabeçalho.
+
+## v3.125.2 — Ordenação no cabeçalho (Não compradores / Novos cadastros)
+- Outros relatórios › Não compradores e Novos cadastros: clicar no cabeçalho ordena a coluna (▲/▼; datas dd/mm/aaaa e números ordenam certo, vazio vai pro fim). O Excel sai na mesma ordem da tela.
+- Nota da tela explica **"Meses c/ o SKU (de 3)"**: em quantos dos 3 meses do tri o PDV comprou o SKU top (3 = compra todo mês).
 
 ## v3.125.1 — Rotina+ não aparecia nos faróis
 - **Sintoma:** farol matinal (Atendimento Produtivo) com **Rotina+ Real = —** em todos os setores; tabelas `spo_rotina_mais_resumo`/`_detalhe` vazias no banco.

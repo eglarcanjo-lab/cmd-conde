@@ -13,6 +13,14 @@ const VERDE = "#7DBA3D";
 const NOMES_MES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const rot = (ym) => `${NOMES_MES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(2, 4)}`;
 const fmtHl = (v) => (v == null ? "" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 3 }));
+// Chave de ordenação: dd/mm/aaaa → aaaammdd; colunas numéricas como número; vazio sempre no fim.
+const NUMERICAS = ["sku_hl_tri", "sku_meses"];
+const chave = (k, v) => {
+  if (v == null || v === "") return null;
+  if (NUMERICAS.includes(k)) return Number(v);
+  const dt = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(String(v));
+  return dt ? `${dt[3]}${dt[2]}${dt[1]}` : String(v);
+};
 const ultimosMeses = (n) => {
   const d = new Date(); const out = [];
   for (let k = 0; k < n; k++) { const x = new Date(d.getFullYear(), d.getMonth() - k, 1); out.push(`${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`); }
@@ -41,6 +49,8 @@ export default function NaoCompradores({ modo = "nao" }) {
   const [erro, setErro] = useState("");
   const [setor, setSetor] = useState("");
   const [busca, setBusca] = useState("");
+  const [sort, setSort] = useState({ k: null, dir: "asc" });
+  const ordenar = (k) => setSort((s) => ({ k, dir: s.k === k && s.dir === "asc" ? "desc" : "asc" }));
 
   useEffect(() => {
     setD(null); setErro("");
@@ -52,9 +62,16 @@ export default function NaoCompradores({ modo = "nao" }) {
   const linhas = useMemo(() => {
     if (!d) return [];
     const q = busca.trim().toLowerCase();
-    return d.linhas.filter((l) => (!setor || l.setor === setor) &&
+    const f = d.linhas.filter((l) => (!setor || l.setor === setor) &&
       (!q || `${l.cod_pdv} ${l.nome} ${l.cidade} ${l.bairro} ${l.sku_nome || ""}`.toLowerCase().includes(q)));
-  }, [d, setor, busca]);
+    if (!sort.k) return f;
+    const sinal = sort.dir === "asc" ? 1 : -1;
+    return [...f].sort((a, b) => {
+      const x = chave(sort.k, a[sort.k]), y = chave(sort.k, b[sort.k]);
+      if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+      return sinal * (typeof x === "number" ? x - y : x.localeCompare(y, "pt-BR", { numeric: true }));
+    });
+  }, [d, setor, busca, sort]);
 
   function exportar() {
     const head = M.cols.map(([, h]) => h);
@@ -87,9 +104,9 @@ export default function NaoCompradores({ modo = "nao" }) {
     <div style={S.box}>
       <p style={S.nota}>
         {modo === "nao"
-          ? "PDVs ativos da base que ainda não compraram no mês, com o SKU que cada um mais comprou no trimestre anterior (por HL). Quem não comprou nada no tri fica sem SKU."
+          ? "PDVs ativos da base que ainda não compraram no mês, com o SKU que cada um mais comprou no trimestre anterior (por HL). \"Meses c/ o SKU (de 3)\" = em quantos dos 3 meses do tri o PDV comprou esse SKU (3 = compra todo mês). Quem não comprou nada no tri fica sem SKU."
           : "PDVs com Data de Cadastro no mês (base de clientes) que ainda não têm compra registrada."}
-        {" "}Compra = venda ou bonificação entregue, inclusive itens de 0 HL.
+        {" "}Compra = venda ou bonificação entregue, inclusive itens de 0 HL. Clique no cabeçalho para ordenar.
       </p>
       <div style={S.filtros}>
         {meses.map((m) => <button key={m} onClick={() => setMes(m)} style={S.chip(m === mes)}>{rot(m)}</button>)}
@@ -111,7 +128,12 @@ export default function NaoCompradores({ modo = "nao" }) {
           {d && modo === "nao" && <p style={S.nota}>Tri considerado: {d.tri.map(rot).join(" · ")}</p>}
           <div style={S.wrap}>
             <table style={S.table}>
-              <thead><tr>{M.cols.map(([k, h]) => <th key={k} style={S.th}>{h}</th>)}</tr></thead>
+              <thead><tr>{M.cols.map(([k, h]) => (
+                <th key={k} onClick={() => ordenar(k)} title="Clique para ordenar"
+                  style={{ ...S.th, cursor: "pointer", userSelect: "none", ...(sort.k === k ? { color: "#fff" } : {}) }}>
+                  {h}{sort.k === k ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅"}
+                </th>
+              ))}</tr></thead>
               <tbody>
                 {linhas.slice(0, 500).map((l) => (
                   <tr key={l.cod_pdv} style={S.tr}>
