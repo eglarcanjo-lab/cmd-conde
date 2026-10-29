@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.126.0** — PDVs › Sem Compra pela última compra dos PEDIDOS (CORA), não só da base.
+Versão atual: **v3.126.1** — PDVs: "Fez pedido hoje" no lugar de "0 dias".
+
+## v3.126.1 — "Fez pedido hoje"
+- Aba PDVs (lista do dia, Sem Compra e ficha do PDV): dias sem compra = 0 aparece como **"Fez pedido hoje"**; 1 = "1 dia"; depois o contador normal. Sem data = "—" (antes "— dias").
 
 ## v3.126.0 — Sem Compra pelos pedidos
 - **Bug:** PDVs que compraram no mês apareciam em **PDVs › 🕐 Sem Compra**. A aba lia a "Data da Última Compra" da **base de clientes** (0105070402), que só muda quando a base é reimportada, e os dias sem compra eram calculados no dia do import.

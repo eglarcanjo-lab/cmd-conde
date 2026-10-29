@@ -28,6 +28,13 @@ function getDiaHoje() {
   return dias[new Date().getDay()];
 }
 
+// Dias sem compra (backend já soma os pedidos do CORA): 0 = pedido feito hoje (D+1 conta como venda do dia)
+const diasTxt = (v) => {
+  if (v === "" || v == null) return "—";
+  const n = Number(v);
+  return n === 0 ? "Fez pedido hoje" : n === 1 ? "1 dia" : `${v} dias`;
+};
+
 // Converte valor que pode vir como "35,5" (locale BR) ou "35.5" ou número
 const parseHl = (v) => {
   if (typeof v === "number" && !isNaN(v)) return v;
@@ -328,7 +335,7 @@ export default function PDVs() {
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>Dias sem compra</span>
                   <span style={{ ...styles.infoVal, color: Number(pdvSelecionado.dias_sem_compra) > 30 ? "#f87171" : "#4ade80" }}>
-                    {pdvSelecionado.dias_sem_compra || "—"} dias
+                    {diasTxt(pdvSelecionado.dias_sem_compra)}
                   </span>
                 </div>
                 <div style={styles.infoItem}>
@@ -437,7 +444,7 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect, mostrarSetor }) {
                 {mostrarSetor && <td style={{ ...styles.td, color: "#7DBA3D", fontWeight: "600" }}>{p.setor || "—"}</td>}
                 <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
                 <td style={{ ...styles.td, color: Number(p.dias_sem_compra) > 30 ? "#f87171" : "#4ade80" }}>
-                  {p.dias_sem_compra || "—"} dias
+                  {diasTxt(p.dias_sem_compra)}
                 </td>
                 <td style={styles.td}>
                   {inad ? <span className="pdv-tag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
@@ -476,7 +483,7 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect, mostrarSetor }) {
               <td style={{ ...styles.td, textAlign: "left" }}>{p.nome_fantasia}</td>
               {mostrarSetor && <td style={{ ...styles.td, color: "#7DBA3D", fontWeight: "600" }}>{p.setor || "—"}</td>}
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.cidade}</td>
-              <td style={{ ...styles.td, color: "#f87171", fontWeight: "700" }}>{p.dias_sem_compra} dias</td>
+              <td style={{ ...styles.td, color: "#f87171", fontWeight: "700" }}>{diasTxt(p.dias_sem_compra)}</td>
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }} className="pdv-col-hide">{p.ultima_compra}</td>
               <td style={styles.td}>{mapaInad[p.cod_pdv] ? <span className="pdv-tag" style={styles.inadTag}>⚠️ Sim</span> : <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}</td>
             </tr>
