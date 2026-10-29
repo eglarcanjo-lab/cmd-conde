@@ -6,6 +6,7 @@ const { authMiddleware } = require("../middleware/auth");
 router.use(authMiddleware);
 
 const { filtrarPorPerfil } = require("../utils/perfil");
+const { aplicarUltimaCompra, comprouNoMes } = require("../utils/ultimaCompra");
 
 // GET /api/pdvs/mix
 router.get("/mix", async (req, res) => {
@@ -130,11 +131,13 @@ router.get("/categorias-produto", async (req, res) => {
   }
 });
 
-// GET /api/pdvs/sem-compra
+// GET /api/pdvs/sem-compra — PDVs SEM compra no mês corrente, mais dias sem compra primeiro.
+// Última compra = maior data entre a base de clientes e os pedidos do CORA (utils/ultimaCompra).
 router.get("/sem-compra", async (req, res) => {
   try {
-    const dados = await readSheet("sem_compra");
-    return res.json(filtrarPorPerfil(dados, req.user));
+    const dados = await aplicarUltimaCompra(filtrarPorPerfil(await readSheet("sem_compra"), req.user));
+    return res.json(dados.filter((p) => !comprouNoMes(p))
+      .sort((a, b) => (Number(b.dias_sem_compra) || 0) - (Number(a.dias_sem_compra) || 0)));
   } catch (err) {
     return res.status(500).json({ error: "Erro ao buscar sem compra." });
   }

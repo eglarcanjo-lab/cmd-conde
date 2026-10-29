@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 // Filtra dados pelo perfil do usuário
 const { filtrarPorPerfil } = require("../utils/perfil");
+const { aplicarUltimaCompra } = require("../utils/ultimaCompra");
 
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const r1 = (n) => Math.round(n * 10) / 10;
@@ -29,10 +30,11 @@ router.get("/", async (req, res) => {
 });
 
 // GET /api/cobertura/pdv-base — base de PDVs com dia de visita
+// (última compra / dias sem compra atualizados pelos pedidos do CORA — utils/ultimaCompra)
 router.get("/pdv-base", async (req, res) => {
   try {
     const dados = await readSheet("pdv_base");
-    return res.json(filtrarPorPerfil(dados, req.user));
+    return res.json(await aplicarUltimaCompra(filtrarPorPerfil(dados, req.user)));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao buscar PDVs." });

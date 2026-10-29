@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.125.2** — Não compradores / Novos cadastros: ordenação clicando no cabeçalho.
+Versão atual: **v3.126.0** — PDVs › Sem Compra pela última compra dos PEDIDOS (CORA), não só da base.
+
+## v3.126.0 — Sem Compra pelos pedidos
+- **Bug:** PDVs que compraram no mês apareciam em **PDVs › 🕐 Sem Compra**. A aba lia a "Data da Última Compra" da **base de clientes** (0105070402), que só muda quando a base é reimportada, e os dias sem compra eram calculados no dia do import.
+- Agora a última compra = **maior data entre a base e os pedidos do CORA** (`vendas_cliente_produto`, mês atual + 3 anteriores; venda/bonificação válida, inclusive D+1 ainda não entregue — mesma regra da RV) e os dias são recalculados para **hoje**. Cálculo único em `utils/ultimaCompra.js`.
+- **Sem Compra** lista só PDVs **sem compra no mês corrente** (mais dias sem compra primeiro). A mesma data atualizada vale para `/api/cobertura/pdv-base` (card "+30 dias sem compra" e ficha do PDV).
 
 ## v3.125.2 — Ordenação no cabeçalho (Não compradores / Novos cadastros)
 - Outros relatórios › Não compradores e Novos cadastros: clicar no cabeçalho ordena a coluna (▲/▼; datas dd/mm/aaaa e números ordenam certo, vazio vai pro fim). O Excel sai na mesma ordem da tela.
