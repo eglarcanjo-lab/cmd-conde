@@ -419,23 +419,49 @@ export default function PDVs() {
   );
 }
 
+// Ordenação clicando no cabeçalho (▲ menor→maior / ▼ maior→menor). "Dias" = número
+// (0 = fez pedido hoje), "Última compra" = data dd/mm/aaaa; vazio sempre no fim.
+const CHAVE_ORD = {
+  dias_sem_compra: (p) => (p.dias_sem_compra === "" || p.dias_sem_compra == null ? null : Number(p.dias_sem_compra)),
+  ultima_compra: (p) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(String(p.ultima_compra || "")); return m ? `${m[3]}${m[2]}${m[1]}` : null; },
+};
+function useOrdenacao(lista, mapaInad) {
+  const [sort, setSort] = useState({ k: null, dir: "asc" });
+  const val = (p, k) => k === "inad" ? (mapaInad[p.cod_pdv] ? 1 : 0)
+    : CHAVE_ORD[k] ? CHAVE_ORD[k](p) : (p[k] == null || p[k] === "" ? null : String(p[k]));
+  const ordenada = !sort.k ? lista : [...lista].sort((a, b) => {
+    const x = val(a, sort.k), y = val(b, sort.k);
+    if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+    const c = typeof x === "number" ? x - y : x.localeCompare(y, "pt-BR", { numeric: true });
+    return sort.dir === "asc" ? c : -c;
+  });
+  const Th = ({ k, children, className }) => (
+    <th className={className} title="Clique para ordenar" onClick={() => setSort((s) => ({ k, dir: s.k === k && s.dir === "asc" ? "desc" : "asc" }))}
+      style={{ ...styles.th, cursor: "pointer", userSelect: "none", ...(sort.k === k ? { color: "#fff" } : {}) }}>
+      {children}{sort.k === k ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅"}
+    </th>
+  );
+  return { ordenada, Th };
+}
+
 function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect, mostrarSetor }) {
+  const { ordenada, Th } = useOrdenacao(pdvs, mapaInad);
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
       <table style={styles.table} className="pdv-table">
         <thead>
           <tr>
-            <th style={styles.th}>Cód</th>
-            <th style={styles.th}>Nome</th>
-            {mostrarSetor && <th style={styles.th}>Setor</th>}
-            <th style={styles.th} className="pdv-col-hide">Cidade</th>
-            <th style={styles.th}>Dias s/ Compra</th>
-            <th style={styles.th}>Inad.</th>
+            <Th k="cod_pdv">Cód</Th>
+            <Th k="nome_fantasia">Nome</Th>
+            {mostrarSetor && <Th k="setor">Setor</Th>}
+            <Th k="cidade" className="pdv-col-hide">Cidade</Th>
+            <Th k="dias_sem_compra">Dias s/ Compra</Th>
+            <Th k="inad">Inad.</Th>
           </tr>
         </thead>
         <tbody>
-          {pdvs.map((p) => {
+          {ordenada.map((p) => {
             const inad = mapaInad[p.cod_pdv];
             return (
               <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
@@ -459,6 +485,7 @@ function TabelaPDVs({ pdvs, mapaInad, coberturaOk, onSelect, mostrarSetor }) {
 }
 
 function TabelaSemCompra({ pdvs, mapaInad, onSelect, mostrarSetor }) {
+  const { ordenada, Th } = useOrdenacao(pdvs, mapaInad);
   if (pdvs.length === 0) return <p style={styles.msg}>Nenhum PDV encontrado.</p>;
   return (
     <div style={styles.tableWrap}>
@@ -466,17 +493,17 @@ function TabelaSemCompra({ pdvs, mapaInad, onSelect, mostrarSetor }) {
         <thead>
           <tr>
             <th style={styles.th}>#</th>
-            <th style={styles.th}>Cód</th>
-            <th style={styles.th}>Nome</th>
-            {mostrarSetor && <th style={styles.th}>Setor</th>}
-            <th style={styles.th} className="pdv-col-hide">Cidade</th>
-            <th style={styles.th}>Dias</th>
-            <th style={styles.th} className="pdv-col-hide">Última Compra</th>
-            <th style={styles.th}>Inad.</th>
+            <Th k="cod_pdv">Cód</Th>
+            <Th k="nome_fantasia">Nome</Th>
+            {mostrarSetor && <Th k="setor">Setor</Th>}
+            <Th k="cidade" className="pdv-col-hide">Cidade</Th>
+            <Th k="dias_sem_compra">Dias</Th>
+            <Th k="ultima_compra" className="pdv-col-hide">Última Compra</Th>
+            <Th k="inad">Inad.</Th>
           </tr>
         </thead>
         <tbody>
-          {pdvs.map((p, i) => (
+          {ordenada.map((p, i) => (
             <tr key={p.cod_pdv} style={{ ...styles.tr, cursor: "pointer" }} onClick={() => onSelect(p)}>
               <td style={{ ...styles.td, color: "rgba(255,255,255,0.3)" }}>{i + 1}</td>
               <td style={styles.td}><span className="pdv-badge" style={styles.codBadge}>{p.cod_pdv}</span></td>

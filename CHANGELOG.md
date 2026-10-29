@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.126.1** — PDVs: "Fez pedido hoje" no lugar de "0 dias".
+Versão atual: **v3.126.2** — PDVs: ordenação clicando no cabeçalho (lista do dia e Sem Compra).
+
+## v3.126.2 — Ordenação na aba PDVs
+- Lista de PDVs do dia e Sem Compra: clicar no cabeçalho ordena (▲ menor→maior, ▼ maior→menor) por Cód, Nome, Setor, Cidade, **Dias s/ compra** ("Fez pedido hoje" = 0, primeiro no ▲), Última compra (data) e Inad. Vazio vai pro fim.
 
 ## v3.126.1 — "Fez pedido hoje"
 - Aba PDVs (lista do dia, Sem Compra e ficha do PDV): dias sem compra = 0 aparece como **"Fez pedido hoje"**; 1 = "1 dia"; depois o contador normal. Sem data = "—" (antes "— dias").
