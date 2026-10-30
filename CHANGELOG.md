@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.127.1** — Devoluções por categoria MÃE (Cerveja · NAB · Match · Mktp · RGB TT).
+Versão atual: **v3.128.0** — WhatsApp 12h: "Vendido HOJE" por categoria antes do acumulado do mês.
+
+## v3.128.0 — Vendido HOJE no envio das 12h
+- `/api/farol-volumes/mensagens` devolve também `report_dia`: mesmas seções (Operação · GV · RN) e categorias do Report (Cerveja, NAB, Match, Mktp, RGB TT, Cerv. Zero, NAB Zero), só a coluna **Hoje**. HL com 1 casa; Mktp em R$.
+  - Volume: `vd_produto` do dia (venda válida do CORA; pedido de hoje p/ entrega amanhã conta hoje) × categorias do produto (mesma regra do rv_volume). RGB TT = Giro RGB + Litrinho + Trimarcas (1x por produto). Setores 301–305 → 107–111.
+  - Mktp: tabela nova `rv_faturamento_mktp_dia` (processador, R$ sem ADF por setor × dia).
+- Robô (`cmd-conde-whatsapp/enviar.js`, fora do git; backup `enviar.backup_antes_vendidohoje_2026-10-30.js`): modo **meiodia** mostra **🛒 Vendido HOJE** e, abaixo, **📊 Acumulado do mês (somatório)**. 8h e 17:10 sem mudança.
+- Mktp do dia só aparece depois de reimportar o CORA (tabela nova).
 
 ## v3.127.1 — Por categoria = categorias mãe
 - Entrega › Por categoria passa a mostrar só as **mães**: Cerveja (inclui Zero, Multipack, HE, HE RGB e RGB) · NAB (inclui NAB Zero) · Match · Mktp · **RGB TT** (GIRO RGB + Litrinho + Trimarcas RGB HE, igual ao Report Volumes). Produto conta 1x em cada mãe; RGB TT também é Cerveja. Sem categoria → "Outros". As 5 aparecem sempre.

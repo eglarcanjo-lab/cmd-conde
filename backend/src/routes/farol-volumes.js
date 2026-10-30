@@ -6,16 +6,62 @@
 // Todo mundo com telefone recebe o relatório INTEIRO (não é escopado por RN).
 const express = require("express");
 const router = express.Router();
-const { readSheet } = require("../services/sheets");
+const { readSheet, readSheetMonths } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { montarReport } = require("../utils/volumesReport");
 const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
-const { rgbPorSetor } = require("../utils/rgbVolume");
+const { rgbPorSetor, CATS_RGB } = require("../utils/rgbVolume");
 
 const pad = (n) => String(n).padStart(2, "0");
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 router.use(authMiddleware);
+
+// "Vendido HOJE" (robô das 12h: vem antes do acumulado do mês) — mesmas categorias e seções
+// do Report, só a coluna Real. Volume = vd_produto do dia (venda válida do CORA; pedido de hoje
+// p/ entrega amanhã conta hoje) × categorias do produto (produtos_base, mesma regra do rv_volume:
+// Cerveja = produto com a categoria CERVEJA etc.); RGB TT = CATS_RGB (produto conta 1x);
+// Mktp = R$ sem ADF do dia (rv_faturamento_mktp_dia). Só setores do Report (rv_resultado).
+const BRUTA = { "CERVEJA RGB": "GIRO RGB", "MKTPLACE": "MKTP", "HE BC": "HE", "CERVEJA ZERO BC": "CERVEJA ZERO" };
+const NOVO_DE = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+const numV = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
+const normC = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
+async function montarVendidoHoje(mes, hojeISO, setoresOk, nomeSetor) {
+  const [base, vd, mk] = await Promise.all([
+    readSheet("produtos_base").catch(() => []),
+    readSheetMonths("vd_produto", "mes_referencia", [mes]).catch(() => []),
+    readSheetMonths("rv_faturamento_mktp_dia", "mes_referencia", [mes]).catch(() => []),
+  ]);
+  const cats = {};
+  base.forEach((p) => {
+    cats[normC(p.cod)] = new Set(String(p.categorias || p.categoria || "").toUpperCase().split(/\s*[|,;]\s*/)
+      .map((c) => BRUTA[c.trim()] || c.trim()).filter(Boolean));
+  });
+  const setorOk = (s) => { const x = NOVO_DE[normC(s)] || normC(s); return setoresOk.has(x) ? x : null; };
+  const rvRows = {}, volRows = [], rgb = {};
+  const linha = (s) => (rvRows[s] = rvRows[s] || { setor: s, real_cerveja: 0, real_nab: 0, real_match: 0, real_marketplace: 0 });
+  setoresOk.forEach(linha); // todo RN aparece (com 0 se não vendeu)
+  vd.forEach((r) => {
+    if (String(r.data || "").slice(0, 10) !== hojeISO) return;
+    const s = setorOk(r.setor); if (!s) return;
+    const hl = numV(r.volume_hl), c = cats[normC(r.cod_produto)] || new Set();
+    const l = linha(s);
+    if (c.has("CERVEJA")) l.real_cerveja += hl;
+    if (c.has("NAB")) l.real_nab += hl;
+    if (c.has("MATCH")) l.real_match += hl;
+    if (c.has("CERVEJA ZERO")) volRows.push({ setor: s, categoria: "CERVEJA ZERO", volume: hl });
+    if (c.has("NAB ZERO")) volRows.push({ setor: s, categoria: "NAB ZERO", volume: hl });
+    if ([...c].some((x) => CATS_RGB.has(x))) rgb[s] = (rgb[s] || 0) + hl;
+  });
+  mk.forEach((r) => {
+    if (String(r.data || "").slice(0, 10) !== hojeISO) return;
+    const s = setorOk(r.setor); if (s) linha(s).real_marketplace += numV(r.faturamento_mktp);
+  });
+  const rep = montarReport(Object.values(rvRows), volRows, nomeSetor, 1, { rgb, casas: 1 });
+  if (!rep) return null;
+  rep.subcols = [{ key: "real", label: "Hoje" }];
+  return rep;
+}
 
 // GET /api/farol-volumes/mensagens  (mês corrente; relatório consolidado p/ todos)
 router.get("/mensagens", async (req, res) => {
@@ -57,6 +103,8 @@ router.get("/mensagens", async (req, res) => {
     // RGB TT (Giro RGB + Litrinho + Trimarcas) no lugar do antigo "Giro RGB" (só Giro + Litrinho)
     const report = montarReport(rv, vol, nomeSetor, fator, { rateio, rgb: await rgbPorSetor(mes) });
     if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
+    const hojeISO = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const reportDia = await montarVendidoHoje(mes, hojeISO, new Set(rv.map((r) => norm(r.setor))), nomeSetor).catch((e) => { console.error("vendido hoje:", e.message); return null; });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.
     const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);
@@ -69,7 +117,7 @@ router.get("/mensagens", async (req, res) => {
       destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
     });
 
-    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, diasUteis, destinatarios, rn: [], gv: [], director: null });
+    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, report_dia: reportDia, diasUteis, destinatarios, rn: [], gv: [], director: null });
   } catch (e) {
     console.error("farol-volumes/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar o Report Volumes." });

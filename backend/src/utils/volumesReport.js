@@ -3,6 +3,9 @@
 // Usado pela Home (resumo/volumes, aba Analítico).
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const fmtN = (n) => (Math.round(Number(n) || 0)).toLocaleString("pt-BR"); // inteiro c/ separador de milhar
+// opts.casas (Vendido hoje): volumes com casas decimais (dia é pouco HL); Mktp (R$) segue inteiro
+const fmtCat = (n, key, casas) => (casas && key !== "mktp"
+  ? (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas }) : fmtN(n));
 
 // tipo "rv" = meta/real do rv_resultado; "zero" = real do rv_volume, meta = 15% da base;
 // "vol" = só volume (soma de categorias brutas do rv_volume), sem meta.
@@ -74,7 +77,7 @@ function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
       const p = (!semMeta && m > 0) ? Math.round((r / m) * 100) : null;
       const pT = (!semMeta && m > 0) ? Math.round((tend / m) * 100) : null;
       out[c.key] = {
-        meta: semMeta ? "—" : fmtN(m), real: fmtN(r),
+        meta: semMeta ? "—" : fmtN(m), real: fmtCat(r, c.key, opts.casas),
         pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`,
         _cor: sinal(p), _corT: sinal(pT),
       };
