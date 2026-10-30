@@ -458,6 +458,7 @@ function Entrega() {
     add("Por PDV", d.por_pdv);
     add("Por Produto", d.por_produto);
     add("Por Setor", d.por_setor);
+    add("Por Categoria", d.por_categoria);
     add("Por Motivo", d.por_motivo);
     add("Detalhe", d.detalhe);
     XLSX.writeFile(wb, `devolucoes_${(dia || mes || "quadrimestre").replace(/\//g, "-")}.xlsx`);
@@ -512,7 +513,7 @@ function Entrega() {
       </div>
 
       <div style={S.subAbas} className="hop-abas">
-        {[["motivo", "Por motivo"], ["setor", "Por setor"], ["caminhao", "Por caminhão"], ["dia", "Por dia"], ["produto", "Por produto"], ["pdv", "Por PDV"], ["detalhe", "Detalhe"]].map(([k, t]) => (
+        {[["motivo", "Por motivo"], ["setor", "Por setor"], ["categoria", "Por categoria"], ["caminhao", "Por caminhão"], ["dia", "Por dia"], ["produto", "Por produto"], ["pdv", "Por PDV"], ["detalhe", "Detalhe"]].map(([k, t]) => (
           <button key={k} style={{ ...S.subTab, ...(sub === k ? S.subTabAtiva : {}) }} onClick={() => setSub(k)}>{t}</button>
         ))}
       </div>
@@ -527,6 +528,20 @@ function Entrega() {
         { k: "cod_produto", t: "Cód" }, { k: "nome_produto", t: "Produto" }, { k: "notas", t: "Notas", num: true },
         { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }]} />}
 
+      {sub === "categoria" && (
+        <>
+          <div style={S.dicaLinha} className="hop-dica">
+            Devolvido = itens das notas devolvidas · Efetivado = volume ENTREGUE no mês · Taxa = devolvido ÷ (efetivado + devolvido).
+            Um produto conta em todas as categorias dele (ex.: HE também é Cerveja), por isso as linhas não somam o total.
+            {(dia || motivo || pdv) && " Com filtro de dia, motivo ou PDV, o efetivado e a taxa não se aplicam."}
+          </div>
+          <Tabela inicial={{ k: "devolvido_hl", dir: "desc" }} linhas={d.por_categoria || []} colunas={[
+            { k: "categoria", t: "Categoria" }, { k: "notas", t: "Notas", num: true },
+            { k: "devolvido_hl", t: "Devolvido (HL)", num: true, fmt: (v) => fmt(v) },
+            { k: "efetivado_hl", t: "Efetivado (HL)", num: true, fmt: (v) => (v == null ? "—" : fmt(v)) },
+            { k: "taxa_pct", t: "Taxa", num: true, fmt: (v) => (v == null ? "—" : `${fmt(v)}%`) }]} />
+        </>
+      )}
       {sub === "motivo" && <Tabela inicial={{ k: "volume_hl", dir: "desc" }} linhas={d.por_motivo} colunas={[
         { k: "desc_motivo", t: "Motivo" }, { k: "qtd", t: "Notas", num: true },
         { k: "volume_hl", t: "Volume (HL)", num: true, fmt: (v) => fmt(v) }, { k: "valor", t: "Valor", num: true, fmt: fmtMoeda }]} />}

@@ -56,11 +56,13 @@ router.get("/entrega", async (req, res) => {
     const pdv = String(req.query.pdv || "").trim().toLowerCase();
     const dia = String(req.query.dia || "").trim(); // dd/mm/yyyy
 
-    const [frustradasRaw, efetivadasRaw, notaItensRaw, motivos] = await Promise.all([
+    const [frustradasRaw, efetivadasRaw, notaItensRaw, motivos, efetCatRaw, prodBase] = await Promise.all([
       readSheet("entregas_frustradas").catch(() => []),
       readSheet("entregas_efetivadas").catch(() => []),
       readSheet("nota_itens").catch(() => []),
       mapaMotivos(),
+      readSheet("entregas_efetivadas_cat").catch(() => []),
+      readSheet("produtos_base").catch(() => []),
     ]);
 
     // descrição do motivo pelo cadastro ATUAL (Admin › Arquivos) — não a gravada no import
@@ -159,6 +161,31 @@ router.get("/entrega", async (req, res) => {
       .map((p) => ({ cod_produto: p.cod_produto, nome_produto: p.nome_produto, volume_hl: r3(p.volume_hl), notas: p.notas.size }))
       .sort((a, b) => b.volume_hl - a.volume_hl);
 
+    // Por categoria — devolvido (itens das notas, categorias gravadas pelo processador; nota_itens
+    // antiga sem a coluna → cadastro produtos_base) × efetivado (entregas_efetivadas_cat, só
+    // ENTREGUE). Produto conta em cada categoria dele (HE também é Cerveja), então as linhas
+    // NÃO somam o total. Com filtro de dia/motivo/PDV a taxa não se aplica (efetivado é mensal).
+    const catBase = {};
+    prodBase.forEach((p) => { catBase[normCodP(p.cod)] = String(p.categorias || p.categoria || ""); });
+    const catsDe = (s) => { const l = String(s || "").split("|").map((c) => c.trim().toUpperCase()).filter((c) => c && !LIXO.has(c)); return l.length ? l : ["SEM CATEGORIA"]; };
+    const mapCat = {};
+    const linhaCat = (c) => (mapCat[c] = mapCat[c] || { categoria: c, devolvido_hl: 0, efetivado_hl: 0, notas: new Set() });
+    notaItensRaw.forEach((it) => {
+      if (!notasFiltradas.has(normNota(it.nota))) return;
+      const cats = catsDe(String(it.categorias || "").trim() ? it.categorias : catBase[normCodP(it.cod_produto)]);
+      cats.forEach((c) => { const x = linhaCat(c); x.devolvido_hl += num(it.volume_marcacao_hl); x.notas.add(normNota(it.nota)); });
+    });
+    const taxaCatOk = !dia && !motivo && !pdv;
+    if (taxaCatOk) filtrarPorPerfil(efetCatRaw, req.user)
+      .filter((r) => (!mes || String(r.mes_referencia) === mes) && (!setor || String(r.setor) === setor))
+      .forEach((r) => { linhaCat(String(r.categoria || "SEM CATEGORIA").trim().toUpperCase()).efetivado_hl += num(r.volume_entregue_hl); });
+    const porCategoria = Object.values(mapCat).map((x) => {
+      const b = x.efetivado_hl + x.devolvido_hl;
+      return { categoria: x.categoria, notas: x.notas.size, devolvido_hl: r3(x.devolvido_hl),
+        efetivado_hl: taxaCatOk && efetCatRaw.length ? r3(x.efetivado_hl) : null,
+        taxa_pct: taxaCatOk && efetCatRaw.length && b > 0 ? Math.round((x.devolvido_hl / b) * 1000) / 10 : null };
+    }).sort((a, b) => b.devolvido_hl - a.devolvido_hl);
+
     const detalhe = fFilt
       .map((r) => ({
         setor: r.setor, data: r.data, nota: r.nota, placa: r.placa, cod_pdv: r.cod_pdv, nome_pdv: r.nome_pdv,
@@ -181,6 +208,7 @@ router.get("/entrega", async (req, res) => {
       por_dia: porDia,
       por_dia_semana: porDiaSemana,
       por_produto: porProduto,
+      por_categoria: porCategoria,
       por_pdv: porPdv,
       detalhe,
       tem_dados: frustradas.length > 0 || efetivadas.length > 0,

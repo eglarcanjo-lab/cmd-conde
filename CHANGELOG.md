@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.126.2** — PDVs: ordenação clicando no cabeçalho (lista do dia e Sem Compra).
+Versão atual: **v3.127.0** — Devoluções por categoria + volume efetivado só ENTREGUE.
+
+## v3.127.0 — Devoluções por categoria · efetivado só ENTREGUE
+- **Detalhamento › Entrega › Por categoria** (nova): por categoria, notas, **devolvido (HL)**, **efetivado (HL)** e **taxa** = devolvido ÷ (efetivado + devolvido). Produto conta em todas as categorias dele (HE também é Cerveja) — as linhas não somam o total. Com filtro de dia/motivo/PDV só o devolvido. Também no Excel.
+- **Volume efetivado** passa a contar só pedido **ENTREGUE** (antes entrava em rota e aguardando roteirização, que ainda não podem ser frustrados — out/26 até 29/10: 5.600 HL vendidos, 4.938 entregues) e **acumula por mês** (antes cada import apagava os meses fora do arquivo).
+- **Processador:** `entregas_efetivadas` (por mês, só ENTREGUE), tabela nova `entregas_efetivadas_cat` (setor × mês × categoria) e coluna `categorias` em `nota_itens`. Vale após **reimportar o CORA**.
 
 ## v3.126.2 — Ordenação na aba PDVs
 - Lista de PDVs do dia e Sem Compra: clicar no cabeçalho ordena (▲ menor→maior, ▼ maior→menor) por Cód, Nome, Setor, Cidade, **Dias s/ compra** ("Fez pedido hoje" = 0, primeiro no ▲), Última compra (data) e Inad. Vazio vai pro fim.
