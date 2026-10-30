@@ -14,6 +14,16 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const r3 = (n) => Math.round(n * 1000) / 1000;
 const uniqSort = (arr) => [...new Set(arr.filter(Boolean))].sort();
 const normNota = (v) => String(v ?? "").trim().replace(/^0+/, "");
+// Categorias mãe da aba Entrega › Por categoria (igual ao processador, proc_analises.categorias_mae)
+const { CATS_RGB } = require("../utils/rgbVolume");
+const RGB_TT = [...CATS_RGB];
+const MAES = [
+  ["CERVEJA", ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "HE", "HE RGB", ...RGB_TT]],
+  ["NAB", ["NAB", "NAB ZERO"]],
+  ["MATCH", ["MATCH"]],
+  ["MKTP", ["MKTP"]],
+  ["RGB TT", RGB_TT],
+];
 
 // Nome de produto "nan"/"None"/vazio (item do CORA sem "Desc. produto", gravado antes da
 // correção no processador) → troca pelo nome do cadastro (produtos_full → produtos_base →
@@ -161,15 +171,21 @@ router.get("/entrega", async (req, res) => {
       .map((p) => ({ cod_produto: p.cod_produto, nome_produto: p.nome_produto, volume_hl: r3(p.volume_hl), notas: p.notas.size }))
       .sort((a, b) => b.volume_hl - a.volume_hl);
 
-    // Por categoria — devolvido (itens das notas, categorias gravadas pelo processador; nota_itens
-    // antiga sem a coluna → cadastro produtos_base) × efetivado (entregas_efetivadas_cat, só
-    // ENTREGUE). Produto conta em cada categoria dele (HE também é Cerveja), então as linhas
-    // NÃO somam o total. Com filtro de dia/motivo/PDV a taxa não se aplica (efetivado é mensal).
+    // Por categoria MÃE (Cerveja · NAB · Match · Mktp · RGB TT) — devolvido (itens das notas,
+    // categorias gravadas pelo processador; nota_itens antiga sem a coluna → cadastro
+    // produtos_base) × efetivado (entregas_efetivadas_cat, só ENTREGUE, já por mãe). Produto
+    // conta 1x em cada mãe (RGB TT também é Cerveja), então as linhas NÃO somam o total.
+    // Com filtro de dia/motivo/PDV a taxa não se aplica (efetivado é mensal).
     const catBase = {};
     prodBase.forEach((p) => { catBase[normCodP(p.cod)] = String(p.categorias || p.categoria || ""); });
-    const catsDe = (s) => { const l = String(s || "").split("|").map((c) => c.trim().toUpperCase()).filter((c) => c && !LIXO.has(c)); return l.length ? l : ["SEM CATEGORIA"]; };
+    const catsDe = (s) => {
+      const f = new Set(String(s || "").toUpperCase().split(/\s*[|,;]\s*/).map((c) => c.trim()).filter(Boolean));
+      const l = MAES.filter(([, filhas]) => filhas.some((c) => f.has(c))).map(([m]) => m);
+      return l.length ? l : ["OUTROS"];
+    };
     const mapCat = {};
     const linhaCat = (c) => (mapCat[c] = mapCat[c] || { categoria: c, devolvido_hl: 0, efetivado_hl: 0, notas: new Set() });
+    MAES.forEach(([m]) => linhaCat(m)); // as 5 mães sempre aparecem (mesmo com 0)
     notaItensRaw.forEach((it) => {
       if (!notasFiltradas.has(normNota(it.nota))) return;
       const cats = catsDe(String(it.categorias || "").trim() ? it.categorias : catBase[normCodP(it.cod_produto)]);

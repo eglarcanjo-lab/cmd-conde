@@ -532,7 +532,7 @@ function Entrega() {
         <>
           <div style={S.dicaLinha} className="hop-dica">
             Devolvido = itens das notas devolvidas · Efetivado = volume ENTREGUE no mês · Taxa = devolvido ÷ (efetivado + devolvido).
-            Um produto conta em todas as categorias dele (ex.: HE também é Cerveja), por isso as linhas não somam o total.
+            Categorias mãe: Cerveja · NAB · Match · Mktp · RGB TT (GIRO RGB + Litrinho + Trimarcas RGB HE). RGB TT também é Cerveja, por isso as linhas não somam o total; "Outros" = produto sem categoria.
             {(dia || motivo || pdv) && " Com filtro de dia, motivo ou PDV, o efetivado e a taxa não se aplicam."}
           </div>
           <Tabela inicial={{ k: "devolvido_hl", dir: "desc" }} linhas={d.por_categoria || []} colunas={[

@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.127.0** — Devoluções por categoria + volume efetivado só ENTREGUE.
+Versão atual: **v3.127.1** — Devoluções por categoria MÃE (Cerveja · NAB · Match · Mktp · RGB TT).
+
+## v3.127.1 — Por categoria = categorias mãe
+- Entrega › Por categoria passa a mostrar só as **mães**: Cerveja (inclui Zero, Multipack, HE, HE RGB e RGB) · NAB (inclui NAB Zero) · Match · Mktp · **RGB TT** (GIRO RGB + Litrinho + Trimarcas RGB HE, igual ao Report Volumes). Produto conta 1x em cada mãe; RGB TT também é Cerveja. Sem categoria → "Outros". As 5 aparecem sempre.
+- Processador: `entregas_efetivadas_cat` grava por mãe (`categorias_mae` em proc_analises). Reimportar o CORA.
 
 ## v3.127.0 — Devoluções por categoria · efetivado só ENTREGUE
 - **Detalhamento › Entrega › Por categoria** (nova): por categoria, notas, **devolvido (HL)**, **efetivado (HL)** e **taxa** = devolvido ÷ (efetivado + devolvido). Produto conta em todas as categorias dele (HE também é Cerveja) — as linhas não somam o total. Com filtro de dia/motivo/PDV só o devolvido. Também no Excel.
