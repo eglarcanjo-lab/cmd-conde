@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.130.0** — SPO: botão "Exportar p/ RPS" (Score 5 + PDVs Aderidos TTC).
+Versão atual: **v3.131.0** — Exportar p/ RPS: histórico de volume mês a mês + painel SPO (fechamento prévio).
+
+## v3.131.0 — RPS: histórico de volume + fechamento prévio do SPO
+- **Volume Diário › Exportar p/ RPS** ganha a aba **Historico**: volume mês a mês de janeiro do ano anterior até o mês da data, por setor × grupo (categorias do produto + mães CERVEJA TT / RGB TT / HIGH END / NAB TT) e Mktp em R$. Rota nova `GET /api/volume-diario/rps-historico?ate=YYYY-MM` (agrega `vendas_cliente_produto` no banco; 301–305 → 107–111). Base dos slides "bimestre vs ano passado" e "1º × 2º semestre".
+- **SPO › Exportar p/ RPS** ganha a aba **Painel**: os números do Painel SPO Consolidado (meta × real de cada KPI por mês do tri + TRI, pts, bateu) — slide de fechamento prévio do SPO na 1ª RPS do mês.
 
 ## v3.130.0 — SPO: Exportar p/ RPS (Score 5 + Aderidos)
 - **SPO** (admin/diretor), ao lado da foto do painel: **⬇️ Exportar p/ RPS** baixa `AAAA-MM SPO HOP (DD-MM).xlsx`. Só frontend (usa as rotas que o SPO já chama).

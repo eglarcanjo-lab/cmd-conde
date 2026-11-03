@@ -173,7 +173,12 @@ export default function VolumeDiario() {
   const exportarRps = async () => {
     setBaixandoRps(true);
     try {
-      const [{ data: b }, XLSX] = await Promise.all([api.get(`/api/volume-diario/rps?data=${data}`), import("xlsx-js-style")]);
+      const [dd0, mm0, aa0] = data.split("/");
+      const [{ data: b }, { data: h }, XLSX] = await Promise.all([
+        api.get(`/api/volume-diario/rps?data=${data}`),
+        api.get(`/api/volume-diario/rps-historico?ate=${aa0}-${mm0}`), // jan do ano passado → mês da data
+        import("xlsx-js-style"),
+      ]);
       const wb = XLSX.utils.book_new();
       const info = [
         ["campo", "valor"], ["mes_referencia", b.mes_referencia], ["data_ref", b.data_ref],
@@ -183,6 +188,7 @@ export default function VolumeDiario() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), "Info");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b.categorias, { header: ["setor", "categoria", "unidade", "meta", "real"] }), "Categorias");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b.produtos, { header: ["setor", "cod_produto", "nome_produto", "grupos", "volume_hl"] }), "Produtos");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h.linhas, { header: ["mes", "setor", "grupo", "valor"] }), "Historico");
       const [dd, mm] = b.data_ref.split("/");
       const ultimoDiaMes = new Date(Number(b.mes_referencia.slice(0, 4)), Number(mm), 0).getDate();
       const parcial = Number(dd) < ultimoDiaMes ? ` (parcial ${dd}-${mm})` : "";

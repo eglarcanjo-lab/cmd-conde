@@ -13,7 +13,7 @@ const num = (v) => {
 };
 const r1 = (n) => Math.round(n * 10) / 10;
 
-export default function ExportarRps() {
+export default function ExportarRps({ painelRef }) {
   const [baixando, setBaixando] = useState(false);
 
   const exportar = async () => {
@@ -87,7 +87,7 @@ export default function ExportarRps() {
       const dd = String(hoje.getDate()).padStart(2, "0"), mm = String(hoje.getMonth() + 1).padStart(2, "0");
       const info = [["campo", "valor"], ["data_export", `${dd}/${mm}/${hoje.getFullYear()}`], ["mes_referencia", mes],
         ["meta_fat_op_pdvs", mFat ?? ""], ["meta_port_op_pdvs", mPort ?? ""], ["meta_ttc_op_pct", mTtc ?? ""],
-        ["ttc_atualizado_em", ttc?.atualizado_em || ""]];
+        ["ttc_atualizado_em", ttc?.atualizado_em || ""], ["painel_total_pts", painelRef?.current?.total_pts ?? ""]];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), "Info");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhasRn, { header: ["setor", "fat_total", "fat_ok", "fat_meta",
@@ -97,6 +97,16 @@ export default function ExportarRps() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((metas || []).filter((m) => ["8", "12", "24"].includes(String(m.item)))
         .map((m) => ({ item: Number(m.item), mes: m.mes, meta: m.meta === "" ? "" : num(m.meta), real: m.real === "" ? "" : num(m.real) })),
         { header: ["item", "mes", "meta", "real"] }), "Metas");
+      // Painel consolidado (os números da tela): KPI × mês do tri + TRI — fechamento prévio do SPO
+      const painel = painelRef?.current;
+      const linhasPainel = [];
+      (painel?.itens || []).forEach((it) => {
+        const lin = (mesP, meta, real) => linhasPainel.push({ ord: it.ord, n: it.n, kpi: it.label, pts: it.pts, mes: mesP,
+          meta: meta ?? "", real: real ?? "", bateu: meta == null || real == null ? "" : (real >= meta ? "SIM" : "NÃO") });
+        it.por_mes.forEach((m) => lin(m.mes, m.meta, m.real));
+        lin("TRI", it.tri_meta, it.tri_real);
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhasPainel, { header: ["ord", "n", "kpi", "pts", "mes", "meta", "real", "bateu"] }), "Painel");
       XLSX.writeFile(wb, `${mes} SPO HOP (${dd}-${mm}).xlsx`);
     } catch {
       alert("Erro ao exportar a base da RPS.");

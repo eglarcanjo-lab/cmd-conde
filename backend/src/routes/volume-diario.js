@@ -201,6 +201,80 @@ router.get("/rps", async (req, res) => {
   }
 });
 
+// GET /api/volume-diario/rps-historico?ate=YYYY-MM — volume mês a mês p/ a RPS (admin/diretor):
+// de janeiro do ano anterior até `ate`, por setor × grupo (categorias do produto + mães, mesma régua
+// do /rps). Fonte: vendas_cliente_produto (acumula mês a mês; volume entregue, hoje = marcação),
+// agregada no banco. Mktp (R$) do rv_mktp/rv_resultado do mês. Setores 301–305 → 107–111.
+const SETOR_NOVO = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+router.get("/rps-historico", async (req, res) => {
+  try {
+    if (!["admin", "director"].includes(req.user.perfil)) return res.status(403).json({ error: "Sem permissão." });
+    const hoje = hojeEmBrasilia();
+    const ate = /^\d{4}-\d{2}$/.test(String(req.query.ate || "")) ? String(req.query.ate)
+      : `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+    const de = `${Number(ate.slice(0, 4)) - 1}-01`;
+    const { query } = require("../services/db");
+    const [agg, prodBase, rvMktp, rvResultado] = await Promise.all([
+      query(`SELECT TRIM(setor::text) AS setor, LEFT(mes_referencia::text, 7) AS mes, cod_produto::text AS cod,
+                    SUM(COALESCE(NULLIF(TRIM(volume_hl::text), ''), '0')::numeric) AS vol
+               FROM vendas_cliente_produto
+              WHERE LEFT(mes_referencia::text, 7) BETWEEN $1 AND $2
+              GROUP BY 1, 2, 3`, [de, ate]),
+      readSheet("produtos_base").catch(() => []),
+      readSheet("rv_mktp").catch(() => []),
+      readSheet("rv_resultado").catch(() => []),
+    ]);
+    const catMap = {};
+    prodBase.forEach((p) => {
+      const cats = String(p.categorias || "").split("|").map((c) => c.trim().toUpperCase()).filter(Boolean);
+      if (normCod(p.cod) && cats.length) catMap[normCod(p.cod)] = cats;
+    });
+    const tot = {};
+    agg.rows.forEach((r) => {
+      const setor = SETOR_NOVO[r.setor] || r.setor, v = Number(r.vol) || 0;
+      if (!v) return;
+      gruposRps(catMap[normCod(r.cod)] || []).split("|").filter(Boolean).forEach((g) => {
+        const k = `${r.mes}|${setor}|${g}`;
+        tot[k] = (tot[k] || 0) + v;
+      });
+    });
+    // Mktp (R$): rv_mktp do mês; se vazio, rv_resultado (mesma regra do Volume Diário)
+    const num = (v) => {
+      let s = String(v ?? "").trim();
+      if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+      else if (s.includes(",")) s = s.replace(",", ".");
+      return parseFloat(s) || 0;
+    };
+    const mktp = {}, mesesMktp = new Set();
+    rvMktp.forEach((r) => {
+      const m = normalizeMesRef(r.mes_referencia), v = num(r.gmv_mktp_real);
+      if (m < de || m > ate || !v) return;
+      mesesMktp.add(m); const k = `${m}|${SETOR_NOVO[String(r.setor).trim()] || String(r.setor).trim()}|MKTP R$`;
+      mktp[k] = (mktp[k] || 0) + v;
+    });
+    rvResultado.forEach((r) => {
+      const m = normalizeMesRef(r.mes_referencia), v = num(r.real_marketplace);
+      if (m < de || m > ate || !v || mesesMktp.has(m)) return;
+      const k = `${m}|${SETOR_NOVO[String(r.setor).trim()] || String(r.setor).trim()}|MKTP R$`;
+      mktp[k] = (mktp[k] || 0) + v;
+    });
+    const linhas = Object.entries({ ...tot, ...mktp }).map(([k, v]) => {
+      const [mes, setor, grupo] = k.split("|");
+      return { mes, setor, grupo, valor: Math.round(v * 1000) / 1000 };
+    }).sort((a, b) => a.mes.localeCompare(b.mes) || a.grupo.localeCompare(b.grupo) || a.setor.localeCompare(b.setor));
+    const ano = hoje.getFullYear(), mes = hoje.getMonth();
+    return res.json({
+      de, ate, gerado_em: toDataStr(hoje),
+      mes_atual: `${ano}-${String(mes + 1).padStart(2, "0")}`,
+      dias_uteis_mes_atual: diasUteisMes(ano, mes), dias_uteis_passados_mes_atual: diasUteisAte(ano, mes, hoje.getDate()),
+      linhas,
+    });
+  } catch (err) {
+    console.error("volume-diario/rps-historico:", err);
+    return res.status(500).json({ error: "Erro ao montar o histórico de volume." });
+  }
+});
+
 // GET /api/volume-diario?data=dd/mm/yyyy&setor=101
 router.get("/", async (req, res) => {
   try {

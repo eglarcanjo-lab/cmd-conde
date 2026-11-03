@@ -112,6 +112,7 @@ export default function SPO() {
   const [painelFull, setPainelFull] = useState(false); // modo tela-cheia do painel consolidado
   const [mesMob, setMesMob] = useState("");             // celular: mês (ou "tri") do painel consolidado em lista
   const painelRef = useRef(null);                       // alvo da foto do fechamento do trimestre
+  const painelDadosRef = useRef(null);                  // números do painel consolidado (Exportar p/ RPS)
 
   // Entra/sai do modo full-screen — tenta travar orientação em paisagem (Android Chrome)
   // Se não suportado (iOS), o CSS rotate(90deg) faz o fallback automaticamente
@@ -660,7 +661,7 @@ export default function SPO() {
               <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#7DBA3D" }}>📊 Painel SPO Consolidado</p>
               <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
               <FechamentoSpo alvoRef={painelRef} isAdmin={usuario?.perfil === "admin"} />
-              {["admin", "director"].includes(usuario?.perfil) && <ExportarRps />}
+              {["admin", "director"].includes(usuario?.perfil) && <ExportarRps painelRef={painelDadosRef} />}
               <button data-sem-foto
                 onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}
@@ -824,6 +825,15 @@ export default function SPO() {
                               const real = triAccumReal(n);
                               if (meta === null || real === null) return null;
                               return real >= meta;
+                            };
+                            // Números do painel (os mesmos da tela) p/ o "Exportar p/ RPS" (fechamento prévio do SPO)
+                            painelDadosRef.current = {
+                              meses: MESES, total_pts: totalPts,
+                              itens: ITENS_SPO.map((item) => ({
+                                n: item.n, ord: item.ord ?? item.n, label: item.label, pts: getPts(item.n),
+                                por_mes: MESES.map((m) => ({ mes: m, meta: INICIO_AVAL[item.n] > m ? null : getMeta(item.n, m), real: INICIO_AVAL[item.n] > m ? null : getReal(item.n, m) })),
+                                tri_meta: triAccumMeta(item.n), tri_real: triAccumReal(item.n),
+                              })),
                             };
 
                             const thStyle = { padding: "6px 7px", color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", whiteSpace: "nowrap" };
