@@ -66,7 +66,13 @@ async function montarVendidoHoje(mes, hojeISO, setoresOk, nomeSetor) {
 // GET /api/farol-volumes/mensagens  (mês corrente; relatório consolidado p/ todos)
 router.get("/mensagens", async (req, res) => {
   try {
-    const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    // ?mes=YYYY-MM (mês ANTERIOR) = FECHAMENTO: usa o último dia daquele mês (tendência = real,
+    // todos os dias úteis feitos) e não monta o "Vendido hoje". Robô: MES=2026-10 node enviar.js
+    const agora = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const mesAtual = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;
+    const mesQ = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : "";
+    const fechamento = !!mesQ && mesQ < mesAtual;
+    const d = fechamento ? new Date(+mesQ.slice(0, 4), +mesQ.slice(5, 7), 0) : agora;
     const mes = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
     const dataBR = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
     const diaLabel = DIA_LABEL[d.getDay()];
@@ -104,7 +110,7 @@ router.get("/mensagens", async (req, res) => {
     const report = montarReport(rv, vol, nomeSetor, fator, { rateio, rgb: await rgbPorSetor(mes) });
     if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
     const hojeISO = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const reportDia = await montarVendidoHoje(mes, hojeISO, new Set(rv.map((r) => norm(r.setor))), nomeSetor).catch((e) => { console.error("vendido hoje:", e.message); return null; });
+    const reportDia = fechamento ? null : await montarVendidoHoje(mes, hojeISO, new Set(rv.map((r) => norm(r.setor))), nomeSetor).catch((e) => { console.error("vendido hoje:", e.message); return null; });
 
     // Destinatários: todos com telefone (perfis de campo). Recebem o relatório INTEIRO.
     const perfisEnvio = new Set(["director", "gv1", "gv3", "rn"]);
@@ -117,7 +123,7 @@ router.get("/mensagens", async (req, res) => {
       destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
     });
 
-    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, report_dia: reportDia, diasUteis, destinatarios, rn: [], gv: [], director: null });
+    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, report_dia: reportDia, fechamento: fechamento ? mes : null, diasUteis, destinatarios, rn: [], gv: [], director: null });
   } catch (e) {
     console.error("farol-volumes/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar o Report Volumes." });
