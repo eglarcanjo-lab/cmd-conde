@@ -82,6 +82,117 @@ router.get("/setores", async (req, res) => {
   }
 });
 
+// Grupos da RPS por produto (categorias do produtos_base + as "mães"), em "|A|B|"
+// para a planilha somar com SUMIFS("*|RGB TT|*"). Mesma régua de categorias_mae do processador.
+const RPS_RGB_TT = ["GIRO RGB", "LITRINHO", "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)"];
+const RPS_MAES = [
+  ["CERVEJA TT", ["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "HE", "HE RGB", ...RPS_RGB_TT]],
+  ["RGB TT", RPS_RGB_TT],
+  ["HIGH END", ["HE", "HE RGB", "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)"]],
+  ["NAB TT", ["NAB", "NAB ZERO"]],
+];
+function gruposRps(cats) {
+  const s = new Set(cats);
+  RPS_MAES.forEach(([mae, filhas]) => { if (filhas.some((f) => s.has(f))) s.add(mae); });
+  return s.size ? `|${[...s].join("|")}|` : "|SEM CATEGORIA|";
+}
+
+// GET /api/volume-diario/rps?data=dd/mm/yyyy — base do slide de Volume da RPS (admin/diretor).
+// Mês da data até a data: (a) setor × categoria da meta (meta × real, igual aos cartões da tela)
+// e (b) setor × produto com o volume do mês + grupos (as aberturas saem na planilha).
+router.get("/rps", async (req, res) => {
+  try {
+    if (!["admin", "director"].includes(req.user.perfil)) return res.status(403).json({ error: "Sem permissão." });
+    const dataRef = req.query.data ? parseData(req.query.data) : hojeEmBrasilia();
+    if (!dataRef || isNaN(dataRef.getTime())) return res.status(400).json({ error: "Parâmetro data inválido. Use dd/mm/yyyy." });
+
+    const [volumeDiario, metas, prodBase, statusArq, rvMktp, rvResultado] = await Promise.all([
+      readSheet("volume_diario").catch(() => []),
+      readSheet("metas").catch(() => []),
+      readSheet("produtos_base").catch(() => []),
+      readSheet("status_arquivos").catch(() => []),
+      readSheet("rv_mktp").catch(() => []),
+      readSheet("rv_resultado").catch(() => []),
+    ]);
+    const ano = dataRef.getFullYear(), mes = dataRef.getMonth();
+    const mesRef = `${ano}-${String(mes + 1).padStart(2, "0")}`;
+    const num = (v) => {
+      let s = String(v ?? "").trim();
+      if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+      else if (s.includes(",")) s = s.replace(",", ".");
+      return parseFloat(s) || 0;
+    };
+    const r3 = (n) => Math.round(n * 1000) / 1000;
+
+    const catMap = {};
+    prodBase.forEach((p) => {
+      const cats = String(p.categorias || "").split("|").map((c) => c.trim().toUpperCase()).filter(Boolean);
+      if (normCod(p.cod) && cats.length) catMap[normCod(p.cod)] = cats;
+    });
+
+    const dadosMes = volumeDiario.filter((r) => {
+      const d = parseData(r.data);
+      return d && d.getFullYear() === ano && d.getMonth() === mes && d <= dataRef;
+    });
+    const ultimoDia = dadosMes.reduce((m, r) => { const d = parseData(r.data); return d > m ? d : m; }, new Date(ano, mes, 1));
+
+    // (b) setor × produto
+    const prod = {};
+    dadosMes.forEach((r) => {
+      const setor = String(r.setor || "").trim(), cod = normCod(r.cod_produto);
+      const k = `${setor}|${cod}`;
+      if (!prod[k]) prod[k] = { setor, cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), grupos: gruposRps(catMap[cod] || []), volume_hl: 0 };
+      prod[k].volume_hl += parseFloat(r.volume_hl) || 0;
+    });
+    const produtos = Object.values(prod).map((p) => ({ ...p, volume_hl: r3(p.volume_hl) }))
+      .sort((a, b) => a.setor.localeCompare(b.setor) || b.volume_hl - a.volume_hl);
+
+    // (a) setor × categoria da meta — real pela mesma regra dos cartões (categoria base do produto)
+    const realSetorCat = {};
+    dadosMes.forEach((r) => {
+      const setor = String(r.setor || "").trim();
+      (catMap[normCod(r.cod_produto)] || []).forEach((c) => {
+        const k = `${setor}|${c}`;
+        realSetorCat[k] = (realSetorCat[k] || 0) + (parseFloat(r.volume_hl) || 0);
+      });
+    });
+    const mktpReal = {};
+    const mktpFonte = rvMktp.some((r) => normalizeMesRef(r.mes_referencia) === mesRef && num(r.gmv_mktp_real) > 0)
+      ? rvMktp.map((r) => [r, num(r.gmv_mktp_real)]) : rvResultado.map((r) => [r, num(r.real_marketplace)]);
+    mktpFonte.forEach(([r, v]) => {
+      if (normalizeMesRef(r.mes_referencia) !== mesRef) return;
+      const s = String(r.setor || "").trim();
+      mktpReal[s] = (mktpReal[s] || 0) + v;
+    });
+    const categorias = [];
+    metas.filter((m) => normalizeMesRef(m.mes_referencia) === mesRef).forEach((m) => {
+      const cat = String(m.categoria || "").trim().toUpperCase(), setor = String(m.setor || "").trim();
+      if (!cat || cat === "PONTOS FORCE") return;
+      const fat = cat.includes("FATURAMENTO");
+      const base = cat.replace(/\s*\((VOLUME|FATURAMENTO)\)\s*$/i, "").trim();
+      categorias.push({
+        setor, categoria: cat, unidade: fat ? "R$" : "HL", meta: r3(num(m.meta_volume)),
+        real: r3(fat ? (mktpReal[setor] || 0) : (realSetorCat[`${setor}|${base}`] || 0)),
+      });
+    });
+    categorias.sort((a, b) => a.categoria.localeCompare(b.categoria) || a.setor.localeCompare(b.setor));
+
+    const linhaPedidos = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
+    return res.json({
+      mes_referencia: mesRef,
+      data_ref: toDataStr(dataRef),
+      ultimo_dia_com_venda: dadosMes.length ? toDataStr(ultimoDia) : "",
+      dias_uteis_mes: diasUteisMes(ano, mes),
+      dias_uteis_passados: diasUteisAte(ano, mes, dataRef.getDate()),
+      atualizado_em: linhaPedidos ? String(linhaPedidos.atualizado_em || "").trim() : "",
+      categorias, produtos,
+    });
+  } catch (err) {
+    console.error("volume-diario/rps:", err);
+    return res.status(500).json({ error: "Erro ao montar a base da RPS." });
+  }
+});
+
 // GET /api/volume-diario?data=dd/mm/yyyy&setor=101
 router.get("/", async (req, res) => {
   try {

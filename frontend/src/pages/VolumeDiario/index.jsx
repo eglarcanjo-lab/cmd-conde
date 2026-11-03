@@ -167,6 +167,33 @@ export default function VolumeDiario() {
 
   useEffect(() => { fetchDados(); }, [fetchDados]);
 
+  /* base do slide de Volume da RPS (Excel) — mês da data escolhida até a data */
+  const podeRps = ["admin", "director"].includes(perfil);
+  const [baixandoRps, setBaixandoRps] = useState(false);
+  const exportarRps = async () => {
+    setBaixandoRps(true);
+    try {
+      const [{ data: b }, XLSX] = await Promise.all([api.get(`/api/volume-diario/rps?data=${data}`), import("xlsx-js-style")]);
+      const wb = XLSX.utils.book_new();
+      const info = [
+        ["campo", "valor"], ["mes_referencia", b.mes_referencia], ["data_ref", b.data_ref],
+        ["ultimo_dia_com_venda", b.ultimo_dia_com_venda], ["dias_uteis_mes", b.dias_uteis_mes],
+        ["dias_uteis_passados", b.dias_uteis_passados], ["atualizado_em", b.atualizado_em],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), "Info");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b.categorias, { header: ["setor", "categoria", "unidade", "meta", "real"] }), "Categorias");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b.produtos, { header: ["setor", "cod_produto", "nome_produto", "grupos", "volume_hl"] }), "Produtos");
+      const [dd, mm] = b.data_ref.split("/");
+      const ultimoDiaMes = new Date(Number(b.mes_referencia.slice(0, 4)), Number(mm), 0).getDate();
+      const parcial = Number(dd) < ultimoDiaMes ? ` (parcial ${dd}-${mm})` : "";
+      XLSX.writeFile(wb, `${b.mes_referencia} Volume HOP${parcial}.xlsx`);
+    } catch {
+      setErro("Erro ao exportar a base da RPS.");
+    } finally {
+      setBaixandoRps(false);
+    }
+  };
+
   const d = dados;
   // Meta Diária + Acumulado só fazem sentido por setor; na visão consolidada
   // ("Todos", admin/gestor) elas somam tudo e não ajudam — então escondemos.
@@ -219,6 +246,15 @@ export default function VolumeDiario() {
             📅 Mês inteiro
           </label>
         </div>
+        {podeRps && (
+          <div style={S.filterGroup}>
+            <label style={S.filterLabel}>RPS</label>
+            <button style={S.mesToggle} onClick={exportarRps} disabled={baixandoRps}
+              title="Excel do mês até a data escolhida (meta × real por setor + volume por produto) para a planilha da RPS">
+              {baixandoRps ? "⏳ Gerando..." : "⬇️ Exportar p/ RPS"}
+            </button>
+          </div>
+        )}
       </div>
 
       {loading && (
