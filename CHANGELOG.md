@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.129.0** — Volume Diário: botão "Exportar p/ RPS" (base do slide de Volume).
+Versão atual: **v3.129.1** — Volume Diário: botão "Exportar p/ RPS" (base do slide de Volume).
+
+## v3.129.1 — Exportar p/ RPS: setores sem meta
+- Aba Categorias do export inclui setor com venda e sem meta (997/995 = PDVs sem RN) com meta 0 — o total da RPS bate com a tela (visão Todos).
 
 ## v3.129.0 — Exportar p/ RPS (Volume)
 - **Volume Diário** (admin/diretor): botão **⬇️ Exportar p/ RPS** baixa `AAAA-MM Volume HOP.xlsx` (mês da data escolhida até a data; "(parcial DD-MM)" se não for o fim do mês). Abas: **Info** (dias úteis do mês/passados, última venda), **Categorias** (setor × categoria da meta: meta × real, mesma regra dos cartões; Mktp em R$) e **Produtos** (setor × produto × volume do mês + `grupos` = categorias + mães CERVEJA TT / RGB TT / HIGH END / NAB TT, em `|A|B|`).

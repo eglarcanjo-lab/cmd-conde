@@ -175,6 +175,14 @@ router.get("/rps", async (req, res) => {
         real: r3(fat ? (mktpReal[setor] || 0) : (realSetorCat[`${setor}|${base}`] || 0)),
       });
     });
+    // Setor com venda e sem meta (997/995 = PDVs sem RN): entra com meta 0, p/ o total bater com a tela
+    const comMeta = new Set(categorias.map((c) => `${c.setor}|${c.categoria.replace(/\s*\((VOLUME|FATURAMENTO)\)\s*$/i, "")}`));
+    const catsMeta = [...new Set(categorias.filter((c) => c.unidade === "HL").map((c) => c.categoria))];
+    Object.entries(realSetorCat).forEach(([k, v]) => {
+      const [setor, base] = k.split("|");
+      const cat = catsMeta.find((c) => c.replace(/\s*\(VOLUME\)\s*$/i, "") === base);
+      if (cat && !comMeta.has(k)) categorias.push({ setor, categoria: cat, unidade: "HL", meta: 0, real: r3(v) });
+    });
     categorias.sort((a, b) => a.categoria.localeCompare(b.categoria) || a.setor.localeCompare(b.setor));
 
     const linhaPedidos = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
