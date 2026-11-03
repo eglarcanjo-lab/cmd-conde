@@ -720,8 +720,11 @@ export default function SPO() {
                               const r = spoMetas.find(m => String(m.item) === String(n) && m.mes === mes);
                               if (r && r.real !== "" && r.real !== null && r.real !== undefined) return parseFloat(r.real);
 
-                              // 2. Fallback: dado real das abas processadas — apenas para o mês atual
-                              if (mes !== mesAtual) return null;
+                              // 2. Fallback: dado real das abas processadas — QUALQUER mês do tri que ainda
+                              //    esteja nelas (todos os casos filtram por mes_referencia do mês pedido).
+                              //    Antes era só o mês atual → na virada do mês o anterior sumia do painel
+                              //    até ser fechado na aba Metas SPO.
+                              if (mes > mesAtual) return null;
                               const op = (arr) => arr.find(x => x.setor === "OPERACAO" || x.setor === "operacao");
                               const opMes = (arr) => arr.find(x => (x.setor === "OPERACAO" || x.setor === "operacao") && (x.mes_referencia || "").startsWith(mes));
                               // Mapa aba->array carregado, p/ o realizado genérico (KPIs simples via SPO_REAL)
