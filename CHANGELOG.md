@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.131.2** — Volume Diário / Exportar p/ RPS: real pela régua da RV + metas 301–305 → 107–111.
+Versão atual: **v3.131.3** — Import "Pedidos histórico": cliente no setor ATUAL; quem não existe mais → INATIVOS.
+
+## v3.131.3 — Pedidos histórico: setor atual do cliente
+- **Processador** (`processar_pedidos_historico`): o setor de cada linha passa a ser o **setor atual do cliente** (pdv_base = ativos; pdv_fora = 102/995/997), não o da época. Cliente que não existe mais na base → setor **INATIVOS** (continua somando no total da operação). Antes as linhas de setor fora dos válidos (100/107/108/110/111 antigos de 2025, ~1/3 do volume) eram **descartadas** → o ano passado da RPS saía ~35% menor.
+- Para corrigir 2025: reimportar os meses em Admin › Arquivos › "Pedidos histórico" (cada mês substitui só o seu mês). Importe a base de clientes (0105070402) atualizada antes.
 
 ## v3.131.2 — Volume Diário: real pela régua da RV e metas dos setores 107–111
 - **Real por categoria da meta** (cartões da tela e aba Categorias do Exportar p/ RPS) passa a usar a régua da RV (`proc_rv`): **Cerveja** = cerveja + Giro RGB + HE + HE RGB + Zero + Multipack + Litrinho + Trimarcas + BC; **NAB** = NAB + NAB Zero. Antes só contava produto com a categoria exata "CERVEJA"/"NAB" (out/26: Cerveja do 101 saía 341 HL p/ meta 1.255). Top SKUs da categoria seguem a mesma régua.
