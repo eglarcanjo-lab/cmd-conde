@@ -18,6 +18,14 @@ function fromInputDate(s) {
   const [yyyy, mm, dd] = s.split("-");
   return `${dd}/${mm}/${yyyy}`;
 }
+// Mês inteiro: "YYYY-MM" → último dia do mês (dd/mm/yyyy); mês corrente → hoje
+function ultimoDiaOuHoje(ym) {
+  const hoje = hojeStr();
+  const [yyyy, mm] = ym.split("-");
+  if (`${hoje.slice(6)}-${hoje.slice(3, 5)}` === ym) return hoje;
+  const ult = new Date(Number(yyyy), Number(mm), 0).getDate();
+  return `${String(ult).padStart(2, "0")}/${mm}/${yyyy}`;
+}
 function fmtHL(v) {
   return Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
@@ -227,14 +235,22 @@ export default function VolumeDiario() {
       {/* Filtros */}
       <div style={S.filters}>
         <div style={S.filterGroup}>
-          <label style={S.filterLabel}>Data</label>
-          <input
-            type="date"
-            style={{ ...S.filterInput, opacity: verMes ? 0.5 : 1 }}
-            value={toInputDate(data)}
-            onChange={(e) => setData(fromInputDate(e.target.value))}
-            disabled={verMes}
-          />
+          <label style={S.filterLabel}>{verMes ? "Mês" : "Data"}</label>
+          {verMes ? (
+            <input
+              type="month"
+              style={S.filterInput}
+              value={toInputDate(data).slice(0, 7)}
+              onChange={(e) => e.target.value && setData(ultimoDiaOuHoje(e.target.value))}
+            />
+          ) : (
+            <input
+              type="date"
+              style={S.filterInput}
+              value={toInputDate(data)}
+              onChange={(e) => setData(fromInputDate(e.target.value))}
+            />
+          )}
         </div>
         {canFilter && setores.length > 0 && (
           <div style={S.filterGroup}>

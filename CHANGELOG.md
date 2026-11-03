@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.131.0** — Exportar p/ RPS: histórico de volume mês a mês + painel SPO (fechamento prévio).
+Versão atual: **v3.131.1** — Volume Diário: seletor de mês no "Mês inteiro".
+
+## v3.131.1 — Volume Diário: escolher o mês
+- Com **📅 Mês inteiro** marcado, o campo Data vira **Mês** (seletor de mês): mês fechado = até o último dia; mês corrente = até hoje. Vale p/ a tela e p/ o **Exportar p/ RPS** (ex.: out/26 p/ a 1ª RPS de novembro). Antes o campo ficava travado em hoje.
 
 ## v3.131.0 — RPS: histórico de volume + fechamento prévio do SPO
 - **Volume Diário › Exportar p/ RPS** ganha a aba **Historico**: volume mês a mês de janeiro do ano anterior até o mês da data, por setor × grupo (categorias do produto + mães CERVEJA TT / RGB TT / HIGH END / NAB TT) e Mktp em R$. Rota nova `GET /api/volume-diario/rps-historico?ate=YYYY-MM` (agrega `vendas_cliente_produto` no banco; 301–305 → 107–111). Base dos slides "bimestre vs ano passado" e "1º × 2º semestre".
