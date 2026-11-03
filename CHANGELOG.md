@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.131.1** — Volume Diário: seletor de mês no "Mês inteiro".
+Versão atual: **v3.131.2** — Volume Diário / Exportar p/ RPS: real pela régua da RV + metas 301–305 → 107–111.
+
+## v3.131.2 — Volume Diário: real pela régua da RV e metas dos setores 107–111
+- **Real por categoria da meta** (cartões da tela e aba Categorias do Exportar p/ RPS) passa a usar a régua da RV (`proc_rv`): **Cerveja** = cerveja + Giro RGB + HE + HE RGB + Zero + Multipack + Litrinho + Trimarcas + BC; **NAB** = NAB + NAB Zero. Antes só contava produto com a categoria exata "CERVEJA"/"NAB" (out/26: Cerveja do 101 saía 341 HL p/ meta 1.255). Top SKUs da categoria seguem a mesma régua.
+- **Metas gravadas com 301–305** (código antigo) contam como **107–111** — antes os 107–111 apareciam com meta 0 e os 301–305 com real 0 (Mktp também).
+- "Atualizado em" usa o status do import do **CORA** (antes o status antigo de pedidos, parado em 23/09).
 
 ## v3.131.1 — Volume Diário: escolher o mês
 - Com **📅 Mês inteiro** marcado, o campo Data vira **Mês** (seletor de mês): mês fechado = até o último dia; mês corrente = até hoje. Vale p/ a tela e p/ o **Exportar p/ RPS** (ex.: out/26 p/ a 1ª RPS de novembro). Antes o campo ficava travado em hoje.

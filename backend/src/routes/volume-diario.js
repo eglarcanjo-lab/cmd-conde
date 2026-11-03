@@ -97,6 +97,25 @@ function gruposRps(cats) {
   return s.size ? `|${[...s].join("|")}|` : "|SEM CATEGORIA|";
 }
 
+// Categoria da META (base de "CERVEJA (VOLUME)" etc.) a que o produto soma — mesma régua da RV
+// (proc_rv: CERVEJA_CATS / NAB_CATS): Cerveja = cerveja + RGB + HE + Zero + Multipack + Litrinho +
+// Trimarcas + BC; NAB = NAB + NAB Zero. Produto conta 1x em cada base.
+const META_CERVEJA = new Set(["CERVEJA", "CERVEJA ZERO", "CERVEJA MULTIPACK", "GIRO RGB", "HE", "HE RGB", "LITRINHO",
+  "TRIMARCA RGB HE (ORIGINAL)", "TRIMARCA RGB HE (STELLA)", "TRIMARCA RGB HE (SPATEN)", "BALANCED CHOICE"]);
+function basesMeta(cats) {
+  const b = new Set();
+  (cats || []).forEach((c) => {
+    if (META_CERVEJA.has(c)) b.add("CERVEJA");
+    if (c === "NAB" || c === "NAB ZERO") b.add("NAB");
+    if (c === "MATCH") b.add("MATCH");
+    if (c === "BALANCED CHOICE") b.add("BALANCED CHOICE");
+  });
+  return [...b];
+}
+// Setores 301–305 (código antigo, ainda nas metas) = 107–111
+const SETOR_NOVO = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+const setorHop = (s) => { const x = String(s ?? "").trim(); return SETOR_NOVO[x] || x; };
+
 // GET /api/volume-diario/rps?data=dd/mm/yyyy — base do slide de Volume da RPS (admin/diretor).
 // Mês da data até a data: (a) setor × categoria da meta (meta × real, igual aos cartões da tela)
 // e (b) setor × produto com o volume do mês + grupos (as aberturas saem na planilha).
@@ -147,11 +166,11 @@ router.get("/rps", async (req, res) => {
     const produtos = Object.values(prod).map((p) => ({ ...p, volume_hl: r3(p.volume_hl) }))
       .sort((a, b) => a.setor.localeCompare(b.setor) || b.volume_hl - a.volume_hl);
 
-    // (a) setor × categoria da meta — real pela mesma regra dos cartões (categoria base do produto)
+    // (a) setor × categoria da meta — real pela régua da RV (basesMeta), igual aos cartões
     const realSetorCat = {};
     dadosMes.forEach((r) => {
-      const setor = String(r.setor || "").trim();
-      (catMap[normCod(r.cod_produto)] || []).forEach((c) => {
+      const setor = setorHop(r.setor);
+      basesMeta(catMap[normCod(r.cod_produto)]).forEach((c) => {
         const k = `${setor}|${c}`;
         realSetorCat[k] = (realSetorCat[k] || 0) + (parseFloat(r.volume_hl) || 0);
       });
@@ -161,13 +180,14 @@ router.get("/rps", async (req, res) => {
       ? rvMktp.map((r) => [r, num(r.gmv_mktp_real)]) : rvResultado.map((r) => [r, num(r.real_marketplace)]);
     mktpFonte.forEach(([r, v]) => {
       if (normalizeMesRef(r.mes_referencia) !== mesRef) return;
-      const s = String(r.setor || "").trim();
+      const s = setorHop(r.setor);
       mktpReal[s] = (mktpReal[s] || 0) + v;
     });
-    const categorias = [];
+    const categorias = [], jaTem = new Set();
     metas.filter((m) => normalizeMesRef(m.mes_referencia) === mesRef).forEach((m) => {
-      const cat = String(m.categoria || "").trim().toUpperCase(), setor = String(m.setor || "").trim();
-      if (!cat || cat === "PONTOS FORCE") return;
+      const cat = String(m.categoria || "").trim().toUpperCase(), setor = setorHop(m.setor);
+      if (!cat || cat === "PONTOS FORCE" || jaTem.has(`${setor}|${cat}`)) return; // 301 e 107 juntos: vale a 1ª
+      jaTem.add(`${setor}|${cat}`);
       const fat = cat.includes("FATURAMENTO");
       const base = cat.replace(/\s*\((VOLUME|FATURAMENTO)\)\s*$/i, "").trim();
       categorias.push({
@@ -185,7 +205,8 @@ router.get("/rps", async (req, res) => {
     });
     categorias.sort((a, b) => a.categoria.localeCompare(b.categoria) || a.setor.localeCompare(b.setor));
 
-    const linhaPedidos = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
+    const linhaPedidos = statusArq.find((r) => /^CORA \(Consulta/i.test(String(r.arquivo || ""))) // CORA = fonte atual
+      || statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
     return res.json({
       mes_referencia: mesRef,
       data_ref: toDataStr(dataRef),
@@ -204,8 +225,7 @@ router.get("/rps", async (req, res) => {
 // GET /api/volume-diario/rps-historico?ate=YYYY-MM — volume mês a mês p/ a RPS (admin/diretor):
 // de janeiro do ano anterior até `ate`, por setor × grupo (categorias do produto + mães, mesma régua
 // do /rps). Fonte: vendas_cliente_produto (acumula mês a mês; volume entregue, hoje = marcação),
-// agregada no banco. Mktp (R$) do rv_mktp/rv_resultado do mês. Setores 301–305 → 107–111.
-const SETOR_NOVO = { "301": "107", "302": "108", "303": "109", "304": "110", "305": "111" };
+// agregada no banco. Mktp (R$) do rv_mktp/rv_resultado do mês. Setores 301–305 → 107–111 (SETOR_NOVO).
 router.get("/rps-historico", async (req, res) => {
   try {
     if (!["admin", "director"].includes(req.user.perfil)) return res.status(403).json({ error: "Sem permissão." });
@@ -307,7 +327,8 @@ router.get("/", async (req, res) => {
     ]);
 
     // Horário da última importação de pedidos (atualiza o Volume Diário)
-    const linhaPedidos = statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
+    const linhaPedidos = statusArq.find((r) => /^CORA \(Consulta/i.test(String(r.arquivo || ""))) // CORA = fonte atual
+      || statusArq.find((r) => /pedidos|03014701/i.test(String(r.arquivo || "")));
     const atualizadoEm = linhaPedidos ? String(linhaPedidos.atualizado_em || "").trim() : "";
 
     // ── Mapa código produto → TODAS as categorias (em caixa alta) ───────────
@@ -385,7 +406,8 @@ router.get("/", async (req, res) => {
       return !c.includes("FATURAMENTO") && c !== "PONTOS FORCE";
     };
 
-    let metasFiltradas = filtrarPorPerfil(metas, usuario)
+    // metas ainda gravadas com 301–305 → 107–111 antes do filtro de perfil/setor
+    let metasFiltradas = filtrarPorPerfil(metas.map((m) => ({ ...m, setor: setorHop(m.setor) })), usuario)
       .filter((m) => normalizeMesRef(m.mes_referencia) === mesRef);
     // Respeita o setor selecionado (senão soma/duplica todos os setores)
     if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
@@ -406,14 +428,15 @@ router.get("/", async (req, res) => {
     const volumeAcumMes = somarVol(dadosMes);
 
     // ── Volume por categoria (breakdown) ────────────────────────────────────
-    // Soma o volume em CADA categoria do produto (um produto pode ter mais de uma).
+    // Soma o volume na categoria da META de cada produto, pela régua da RV (basesMeta):
+    // Cerveja = toda a cerveja (RGB, HE, Zero, Litrinho…), NAB = NAB + NAB Zero.
     function volPorCategoria(linhas) {
       const m = {};
       linhas.forEach((r) => {
         const cats = catMap[normCod(r.cod_produto)];
         if (!cats) return;
         const v = parseFloat(r.volume_hl) || 0;
-        cats.forEach((cat) => { m[cat] = (m[cat] || 0) + v; });
+        basesMeta(cats).forEach((cat) => { m[cat] = (m[cat] || 0) + v; });
       });
       return m;
     }
@@ -438,7 +461,7 @@ router.get("/", async (req, res) => {
       const m = {};
       dadosMes.forEach((r) => {
         const cats = catMap[normCod(r.cod_produto)];
-        if (!cats || !cats.includes(base)) return;
+        if (!cats || !basesMeta(cats).includes(base)) return;
         const cod = String(r.cod_produto || "").trim();
         if (!cod) return;
         if (!m[cod]) m[cod] = { cod_produto: cod, nome_produto: String(r.nome_produto || "").trim(), volume_mes_hl: 0, volume_hoje_hl: 0 };
