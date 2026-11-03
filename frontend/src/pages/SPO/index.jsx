@@ -12,6 +12,7 @@ import KpisExecucao from "./KpisExecucao";
 import KpisTasks from "./KpisTasks";
 import KpisProgramas from "./KpisProgramas";
 import FechamentoSpo, { triDoPainel } from "./FechamentoSpo"; // foto do painel consolidado por trimestre
+import ExportarRps from "./ExportarRps"; // Excel do Score 5 + Aderidos TTC p/ a planilha da RPS
 import { BarraMeta, BarraProgresso, INICIO_AVAL_KPI, MESES_TRI, META_GV, SPO_ITEMS, mostra, rmTd, rmTh, styles } from "./shared";
 export default function SPO() {
   const { usuario, logout } = useAuth();
@@ -659,6 +660,7 @@ export default function SPO() {
               <p style={{ margin: 0, fontWeight: "700", fontSize: "0.98rem", color: "#7DBA3D" }}>📊 Painel SPO Consolidado</p>
               <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
               <FechamentoSpo alvoRef={painelRef} isAdmin={usuario?.perfil === "admin"} />
+              {["admin", "director"].includes(usuario?.perfil) && <ExportarRps />}
               <button data-sem-foto
                 onClick={togglePainelFull}
                 title={painelFull ? "Fechar" : "Expandir tabela"}

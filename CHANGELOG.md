@@ -1,6 +1,12 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.129.1** — Volume Diário: botão "Exportar p/ RPS" (base do slide de Volume).
+Versão atual: **v3.130.0** — SPO: botão "Exportar p/ RPS" (Score 5 + PDVs Aderidos TTC).
+
+## v3.130.0 — SPO: Exportar p/ RPS (Score 5 + Aderidos)
+- **SPO** (admin/diretor), ao lado da foto do painel: **⬇️ Exportar p/ RPS** baixa `AAAA-MM SPO HOP (DD-MM).xlsx`. Só frontend (usa as rotas que o SPO já chama).
+  - **RN:** por setor, Score 5 Faturamento (item 12: PDVs, ok, meta) · Portfólio Ideal (item 24) · Planificador TTC (KPI 8: base, aderidos, executados, aderidos e executados, aderidos sem execução, quase aderidos, meta). Meta do RN = rateio da meta da operação do mês (12/24 em nº de PDVs; 8 em %), igual às telas.
+  - **Proximos:** PDVs mais perto de bater, já ordenados — Faturamento (real ÷ meta da task, maior primeiro), Portfólio (menos itens faltando), TTC aderido sem execução e TTC quase aderido (50–79%).
+  - **Metas:** spo_metas dos itens 8/12/24 (meta × real por mês, p/ o trimestre).
 
 ## v3.129.1 — Exportar p/ RPS: setores sem meta
 - Aba Categorias do export inclui setor com venda e sem meta (997/995 = PDVs sem RN) com meta 0 — o total da RPS bate com a tela (visão Todos).
