@@ -12,6 +12,8 @@ const num = (v) => {
   return parseFloat(s) || 0;
 };
 const r1 = (n) => Math.round(n * 10) / 10;
+// Código do PDV: o relatório de task fat vem como "1035185_20001" (revenda_PDV) → "20001"
+const codPdv = (v) => String(v ?? "").split("_").pop().trim().replace(/^0+/, "");
 
 export default function ExportarRps({ painelRef }) {
   const [baixando, setBaixando] = useState(false);
@@ -34,7 +36,7 @@ export default function ExportarRps({ painelRef }) {
       const mFat = metaOp(12), mPort = metaOp(24), mTtc = metaOp(8);
       const planif = ttc?.pdvs || [];
       const diaPorPdv = {};
-      [...portDet, ...planif].forEach((p) => { if (p.dia_visita) diaPorPdv[String(p.cod_pdv)] = p.dia_visita; });
+      [...portDet, ...planif].forEach((p) => { if (p.dia_visita) diaPorPdv[codPdv(p.cod_pdv)] = p.dia_visita; });
 
       // ── por RN ───────────────────────────────────────────────────────────
       const rn = {};
@@ -65,7 +67,7 @@ export default function ExportarRps({ painelRef }) {
       add("Faturamento", fatDet
         .filter((d) => d.bateu !== "Sim" && num(d.meta_task) > 0)
         .map((d) => { const pc = num(d.real_task) / num(d.meta_task);
-          return { setor: String(d.setor), cod_pdv: String(d.cod_pdv), nome_pdv: d.nome_pdv, dia_visita: diaPorPdv[String(d.cod_pdv)] || "",
+          return { setor: String(d.setor), cod_pdv: codPdv(d.cod_pdv), nome_pdv: d.nome_pdv, dia_visita: diaPorPdv[codPdv(d.cod_pdv)] || "",
             indicador: r1(pc * 100), detalhe: `real ${num(d.real_task).toLocaleString("pt-BR")} de ${num(d.meta_task).toLocaleString("pt-BR")}` }; })
         .sort((a, b) => b.indicador - a.indicador));
       add("Portfolio", portDet

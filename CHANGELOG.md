@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.131.3** — Import "Pedidos histórico": cliente no setor ATUAL; quem não existe mais → INATIVOS.
+Versão atual: **v3.131.4** — SPO › Exportar p/ RPS: código do PDV limpo na lista de Faturamento.
+
+## v3.131.4 — SPO › Exportar p/ RPS: código do PDV
+- Lista "PDVs mais próximos" de **Faturamento** (task fat): código vinha "1035185_20001" (revenda_PDV) → agora "20001", e o **dia de visita** passa a ser encontrado (cruzava pelo código com prefixo e saía vazio).
 
 ## v3.131.3 — Pedidos histórico: setor atual do cliente
 - **Processador** (`processar_pedidos_historico`): o setor de cada linha passa a ser o **setor atual do cliente** (pdv_base = ativos; pdv_fora = 102/995/997), não o da época. Cliente que não existe mais na base → setor **INATIVOS** (continua somando no total da operação). Antes as linhas de setor fora dos válidos (100/107/108/110/111 antigos de 2025, ~1/3 do volume) eram **descartadas** → o ano passado da RPS saía ~35% menor.
