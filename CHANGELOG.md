@@ -1,6 +1,16 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.131.4** — SPO › Exportar p/ RPS: código do PDV limpo na lista de Faturamento.
+Versão atual: **v3.132.0** — Volume = venda + BONIFICAÇÃO (igual ao BI da Ambev).
+
+## v3.132.0 — Bonificação entra no volume
+- **Por quê:** de-para NF a NF BI × CORA de set/26 (6.019,5 × 5.664,6 HL): 277,1 HL = NFs de fim de agosto que o BI lança em 01/09; **71,0 HL = bonificação (op 2 BONIF DES BALZ/COMBO)**, que o BI soma no volume e a HOP não somava; 6,8 HL = arredondamento (CORA 2 casas).
+- **Processador (`proc_cora.py`):** `Volume Entrega` = HL de **venda (op 1) + bonificação (op 2)** atendida e não cancelada/devolvida. Vale para tudo que sai do volume: RV, Volume Diário, vendas por PDV/produto, Report Volumes do WhatsApp, export p/ RPS, efetivado da aba Entrega. Out/26 no CORA de 04/11: 5.923,1 → **5.982,7 HL** (+59,5).
+- Vale a partir do próximo import do CORA (reimportar o mês recalcula aquele mês; **mês com RV fechada não é recalculado**). Faturamento Marketplace (R$) segue só venda.
+
+## v3.131.5 — registro de 3 versões que subiram com número fora da sequência (sessão paralela)
+- **"v3.128.1"** — `/api/farol-volumes/mensagens?mes=AAAA-MM` (mês anterior) = Report Volumes de FECHAMENTO (data = último dia, Tend = Real, sem Vendido hoje). Robô: modo `fechamento` (`FAROL=fechamento MES=2026-10`) e MOTOR opções 24/25 (pergunta o mês).
+- **"v3.128.2"** — SPO Consolidado: realizado das abas lido para qualquer mês do tri (outubro sumia na virada para novembro).
+- **"v3.128.3"** — `/api/volume-diario/rps` inclui **RGB TT (VOLUME)**: real Giro RGB + Litrinho + Trimarcas (1x) e meta do monitoramento da Home. Slide 4 da RPS.
 
 ## v3.131.4 — SPO › Exportar p/ RPS: código do PDV
 - Lista "PDVs mais próximos" de **Faturamento** (task fat): código vinha "1035185_20001" (revenda_PDV) → agora "20001", e o **dia de visita** passa a ser encontrado (cruzava pelo código com prefixo e saía vazio).
