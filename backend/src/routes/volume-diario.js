@@ -7,6 +7,8 @@ const { authMiddleware } = require("../middleware/auth");
 router.use(authMiddleware);
 
 const { filtrarPorPerfil } = require("../utils/perfil");
+const { CATS_RGB } = require("../utils/rgbVolume");
+const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
 
 function diasUteisMes(ano, mes) {
   let count = 0;
@@ -202,6 +204,24 @@ router.get("/rps", async (req, res) => {
       const [setor, base] = k.split("|");
       const cat = catsMeta.find((c) => c.replace(/\s*\(VOLUME\)\s*$/i, "") === base);
       if (cat && !comMeta.has(k)) categorias.push({ setor, categoria: cat, unidade: "HL", meta: 0, real: r3(v) });
+    });
+    // RGB TT (Giro RGB + Litrinho + Trimarcas RGB HE; produto conta 1x) — não é categoria da RV:
+    // meta = monitoramento lançado na Home (metas_monitor, rateado pela meta de cerveja), igual
+    // ao Report Volumes do WhatsApp. Slide 4 da RPS (placar + tabela por RN).
+    const rgbReal = {};
+    dadosMes.forEach((r) => {
+      if (!(catMap[normCod(r.cod_produto)] || []).some((c) => CATS_RGB.has(c))) return;
+      const s = setorHop(r.setor);
+      rgbReal[s] = (rgbReal[s] || 0) + (parseFloat(r.volume_hl) || 0);
+    });
+    const rvMes = rvResultado.filter((r) => normalizeMesRef(r.mes_referencia) === mesRef);
+    const metaRgb = (ratearMetasMonitor(await lerMetasMonitor(mesRef).catch(() => null), rvMes).rgb) || {};
+    const setoresRgb = new Set([...categorias.map((c) => c.setor), ...Object.keys(rgbReal), ...Object.keys(metaRgb).map(setorHop)]);
+    const metaRgbHop = {};
+    Object.entries(metaRgb).forEach(([s, v]) => { const h = setorHop(s); metaRgbHop[h] = (metaRgbHop[h] || 0) + v; });
+    setoresRgb.forEach((s) => {
+      if (!(metaRgbHop[s] || rgbReal[s])) return;
+      categorias.push({ setor: s, categoria: "RGB TT (VOLUME)", unidade: "HL", meta: r3(metaRgbHop[s] || 0), real: r3(rgbReal[s] || 0) });
     });
     categorias.sort((a, b) => a.categoria.localeCompare(b.categoria) || a.setor.localeCompare(b.setor));
 
