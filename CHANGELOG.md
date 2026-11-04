@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.133.0** — REGRA ÚNICA igual ao BI: só conta o ENTREGUE, no dia da entrega; HL pelo Fator Hecto.
+Versão atual: **v3.133.1** — Import do CORA recalcula a RV de todos os meses ABERTOS do arquivo.
+
+## v3.133.1 — RV dos meses do arquivo do CORA
+- Antes o import do CORA só recalculava a RV do mês corrente: reimportar outubro em novembro atualizava volume/cobertura/distribuição de outubro mas não a RV de outubro.
+- Agora recalcula a RV de **cada mês gravado pelo arquivo** (Data entrega, ≥ out/26). **Mês com RV FECHADA é pulado** (o que foi pago não muda). Não precisa marcar competência.
 
 ## v3.133.0 — Regra única (= BI da Ambev): entregue, na data de entrega
 - **Decisão do Eduardo (04/11/2026, confirmado com a responsável do BI):** volume do mês = o que foi **entregue** dentro do mês. Uma regra só para tudo — **RV só sobe quando entrega**; acabou o sobe/desce de RV por devolução.
