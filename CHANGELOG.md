@@ -1,6 +1,19 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.132.1** — Operações 5/9/39/101 fora de qualquer volume (painel do dia e ruptura).
+Versão atual: **v3.133.0** — REGRA ÚNICA igual ao BI: só conta o ENTREGUE, no dia da entrega; HL pelo Fator Hecto.
+
+## v3.133.0 — Regra única (= BI da Ambev): entregue, na data de entrega
+- **Decisão do Eduardo (04/11/2026, confirmado com a responsável do BI):** volume do mês = o que foi **entregue** dentro do mês. Uma regra só para tudo — **RV só sobe quando entrega**; acabou o sobe/desce de RV por devolução.
+- **Processador (`proc_cora.py`):**
+  - Data do volume = **Data entrega** (antes: emissão da NF; sem NF, entrega − 1).
+  - Conta só pedido **ENTREGUE** (op 1 venda + op 2 bonificação, item ATENDIDO). Em rota / aguardando = programado, não realizado. Vale para RV, Volume Diário, vendas por PDV/produto, compradores/cobertura, faturamento Mktp (R$).
+  - HL do item = **Quant. venda × Fator Hecto Comercial** (col P da base de produtos 0111 → `produtos_full.hl_caixa`), sem o arredondamento de 2 casas do CORA. Produto sem fator usa o HL do CORA.
+  - Desligada para o CORA a regra antiga "hoje = Volume Marcação" (`proc_analises.SO_ENTREGUE`).
+  - `cora_dia` (data = entrega) ganhou `valor` (R$ sem ADF).
+- **Validação:** set/26 BI (sem as NFs de fim de agosto) 5.742,4 HL = CORA com fator 5.742,4 HL; as NFs de fim de agosto entram em setembro pela data de entrega. Out/26 no CORA de 04/11: **6.249,7 HL entregues** (regra antiga 5.982,7).
+- **WhatsApp 12h:** o bloco "Vendido HOJE" virou **"🚚 Programado p/ entregar DD/MM"** — pedidos aceitos (ATENDIDO, op 1/2) com entrega na próxima data (domingo pula p/ segunda), por categoria, do `cora_dia`. Robô: backup `enviar.backup_antes_programado_2026-11-04.js`.
+- PDVs: "Fez pedido hoje" → **"Entregue hoje"**.
+- **Atenção:** reimportar outubro recalcula a RV de outubro com a regra nova (mês com RV fechada não muda).
 
 ## v3.132.1 — Só venda (op 1) e bonificação (op 2) são volume, em todo lugar
 - Regra (igual ao BI): troca (5), remessa de vasilhame (9), reposição (39), perda (101/108), consignação etc. **não são volume**. O volume oficial (RV, Volume Diário, Report, RPS) já era só op 1 + 2 (v3.132.0).

@@ -28,11 +28,12 @@ function getDiaHoje() {
   return dias[new Date().getDay()];
 }
 
-// Dias sem compra (backend já soma os pedidos do CORA): 0 = pedido feito hoje (D+1 conta como venda do dia)
+// Dias sem compra (backend já soma os pedidos do CORA): 0 = entrega feita hoje (desde 04/11/2026 a
+// compra conta no dia da ENTREGA, igual ao BI)
 const diasTxt = (v) => {
   if (v === "" || v == null) return "—";
   const n = Number(v);
-  return n === 0 ? "Fez pedido hoje" : n === 1 ? "1 dia" : `${v} dias`;
+  return n === 0 ? "Entregue hoje" : n === 1 ? "1 dia" : `${v} dias`;
 };
 
 // Converte valor que pode vir como "35,5" (locale BR) ou "35.5" ou número
