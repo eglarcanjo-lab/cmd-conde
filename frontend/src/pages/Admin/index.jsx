@@ -14,7 +14,6 @@ import SpoDesafios from "./SpoDesafios";
 import SpoMetas from "./SpoMetas";
 import IncentivosAdmin from "./Incentivos";
 import PopupsAdmin from "./Popups";
-import AvisosAdmin from "./Avisos";
 import Engajamento from "./Engajamento";
 import Alertas from "./Alertas";
 import { ADMIN_TABS, ADMIN_GRUPOS } from "../../menu";
@@ -128,7 +127,6 @@ export default function Admin() {
           {tab === "spo_metas" && <SpoMetas />}
           {tab === "incentivos" && <IncentivosAdmin />}
           {tab === "popups" && <PopupsAdmin />}
-          {tab === "avisos" && <AvisosAdmin />}
           {tab === "engajamento" && <Engajamento />}
           {tab === "incidentes" && <Incidentes />}
           {tab === "alertas" && <Alertas />}

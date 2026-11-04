@@ -29,7 +29,6 @@ import IncentivosRn from "./pages/IncentivosRn";
 import { BarraVerComo } from "./components/VerComo"; // admin vendo o app como um setor (RN) // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
-import BotaoAjuda from "./components/BotaoAjuda";
 import { usoContagem } from "./utils/uso";
 import api from "./services/api";
 
@@ -104,7 +103,6 @@ function AppContent() {
     <>
       {location.pathname !== "/login" && <BarraVerComo />}
       {usuario && location.pathname !== "/login" && <PopupDiario />}
-      {usuario && location.pathname !== "/login" && <BotaoAjuda />}
       <Routes>
       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
       <Route path="/" element={<PrivateRoute><ErrorBoundary><Home /></ErrorBoundary></PrivateRoute>} />
@@ -135,7 +133,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.133.1";
+export const APP_VERSION = "v3.133.2";
 
 export default function App() {
   return (

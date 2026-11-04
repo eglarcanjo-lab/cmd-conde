@@ -52,6 +52,5 @@ export const ADMIN_TABS = [
   { id: "configuracoes", icon: "⚙️", label: "Configurações", grupo: "Dados" },
   { id: "incidentes",    icon: "🚨", label: "Solicitações",  grupo: "Comunicação" },
   { id: "popups",        icon: "🖼️", label: "Popups",        grupo: "Comunicação" },
-  { id: "avisos",        icon: "❔", label: "Avisos",        grupo: "Comunicação" },
 ];
 export const ADMIN_GRUPOS = ["Pessoas", "Metas e RV", "Dados", "Comunicação"];

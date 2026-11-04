@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.133.1** — Import do CORA recalcula a RV de todos os meses ABERTOS do arquivo.
+Versão atual: **v3.133.2** — Botão "?" (Ajuda & Avisos) removido.
+
+## v3.133.2 — Sem o botão "?"
+- Removido o botão flutuante **"?" (Ajuda & Avisos)** de todas as telas e a aba **Admin › Avisos** que o configurava (não era mais usado). Rotas do backend mantidas.
 
 ## v3.133.1 — RV dos meses do arquivo do CORA
 - Antes o import do CORA só recalculava a RV do mês corrente: reimportar outubro em novembro atualizava volume/cobertura/distribuição de outubro mas não a RV de outubro.
