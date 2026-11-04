@@ -10,6 +10,7 @@ const router = express.Router();
 const { readSheet } = require("../services/sheets");
 const { authMiddleware } = require("../middleware/auth");
 const { dedupe } = require("../utils/dedupe");
+const { opVolume } = require("../utils/opVolume");
 
 router.use(authMiddleware);
 
@@ -70,7 +71,8 @@ router.get("/mensagens", async (req, res) => {
     const nomeDe = (cod, nome) => String(nome || "").trim() || nomeProd[cod] || "";
 
     // DIA
-    let dia = coraDia.filter((r) => r.data === hojeBR && String(r.situacao || "").toUpperCase() === "FALTA")
+    // só venda/bonificação (op 1/2): falta em troca, vasilhame ou reposição não é ruptura de venda
+    let dia = coraDia.filter((r) => r.data === hojeBR && String(r.situacao || "").toUpperCase() === "FALTA" && opVolume(r))
       .map((r) => ({ setor: String(r.setor || "").trim(), cod_pdv: normCod(r.cod_pdv), nome_pdv: String(r.nome_pdv || "").trim(),
         cod_produto: normCod(r.cod_produto), nome_produto: nomeDe(normCod(r.cod_produto), r.nome_produto), hl: num(r.volume_hl), data: r.data }));
     const fonteDia = dia.length || coraDia.some((r) => r.data === hojeBR) ? "CORA (painel do dia)" : "ruptura_detalhe";

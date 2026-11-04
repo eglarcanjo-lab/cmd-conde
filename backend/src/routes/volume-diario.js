@@ -9,6 +9,7 @@ router.use(authMiddleware);
 const { filtrarPorPerfil } = require("../utils/perfil");
 const { CATS_RGB } = require("../utils/rgbVolume");
 const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
+const { opVolume } = require("../utils/opVolume");
 
 function diasUteisMes(ano, mes) {
   let count = 0;
@@ -373,8 +374,10 @@ router.get("/", async (req, res) => {
     const dadosComp = dados.filter((r) => r.data === dataCompStr);
     // Painel do dia igual à "Visão geral" do CORA (cora_dia: todos os setores, inclusive 997
     // = PDVs sem RN, e todas as situações do item). Dia = tudo · Operação = Dia − anulados.
+    // Só operação 1 (venda) e 2 (bonificação), igual ao BI: troca (5), vasilhame (9), reposição
+    // (39) e perda (101…) não são volume. Linha antiga sem `op` (import anterior) continua valendo.
     let coraEsc = filtrarPorPerfil(coraDia.map((r) => ({ ...r, setor: String(r.setor || "").trim() })), usuario)
-      .filter((r) => r.data === dataRefStr);
+      .filter((r) => r.data === dataRefStr && opVolume(r));
     if (req.query.setor && ["admin", "director", "gv1", "gv3"].includes(usuario.perfil)) {
       coraEsc = coraEsc.filter((r) => r.setor === String(req.query.setor).trim());
     }

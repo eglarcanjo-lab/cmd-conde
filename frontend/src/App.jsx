@@ -135,7 +135,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.132.0";
+export const APP_VERSION = "v3.132.1";
 
 export default function App() {
   return (

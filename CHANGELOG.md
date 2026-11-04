@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.132.0** — Volume = venda + BONIFICAÇÃO (igual ao BI da Ambev).
+Versão atual: **v3.132.1** — Operações 5/9/39/101 fora de qualquer volume (painel do dia e ruptura).
+
+## v3.132.1 — Só venda (op 1) e bonificação (op 2) são volume, em todo lugar
+- Regra (igual ao BI): troca (5), remessa de vasilhame (9), reposição (39), perda (101/108), consignação etc. **não são volume**. O volume oficial (RV, Volume Diário, Report, RPS) já era só op 1 + 2 (v3.132.0).
+- **Painel do dia** do Volume Diário (cards Dia/Operação/Atendidos/Ag./Faltas, cópia da "Visão geral" do CORA) somava TODAS as operações → agora só op 1/2. Processador grava a coluna `op` no `cora_dia`; backend filtra (`utils/opVolume.js`). Linha antiga sem `op` segue valendo até o próximo import.
+- **Ruptura:** falta em troca/vasilhame/reposição não é mais ruptura de venda — `Motivo = FALTA` só em op 1/2 (ruptura_detalhe) e a ruptura do DIA no WhatsApp das 17:10 filtra op 1/2. Ruptura por pedido já era só op 1.
 
 ## v3.132.0 — Bonificação entra no volume
 - **Por quê:** de-para NF a NF BI × CORA de set/26 (6.019,5 × 5.664,6 HL): 277,1 HL = NFs de fim de agosto que o BI lança em 01/09; **71,0 HL = bonificação (op 2 BONIF DES BALZ/COMBO)**, que o BI soma no volume e a HOP não somava; 6,8 HL = arredondamento (CORA 2 casas).
