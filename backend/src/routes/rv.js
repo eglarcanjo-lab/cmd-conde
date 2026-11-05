@@ -37,6 +37,15 @@ function semAntigoDuplicado(linhas) {
   });
 }
 
+// RN numa RV de mês com estrutura própria (rv_estrutura / fechamento): vê o setor que ELE tinha
+// naquele mês (pelo nome), não o código atual — RN que trocou de setor não vê a RV do antecessor.
+async function filtrarRv(linhas, user, mes) {
+  if (user.perfil !== "rn") return filtrarPorPerfil(linhas, user);
+  const setor = await rvf.setorDoRnNoMes(user, mes).catch(() => null);
+  if (setor === null) return filtrarPorPerfil(linhas, user);
+  return linhas.filter((r) => String(r.setor || "").trim() === setor);
+}
+
 const msgFechado = (st) =>
   `A RV de ${st.mes} está FECHADA (em ${new Date(st.fechado_em).toLocaleDateString("pt-BR")}` +
   `${st.fechado_por ? ` por ${st.fechado_por}` : ""}). Reabra o mês para alterar.`;
@@ -47,7 +56,7 @@ router.get("/", async (req, res) => {
   try {
     const mes = req.query.mes || mesAtualBR();
     const filtrado = await linhasRv("rv_resultado", mes, (r) => String(r.mes_referencia) === mes);
-    return res.json(filtrarPorPerfil(filtrado, req.user));
+    return res.json(await filtrarRv(filtrado, req.user, mes));
   } catch {
     return res.json([]);
   }
@@ -58,7 +67,7 @@ router.get("/pontos", async (req, res) => {
   try {
     const mes = req.query.mes || mesAtualBR();
     const filtrado = await linhasRv("rv_pontos_bees", mes, (r) => !r.mes_referencia || String(r.mes_referencia) === mes);
-    return res.json(filtrarPorPerfil(filtrado, req.user));
+    return res.json(await filtrarRv(filtrado, req.user, mes));
   } catch {
     return res.json([]);
   }
@@ -69,7 +78,7 @@ router.get("/ap", async (req, res) => {
   try {
     const mes = req.query.mes || mesAtualBR();
     const filtrado = await linhasRv("rv_ap", mes, (r) => !r.mes_referencia || String(r.mes_referencia) === mes);
-    return res.json(filtrarPorPerfil(filtrado, req.user));
+    return res.json(await filtrarRv(filtrado, req.user, mes));
   } catch {
     return res.json([]);
   }
@@ -118,12 +127,14 @@ router.get("/relatorio", async (req, res) => {
       linhasRv("rv_resultado", mes, doMes),
       linhasRv("rv_ap", mes, doMes),
       readSheet("usuarios").catch(() => []),
-      rvf.nomesCongelados(mes).catch(() => null),
+      rvf.nomesDoMes(mes).catch(() => null),
     ]);
 
-    // Mês fechado: usa os nomes do dia do fechamento (setor renomeado não "troca" de RN).
-    const nomeMap = { ...(nomesCong || {}) };
-    if (!nomesCong) usuarios.forEach(u => { if (u.cod) nomeMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+    // Mês fechado: nomes do dia do fechamento; mês com estrutura gravada (rv_estrutura): os RNs
+    // daquele mês; senão o cadastro atual (setor que mudou de RN não "troca" a RV de dono).
+    const nomeMap = {};
+    usuarios.forEach(u => { if (u.cod) nomeMap[String(u.cod).trim()] = String(u.nome || "").trim(); });
+    Object.assign(nomeMap, nomesCong || {}); // RNs do mês valem sobre o cadastro atual
 
     const apMap = {};
     apData.forEach(a => { if (a.setor) apMap[String(a.setor).trim()] = a; });
@@ -141,6 +152,20 @@ router.get("/relatorio", async (req, res) => {
   } catch (err) {
     console.error("rv/relatorio:", err);
     return res.status(500).json({ error: "Erro ao gerar relatório." });
+  }
+});
+
+// GET /api/rv/nomes?mes=YYYY-MM → { setor: nome } com os RNs DAQUELE mês (fechamento > estrutura
+// gravada > cadastro atual). Usado pelo Simulador de RV.
+router.get("/nomes", async (req, res) => {
+  try {
+    const mes = req.query.mes || mesAtualBR();
+    const [usuarios, doMes] = await Promise.all([readSheet("usuarios").catch(() => []), rvf.nomesDoMes(mes).catch(() => null)]);
+    const m = {};
+    usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) m[c] = String(u.nome || "").trim(); });
+    return res.json({ ...m, ...(doMes || {}) });
+  } catch {
+    return res.json({});
   }
 });
 

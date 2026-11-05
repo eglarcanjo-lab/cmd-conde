@@ -12,6 +12,7 @@ const { montarReport } = require("../utils/volumesReport");
 const { lerMetasMonitor, ratearMetasMonitor } = require("../utils/metasMonitor");
 const { rgbPorSetor, CATS_RGB } = require("../utils/rgbVolume");
 const { opVolume } = require("../utils/opVolume");
+const rvf = require("../services/rvFechamento");
 
 const pad = (n) => String(n).padStart(2, "0");
 const DIA_LABEL = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
@@ -110,6 +111,8 @@ router.get("/mensagens", async (req, res) => {
 
     const nomeSetor = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeSetor[c] = String(u.nome || "").trim(); });
+    // Fechamento de mês anterior: RNs DAQUELE mês (troca de RN entre setores não muda o passado)
+    if (fechamento) Object.assign(nomeSetor, (await rvf.nomesDoMes(mes).catch(() => null)) || {});
 
     // RGB TT entra como categoria após Cerveja (meta = monitoramento, se lançada).
     // RGB TT (Giro RGB + Litrinho + Trimarcas) no lugar do antigo "Giro RGB" (só Giro + Litrinho)

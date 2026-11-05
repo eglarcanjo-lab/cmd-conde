@@ -138,14 +138,14 @@ export default function RvSimulador() {
         api.get(`/api/rv?mes=${mesRef}`),
         api.get(`/api/rv/pontos?mes=${mesRef}`),
         api.get(`/api/rv/ap?mes=${mesRef}`),
-        api.get("/api/admin/usuarios").catch(() => ({ data: [] })),
+        // RNs DAQUELE mês (fechamento > estrutura gravada > cadastro atual): troca de RN entre
+        // setores não muda o nome na RV de meses anteriores.
+        api.get(`/api/rv/nomes?mes=${mesRef}`).catch(() => ({ data: {} })),
       ]);
       setRvData(r1.data || []);
       setPontosData(r2.data || []);
       setApData(r3.data || []);
-      const mapa = {};
-      (r4.data || []).forEach((u) => { if (u.cod) mapa[String(u.cod)] = u.nome; });
-      setUsuariosMap(mapa);
+      setUsuariosMap(r4.data || {});
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -174,7 +174,7 @@ export default function RvSimulador() {
   function getRv(cod)     { return rvData.find(r => r.setor === cod) || null; }
   function getPontos(cod) { return pontosData.find(r => r.setor === cod) || null; }
   function getAp(cod)     { return apData.find(r => r.setor === cod) || null; }
-  // Nome do colaborador: tabela viva de usuários (reflete troca de setor); fallback no fixo.
+  // Nome do colaborador NO MÊS selecionado (/api/rv/nomes); fallback no fixo.
   const nomeDe = (cod) => usuariosMap[String(cod)] || SETORES.find(s => s.cod === cod)?.nome || cod;
 
   function computeTotals(cod) {

@@ -41,6 +41,56 @@ async function lerCongelado(mes, tabela) {
   return Array.isArray(r.rows[0].dados) ? r.rows[0].dados : [];
 }
 
+// ── Estrutura do mês (setor → RN) ───────────────────────────────────────────────
+// Os setores (carteiras) ficam, as PESSOAS mudam de setor. A RV de um mês tem que sair com os RNs
+// DAQUELE mês — o cadastro de usuários é sempre o atual. rv_estrutura guarda setor → nome por mês;
+// meses sem estrutura gravada usam o cadastro atual. Nov/2026: troca de RNs (101 João→Allan,
+// 104 Hebert→Eldiny, 106 Eldiny→Hebert, 107 Luan→Ramon, 108 Allan→João, 111 Manoel→Arthur) —
+// outubro fica na estrutura antiga (semente abaixo, gravada 1x se o mês não tiver estrutura).
+const ESTRUTURA_SEMENTE = {
+  "2026-10": {
+    "101": "João Victor Barbisa da Silva", "103": "Iger Renan Castro Da Silva",
+    "104": "Hebert Henrique Lopes dos Santos", "105": "Eduardo da Silva Alves", "106": "Eldiny Henrique",
+    "107": "Luan Marques da Silva", "108": "Allan Fernando Andrade de Souza",
+    "109": "Adriano Ferreira Do Nascimento", "110": "Joicilene Alves Da Silva", "111": "Manoel Roseno de Souza Neto",
+  },
+};
+let _okE = false;
+async function ensureEstrutura() {
+  if (_okE) return;
+  await query(`CREATE TABLE IF NOT EXISTS rv_estrutura (mes TEXT, setor TEXT, nome TEXT, PRIMARY KEY (mes, setor))`);
+  for (const [mes, mapa] of Object.entries(ESTRUTURA_SEMENTE)) {
+    const ja = await query(`SELECT 1 FROM rv_estrutura WHERE mes = $1 LIMIT 1`, [mes]);
+    if (ja.rows.length) continue;
+    for (const [setor, nome] of Object.entries(mapa)) {
+      await query(`INSERT INTO rv_estrutura (mes, setor, nome) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [mes, setor, nome]);
+    }
+  }
+  _okE = true;
+}
+// { setor: nome } do mês, ou null se o mês não tem estrutura gravada (= usa o cadastro atual)
+async function estrutura(mes) {
+  await ensureEstrutura();
+  const r = await query(`SELECT setor, nome FROM rv_estrutura WHERE mes = $1`, [mes]);
+  if (!r.rows.length) return null;
+  const m = {}; r.rows.forEach((x) => { m[String(x.setor).trim()] = String(x.nome || "").trim(); });
+  return m;
+}
+// Nomes do mês p/ as telas de RV: fechado → foto; senão estrutura gravada; senão null (cadastro atual)
+async function nomesDoMes(mes) {
+  return (await nomesCongelados(mes)) || (await estrutura(mes));
+}
+const normNome = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+// Setor que o RN tinha no mês (pelo nome). null = mês sem estrutura (vale o cod atual);
+// "" = o RN não tinha setor naquele mês (não vê RV de ninguém).
+async function setorDoRnNoMes(usuario, mes) {
+  const nomes = await nomesDoMes(mes).catch(() => null);
+  if (!nomes || !Object.keys(nomes).length) return null;
+  const alvo = normNome(usuario.nome);
+  const hit = Object.entries(nomes).find(([, n]) => normNome(n) === alvo);
+  return hit ? hit[0] : "";
+}
+
 async function nomesCongelados(mes) {
   await ensureTabela();
   const r = await query(`SELECT snapshot -> 'nomes' AS nomes FROM rv_fechamentos WHERE mes = $1`, [mes]);
@@ -63,6 +113,7 @@ async function fechar(mes, usuario) {
   const usuarios = await readSheet("usuarios").catch(() => []);
   snap.nomes = {};
   usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) snap.nomes[c] = String(u.nome || "").trim(); });
+  Object.assign(snap.nomes, (await estrutura(mes).catch(() => null)) || {}); // estrutura do mês vale sobre o cadastro
   await query(`INSERT INTO rv_fechamentos (mes, fechado_por, linhas, snapshot) VALUES ($1, $2, $3, $4)`,
     [mes, usuario || "", total, JSON.stringify(snap)]);
   return { mes, linhas: total, setores: snap.rv_resultado.length };
@@ -74,4 +125,4 @@ async function reabrir(mes) {
   return r.rowCount > 0;
 }
 
-module.exports = { mesValido, status, listar, lerCongelado, nomesCongelados, fechar, reabrir };
+module.exports = { mesValido, status, listar, lerCongelado, nomesCongelados, fechar, reabrir, estrutura, nomesDoMes, setorDoRnNoMes };

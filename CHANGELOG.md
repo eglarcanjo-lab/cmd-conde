@@ -1,6 +1,14 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.133.2** — Botão "?" (Ajuda & Avisos) removido.
+Versão atual: **v3.134.0** — RV por mês com os RNs DAQUELE mês (troca de RNs entre setores em nov/26).
+
+## v3.134.0 — Estrutura de RNs por mês na RV
+- Nov/2026 os RNs trocaram de setor (101 João→Allan · 104 Hebert→Eldiny · 106 Eldiny→Hebert · 107 Luan→Ramon · 108 Allan→João · 111 Manoel→Arthur). Os setores (carteiras) ficam; a RV de outubro tem que sair com os RNs de outubro.
+- Tabela nova **`rv_estrutura`** (mes, setor, nome), com outubro/26 gravado na estrutura antiga (semente em `services/rvFechamento.js`). Mês sem estrutura = cadastro atual.
+- **Simulador de RV** (`/api/rv/nomes?mes=`), **Relatório da RV** e **Report de fechamento** do WhatsApp (`?mes=`) mostram os RNs do mês consultado.
+- **RN** abrindo a RV de um mês com estrutura vê o setor que **ele** tinha naquele mês (pelo nome): o Allan em outubro vê o 108, não o 101; quem não tinha setor no mês não vê RV de ninguém.
+- **Fechar** o mês congela os nomes da estrutura do mês (não os do cadastro atual).
+- Segmento ON/OFF continua por setor (não muda com a pessoa).
 
 ## v3.133.2 — Sem o botão "?"
 - Removido o botão flutuante **"?" (Ajuda & Avisos)** de todas as telas e a aba **Admin › Avisos** que o configurava (não era mais usado). Rotas do backend mantidas.
