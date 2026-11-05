@@ -7,6 +7,7 @@
 // Todos veem todos os RNs (competição); a tela destaca o setor de quem está logado.
 // Realizado: vendas_cliente_produto (mês) × produtos_base (categorias). Mesma lógica do
 // Relatório aberto: distribuição = Σ, por PDV, dos SKUs DISTINTOS da categoria; cobertura = PDVs.
+const rvf = require("../services/rvFechamento"); // estrutura de RNs por mês (rv_estrutura)
 const express = require("express");
 const router = express.Router();
 const { readSheet, readSheetMonths } = require("../services/sheets");
@@ -180,6 +181,16 @@ async function montar(inc, mesQ, user) {
     ]);
     const nomeDe = {};
     usuarios.forEach((u) => { const c = String(u.cod || "").trim(); if (c) nomeDe[c] = String(u.nome || "").trim(); });
+    // Mês com estrutura própria (troca de RNs entre setores, ex.: out/26): nome do RN DAQUELE mês e
+    // o setor que o usuário tinha nele (rv_estrutura — mesma regra da RV). Tri (Liga) = cadastro atual.
+    let meuSetor = String(user.cod || "");
+    if (mesSel) {
+      Object.assign(nomeDe, (await rvf.nomesDoMes(mesSel).catch(() => null)) || {});
+      if (user.perfil === "rn") {
+        const sm = await rvf.setorDoRnNoMes(user, mesSel).catch(() => null);
+        if (sm !== null) meuSetor = sm;
+      }
+    }
 
     // Setores = quem tem meta em algum mês do incentivo (ordem numérica)
     const setores = [...new Set(Object.values(metas).flatMap((o) => Object.keys(o)))]
@@ -260,7 +271,7 @@ async function montar(inc, mesQ, user) {
       incentivo: { id: inc.id, titulo: inc.titulo, subtitulo: inc.subtitulo, meses: inc.meses, minPts: inc.minPts, premios: inc.premios, valorMeta: inc.valorMeta,
         kpis: inc.kpis.map(({ key, label, pts, unidade, ind }) => ({ key, label, pts, unidade, ind })) },
       mes: mesSel || "tri", mesesCalc, diasUteis: f && f.aberto ? { feitos: f.feitos, total: f.total } : null,
-      meuSetor: String(user.cod || ""),
+      meuSetor,
       metas, linhas, total,
     };
 }

@@ -311,7 +311,9 @@ export default function IncentivosRn() {
       .catch((e) => setErro(e?.response?.data?.error || "Erro ao carregar o incentivo."));
   }, [incId, mes, recarga]);
 
-  const meu = String(usuario?.cod ?? "");
+  // Setor do usuário NO MÊS escolhido (backend: estrutura de RNs por mês — ex.: João era o 101 em
+  // out/26 e hoje é o 108); sem resposta ainda, o código atual.
+  const meu = String(d?.meuSetor ?? usuario?.cod ?? "");
   const setores = d ? [...new Set([...SETORES_PADRAO, ...d.linhas.map((l) => l.setor)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) : SETORES_PADRAO;
 
   return (

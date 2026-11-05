@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.134.1** — Tela de RV do RN: RV de mês anterior com outro setor não aparece mais zerada.
+Versão atual: **v3.134.2** — Incentivos (Bateu Levou) com os RNs do mês escolhido.
+
+## v3.134.2 — Bateu, Levou com a estrutura do mês
+- Incentivos › Bateu, Levou (mensal): nome do RN de cada setor = o RN **daquele mês** (`rv_estrutura`, mesma regra da RV); o "(você)" destaca o setor que o RN tinha no mês (João em out/26 = 101). Liga (tri) segue o cadastro atual.
 
 ## v3.134.1 — RV do RN zerada em outubro
 - **Bug (v3.134.0):** a tela RV do RN procurava a linha pelo código ATUAL dele; em out/26 o backend devolve o setor que ele tinha naquele mês (ex.: João = 101 em outubro, 108 hoje) → não achava e mostrava zerado.
