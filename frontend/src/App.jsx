@@ -26,6 +26,7 @@ import AcoesPreco from "./pages/AcoesPreco";
 import InputTasks from "./pages/InputTasks";
 import RotaEfetiva from "./pages/RotaEfetiva";
 import IncentivosRn from "./pages/IncentivosRn";
+import PainelTV from "./pages/PainelTV"; // Smart TV da empresa (/tv?k=CHAVE, sem login)
 import { BarraVerComo } from "./components/VerComo"; // admin vendo o app como um setor (RN) // aba "Incentivos" (Liga CMD, Bateu Levou Zeros)
 import PopupDiario from "./components/PopupDiario";
 import AtualizacaoApp from "./components/AtualizacaoApp";
@@ -84,6 +85,9 @@ function AppContent() {
       .catch(() => setManu({ ativo: false }));
   }, []);
 
+  // Painel TV: tela própria, sem login, sem manutenção, sem barras/popups do app.
+  if (location.pathname === "/tv") return <ErrorBoundary><PainelTV /></ErrorBoundary>;
+
   // Aguarda auth E status de manutenção — evita race condition admin vs manu
   if (manu === null || authLoading) {
     return (
@@ -133,7 +137,7 @@ function AppContent() {
 }
 
 // Versão do app — ver CHANGELOG.md para o esquema (vMAJOR.MINOR.PATCH)
-export const APP_VERSION = "v3.134.2";
+export const APP_VERSION = "v3.135.0";
 
 export default function App() {
   return (

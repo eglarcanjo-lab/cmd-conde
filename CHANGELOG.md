@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.134.2** — Incentivos (Bateu Levou) com os RNs do mês escolhido.
+Versão atual: **v3.135.0** — Painel TV (slides da Smart TV da empresa).
+
+## v3.135.0 — Painel TV
+- Página nova **`/tv`** para a Smart TV da empresa: slides em tela cheia com tempo — **Abertura** (logo + saudação + data), **10 Princípios**, **Princípio em foco**, **Volumes da operação**, **Avisos** (1 slide cada), **Recados do RH** (aniversariantes etc., 1 slide cada) e **Vagas em aberto**. Relógio no topo, barra de tempo e bolinhas no rodapé.
+- Abre por **link com chave** (`/tv?k=…`), sem login; a TV guarda a chave. Botão “Aperte OK para tela cheia” (o navegador só deixa entrar em tela cheia com um clique/OK). Sem banner de versão nova e sem recarregar (sairia da tela cheia); conteúdo atualiza sozinho a cada 3 min; sem internet continua com o último conteúdo.
+- **Admin › Painel TV** (grupo Comunicação): link da TV (copiar / gerar novo), logo (upload), nome, slides ligados + tempo de cada um, e cadastro dos itens com texto, imagem, período (de/até), ordem e tempo próprio.
+- Volumes = **consolidado da operação** do Report Volumes do WhatsApp (barra = tendência ÷ meta, sem RN). Função `montarMensagens` extraída de `farol-volumes.js` (rota do robô igual).
+- Backend `routes/tv.js` (`/api/tv`), tabelas `tv_itens` e `tv_config` (criadas sozinhas). `/api/tv` fica fora da manutenção (a TV não apaga 5h–6h).
 
 ## v3.134.2 — Bateu, Levou com a estrutura do mês
 - Incentivos › Bateu, Levou (mensal): nome do RN de cada setor = o RN **daquele mês** (`rv_estrutura`, mesma regra da RV); o "(você)" destaca o setor que o RN tinha no mês (João em out/26 = 101). Liga (tri) segue o cadastro atual.

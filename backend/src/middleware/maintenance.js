@@ -3,7 +3,7 @@ const { getEstado } = require("../services/configuracoes");
 
 function maintenanceMiddleware(req, res, next) {
   // Rotas sempre isentas — admin precisa conseguir logar e desligar a manutenção
-  const exemptPrefixes = ["/health", "/api/status", "/api/manutencao", "/api/auth", "/api/admin"];
+  const exemptPrefixes = ["/health", "/api/status", "/api/manutencao", "/api/auth", "/api/admin", "/api/tv"]; // /api/tv: a TV da empresa não apaga na janela de atualização
   if (exemptPrefixes.some((p) => req.path === p || req.path.startsWith(p + "/"))) return next();
 
   // Admin tem acesso TOTAL mesmo em manutenção (o frontend já libera a tela do admin;

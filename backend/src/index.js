@@ -70,6 +70,7 @@ app.use("/api/incentivos-rn", require("./routes/incentivosRn")); // aba Incentiv
 app.use("/api/anomalia-volume", require("./routes/anomaliaVolume")); // Outros relatórios › Anomalia de Volume
 app.use("/api/input-tasks", require("./routes/input-tasks")); // gerador de tasks (grupo Ações de Preço, admin)
 app.use("/api/popups", require("./routes/popups"));
+app.use("/api/tv", require("./routes/tv")); // Painel TV (Smart TV da empresa) — /tv?k=CHAVE, conteúdo em Admin › Painel TV
 app.use("/api/detalhamento", require("./routes/detalhamento"));
 app.use("/api/grade", require("./routes/grade"));
 app.use("/api/deck", require("./routes/deck"));

@@ -79,7 +79,7 @@ function montarReport(rvRows, volRows, nomeSetor, fator, opts = {}) {
       out[c.key] = {
         meta: semMeta ? "—" : fmtN(m), real: fmtCat(r, c.key, opts.casas),
         pct: p == null ? "—" : `${p}%`, tend: fmtN(tend), pctT: pT == null ? "—" : `${pT}%`,
-        _cor: sinal(p), _corT: sinal(pT),
+        _cor: sinal(p), _corT: sinal(pT), _p: p, _pT: pT, _meta: semMeta ? null : m, _real: r, _tend: tend, // numéricos (Painel TV)
       };
     });
     return out;

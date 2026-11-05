@@ -70,14 +70,13 @@ async function montarProgramado(dataBR, setoresOk, nomeSetor) {
   return rep;
 }
 
-// GET /api/farol-volumes/mensagens  (mês corrente; relatório consolidado p/ todos)
-router.get("/mensagens", async (req, res) => {
-  try {
+// Monta o JSON do Report Volumes (robô WhatsApp E Painel TV — routes/tv.js).
+async function montarMensagens(mesParam) {
     // ?mes=YYYY-MM (mês ANTERIOR) = FECHAMENTO: usa o último dia daquele mês (tendência = real,
     // todos os dias úteis feitos) e não monta o "Vendido hoje". Robô: MES=2026-10 node enviar.js
     const agora = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const mesAtual = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;
-    const mesQ = /^\d{4}-\d{2}$/.test(String(req.query.mes || "")) ? String(req.query.mes) : "";
+    const mesQ = /^\d{4}-\d{2}$/.test(String(mesParam || "")) ? String(mesParam) : "";
     const fechamento = !!mesQ && mesQ < mesAtual;
     const d = fechamento ? new Date(+mesQ.slice(0, 4), +mesQ.slice(5, 7), 0) : agora;
     const mes = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
@@ -117,7 +116,7 @@ router.get("/mensagens", async (req, res) => {
     // RGB TT entra como categoria após Cerveja (meta = monitoramento, se lançada).
     // RGB TT (Giro RGB + Litrinho + Trimarcas) no lugar do antigo "Giro RGB" (só Giro + Litrinho)
     const report = montarReport(rv, vol, nomeSetor, fator, { rateio, rgb: await rgbPorSetor(mes) });
-    if (!report) return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
+    if (!report) return ({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report: null, rn: [], gv: [], director: null, destinatarios: [] });
     const pe = proximaEntrega(agora);
     const dataEntregaBR = `${pad(pe.getDate())}/${pad(pe.getMonth() + 1)}/${pe.getFullYear()}`;
     const reportDia = fechamento ? null : await montarProgramado(dataEntregaBR, new Set(rv.map((r) => norm(r.setor))), nomeSetor).catch((e) => { console.error("programado amanhã:", e.message); return null; });
@@ -133,7 +132,13 @@ router.get("/mensagens", async (req, res) => {
       destinatarios.push({ nome: String(u.nome || "").trim() || "HOP", telefone: String(u.telefone).trim() });
     });
 
-    return res.json({ data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, report_dia: reportDia, fechamento: fechamento ? mes : null, diasUteis, destinatarios, rn: [], gv: [], director: null });
+    return { data: dataBR, dia: diaLabel, titulo: "Report Volumes", emoji: "📊", report, report_dia: reportDia, fechamento: fechamento ? mes : null, diasUteis, destinatarios, rn: [], gv: [], director: null };
+}
+
+// GET /api/farol-volumes/mensagens  (mês corrente; relatório consolidado p/ todos)
+router.get("/mensagens", async (req, res) => {
+  try {
+    return res.json(await montarMensagens(req.query.mes));
   } catch (e) {
     console.error("farol-volumes/mensagens:", e);
     return res.status(500).json({ error: "Erro ao gerar o Report Volumes." });
@@ -141,3 +146,4 @@ router.get("/mensagens", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.montarMensagens = montarMensagens;

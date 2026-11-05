@@ -59,7 +59,9 @@ export default function AtualizacaoApp() {
     }
   }
 
-  if (!precisaAtualizar) return null;
+  // Painel TV: sem banner (ninguém clica na TV, e recarregar tiraria a tela cheia). A versão
+  // nova entra quando a TV for religada / a página reaberta.
+  if (!precisaAtualizar || window.location.pathname.startsWith("/tv")) return null;
 
   return (
     <div style={S.banner} role="alert">
