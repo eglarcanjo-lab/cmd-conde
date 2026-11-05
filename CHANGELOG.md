@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.134.0** — RV por mês com os RNs DAQUELE mês (troca de RNs entre setores em nov/26).
+Versão atual: **v3.134.1** — Tela de RV do RN: RV de mês anterior com outro setor não aparece mais zerada.
+
+## v3.134.1 — RV do RN zerada em outubro
+- **Bug (v3.134.0):** a tela RV do RN procurava a linha pelo código ATUAL dele; em out/26 o backend devolve o setor que ele tinha naquele mês (ex.: João = 101 em outubro, 108 hoje) → não achava e mostrava zerado.
+- Agora a tela usa o setor devolvido pelo backend (e mostra "Setor 101" em outubro).
 
 ## v3.134.0 — Estrutura de RNs por mês na RV
 - Nov/2026 os RNs trocaram de setor (101 João→Allan · 104 Hebert→Eldiny · 106 Eldiny→Hebert · 107 Luan→Ramon · 108 Allan→João · 111 Manoel→Arthur). Os setores (carteiras) ficam; a RV de outubro tem que sair com os RNs de outubro.

@@ -64,6 +64,7 @@ export default function RV() {
   const [pontos, setPontos] = useState(null);
   const [ap, setAp] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [setorMes, setSetorMes] = useState(null); // setor do RN no mês consultado
   const [mesRef, setMesRef] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -79,17 +80,21 @@ export default function RV() {
         api.get(`/api/rv/pontos?mes=${mesRef}`),
         api.get(`/api/rv/ap?mes=${mesRef}`),
       ]);
-      const setor = usuario?.cod;
-      setRv((resRv.data || []).find((r) => r.setor === setor) || null);
-      setPontos((resPontos.data || []).find((r) => r.setor === setor) || null);
-      setAp((resAp.data || []).find((r) => r.setor === setor) || null);
+      // RN: o backend já devolve só o setor que ELE tinha no mês (estrutura do mês — ex.: João era
+      // o 101 em out/26 e hoje é o 108). Por isso o setor vem da resposta, não do código atual.
+      const linhasRv = resRv.data || [];
+      const setor = usuario?.perfil === "rn" && linhasRv.length === 1 ? String(linhasRv[0].setor) : usuario?.cod;
+      setSetorMes(setor);
+      setRv(linhasRv.find((r) => String(r.setor) === String(setor)) || null);
+      setPontos((resPontos.data || []).find((r) => String(r.setor) === String(setor)) || null);
+      setAp((resAp.data || []).find((r) => String(r.setor) === String(setor)) || null);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
 
   const apOk = ap?.ap_ok === "OK";
   const poTotal = parseFloat(rv?.po_total || 1000);
-  const segmento = rv?.segmento || (["101","102","103"].includes(usuario?.cod) ? "OFF" : "ON");
+  const segmento = rv?.segmento || (["101","102","103"].includes(setorMes || usuario?.cod) ? "OFF" : "ON");
   const w = PESOS[segmento] || PESOS.ON;
 
   const pctPontos = pontos ? Math.min((parseFloat(pontos.pontos_real || 0) / META_PONTOS) * 100, 150) : 0;
@@ -122,7 +127,7 @@ export default function RV() {
           <button style={styles.backBtn} onClick={() => navigate("/")}>← Voltar</button>
           <div>
             <h1 style={styles.title}>💰 Remuneração Variável</h1>
-            <p style={styles.subtitle}>{usuario?.nome} · Setor {usuario?.cod} · {segmento}</p>
+            <p style={styles.subtitle}>{usuario?.nome} · Setor {setorMes || usuario?.cod} · {segmento}</p>
           </div>
         </div>
         <div style={styles.headerRight}>
