@@ -2,6 +2,10 @@
 
 Versão atual: **v3.137.0** — Painel TV com artes prontas (só imagem) em todas as seções.
 
+## v3.137.0 — Painel TV: artes prontas em tudo
+- Todas as seções do Admin › Painel TV aceitam **só a imagem** (arte pronta), inclusive **10 Princípios** e **Vagas** (antes só texto).
+- Item só com imagem (sem título/texto) = **tela inteira** na TV, por cima do relógio (arte 16:9 preenche a TV toda). Princípios/vagas com imagem viram 1 slide cada; os escritos continuam na grade.
+
 ## v3.136.1 — Painel TV por endereço sem hífen
 - A TV da empresa (Sony Bravia) não digita "-". `/api/tv/painel` agora aceita qualquer origem (CORS só nessa rota; continua exigindo o código), então um domínio extra na Vercel sem hífen (ex.: `cmdtv.vercel.app`) já funciona para a TV. O resto da HOP segue só em cmd-conde.vercel.app.
 
