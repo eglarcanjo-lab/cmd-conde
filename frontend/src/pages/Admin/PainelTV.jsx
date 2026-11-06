@@ -10,11 +10,11 @@ const SLIDE_LABEL = {
   volumes: "📊 Volumes da operação", aviso: "📢 Avisos (1 slide cada)", rh: "🎂 Recados do RH (1 slide cada)", vagas: "💼 Vagas em aberto",
 };
 const SECOES = [
-  { tipo: "principio", titulo: "📜 10 Princípios", dica: "Um por item, na ordem (campo Ordem = número do princípio). Título = o princípio; texto = explicação curta (opcional).", semImagem: true, semDatas: true },
-  { tipo: "destaque", titulo: "⭐ Princípio em foco", dica: "O princípio da semana/mês. Use as datas para trocar sozinho (ex.: cadastre os próximos já com início e fim)." },
+  { tipo: "principio", titulo: "📜 10 Princípios", dica: "Escrito: um por item, na ordem (Ordem = número do princípio), título = o princípio, texto = explicação curta — viram uma grade."+" 🖼️ Tem a arte pronta? Mande SÓ a imagem (sem título/texto) que ela ocupa a tela toda. Pode ser 1 imagem com os 10 ou 1 por princípio (cada imagem = 1 slide).", semDatas: true },
+  { tipo: "destaque", titulo: "⭐ Princípio em foco", dica: "O princípio da semana/mês. Use as datas para trocar sozinho (ex.: cadastre os próximos já com início e fim). 🖼️ Tem a arte pronta? Mande SÓ a imagem (sem título/texto) que ela ocupa a tela toda." },
   { tipo: "aviso", titulo: "📢 Avisos", dica: "Só imagem (arte pronta) = ocupa a tela toda. Com título/texto = texto à esquerda e imagem à direita. Cada linha do texto vira um parágrafo." },
-  { tipo: "rh", titulo: "🎂 Recados do RH", dica: "Ex.: título “Aniversariantes de Novembro” e no texto UMA PESSOA POR LINHA (“05/11 – Maria · Vendas”). 3+ linhas viram cartões." },
-  { tipo: "vaga", titulo: "💼 Vagas em aberto", dica: "Título = cargo. Texto = uma informação por linha (setor, requisitos, como se candidatar). Aparecem juntas num slide (até 6).", semImagem: true },
+  { tipo: "rh", titulo: "🎂 Recados do RH", dica: "Ex.: título “Aniversariantes de Novembro” e no texto UMA PESSOA POR LINHA (“05/11 – Maria · Vendas”). 3+ linhas viram cartões. 🖼️ Tem a arte pronta? Mande SÓ a imagem (sem título/texto) que ela ocupa a tela toda." },
+  { tipo: "vaga", titulo: "💼 Vagas em aberto", dica: "Título = cargo. Texto = uma informação por linha (setor, requisitos, como se candidatar). Aparecem juntas num slide (até 6). 🖼️ Tem a arte pronta? Mande SÓ a imagem (sem título/texto) que ela ocupa a tela toda. (cada imagem = 1 slide)" },
 ];
 const vazio = (tipo) => ({ tipo, titulo: "", texto: "", imagem_url: "", ativo: true, data_inicio: "", data_fim: "", ordem: "", duracao: "" });
 const isTrue = (v) => v === true || String(v).toLowerCase() === "true";

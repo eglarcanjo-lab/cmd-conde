@@ -1,6 +1,6 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.136.1** — Painel TV aceita endereço sem hífen.
+Versão atual: **v3.137.0** — Painel TV com artes prontas (só imagem) em todas as seções.
 
 ## v3.136.1 — Painel TV por endereço sem hífen
 - A TV da empresa (Sony Bravia) não digita "-". `/api/tv/painel` agora aceita qualquer origem (CORS só nessa rota; continua exigindo o código), então um domínio extra na Vercel sem hífen (ex.: `cmdtv.vercel.app`) já funciona para a TV. O resto da HOP segue só em cmd-conde.vercel.app.

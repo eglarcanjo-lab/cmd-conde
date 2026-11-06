@@ -42,12 +42,16 @@ function montarSlides(d) {
   const dur = (item, tipo) => (item?.duracao || t[tipo] || 15) * 1000;
   const s = [];
   if (on.abertura) s.push({ k: "abertura", tipo: "abertura", ms: dur(null, "abertura") });
-  if (on.principios && d.principios?.length) s.push({ k: "principios", tipo: "principios", ms: dur(null, "principios") });
+  // Princípios/vagas: os escritos viram 1 slide em grade; os que têm imagem viram 1 slide cada (arte).
+  const comImg = (l) => (l || []).filter((x) => x.imagem_url), semImg = (l) => (l || []).filter((x) => !x.imagem_url);
+  if (on.principios && semImg(d.principios).length) s.push({ k: "principios", tipo: "principios", ms: dur(null, "principios") });
+  if (on.principios) comImg(d.principios).forEach((it) => s.push({ k: "p" + it.id, tipo: "imagem", item: it, ms: dur(it, "principios") }));
   if (on.destaque) (d.destaques || []).forEach((it) => s.push({ k: "d" + it.id, tipo: "destaque", item: it, ms: dur(it, "destaque") }));
   if (on.volumes && d.volumes?.categorias?.length) s.push({ k: "volumes", tipo: "volumes", ms: dur(null, "volumes") });
   if (on.aviso) (d.avisos || []).forEach((it) => s.push({ k: "a" + it.id, tipo: "aviso", item: it, ms: dur(it, "aviso") }));
   if (on.rh) (d.rh || []).forEach((it) => s.push({ k: "r" + it.id, tipo: "rh", item: it, ms: dur(it, "rh") }));
-  if (on.vagas && d.vagas?.length) s.push({ k: "vagas", tipo: "vagas", ms: dur(null, "vagas") });
+  if (on.vagas && semImg(d.vagas).length) s.push({ k: "vagas", tipo: "vagas", ms: dur(null, "vagas") });
+  if (on.vagas) comImg(d.vagas).forEach((it) => s.push({ k: "v" + it.id, tipo: "imagem", item: it, ms: dur(it, "vagas") }));
   if (!s.length) s.push({ k: "abertura", tipo: "abertura", ms: 15000 });
   return s;
 }
@@ -177,6 +181,13 @@ export default function PainelTV() {
         <Slide s={atual} d={dados} agora={agora} />
       </main>
 
+      {/* Arte pronta (só imagem): cobre a tela inteira por cima do topo — 16:9 preenche a TV toda */}
+      {atual.item && soImagem(atual.item) && (
+        <div key={"img-" + atual.k + idx} className="tv-entra" style={{ position: "fixed", inset: 0, zIndex: 5, background: "#000", display: "flex" }}>
+          <img src={atual.item.imagem_url} alt="" style={{ margin: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+        </div>
+      )}
+
       {/* Rodapé: barra de tempo do slide + bolinhas */}
       <footer style={S.rodape}>
         <div style={{ display: "flex", gap: "0.5vw", justifyContent: "center", marginBottom: "0.8vw" }}>
@@ -228,12 +239,13 @@ function TelaCodigo({ msg, conferindo, onCodigo }) {
 function Slide({ s, d, agora }) {
   switch (s.tipo) {
     case "abertura": return <Abertura d={d} agora={agora} />;
-    case "principios": return <Principios lista={d.principios} />;
+    case "principios": return <Principios lista={(d.principios || []).filter((x) => !x.imagem_url)} />;
+    case "imagem": return <ImagemCheia url={s.item.imagem_url} />;
     case "destaque": return <Destaque it={s.item} />;
     case "volumes": return <Volumes v={d.volumes} />;
     case "aviso": return <Aviso it={s.item} />;
     case "rh": return <Rh it={s.item} />;
-    case "vagas": return <Vagas lista={d.vagas} />;
+    case "vagas": return <Vagas lista={(d.vagas || []).filter((x) => !x.imagem_url)} />;
     default: return null;
   }
 }
@@ -276,7 +288,14 @@ function Principios({ lista }) {
   );
 }
 
+// Arte pronta: imagem ocupando o palco todo (sem cortar).
+function ImagemCheia({ url }) {
+  return <img src={url} alt="" style={{ margin: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "1vw" }} />;
+}
+const soImagem = (it) => !!it.imagem_url && !String(it.titulo || "").trim() && !String(it.texto || "").trim();
+
 function Destaque({ it }) {
+  if (soImagem(it)) return <ImagemCheia url={it.imagem_url} />;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4vw", width: "100%" }}>
       <div style={{ flex: 1.3 }}>
@@ -360,6 +379,7 @@ function Aviso({ it }) {
 
 // RH: cada linha do texto vira um cartão (ex.: "05/11 – Maria (Vendas)"). Poucas linhas = texto grande.
 function Rh({ it }) {
+  if (soImagem(it)) return <ImagemCheia url={it.imagem_url} />;
   const ls = linhas(it.texto);
   const lista = ls.length >= 3;
   return (
