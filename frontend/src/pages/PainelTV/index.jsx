@@ -253,7 +253,7 @@ function Volumes({ v }) {
         {v.diasUteis && <span style={{ marginLeft: "auto", fontSize: "1.2vw", opacity: 0.6 }}>Dia útil {v.diasUteis.feitos} de {v.diasUteis.total} · atualizado {v.data}</span>}
       </div>
       <div style={{ display: "flex", gap: "1.5vw", fontSize: "1vw", opacity: 0.55, margin: "-0.3vw 0 1.4vw" }}>
-        <span>Barra = tendência do mês ÷ meta</span><span>│ marca branca = 100% da meta</span>
+        <span>Barra = tendência do mês ÷ meta</span><span>│ marca branca = 100% da meta</span><span>│ sem meta: mostra o realizado</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}>
         {cats.map((c) => {
@@ -261,20 +261,31 @@ function Volumes({ v }) {
           const p = temMeta ? c.pctT : null;
           const larg = temMeta ? Math.min(100, (p || 0) / 1.2) : 0; // escala até 120% da meta
           const un = c.key === "mktp" ? "R$" : "HL";
+          const val = (n) => `${un === "R$" ? "R$ " : ""}${fmt(n)}${un === "HL" ? " HL" : ""}`;
+          // Sem meta: barra neutra = realizado ÷ tendência (quanto do mês já foi feito) e o
+          // número da direita vira o REALIZADO (em vez de "—").
+          const largSem = !temMeta && c.tend > 0 ? Math.min(100, (c.real / c.tend) * 100 / 1.2) : 0;
           return (
-            <div key={c.key} style={{ display: "grid", gridTemplateColumns: "13vw 1fr 9vw", alignItems: "center", gap: "1.5vw" }}>
+            <div key={c.key} style={{ display: "grid", gridTemplateColumns: "13vw 1fr 12vw", alignItems: "center", gap: "1.5vw" }}>
               <div style={{ fontSize: "1.8vw", fontWeight: 700 }}>{c.label}</div>
               <div>
                 <div style={{ position: "relative", height: "3.2vh", background: "rgba(255,255,255,0.07)", borderRadius: "0.5vw" }}>
                   {temMeta && <div className="tv-cresce" style={{ position: "absolute", inset: 0, width: `${larg}%`, background: corPct(p), borderRadius: "0.5vw" }} />}
                   {temMeta && <div style={{ position: "absolute", top: "-0.5vh", bottom: "-0.5vh", left: `${100 / 1.2}%`, width: "0.2vw", background: "#fff" }} />}
+                  {!temMeta && largSem > 0 && <div className="tv-cresce" style={{ position: "absolute", inset: 0, width: `${largSem}%`, background: "rgba(125,186,61,0.45)", borderRadius: "0.5vw" }} />}
                 </div>
                 <div style={{ fontSize: "1.05vw", opacity: 0.7, marginTop: "0.4vh" }}>
-                  Real {un === "R$" ? "R$ " : ""}{fmt(c.real)}{un === "HL" ? " HL" : ""}
-                  {temMeta ? <> · Meta {un === "R$" ? "R$ " : ""}{fmt(c.meta)} · Tendência {un === "R$" ? "R$ " : ""}{fmt(c.tend)}</> : " · sem meta no mês"}
+                  {temMeta
+                    ? <>Real {val(c.real)} · Meta {val(c.meta)} · Tendência {val(c.tend)}</>
+                    : <>Tendência {val(c.tend)} · sem meta no mês</>}
                 </div>
               </div>
-              <div style={{ fontSize: "3vw", fontWeight: 800, textAlign: "right", color: corPct(p), fontVariantNumeric: "tabular-nums" }}>{p == null ? "—" : `${p}%`}</div>
+              {temMeta
+                ? <div style={{ fontSize: "3vw", fontWeight: 800, textAlign: "right", color: corPct(p), fontVariantNumeric: "tabular-nums" }}>{p == null ? "—" : `${p}%`}</div>
+                : <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", lineHeight: 1.05 }}>
+                    <div style={{ fontSize: un === "R$" ? "1.9vw" : "2.3vw", fontWeight: 800 }}>{val(c.real)}</div>
+                    <div style={{ fontSize: "0.9vw", opacity: 0.55 }}>realizado</div>
+                  </div>}
             </div>
           );
         })}

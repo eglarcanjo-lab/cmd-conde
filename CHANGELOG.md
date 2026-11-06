@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.135.0** — Painel TV (slides da Smart TV da empresa).
+Versão atual: **v3.135.1** — Painel TV mostra o volume mesmo sem meta.
+
+## v3.135.1 — Painel TV: volume sem meta
+- Slide de Volumes: categoria **sem meta** no mês mostra o **realizado** grande à direita (antes “—”), barra neutra (realizado ÷ tendência) e a tendência embaixo.
 
 ## v3.135.0 — Painel TV
 - Página nova **`/tv`** para a Smart TV da empresa: slides em tela cheia com tempo — **Abertura** (logo + saudação + data), **10 Princípios**, **Princípio em foco**, **Volumes da operação**, **Avisos** (1 slide cada), **Recados do RH** (aniversariantes etc., 1 slide cada) e **Vagas em aberto**. Relógio no topo, barra de tempo e bolinhas no rodapé.
