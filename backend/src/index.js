@@ -17,6 +17,9 @@ const ORIGENS = [
   "http://localhost:5173",
   ...String(process.env.FRONTEND_URL || "").split(",").map((s) => s.trim().replace(/\/$/, "")).filter(Boolean),
 ];
+// Painel TV: a TV pode abrir por outro endereço (ex.: domínio SEM hífen — a Sony Bravia não digita "-").
+// Rota pública protegida pelo código de 6 números, GET sem cookie → libera qualquer origem só nela.
+app.use("/api/tv/painel", cors({ origin: "*" }));
 app.use(cors({
   origin: ORIGENS,
   credentials: true,

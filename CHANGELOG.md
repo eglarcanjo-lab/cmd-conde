@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.136.0** — Painel TV abre com código de 6 números.
+Versão atual: **v3.136.1** — Painel TV aceita endereço sem hífen.
+
+## v3.136.1 — Painel TV por endereço sem hífen
+- A TV da empresa (Sony Bravia) não digita "-". `/api/tv/painel` agora aceita qualquer origem (CORS só nessa rota; continua exigindo o código), então um domínio extra na Vercel sem hífen (ex.: `cmdtv.vercel.app`) já funciona para a TV. O resto da HOP segue só em cmd-conde.vercel.app.
 
 ## v3.136.0 — Painel TV com código de 6 números
 - Chave longa do link virou **código de 6 números** (fácil no controle remoto). Na TV: abrir **cmd-conde.vercel.app/tv** e digitar o código; com 6 números confere sozinho e a TV guarda (próximas vezes abre direto). `/tv?k=CÓDIGO` continua valendo.
