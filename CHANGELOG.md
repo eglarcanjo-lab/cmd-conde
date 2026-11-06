@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.135.1** — Painel TV mostra o volume mesmo sem meta.
+Versão atual: **v3.136.0** — Painel TV abre com código de 6 números.
+
+## v3.136.0 — Painel TV com código de 6 números
+- Chave longa do link virou **código de 6 números** (fácil no controle remoto). Na TV: abrir **cmd-conde.vercel.app/tv** e digitar o código; com 6 números confere sozinho e a TV guarda (próximas vezes abre direto). `/tv?k=CÓDIGO` continua valendo.
+- Código errado/trocado no admin → a TV volta para a tela do código. Anti-chute: 10 códigos errados por IP em 15 min bloqueiam por 15 min.
+- Admin › Painel TV mostra o endereço curto + o código em destaque; “Gerar código novo”. A chave longa antiga é trocada sozinha por um código ao abrir a aba.
 
 ## v3.135.1 — Painel TV: volume sem meta
 - Slide de Volumes: categoria **sem meta** no mês mostra o **realizado** grande à direita (antes “—”), barra neutra (realizado ÷ tendência) e a tendência embaixo.

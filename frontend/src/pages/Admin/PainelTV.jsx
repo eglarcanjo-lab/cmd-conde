@@ -1,5 +1,5 @@
 // Admin › Painel TV — conteúdo da Smart TV da empresa (página /tv).
-// Link da TV (com chave), logo, slides ligados + tempo de cada um, e os itens:
+// Código da TV (6 números), logo, slides ligados + tempo de cada um, e os itens:
 // 10 princípios, princípio em foco, avisos, recados do RH e vagas. Muda na TV em até ~3 min.
 import { useEffect, useState } from "react";
 import api from "../../services/api";
@@ -41,6 +41,7 @@ export default function PainelTVAdmin() {
   if (erro && !cfg) return <div style={{ color: "#E5534B" }}>{erro}</div>;
   if (!cfg) return <div style={{ color: "rgba(255,255,255,0.5)" }}>Carregando…</div>;
 
+  const enderecoCurto = `${window.location.host}/tv`;
   const link = `${window.location.origin}/tv?k=${cfg.chave}`;
 
   async function salvarCfg(parcial) {
@@ -50,7 +51,7 @@ export default function PainelTVAdmin() {
     finally { setSalvandoCfg(false); }
   }
   async function novaChave() {
-    if (!confirm("Gerar um link novo? O link atual para de funcionar e a TV precisa abrir o novo.")) return;
+    if (!confirm("Gerar um código novo? O código atual para de funcionar e a TV vai pedir o novo.")) return;
     const r = await api.post("/api/tv/admin/chave");
     setCfg((c) => ({ ...c, chave: r.data.chave }));
   }
@@ -69,15 +70,24 @@ export default function PainelTVAdmin() {
         </p>
       </div>
 
-      {/* Link da TV */}
+      {/* Código da TV */}
       <div style={S.card}>
-        <b>🔗 Link da TV</b>
-        <p style={S.dica}>Abra esse endereço no navegador da TV <b>uma vez</b> (depois ela lembra; pode ser só <code>/tv</code>). Aperte OK no controle para entrar em tela cheia.</p>
+        <b>📺 Como abrir na TV</b>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+          <div>
+            <div style={S.dica}>1. No navegador da TV, digite:</div>
+            <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>{enderecoCurto}</div>
+          </div>
+          <div>
+            <div style={S.dica}>2. Com os números do controle, o código:</div>
+            <div style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "0.3em", color: VERDE, fontVariantNumeric: "tabular-nums" }}>{cfg.chave}</div>
+          </div>
+        </div>
+        <p style={S.dica}>3. Aperte OK no controle para tela cheia. A TV guarda o código: das próximas vezes abre direto.</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <code style={{ ...S.input, flex: 1, minWidth: 260, overflowX: "auto", whiteSpace: "nowrap" }}>{link}</code>
-          <button style={S.btn} onClick={() => { navigator.clipboard?.writeText(link); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}>{copiado ? "✓ Copiado" : "Copiar"}</button>
+          <button style={S.btnSec} onClick={() => { navigator.clipboard?.writeText(link); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}>{copiado ? "✓ Copiado" : "Copiar link completo"}</button>
           <a href={link} target="_blank" rel="noreferrer" style={{ ...S.btnSec, textDecoration: "none" }}>Abrir prévia ↗</a>
-          <button style={S.btnSec} onClick={novaChave}>Gerar link novo</button>
+          <button style={S.btnSec} onClick={novaChave}>Gerar código novo</button>
         </div>
       </div>
 

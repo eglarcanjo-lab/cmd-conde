@@ -1,7 +1,7 @@
 // Painel TV — slides para a Smart TV da empresa (logo, 10 princípios, princípio em destaque,
 // volumes da operação, avisos, recados do RH, vagas). Conteúdo editado em Admin › Painel TV.
 //
-// A TV abre /tv?k=CHAVE (sem login). GET /api/tv/painel valida a chave e devolve TUDO que a TV
+// A TV abre /tv e digita o CÓDIGO de 6 números (ou /tv?k=CÓDIGO), sem login. GET /api/tv/painel valida a chave e devolve TUDO que a TV
 // precisa (nada de dado sensível: só o consolidado da operação, sem RN). Admin edita por
 // /api/tv/admin/* (login admin). Isento da manutenção (middleware/maintenance.js) p/ a TV não apagar.
 //
@@ -38,7 +38,16 @@ const CONFIG_PADRAO = {
 
 const isTrue = (v) => ["true", "1", "sim"].includes(String(v).trim().toLowerCase());
 const gerarId = () => "TV" + Date.now().toString(36).toUpperCase() + crypto.randomBytes(2).toString("hex").toUpperCase();
-const gerarChave = () => crypto.randomBytes(9).toString("base64url");
+// Código de 6 números (fácil de digitar no controle da TV). Painel não tem dado sensível
+// (só consolidado da operação + avisos) e o chute é limitado por IP (ver tentativasErradas).
+const gerarChave = () => String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+const chaveValida = (c) => /^d{6}$/.test(String(c || ""));
+// Anti-chute: 10 códigos errados por IP em 15 min → bloqueia até a janela passar.
+const _erros = new Map(); // ip → { n, ts }
+const JANELA_ERROS = 15 * 60 * 1000, MAX_ERROS = 10;
+const ipDe = (req) => String(req.headers["x-forwarded-for"] || req.ip || "").split(",")[0].trim();
+function bloqueado(ip) { const e = _erros.get(ip); if (!e) return false; if (Date.now() - e.ts > JANELA_ERROS) { _erros.delete(ip); return false; } return e.n >= MAX_ERROS; }
+function errou(ip) { const e = _erros.get(ip); if (!e || Date.now() - e.ts > JANELA_ERROS) _erros.set(ip, { n: 1, ts: Date.now() }); else e.n++; if (_erros.size > 5000) _erros.clear(); }
 const hojeISO = () => {
   const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -68,7 +77,7 @@ async function gravarConfig(cfg) {
 // Primeira vez: cria a chave da TV sozinho.
 async function configComChave() {
   const cfg = await lerConfig();
-  if (!cfg.chave) { cfg.chave = gerarChave(); await gravarConfig(cfg); }
+  if (!chaveValida(cfg.chave)) { cfg.chave = gerarChave(); await gravarConfig(cfg); } // 1ª vez ou chave antiga (longa) → código de 6 números
   return cfg;
 }
 
@@ -115,11 +124,15 @@ async function volumesOperacao() {
 router.get("/painel", async (req, res) => {
   try {
     const cfg = await lerConfig();
-    const k = String(req.query.k || "");
+    const k = String(req.query.k || "").replace(/D/g, "");
+    const ip = ipDe(req);
+    if (bloqueado(ip)) return res.status(429).json({ error: "Muitos códigos errados. Espere 15 minutos." });
     if (!cfg.chave || !k || k.length !== cfg.chave.length
         || !crypto.timingSafeEqual(Buffer.from(k), Buffer.from(cfg.chave))) {
-      return res.status(403).json({ error: "Chave da TV inválida. Copie o link em Admin › Painel TV." });
+      errou(ip);
+      return res.status(403).json({ error: "Código da TV inválido. Veja o código em Admin › Painel TV." });
     }
+    _erros.delete(ip);
     const hoje = hojeISO();
     const vigente = (r) => isTrue(r.ativo)
       && (!r.data_inicio || String(r.data_inicio).slice(0, 10) <= hoje)

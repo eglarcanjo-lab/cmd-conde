@@ -1,6 +1,6 @@
 // Painel TV — slides em tela cheia para a Smart TV da empresa.
-// Abre por /tv?k=CHAVE (link em Admin › Painel TV), sem login. A chave fica guardada na TV,
-// então /tv sozinho também funciona depois da 1ª vez.
+// Abre por /tv e pede o CÓDIGO de 6 números (Admin › Painel TV), sem login; /tv?k=CÓDIGO também
+// funciona. O código fica guardado na TV — depois da 1ª vez abre direto.
 // Ordem: Abertura (logo) → 10 Princípios → Princípio em foco → Volumes → Avisos → RH → Vagas.
 // Conteúdo recarrega a cada 3 min SEM recarregar a página (recarregar tiraria a tela cheia).
 // Sem internet: continua passando o último conteúdo que recebeu.
@@ -53,7 +53,10 @@ function montarSlides(d) {
 }
 
 export default function PainelTV() {
-  const [chave] = useState(chaveDaUrl);
+  const [chave, setChave] = useState(chaveDaUrl);
+  const [pedirCodigo, setPedirCodigo] = useState(() => !chaveDaUrl());
+  const [msgCodigo, setMsgCodigo] = useState("");
+  const [tentativa, setTentativa] = useState(0); // remonta a tela do código (limpa o campo) a cada erro
   const [dados, setDados] = useState(() => { try { return JSON.parse(localStorage.getItem(LS_DADOS) || "null"); } catch { return null; } });
   const [erro, setErro] = useState("");
   const [idx, setIdx] = useState(0);
@@ -63,20 +66,32 @@ export default function PainelTV() {
 
   // Busca o conteúdo (e repete). Erro mantém o último conteúdo na tela.
   useEffect(() => {
-    if (!chave) { setErro("Abra pelo link com a chave (Admin › Painel TV)."); return; }
+    if (!chave) { setPedirCodigo(true); return; }
     let vivo = true;
     const buscar = () => fetch(`${BASE}/api/tv/painel?k=${encodeURIComponent(chave)}`, { cache: "no-store" })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}));
+        if (r.status === 403 || r.status === 429) {
+          // código errado/trocado no admin → volta pra tela do código (esquece o conteúdo antigo)
+          const e = new Error(j.error || "Código inválido"); e.codigo = true; throw e;
+        }
         if (!r.ok) throw new Error(j.error || `Erro ${r.status}`);
         return j;
       })
       .then((j) => {
         if (!vivo) return;
-        setDados(j); setErro("");
+        setDados(j); setErro(""); setPedirCodigo(false);
         try { localStorage.setItem(LS_DADOS, JSON.stringify(j)); } catch { /* */ }
       })
-      .catch((e) => { if (vivo) setErro(e.message || "Sem conexão"); });
+      .catch((e) => {
+        if (!vivo) return;
+        if (e.codigo) {
+          try { localStorage.removeItem(LS_CHAVE); localStorage.removeItem(LS_DADOS); } catch { /* */ }
+          setDados(null); setMsgCodigo(e.message); setPedirCodigo(true); setChave(""); setTentativa((t) => t + 1);
+          return;
+        }
+        setErro(e.message || "Sem conexão");
+      });
     buscar();
     const iv = setInterval(buscar, ATUALIZA_MS);
     return () => { vivo = false; clearInterval(iv); };
@@ -122,6 +137,13 @@ export default function PainelTV() {
     const t = setTimeout(() => setIdx((i) => (i + 1) % Math.max(1, slides.length)), atual.ms);
     return () => clearTimeout(t);
   }, [idx, atual, slides.length]);
+
+  if (pedirCodigo) {
+    return <TelaCodigo key={tentativa} msg={msgCodigo} conferindo={!!chave} onCodigo={(c) => {
+      try { localStorage.setItem(LS_CHAVE, c); } catch { /* */ }
+      setMsgCodigo(""); setChave(c);
+    }} />;
+  }
 
   if (!dados) {
     return (
@@ -174,6 +196,31 @@ export default function PainelTV() {
           ⛶ Aperte OK para tela cheia
         </button>
       )}
+    </div>
+  );
+}
+
+// 1ª vez na TV: digita o código de 6 números (Admin › Painel TV) com os números do controle.
+// Com 6 números já confere sozinho; a TV guarda o código e não pede mais.
+function TelaCodigo({ msg, conferindo, onCodigo }) {
+  const [v, setV] = useState("");
+  const ref = useRef(null);
+  useEffect(() => { ref.current?.focus(); }, []);
+  const mudar = (x) => { const d = x.replace(/D/g, "").slice(0, 6); setV(d); if (d.length === 6) onCodigo(d); };
+  return (
+    <div style={S.tela} onClick={() => ref.current?.focus()}>
+      <CssGlobal />
+      <style>{"html, body { cursor: auto; }"}</style>
+      <div style={{ margin: "auto", textAlign: "center" }}>
+        <div style={{ fontSize: "3.4vw", fontWeight: 800, color: VERDE }}>📺 Painel TV</div>
+        <div style={{ fontSize: "1.8vw", opacity: 0.8, margin: "1.5vw 0 2.5vw" }}>Digite o código da TV <span style={{ opacity: 0.6 }}>(HOP › Admin › Painel TV)</span></div>
+        <input ref={ref} autoFocus value={v} onChange={(e) => mudar(e.target.value)} inputMode="numeric" type="tel" maxLength={6}
+          style={{ width: "26vw", fontSize: "5vw", letterSpacing: "0.5em", textAlign: "center", padding: "1vw 0 1vw 0.5em", borderRadius: "1vw",
+            border: `0.25vw solid ${VERDE}`, background: "rgba(255,255,255,0.06)", color: "#fff", fontFamily: "inherit", fontWeight: 800, outline: "none" }} />
+        {conferindo && <div style={{ fontSize: "1.5vw", marginTop: "1.5vw", opacity: 0.7 }}>Conferindo…</div>}
+        {!conferindo && msg && <div style={{ color: "#E5534B", fontSize: "1.5vw", marginTop: "1.5vw" }}>{msg}</div>}
+        <div style={{ fontSize: "1.2vw", opacity: 0.45, marginTop: "2vw" }}>Use os números do controle remoto · a TV lembra o código</div>
+      </div>
     </div>
   );
 }
