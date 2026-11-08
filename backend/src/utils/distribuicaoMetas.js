@@ -4,7 +4,11 @@
 // operação × peso. Cerveja/NAB/Match em HL (vendas_cliente_produto × produtos_base);
 // Marketplace em R$ (vendas_cliente_produto.valor, gravado pelo processador desde o
 // v3.138.0 — mês sem esse valor cai no faturamento Mktp do SETOR, rv_faturamento_mktp).
+// Também as metas de MONITORAMENTO (fora da RV): Cerveja Zero, NAB Zero e RGB TT → gravadas por
+// setor em metas_monitor_setor (Home, Volume Diário, Report do WhatsApp usam a do setor).
 const { readSheet, readSheetMonths } = require("../services/sheets");
+const { lerMetasMonitor } = require("./metasMonitor");
+const { CATS_RGB } = require("./rgbVolume");
 
 const normCod = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
 const num = (v) => { const n = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? n : 0; };
@@ -21,13 +25,20 @@ const GRUPOS = {
   nab: new Set(["NAB", "NAB ZERO"]),
   match: new Set(["MATCH"]),
   mktp: new Set(["MKTP"]),
+  cervejaZero: new Set(["CERVEJA ZERO"]),
+  nabZero: new Set(["NAB ZERO"]),
+  rgb: CATS_RGB,
 };
 
+// tipo "rv" = metas da RV (tabela metas); "monitor" = metas fora da RV (metas_monitor_setor)
 const CATEGORIAS = [
-  { key: "cerveja", categoria: "CERVEJA (VOLUME)", label: "Cerveja", unidade: "HL" },
-  { key: "nab", categoria: "NAB (VOLUME)", label: "NAB", unidade: "HL" },
-  { key: "match", categoria: "MATCH (VOLUME)", label: "Match", unidade: "HL", so_off: true },
-  { key: "mktp", categoria: "MARKETPLACE (FATURAMENTO)", label: "Marketplace", unidade: "R$" },
+  { key: "cerveja", categoria: "CERVEJA (VOLUME)", label: "Cerveja", unidade: "HL", tipo: "rv" },
+  { key: "nab", categoria: "NAB (VOLUME)", label: "NAB", unidade: "HL", tipo: "rv" },
+  { key: "match", categoria: "MATCH (VOLUME)", label: "Match", unidade: "HL", so_off: true, tipo: "rv" },
+  { key: "mktp", categoria: "MARKETPLACE (FATURAMENTO)", label: "Marketplace", unidade: "R$", tipo: "rv" },
+  { key: "cervejaZero", categoria: "cervejaZero", label: "Cerveja Zero", unidade: "HL", tipo: "monitor" },
+  { key: "nabZero", categoria: "nabZero", label: "NAB Zero", unidade: "HL", tipo: "monitor" },
+  { key: "rgb", categoria: "rgb", label: "RGB TT", unidade: "HL", tipo: "monitor" },
 ];
 
 // "2026-12" → ["2026-09","2026-10","2026-11"] (3 meses fechados antes do mês da meta)
@@ -44,13 +55,14 @@ const mesAnterior = (mes) => mesesTri(mes)[2];
 
 async function calcularDistribuicao(mes) {
   const meses = mesesTri(mes);
-  const [base, pdvBase, vendas, fatMktp, metas, usuarios] = await Promise.all([
+  const [base, pdvBase, vendas, fatMktp, metas, usuarios, monMes, monAnt] = await Promise.all([
     readSheet("produtos_base").catch(() => []),
     readSheet("pdv_base").catch(() => []),
     readSheetMonths("vendas_cliente_produto", "mes_referencia", meses).catch(() => []),
     readSheet("rv_faturamento_mktp").catch(() => []),
     readSheet("metas").catch(() => []),
     readSheet("usuarios").catch(() => []),
+    lerMetasMonitor(mes), lerMetasMonitor(mesAnterior(mes)),
   ]);
 
   // produto → grupos (um produto conta 1x por grupo, mesmo com várias categorias)
@@ -103,7 +115,9 @@ async function calcularDistribuicao(mes) {
 
   // meta da operação sugerida = soma das metas já lançadas p/ o mês (senão, do mês anterior)
   const metaOp = (m) => {
+    const mon = m === mes ? monMes : monAnt;
     const o = {};
+    CATEGORIAS.filter((c) => c.tipo === "monitor").forEach((c) => { if (mon[c.key] != null) o[c.key] = mon[c.key]; });
     metas.forEach((x) => {
       if (String(x.mes_referencia || "").slice(0, 7) !== m) return;
       const c = CATEGORIAS.find((k) => k.categoria === String(x.categoria || "").trim().toUpperCase());
@@ -120,6 +134,7 @@ async function calcularDistribuicao(mes) {
     const s = String(x.setor || "").trim();
     (atuais[s] = atuais[s] || {})[String(x.categoria || "").trim().toUpperCase()] = num(x.meta_aplicada || x.meta_volume);
   });
+  Object.entries(monMes._porSetor || {}).forEach(([k, por]) => Object.entries(por).forEach(([s, v]) => { (atuais[s] = atuais[s] || {})[k] = v; }));
 
   const nome = {};
   usuarios.forEach((u) => { if (String(u.ativo) !== "false" && u.cod) nome[String(u.cod).trim()] = u.nome; });

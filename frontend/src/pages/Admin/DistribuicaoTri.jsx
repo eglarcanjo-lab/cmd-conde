@@ -2,13 +2,16 @@
 // peso da média dos 3 últimos meses fechados da CARTEIRA ATUAL de cada um.
 // Meta sugerida = meta da operação × peso (arredondada; a sobra do arredondamento vai
 // p/ quem tem a maior fração, então a soma bate com a operação). Dá p/ ajustar à mão
-// antes de gravar. Gravar = upsert nas metas da RV do mês (Cerveja, NAB, Match, Mktp).
+// antes de aplicar. Aplicar = metas da RV do mês (Cerveja, NAB, Match, Mktp) + metas de
+// monitoramento por setor (Cerveja Zero, NAB Zero, RGB TT) e recalcula a RV do mês (se já começou).
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import api from "../../services/api";
 
 // casas decimais da meta gravada por categoria (Match é pequeno → 2 casas)
-const CASAS = { cerveja: 0, nab: 0, match: 2, mktp: 0 };
+const CASAS = { cerveja: 0, nab: 0, match: 2, mktp: 0, cervejaZero: 1, nabZero: 1, rgb: 0 };
+const casasMedia = (k) => (k === "match" ? 2 : k === "mktp" ? 0 : 1);
+const mesAtual = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
 
 function proximoMes() {
   const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1);
@@ -114,12 +117,25 @@ export default function DistribuicaoTri() {
       }
     }
     if (!linhas.length) { setErro("Preencha a meta da operação de pelo menos uma categoria."); return; }
-    const cats = [...new Set(linhas.map((l) => l.categoria))].join(", ");
-    if (!window.confirm(`Gravar ${linhas.length} metas de ${nomeMes(mes)} (${cats})?\nSubstitui as metas já lançadas desses setores/categorias no mês.`)) return;
+    const cats = [...new Set(linhas.map((l) => dados.categorias.find((c) => c.categoria === l.categoria)?.label || l.categoria))].join(", ");
+    const recalc = mes <= mesAtual();
+    if (!window.confirm(`Aplicar ${linhas.length} metas de ${nomeMes(mes)} (${cats})?\nSubstitui as metas já lançadas desses setores/categorias no mês.${recalc ? "\nDepois recalcula a RV do mês." : ""}`)) return;
     setGravando(true);
     try {
       const r = await api.post("/api/admin/metas/distribuicao", { mes, linhas });
-      setOk(`✅ ${r.data.gravadas} metas gravadas em ${nomeMes(mes)}. Recalcule a RV para refletir.`);
+      let msg = `✅ ${r.data.gravadas} metas aplicadas em ${nomeMes(mes)}.`;
+      if (recalc && r.data.rv) {
+        setOk(`${msg} Recalculando a RV…`);
+        try {
+          await api.post("/api/rv/calcular", { mes }, { timeout: 200000 });
+          msg += " RV recalculada.";
+        } catch (e) {
+          msg += ` RV NÃO recalculada: ${e.response?.data?.error || e.message} (recalcule pelo Simulador de RV).`;
+        }
+      } else if (!recalc) {
+        msg += " A RV usa essas metas quando o mês começar.";
+      }
+      setOk(msg);
       await carregar();
     } catch (e) {
       setErro(e.response?.data?.error || "Erro ao gravar.");
@@ -138,7 +154,7 @@ export default function DistribuicaoTri() {
         )}
         <div style={{ flex: 1 }} />
         <button style={st.btn2} onClick={exportar} disabled={!dados}>⬇ Excel</button>
-        <button style={st.btn1} onClick={gravar} disabled={!dados || gravando}>{gravando ? "Gravando..." : "Gravar metas do mês"}</button>
+        <button style={st.btn1} onClick={gravar} disabled={!dados || gravando}>{gravando ? "Aplicando..." : "✔ Aplicar metas"}</button>
       </div>
 
       {erro && <p style={st.erro}>{erro}</p>}
@@ -154,7 +170,8 @@ export default function DistribuicaoTri() {
               const dif = k && Number.isFinite(k.op) ? k.somaFinal - k.op : 0;
               return (
                 <div key={c.key} style={{ ...st.card, ...(cat === c.key ? st.cardOn : {}) }} onClick={() => setCat(c.key)}>
-                  <div style={st.cardTit}>{c.label} <span style={st.un}>({c.unidade})</span></div>
+                  <div style={st.cardTit}>{c.label} <span style={st.un}>({c.unidade})</span>
+                    <span style={c.tipo === "rv" ? st.tagRv : st.tagMon}>{c.tipo === "rv" ? "RV" : "fora da RV"}</span></div>
                   <input
                     style={st.inputMeta}
                     value={metaOp[c.key] ?? ""}
@@ -163,7 +180,7 @@ export default function DistribuicaoTri() {
                     onChange={(e) => setMetaOp((p) => ({ ...p, [c.key]: e.target.value }))}
                   />
                   <div style={st.cardSub}>
-                    tri: {fmt(k?.tot, c.key === "match" ? 2 : 0)} {c.unidade}/mês
+                    tri: {fmt(k?.tot, casasMedia(c.key))} {c.unidade}/mês
                     {Math.abs(dif) > 0.005 && <span style={{ color: "#fbbf24" }}> · ajustes {dif > 0 ? "+" : ""}{fmt(dif, CASAS[c.key])}</span>}
                   </div>
                 </div>
@@ -189,7 +206,7 @@ export default function DistribuicaoTri() {
                       <td style={st.td}><span style={st.badge}>{r.setor}</span></td>
                       <td style={st.td}>{r.nome || "—"}</td>
                       <td style={st.tdN}>{r.pdvs}</td>
-                      <td style={st.tdN}>{fmt(r.media, cat === "match" ? 2 : (cat === "mktp" ? 0 : 1))}</td>
+                      <td style={st.tdN}>{fmt(r.media, casasMedia(cat))}</td>
                       <td style={st.tdN}>{(r.peso * 100).toFixed(1).replace(".", ",")}%</td>
                       <td style={st.tdN}>{Number.isFinite(r.sugerida) ? fmt(r.sugerida, CASAS[cat]) : "—"}</td>
                       <td style={st.tdN}>
@@ -206,7 +223,7 @@ export default function DistribuicaoTri() {
                   <tr style={st.trTot}>
                     <td style={st.td} colSpan={2}><b>Operação</b></td>
                     <td style={st.tdN}><b>{atual.rows.reduce((a, r) => a + r.pdvs, 0)}</b></td>
-                    <td style={st.tdN}><b>{fmt(atual.tot, cat === "match" ? 2 : (cat === "mktp" ? 0 : 1))}</b></td>
+                    <td style={st.tdN}><b>{fmt(atual.tot, casasMedia(cat))}</b></td>
                     <td style={st.tdN}><b>100%</b></td>
                     <td style={st.tdN}><b>{Number.isFinite(atual.op) ? fmt(atual.op, CASAS[cat]) : "—"}</b></td>
                     <td style={st.tdN}><b>{fmt(atual.somaFinal, CASAS[cat])}</b></td>
@@ -219,7 +236,9 @@ export default function DistribuicaoTri() {
           <p style={st.nota}>
             Peso = média mensal do RN ÷ média da operação, com o que os PDVs da carteira de hoje compraram nos 3 meses
             (PDV que mudou de setor leva o histórico dele). Digite em "Meta final" só onde quiser mudar; a soma aparece no total.
-            Pontos Force não entra aqui (continua 100.000).
+            Pontos Force não entra aqui (continua 100.000). Cerveja Zero, NAB Zero e RGB TT são metas fora da RV
+            (Home, Volume Diário e Report do WhatsApp): aplicadas aqui, cada RN fica com a sua no lugar do rateio automático.
+            Categoria com a meta da operação em branco não é aplicada.
           </p>
         </>
       )}
@@ -240,6 +259,8 @@ const st = {
   cardTit: { fontWeight: 700, marginBottom: "8px" },
   un: { color: "rgba(255,255,255,0.45)", fontWeight: 400, fontSize: "0.8rem" },
   inputMeta: { width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#fff", padding: "8px 10px", fontSize: "1rem", fontFamily: "inherit" },
+  tagRv: { marginLeft: "6px", fontSize: "0.65rem", padding: "1px 6px", borderRadius: "6px", background: "rgba(125,186,61,0.15)", color: "#7DBA3D", fontWeight: 700, verticalAlign: "middle" },
+  tagMon: { marginLeft: "6px", fontSize: "0.65rem", padding: "1px 6px", borderRadius: "6px", background: "rgba(96,165,250,0.15)", color: "#60a5fa", fontWeight: 700, verticalAlign: "middle" },
   cardSub: { color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", marginTop: "6px" },
   nota: { color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", margin: "8px 0 14px" },
   tableWrap: { overflowX: "auto", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)" },

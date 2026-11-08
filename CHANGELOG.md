@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.138.0** — Distribuição de metas pelo tri (Admin › Metas).
+Versão atual: **v3.139.0** — Distribuição pelo tri também para Cerveja Zero, NAB Zero e RGB TT; Aplicar já recalcula a RV.
+
+## v3.139.0 — Distribuição pelo tri: zeros, RGB e aplicar
+- A Distribuição pelo tri (Admin › Metas) agora gera também as metas **fora da RV**: **Cerveja Zero**, **NAB Zero** e **RGB TT** (Giro RGB + Litrinho + Trimarcas), pelo mesmo peso da carteira atual. Os cartões mostram a etiqueta **RV** ou **fora da RV**.
+- Essas metas ficam **por setor** (tabela nova `metas_monitor_setor`) e a meta da operação (`metas_monitor`) vira a soma. Home, Volume Diário e Report Volumes do WhatsApp usam a meta do setor no lugar do rateio automático (`ratearMetasMonitor`). Se a meta da operação for alterada depois na Home, a distribuição daquela categoria é apagada e volta o rateio automático.
+- Fluxo **gerar → conferir → aplicar**: botão **✔ Aplicar metas** grava tudo e, se o mês já começou, **recalcula a RV** do mês na hora (mês fechado → avisa e não recalcula). Mês futuro: a RV usa as metas quando o mês começar.
 
 ## v3.138.0 — Distribuição de metas pelo peso do tri
 - **Admin › Metas › ⚖ Distribuição pelo tri** (substitui a planilha de pesos perdida): escolhe o mês da meta, digita a **meta da operação** de Cerveja, NAB, Match e Marketplace e a HOP reparte entre os RNs.

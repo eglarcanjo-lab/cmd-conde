@@ -166,8 +166,10 @@ router.post("/metas/import", async (req, res) => {
 // GET  /api/admin/metas/distribuicao?mes=YYYY-MM → média dos 3 meses fechados por setor
 //      (carteira atual) + meta da operação sugerida. O cálculo do peso/meta é na tela.
 // POST /api/admin/metas/distribuicao { mes, linhas:[{setor,categoria,meta,peso,volume_tri}] }
+//      (Cerveja Zero / NAB Zero / RGB TT → metas_monitor_setor + total em metas_monitor)
 //      → upsert nas metas da RV (meta_volume = meta_aplicada = meta; peso = fatia do RN, 0–1).
 const { calcularDistribuicao, CATEGORIAS: CATS_DIST } = require("../utils/distribuicaoMetas");
+const { salvarMetasMonitorSetor } = require("../utils/metasMonitor");
 
 router.get("/metas/distribuicao", async (req, res) => {
   try {
@@ -185,24 +187,30 @@ router.post("/metas/distribuicao", async (req, res) => {
     const mes = String(req.body?.mes || "").slice(0, 7);
     const linhas = Array.isArray(req.body?.linhas) ? req.body.linhas : [];
     if (!/^\d{4}-\d{2}$/.test(mes) || !linhas.length) return res.status(400).json({ error: "Envie o mês e as linhas." });
-    const validas = new Set(CATS_DIST.map((c) => c.categoria));
+    const tipoDe = {}; CATS_DIST.forEach((c) => { tipoDe[c.categoria] = c.tipo; });
+    const monitor = {};   // key → { setor: meta } (Cerveja Zero / NAB Zero / RGB TT, fora da RV)
     const existentes = await readSheet("metas");
     const pesoDe = {};
     existentes.forEach((m) => { if (String(m.mes_referencia || "").slice(0, 7) === mes) pesoDe[`${m.setor}|${m.categoria}`] = m.peso; });
     const rows = [];
     for (const l of linhas) {
       const setor = String(l.setor || "").trim();
-      const categoria = String(l.categoria || "").trim().toUpperCase();
+      const bruto = String(l.categoria || "").trim();
+      const categoria = tipoDe[bruto] === "monitor" ? bruto : bruto.toUpperCase();
       const meta = Number(l.meta);
-      if (!/^\d{3}$/.test(setor) || !validas.has(categoria) || !Number.isFinite(meta) || meta < 0) {
+      if (!/^\d{3}$/.test(setor) || !tipoDe[categoria] || !Number.isFinite(meta) || meta < 0) {
         return res.status(400).json({ error: `Linha inválida: ${JSON.stringify(l)}` });
       }
+      if (tipoDe[categoria] === "monitor") { (monitor[categoria] = monitor[categoria] || {})[setor] = meta; continue; }
       const vt = Number(l.volume_tri);
       const pw = Number(l.peso);  // fatia do RN na meta da operação (0–1), como na planilha antiga
       rows.push([setor, categoria, meta, mes, Number.isFinite(pw) ? pw : (pesoDe[`${setor}|${categoria}`] ?? ""), Number.isFinite(vt) ? vt : "", meta]);
     }
-    await upsertRows("metas", rows, ["setor", "categoria", "mes_referencia"]);
-    return res.json({ success: true, gravadas: rows.length });
+    if (rows.length) await upsertRows("metas", rows, ["setor", "categoria", "mes_referencia"]);
+    let nMon = 0;
+    for (const [key, por] of Object.entries(monitor)) { await salvarMetasMonitorSetor(mes, key, por); nMon += Object.keys(por).length; }
+    try { cacheClearAll(); } catch { /* no-op */ }
+    return res.json({ success: true, gravadas: rows.length + nMon, rv: rows.length, monitor: nMon });
   } catch (err) {
     console.error("metas/distribuicao (gravar):", err);
     return res.status(500).json({ error: `Erro ao gravar: ${err.message || err}` });
