@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 import * as XLSX from "xlsx";
+import DistribuicaoTri from "./DistribuicaoTri";
 
 // Converte serial de data do Sheets (ex: 46143 → "2026-05")
 // Ocorre quando USER_ENTERED interpretou "2026-05" como data
@@ -47,6 +48,7 @@ export default function Metas() {
   const [filtroMes, setFiltroMes] = useState(getMesAtual());
   const [filtroSetor, setFiltroSetor] = useState("");
   const [importando, setImportando] = useState(false);
+  const [modo, setModo] = useState("lista"); // lista | tri (distribuição pelo tri)
   const fileRef = useRef();
 
   useEffect(() => { carregar(); }, []);
@@ -189,8 +191,19 @@ export default function Metas() {
     return mesOk && setorOk;
   });
 
+  const abas = (
+    <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+      {[["lista", "Metas lançadas"], ["tri", "⚖ Distribuição pelo tri"]].map(([k, l]) => (
+        <button key={k} onClick={() => setModo(k)}
+          style={{ ...styles.btnSecondary, ...(modo === k ? { border: "1px solid #7DBA3D", color: "#7DBA3D" } : {}) }}>{l}</button>
+      ))}
+    </div>
+  );
+  if (modo === "tri") return <div>{abas}<DistribuicaoTri /></div>;
+
   return (
     <div>
+      {abas}
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <input

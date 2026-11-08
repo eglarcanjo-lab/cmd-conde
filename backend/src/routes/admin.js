@@ -162,6 +162,53 @@ router.post("/metas/import", async (req, res) => {
   }
 });
 
+// ─── DISTRIBUIÇÃO DE METAS PELO TRI ──────────────────────────────────────────
+// GET  /api/admin/metas/distribuicao?mes=YYYY-MM → média dos 3 meses fechados por setor
+//      (carteira atual) + meta da operação sugerida. O cálculo do peso/meta é na tela.
+// POST /api/admin/metas/distribuicao { mes, linhas:[{setor,categoria,meta,peso,volume_tri}] }
+//      → upsert nas metas da RV (meta_volume = meta_aplicada = meta; peso = fatia do RN, 0–1).
+const { calcularDistribuicao, CATEGORIAS: CATS_DIST } = require("../utils/distribuicaoMetas");
+
+router.get("/metas/distribuicao", async (req, res) => {
+  try {
+    const mes = String(req.query.mes || "").slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(mes)) return res.status(400).json({ error: "Informe o mês (AAAA-MM)." });
+    return res.json(await calcularDistribuicao(mes));
+  } catch (err) {
+    console.error("metas/distribuicao:", err);
+    return res.status(500).json({ error: `Erro ao calcular a distribuição: ${err.message || err}` });
+  }
+});
+
+router.post("/metas/distribuicao", async (req, res) => {
+  try {
+    const mes = String(req.body?.mes || "").slice(0, 7);
+    const linhas = Array.isArray(req.body?.linhas) ? req.body.linhas : [];
+    if (!/^\d{4}-\d{2}$/.test(mes) || !linhas.length) return res.status(400).json({ error: "Envie o mês e as linhas." });
+    const validas = new Set(CATS_DIST.map((c) => c.categoria));
+    const existentes = await readSheet("metas");
+    const pesoDe = {};
+    existentes.forEach((m) => { if (String(m.mes_referencia || "").slice(0, 7) === mes) pesoDe[`${m.setor}|${m.categoria}`] = m.peso; });
+    const rows = [];
+    for (const l of linhas) {
+      const setor = String(l.setor || "").trim();
+      const categoria = String(l.categoria || "").trim().toUpperCase();
+      const meta = Number(l.meta);
+      if (!/^\d{3}$/.test(setor) || !validas.has(categoria) || !Number.isFinite(meta) || meta < 0) {
+        return res.status(400).json({ error: `Linha inválida: ${JSON.stringify(l)}` });
+      }
+      const vt = Number(l.volume_tri);
+      const pw = Number(l.peso);  // fatia do RN na meta da operação (0–1), como na planilha antiga
+      rows.push([setor, categoria, meta, mes, Number.isFinite(pw) ? pw : (pesoDe[`${setor}|${categoria}`] ?? ""), Number.isFinite(vt) ? vt : "", meta]);
+    }
+    await upsertRows("metas", rows, ["setor", "categoria", "mes_referencia"]);
+    return res.json({ success: true, gravadas: rows.length });
+  } catch (err) {
+    console.error("metas/distribuicao (gravar):", err);
+    return res.status(500).json({ error: `Erro ao gravar: ${err.message || err}` });
+  }
+});
+
 // ─── PRODUTOS BASE ───────────────────────────────────────────────────────────
 
 // NOTA: a rota GET /api/admin/produtos é servida por routes/produtos.js

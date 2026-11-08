@@ -1,6 +1,13 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.137.0** — Painel TV com artes prontas (só imagem) em todas as seções.
+Versão atual: **v3.138.0** — Distribuição de metas pelo tri (Admin › Metas).
+
+## v3.138.0 — Distribuição de metas pelo peso do tri
+- **Admin › Metas › ⚖ Distribuição pelo tri** (substitui a planilha de pesos perdida): escolhe o mês da meta, digita a **meta da operação** de Cerveja, NAB, Match e Marketplace e a HOP reparte entre os RNs.
+- **Peso do RN** = média mensal dos **3 últimos meses fechados** do que os PDVs da **carteira atual** dele (`pdv_base`) compraram ÷ a mesma média da operação. PDV que mudou de setor leva o histórico junto. Cerveja = mesmos grupos da RV (inclui RGB, HE, Balanced Choice); Match só no OFF (101–103).
+- Meta sugerida = meta da operação × peso, arredondada com a sobra indo p/ a maior fração (a soma bate). Dá p/ **ajustar à mão** por setor (fica amarelo; o total mostra a diferença). **Gravar metas do mês** = upsert nas metas da RV (`meta_volume` = `meta_aplicada`, `peso` = fatia do RN, `volume_tri` = média). Pontos Force não entra. Exporta em Excel.
+- **Marketplace em R$**: o processador passa a gravar o **R$ entregue por PDV × produto × mês** em `vendas_cliente_produto.valor` (só CORA; coluna `Valor Entrega` = Valor sem ADF do que conta). Mês sem esse valor (anteriores ao deploy) usa o faturamento Mktp **do setor** (`rv_faturamento_mktp`) — a tela avisa quando isso acontece.
+- Backend: `utils/distribuicaoMetas.js`, `GET/POST /api/admin/metas/distribuicao`. Processador: `proc_cora` (Valor Entrega), `proc_clientes_pedidos` (lê), `proc_analises._processar_vendas_cliente` (soma `valor`).
 
 ## v3.137.0 — Painel TV: artes prontas em tudo
 - Todas as seções do Admin › Painel TV aceitam **só a imagem** (arte pronta), inclusive **10 Princípios** e **Vagas** (antes só texto).
