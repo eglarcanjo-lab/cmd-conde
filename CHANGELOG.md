@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.139.1** — Recalcular RV tenta de novo quando o processador está acordando (erro 429).
+Versão atual: **v3.139.2** — Import do CORA não apaga mais o mês anterior (só grava mês cujo início está no arquivo).
+
+## v3.139.2 — CORA: proteção de mês voltou a funcionar
+- **Bug (09/11/2026):** desde a v3.133.0 (data = ENTREGA) a proteção "só grava mês coberto pelo arquivo" aceitava qualquer mês com alguma entrega. O CORA de novembro trazia uns pedidos entregues no fim de outubro → a HOP **apagou outubro** (vendas, volume, RV…) e gravou só esses (cerveja de out ≈ 12 HL no histórico).
+- Agora um mês só é gravado se o arquivo tem entregas no **início** dele (até o dia 7). Linhas de mês não coberto são ignoradas (log no processador).
+- **Para consertar outubro:** reimportar o CORA de outubro completo e, por último, o de novembro (RV de outubro é recalculada sozinha, está aberta).
 
 ## v3.139.1 — Recalcular RV resiste ao processador acordando
 - "Erro ao calcular RV: Request failed with status code 429": é o Render respondendo enquanto o processador acorda/reinicia (deploy). `POST /api/rv/calcular` agora retenta até 4x (15s, 30s, 45s) em 429/502/503/504/conexão caída, igual ao upload de arquivos. Tempo limite da tela (Simulador de RV e Distribuição pelo tri) subiu p/ 7 min.
