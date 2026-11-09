@@ -176,11 +176,30 @@ router.post("/calcular", adminOnly, async (req, res) => {
     const stCalc = await rvf.status(mes || mesAtualBR());
     if (stCalc) return res.status(409).json({ error: msgFechado(stCalc) });
     // 180s: o processador no plano grátis pode levar ~50s só pra acordar (cold start).
-    const response = await axios.post(
-      `${PROCESSOR_URL}/api/rv/calcular`,
-      mes ? { mes } : {},
-      { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 180000 }
-    );
+    // Render acordando/redeployando responde 429/502/503/504 na borda (antes de chegar ao app)
+    // → retenta até 4x (o cálculo é idempotente: reescreve a RV do mês).
+    const RETRIABLE = new Set([429, 502, 503, 504]);
+    let response;
+    for (let tentativa = 1; ; tentativa++) {
+      try {
+        response = await axios.post(
+          `${PROCESSOR_URL}/api/rv/calcular`,
+          mes ? { mes } : {},
+          { headers: { "X-Processor-Token": PROCESSOR_TOKEN }, timeout: 180000 }
+        );
+        break;
+      } catch (e) {
+        const st = e.response?.status;
+        const infra = (!e.response && e.code !== "ECONNABORTED") || RETRIABLE.has(st);
+        if (infra && tentativa < 4) {
+          const espera = tentativa * 15000; // 15s, 30s, 45s
+          console.warn(`rv/calcular: processador indisponível (${st || e.code}) — tentativa ${tentativa}/4, aguardando ${espera / 1000}s`);
+          await new Promise((r) => setTimeout(r, espera));
+          continue;
+        }
+        throw e;
+      }
+    }
     // O processador reescreveu rv_resultado/rv_volume no SQL — limpa o cache de leitura
     // do backend p/ o simulador e a home refletirem na hora (senão espera o TTL).
     try { cacheClearAll(); } catch { /* no-op */ }

@@ -156,7 +156,7 @@ export default function RvSimulador() {
     try {
       // Recalcula a RV do MÊS selecionado. timeout alto: o processador (plano grátis)
       // pode levar ~50s só pra acordar (cold start) antes de calcular.
-      const r = await api.post("/api/rv/calcular", { mes: mesRef }, { timeout: 180000 });
+      const r = await api.post("/api/rv/calcular", { mes: mesRef }, { timeout: 420000 });
       setMsg(`✅ ${r.data?.message || `RV recalculada (${mesRef})!`}`);
       await carregar();
       setTimeout(() => setMsg(""), 4000);

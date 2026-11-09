@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.139.0** — Distribuição pelo tri também para Cerveja Zero, NAB Zero e RGB TT; Aplicar já recalcula a RV.
+Versão atual: **v3.139.1** — Recalcular RV tenta de novo quando o processador está acordando (erro 429).
+
+## v3.139.1 — Recalcular RV resiste ao processador acordando
+- "Erro ao calcular RV: Request failed with status code 429": é o Render respondendo enquanto o processador acorda/reinicia (deploy). `POST /api/rv/calcular` agora retenta até 4x (15s, 30s, 45s) em 429/502/503/504/conexão caída, igual ao upload de arquivos. Tempo limite da tela (Simulador de RV e Distribuição pelo tri) subiu p/ 7 min.
 
 ## v3.139.0 — Distribuição pelo tri: zeros, RGB e aplicar
 - A Distribuição pelo tri (Admin › Metas) agora gera também as metas **fora da RV**: **Cerveja Zero**, **NAB Zero** e **RGB TT** (Giro RGB + Litrinho + Trimarcas), pelo mesmo peso da carteira atual. Os cartões mostram a etiqueta **RV** ou **fora da RV**.

@@ -127,7 +127,7 @@ export default function DistribuicaoTri() {
       if (recalc && r.data.rv) {
         setOk(`${msg} Recalculando a RV…`);
         try {
-          await api.post("/api/rv/calcular", { mes }, { timeout: 200000 });
+          await api.post("/api/rv/calcular", { mes }, { timeout: 420000 });
           msg += " RV recalculada.";
         } catch (e) {
           msg += ` RV NÃO recalculada: ${e.response?.data?.error || e.message} (recalcule pelo Simulador de RV).`;
