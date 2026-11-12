@@ -1,6 +1,9 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.139.3** — Fotos novas no Deck de Estoque (2354, 32785, 36034, 38419, 9071), sem fundo branco.
+Versão atual: **v3.139.4** — Foto da Beats Pink Lemonade lata no código certo (38345).
+
+## v3.139.4 — Beats Pink Lemonade: código da foto
+- A foto é da LATA 269 (38345 · LT 269ML CX CARTAO C/8) e tinha subido como 38419 (long neck six-pack C/2). Arquivo renomeado p/ `38345.png`.
 
 ## v3.139.3 — Fotos novas de produtos
 - 5 SKUs ganharam foto (`frontend/public/produtos/`): **2354** Soda Limonada Diet PET 2L, **32785** Corona Extra One Way 600, **36034** Budweiser lata 473 multipack, **38419** Beats Pink Lemonade LN 269, **9071** Caracu lata 350. Fundo branco removido (PNG transparente), recortadas e com 360 px de altura, no padrão das demais.
