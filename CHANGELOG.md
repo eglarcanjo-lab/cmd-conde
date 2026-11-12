@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.139.2** — Import do CORA não apaga mais o mês anterior (só grava mês cujo início está no arquivo).
+Versão atual: **v3.139.3** — Fotos novas no Deck de Estoque (2354, 32785, 36034, 38419, 9071), sem fundo branco.
+
+## v3.139.3 — Fotos novas de produtos
+- 5 SKUs ganharam foto (`frontend/public/produtos/`): **2354** Soda Limonada Diet PET 2L, **32785** Corona Extra One Way 600, **36034** Budweiser lata 473 multipack, **38419** Beats Pink Lemonade LN 269, **9071** Caracu lata 350. Fundo branco removido (PNG transparente), recortadas e com 360 px de altura, no padrão das demais.
+- Categorias desses SKUs foram cadastradas na guia Produtos (banco) — o Deck de Estoque já agrupa por elas.
 
 ## v3.139.2 — CORA: proteção de mês voltou a funcionar
 - **Bug (09/11/2026):** desde a v3.133.0 (data = ENTREGA) a proteção "só grava mês coberto pelo arquivo" aceitava qualquer mês com alguma entrega. O CORA de novembro trazia uns pedidos entregues no fim de outubro → a HOP **apagou outubro** (vendas, volume, RV…) e gravou só esses (cerveja de out ≈ 12 HL no histórico).
