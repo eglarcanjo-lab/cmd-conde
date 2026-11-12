@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { SPO_KPIS, SPO_KPIS_BASICO, realDaLinha } from "../../config/spoKpis";
+import { SPO_KPIS, SPO_KPIS_BASICO, realDaLinha, bateuKpi, atingKpi } from "../../config/spoKpis";
 import { useContarAba } from "../../utils/uso";
 import { useAbaUrl } from "../../utils/abaUrl";
 
@@ -141,7 +141,7 @@ export default function SPO() {
         if (row?.meta !== "" && row?.meta != null) { metaTot += parseFloat(row.meta) || 0; hasMeta = true; }
         if (row?.real !== "" && row?.real != null) { realTot += parseFloat(row.real) || 0; hasReal = true; }
       }
-      status[n] = (hasMeta && hasReal) ? realTot >= metaTot : null;
+      status[n] = (hasMeta && hasReal) ? bateuKpi(n, realTot, metaTot) : null;
     });
     return status;
   })();
@@ -797,7 +797,7 @@ export default function SPO() {
                               const meta = getMeta(item.n, mes);
                               const real = getReal(item.n, mes);
                               if (meta === null || real === null) return acc;
-                              return acc + (real >= meta ? getPts(item.n) : 0);
+                              return acc + (bateuKpi(item.n, real, meta) ? getPts(item.n) : 0);
                             }, 0);
               
                             // mesAtual definido no escopo do componente
@@ -827,7 +827,7 @@ export default function SPO() {
                               const meta = triAccumMeta(n);
                               const real = triAccumReal(n);
                               if (meta === null || real === null) return null;
-                              return real >= meta;
+                              return bateuKpi(n, real, meta);
                             };
                             // Números do painel (os mesmos da tela) p/ o "Exportar p/ RPS" (fechamento prévio do SPO)
                             painelDadosRef.current = {
@@ -869,9 +869,9 @@ export default function SPO() {
                                     meta = null; real = null; ok = null; pts = null;
                                   } else {
                                     meta = getMeta(item.n, mSel); real = getReal(item.n, mSel);
-                                    ok = meta !== null && real !== null ? real >= meta : null; pts = ok === null ? null : (ok ? 3 : 0);
+                                    ok = bateuKpi(item.n, real, meta); pts = ok === null ? null : (ok ? 3 : 0);
                                   }
-                                  const ating = meta !== null && real !== null && meta > 0 ? (real / meta * 100).toFixed(0) : null;
+                                  const _at = atingKpi(item.n, real, meta); const ating = _at !== null ? _at.toFixed(0) : null;
                                   const cor = ok === true ? "#4ade80" : ok === false ? "#f87171" : "rgba(255,255,255,0.35)";
                                   return (
                                     <div key={item.n} onClick={() => setKpiAtivo(kpiAtivo === item.n ? null : item.n)}
@@ -935,8 +935,8 @@ export default function SPO() {
                                             }
                                             const meta = getMeta(item.n, mes);
                                             const real = getReal(item.n, mes);
-                                            const ating = (meta !== null && real !== null && meta > 0) ? (real / meta * 100).toFixed(1) : null;
-                                            const bateu = meta !== null && real !== null && real >= meta;
+                                            const _at = atingKpi(item.n, real, meta); const ating = _at !== null ? _at.toFixed(1) : null;
+                                            const bateu = bateuKpi(item.n, real, meta) === true;
                                             const pts = (meta !== null && real !== null) ? (bateu ? 3 : 0) : null;
                                             const corAting = bateu ? "#4ade80" : (ating !== null && parseFloat(ating) >= 70) ? "#7DBA3D" : "#f87171";
                                             return [

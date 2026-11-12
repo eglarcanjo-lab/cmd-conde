@@ -4,6 +4,7 @@
 // Meta por RN = rateio da meta da operação (12/24: nº de PDVs; 8: %), igual às telas do SPO.
 import { useState } from "react";
 import api from "../../services/api";
+import { bateuKpi } from "../../config/spoKpis";
 
 const num = (v) => {
   let s = String(v ?? "").replace(/[R$\s%]/g, "");
@@ -104,7 +105,7 @@ export default function ExportarRps({ painelRef }) {
       const linhasPainel = [];
       (painel?.itens || []).forEach((it) => {
         const lin = (mesP, meta, real) => linhasPainel.push({ ord: it.ord, n: it.n, kpi: it.label, pts: it.pts, mes: mesP,
-          meta: meta ?? "", real: real ?? "", bateu: meta == null || real == null ? "" : (real >= meta ? "SIM" : "NÃO") });
+          meta: meta ?? "", real: real ?? "", bateu: meta == null || real == null ? "" : (bateuKpi(it.n, real, meta) ? "SIM" : "NÃO") });
         it.por_mes.forEach((m) => lin(m.mes, m.meta, m.real));
         lin("TRI", it.tri_meta, it.tri_real);
       });

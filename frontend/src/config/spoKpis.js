@@ -32,7 +32,10 @@ export const SPO_KPIS = [
   { n: 25, ord: 5,  label: "Rotina +",                                   pts: 10, peso: 5.56,  ativo: true }, // % Visitas Medianas ou Excelentes
   { n: 6,  ord: 6,  label: "DTO GC",                                     pts: 4,  peso: 2.22,  ativo: true },
   { n: 8,  ord: 7,  label: "Aderência da Política Comercial",            pts: 8,  peso: 4.44,  ativo: true },
-  { n: 9,  ord: 8,  label: "Execução de Menu de Cerveja ou Cardápio",    pts: 6,  peso: 3.33,  ativo: true },
+  // KPI 8 do Q4 = Tasks de Rotina Justificadas (substitui o Menu de Cerveja). MENOR É MELHOR: bate quando o
+  // real fica IGUAL OU ABAIXO da meta. Meta/real manuais em Admin › Metas SPO, em Nº DE TASKS (meta = % da
+  // meta × total de tasks do mês; real = tasks justificadas) → o tri soma mês a mês = média ponderada do BI.
+  { n: 30, ord: 8,  label: "Tasks de Rotina Justificadas",               pts: 6,  peso: 3.33,  ativo: true, menorMelhor: true },
   { n: 10, ord: 9,  label: "Academia Bees RN",                           pts: 6,  peso: 3.33,  ativo: true },
   { n: 11, ord: 10, label: "Tarefas de Cerveja TT (apenas Portfolio)",   pts: 26, peso: 14.44, ativo: true },
   { n: 12, ord: 11, label: "Tasks de Faturamento Score 5",               pts: 6,  peso: 3.33,  ativo: true },
@@ -48,6 +51,7 @@ export const SPO_KPIS = [
   { n: 22, ord: 21, label: "% Lojas Ideais",                             pts: 4,  peso: 2.22,  ativo: true },
   { n: 23, ord: 22, label: "Expansão Scanntech",                         pts: 2,  peso: 1.11,  ativo: true },
   // ── Fora do 4º tri/2026 (código/histórico preservados; sem ord) ──
+  { n: 9,  label: "Execução de Menu de Cerveja ou Cardápio", pts: 6, peso: 3.33, ativo: false }, // saiu no Q4 (KPI 8 virou Tasks de Rotina Justificadas)
   { n: 17, label: "Tasks Cerveja Zero (Portfolio)",     pts: 4,  peso: 2.22, ativo: false }, // saiu no Q4
   { n: 18, label: "Tarefa de Digitalização",            pts: 6,  peso: 3.33, ativo: false }, // saiu no Q4
   { n: 21, label: "Cupons Digitais - Score 5",          pts: 4,  peso: 2.22, ativo: false }, // saiu no Q4
@@ -56,6 +60,21 @@ export const SPO_KPIS = [
   { n: 19, label: "PDVs com Compra Independente",       pts: 4,  peso: 2.2,  ativo: false },
   { n: 20, label: "+RGB",                               pts: 6,  peso: 3.3,  ativo: false },
 ];
+
+// KPIs em que MENOR é melhor (bate com real ≤ meta) — ex.: Tasks de Rotina Justificadas.
+const MENOR_MELHOR = new Set(SPO_KPIS.filter((k) => k.menorMelhor).map((k) => k.n));
+export const menorMelhor = (n) => MENOR_MELHOR.has(Number(n));
+// Bateu a meta? (respeita "menor é melhor"). null quando falta meta ou real.
+export function bateuKpi(n, real, meta) {
+  if (real === null || real === undefined || meta === null || meta === undefined || isNaN(real) || isNaN(meta)) return null;
+  return menorMelhor(n) ? real <= meta : real >= meta;
+}
+// % de atingimento p/ exibir: real ÷ meta; no "menor é melhor", meta ÷ real (real 0 = 100%+).
+export function atingKpi(n, real, meta) {
+  if (real === null || meta === null || real === undefined || meta === undefined) return null;
+  if (menorMelhor(n)) return real > 0 ? (meta / real) * 100 : (meta >= 0 ? 100 : null);
+  return meta > 0 ? (real / meta) * 100 : null;
+}
 
 // Versão enxuta {n, label, ord} para o Painel SPO e o admin de Metas — SÓ os KPIs
 // ativos, JÁ ORDENADOS pela numeração oficial (ord). ativo:false sai do painel mas

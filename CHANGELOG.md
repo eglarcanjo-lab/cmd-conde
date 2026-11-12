@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.139.4** — Foto da Beats Pink Lemonade lata no código certo (38345).
+Versão atual: **v3.140.0** — SPO Q4: KPI 8 = Tasks de Rotina Justificadas (menor é melhor), manual em Metas SPO.
+
+## v3.140.0 — SPO Q4 · KPI 8 = Tasks de Rotina Justificadas
+- O KPI 8 do 4º tri passa a ser **Tasks de Rotina Justificadas** (n=30, 6 pts / 3,33%), no lugar de **Execução de Menu de Cerveja ou Cardápio** (n=9, agora `ativo:false`, histórico preservado). Total do tri continua 180 pts.
+- **Menor é melhor:** bate quando o real fica **igual ou abaixo** da meta. Registro ganhou `menorMelhor` + helpers `bateuKpi`/`atingKpi` (config/spoKpis.js), usados no Painel SPO Consolidado (mês, tri, pontos, celular, bordas dos cards) e no "Exportar p/ RPS". % de atingimento desse KPI = meta ÷ real.
+- **Sem base automática:** meta e real são digitados em **Admin › Metas SPO**, em **nº de tasks** (meta = % da meta × total de tasks do mês; real = tasks justificadas). Assim o TRI soma mês a mês = média ponderada da guia (ex.: meta 414 × real 416 → não bateu). O "Gravar realizados" do fechamento não mexe nesse item.
 
 ## v3.139.4 — Beats Pink Lemonade: código da foto
 - A foto é da LATA 269 (38345 · LT 269ML CX CARTAO C/8) e tinha subido como 38419 (long neck six-pack C/2). Arquivo renomeado p/ `38345.png`.

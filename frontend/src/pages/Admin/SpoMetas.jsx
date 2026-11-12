@@ -1,7 +1,7 @@
 // v1.1 - botão Snapshot (fechar mês) + import/edit spo_metas
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
-import { SPO_KPIS, SPO_KPIS_BASICO } from "../../config/spoKpis";
+import { SPO_KPIS, SPO_KPIS_BASICO, menorMelhor } from "../../config/spoKpis";
 import { MESES_TRI } from "../SPO/shared";
 import { triDoPainel } from "../SPO/FechamentoSpo";
 const TRI = triDoPainel().id; // pts/peso/início valem por trimestre
@@ -406,7 +406,8 @@ export default function SpoMetas() {
               {ITENS.map(({ n, label, ord }) => (
                 <tr key={n} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <td style={{ padding: "6px 10px", color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>{ord ?? n}</td>
-                  <td style={{ padding: "6px 10px", color: "rgba(255,255,255,0.8)", fontSize: "0.8rem", whiteSpace: "nowrap" }}>{label}</td>
+                  <td style={{ padding: "6px 10px", color: "rgba(255,255,255,0.8)", fontSize: "0.8rem", whiteSpace: "nowrap" }}>{label}{menorMelhor(n) && (
+                    <div style={{ fontSize: "0.68rem", color: "#fbbf24", whiteSpace: "normal" }}>menor é melhor · em nº de tasks (meta = % × total; real = justificadas)</div>)}</td>
                   <td style={{ padding: "4px 6px", background: "rgba(125,186,61,0.04)" }}>
                     <input style={{ ...inpStyle, width: "50px" }} value={getCfg(n, "pts")} onChange={(e) => setCfgVal(n, "pts", e.target.value)} placeholder={String(REG[n]?.pts ?? "")} />
                   </td>
