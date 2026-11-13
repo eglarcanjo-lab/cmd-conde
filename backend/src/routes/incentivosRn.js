@@ -58,6 +58,18 @@ const SEED = {
   },
 };
 
+// Metas que SUBSTITUEM o que estiver gravado — aplicadas UMA vez (marca em incentivos_seeds),
+// p/ não sobrescrever ajustes feitos depois na própria aba.
+const SEED_UMA_VEZ = {
+  // Bateu, Levou · Zeros — nov/2026 (prints do GV, 13/11; nomes errados no print, metas por setor certas)
+  "zeros|2026-11|v1": {
+    nabz_vol: { 101: 128, 103: 172 },
+    cervz_vol: { 101: 36, 103: 44 },
+    nabz_cob: { 104: 96, 105: 82, 106: 78, 107: 68, 108: 71, 109: 46, 110: 71, 111: 95 },
+    cervz_cob: { 104: 48, 105: 29, 106: 25, 107: 26, 108: 36, 109: 41, 110: 28, 111: 39 },
+  },
+};
+
 const num = (v) => parseFloat(String(v ?? "0").replace(",", ".")) || 0;
 const normCod = (v) => String(v ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
 const LIXO = new Set(["NAN", "NONE", "NULL", "NAT"]);
@@ -80,6 +92,19 @@ async function ensure() {
           [inc, mes, String(setor), kpi, meta]);
       }
     }
+  }
+  await query("CREATE TABLE IF NOT EXISTS incentivos_seeds (id TEXT PRIMARY KEY, aplicado_em TIMESTAMP DEFAULT NOW())");
+  for (const [id, kpis] of Object.entries(SEED_UMA_VEZ)) {
+    const ja = await query("SELECT 1 FROM incentivos_seeds WHERE id = $1", [id]);
+    if (ja.rows.length) continue;
+    const [inc, mes] = id.split("|");
+    for (const [kpi, porSetor] of Object.entries(kpis)) {
+      for (const [setor, meta] of Object.entries(porSetor)) {
+        await query(`INSERT INTO incentivos_metas (incentivo, mes, setor, kpi, meta) VALUES ($1,$2,$3,$4,$5)
+          ON CONFLICT (incentivo, mes, setor, kpi) DO UPDATE SET meta = EXCLUDED.meta`, [inc, mes, String(setor), kpi, meta]);
+      }
+    }
+    await query("INSERT INTO incentivos_seeds (id) VALUES ($1) ON CONFLICT DO NOTHING", [id]);
   }
   _ok = true;
 }

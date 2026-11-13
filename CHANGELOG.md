@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.141.0** — Liga CMD: trimestre por pessoa (CPF), média dos % mensais.
+Versão atual: **v3.141.1** — Metas de novembro do Bateu, Levou · Zeros.
+
+## v3.141.1 — Bateu, Levou · Zeros: metas de nov/26
+- Metas de nov/26 por setor (prints do GV de 13/11): **AS (volume HL)** 101 NAB Zero 128 · Cerveja Zero 36; 103 NAB Zero 172 · Cerveja Zero 44. **Rota (cobertura, PDVs)** NAB Zero / Cerveja Zero: 104 96/48 · 105 82/29 · 106 78/25 · 107 68/26 · 108 71/36 · 109 46/41 · 110 71/28 · 111 95/39.
+- Gravadas uma única vez (`SEED_UMA_VEZ`, marca em `incentivos_seeds`): substituem o que estiver lançado nesses setores/KPIs; ajustes feitos depois na aba Incentivos não são sobrescritos.
 
 ## v3.141.0 — Liga CMD por CPF no trimestre
 - **Só a Liga CMD** mudou (Bateu, Levou e RV seguem por setor/mês). No **trimestre**, a Liga é por **pessoa (CPF)**: RN que trocou de rota leva a pontuação dele, ela não passa p/ o novo dono do setor.
