@@ -1,6 +1,10 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.141.1** — Metas de novembro do Bateu, Levou · Zeros.
+Versão atual: **v3.141.2** — Metas de novembro da Liga CMD.
+
+## v3.141.2 — Liga CMD: metas de nov/26
+- Metas de nov/26 por setor (prints de 13/11): **Cobertura Stella Pure Gold** 101 14 · 103 16 · 104 25 · 105 15 · 106 15 · 107 13 · 108 16 · 109 12 · 110 13 · 111 11 (op. 150); **Distribuição de RGB** 279 · 260 · 321 · 250 · 259 · 281 · 267 · 266 · 294 · 206 (op. 2.683); **Volume de RGB (HL)** 280 · 543 · 169 · 127 · 128 · 131 · 114 · 104 · 91 · 102 (op. 1.789); **Distribuição de Marketplace** = mesma meta de out por setor.
+- Regra (v3.141.0): todo mês a Liga conta só o realizado do mês; no fim do tri, média dos % de cada KPI por CPF.
 
 ## v3.141.1 — Bateu, Levou · Zeros: metas de nov/26
 - Metas de nov/26 por setor (prints do GV de 13/11): **AS (volume HL)** 101 NAB Zero 128 · Cerveja Zero 36; 103 NAB Zero 172 · Cerveja Zero 44. **Rota (cobertura, PDVs)** NAB Zero / Cerveja Zero: 104 96/48 · 105 82/29 · 106 78/25 · 107 68/26 · 108 71/36 · 109 46/41 · 110 71/28 · 111 95/39.
