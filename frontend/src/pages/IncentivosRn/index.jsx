@@ -81,7 +81,8 @@ const MES_ROT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", 
 const rotMes = (m) => (m === "tri" ? "Trimestre" : `${MES_ROT[Number(String(m).slice(5, 7)) - 1]}/${String(m).slice(2, 4)}`);
 const fmt = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: d }));
 // Setor + 1º nome do RN (os vendedores mudam — o setor é a referência, o nome ajuda a ler)
-const rotSetor = (l) => `${l.setor}${l.nome ? ` · ${String(l.nome).trim().split(" ").filter(Boolean)[0]}` : ""}`;
+// Tri da Liga é por pessoa: quem trocou de rota mostra o caminho (ex.: 104→106)
+const rotSetor = (l) => `${l.setoresTri?.length > 1 ? l.setoresTri.join("→") : l.setor}${l.nome ? ` · ${String(l.nome).trim().split(" ").filter(Boolean)[0]}` : ""}`;
 const SETORES_PADRAO = ["101", "103", "104", "105", "106", "107", "108", "109", "110", "111"];
 const MEDALHA = ["🥇", "🥈", "🥉", "4º", "5º"];
 

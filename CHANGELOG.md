@@ -1,6 +1,11 @@
 # Versionamento — CMD Conde App
 
-Versão atual: **v3.140.0** — SPO Q4: KPI 8 = Tasks de Rotina Justificadas (menor é melhor), manual em Metas SPO.
+Versão atual: **v3.141.0** — Liga CMD: trimestre por pessoa (CPF), média dos % mensais.
+
+## v3.141.0 — Liga CMD por CPF no trimestre
+- **Só a Liga CMD** mudou (Bateu, Levou e RV seguem por setor/mês). No **trimestre**, a Liga é por **pessoa (CPF)**: RN que trocou de rota leva a pontuação dele, ela não passa p/ o novo dono do setor.
+- Cada KPI: % de atingimento de **cada mês** no setor em que o RN estava naquele mês (real ÷ meta daquele setor) → no tri, **média dos % mensais**; bate se a média ≥ 100%. Ex.: 98,4% em out + 100% em nov e dez = 99,46% → não bate.
+- Setor do RN em cada mês: estrutura gravada do mês (rv_estrutura, ex.: out/26) ou o cadastro atual; liga pelo nome ao usuário (CPF). Entra quem está numa rota no mês atual. Na tela, quem trocou mostra o caminho (ex.: **104→106 · Hebert**). Visão mensal continua por setor.
 
 ## v3.140.0 — SPO Q4 · KPI 8 = Tasks de Rotina Justificadas
 - O KPI 8 do 4º tri passa a ser **Tasks de Rotina Justificadas** (n=30, 6 pts / 3,33%), no lugar de **Execução de Menu de Cerveja ou Cardápio** (n=9, agora `ativo:false`, histórico preservado). Total do tri continua 180 pts.

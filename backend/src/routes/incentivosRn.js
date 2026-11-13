@@ -1,7 +1,8 @@
 // Aba "Incentivos" (menu) — incentivos dos RNs, com meta por mês × setor × KPI.
 //  • LIGA CMD (trimestral out→dez/2026): 4 KPIs, TUDO OU NADA por KPI (bateu = pontos cheios),
 //    elegível com ≥ 80 pts; pódio por pontos e, no empate, pelo % médio de atingimento.
-//    Tri = acumulado: volume soma os meses; distribuição/cobertura = média dos meses (meta e real).
+//    Tri = POR PESSOA (CPF): média dos % de atingimento de cada mês, no setor em que o RN estava
+//    naquele mês (trocou de rota → leva a pontuação dele). Visão mensal continua por setor.
 //  • BATEU, LEVOU — Zeros (mensal): cada meta batida = R$ 150. Segmentado (AS) por volume,
 //    Rota por cobertura (as metas lançadas definem quem é avaliado em quê).
 // Todos veem todos os RNs (competição); a tela destaca o setor de quem está logado.
@@ -196,7 +197,67 @@ async function montar(inc, mesQ, user) {
     const setores = [...new Set(Object.values(metas).flatMap((o) => Object.keys(o)))]
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-    const linhas = setores.map((setor) => {
+    // ── LIGA CMD no TRIMESTRE = POR PESSOA (CPF), não por setor (13/11/2026) ──────────────
+    // RN que trocou de rota leva a pontuação dele (não passa p/ o novo dono do setor). Para cada
+    // KPI: % de atingimento de CADA MÊS no setor em que ele estava naquele mês (real ÷ meta daquele
+    // setor) → no tri, MÉDIA dos % dos meses; bate o KPI se a média ≥ 100%.
+    // Ex.: 98,4% em out + 100% + 100% → 99,46% → não bate.
+    let linhasPessoa = null;
+    if (tri && inc.id === "liga") {
+      const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+      const rns = usuarios.filter((u) => String(u.perfil || "").toLowerCase() === "rn" && String(u.ativo) !== "false");
+      const pessoas = {}; // chave (cpf | nome) → { nome, porMes: { mes: setor } }
+      for (const m of mesesCalc) {
+        const est = await rvf.nomesDoMes(m).catch(() => null);
+        // mês com estrutura gravada (ex.: out/26) → setor→nome dele; senão, cadastro atual (cod = setor)
+        const mapa = est && Object.keys(est).length ? est
+          : Object.fromEntries(rns.map((u) => [String(u.cod || "").trim(), String(u.nome || "").trim()]));
+        Object.entries(mapa).forEach(([setor, nome]) => {
+          if (!nome || !setores.includes(setor)) return;
+          const u = rns.find((x) => norm(x.nome) === norm(nome));
+          const chave = u?.cpf ? String(u.cpf).replace(/\D/g, "") : `nome:${norm(nome)}`;
+          const p = (pessoas[chave] = pessoas[chave] || { nome: u?.nome || nome, porMes: {}, ativo: !!u });
+          p.porMes[m] = setor;
+        });
+      }
+      const ultimo = mesesCalc[mesesCalc.length - 1];
+      linhasPessoa = Object.values(pessoas)
+        .filter((p) => p.porMes[ultimo])            // só quem está numa rota hoje (saiu da operação = fora)
+        .map((p) => {
+          const kpis = inc.kpis.map((k) => {
+            const ms = mesesCalc.filter((m) => p.porMes[m] && metas[m]?.[p.porMes[m]]?.[k.key] != null && metas[m][p.porMes[m]][k.key] > 0);
+            if (!ms.length) return { key: k.key, meta: null, real: null, tend: null };
+            let meta = 0, real = 0, tend = 0, at = 0, atT = 0;
+            ms.forEach((m) => {
+              const s = p.porMes[m], f = fatorMes(m).fator || 1;
+              const mt = metas[m][s][k.key], r = reais[m]?.[s]?.[k.key] || 0;
+              meta += mt; real += r; tend += r * f; at += r / mt; atT += (r * f) / mt;
+            });
+            if (k.ind !== "vol") { meta /= ms.length; real /= ms.length; tend /= ms.length; } // exibição (igual antes)
+            const ating = at / ms.length, atingT = atT / ms.length;                             // MÉDIA dos % mensais
+            const r2 = (x) => Math.round(x * 100) / 100;
+            return { key: k.key, meta: r2(meta), real: r2(real), tend: r2(tend),
+              ating: Math.round(ating * 1000) / 10, atingTend: Math.round(atingT * 1000) / 10,
+              bateu: ating >= 1, bateTend: atingT >= 1,
+              meses: ms.map((m) => ({ mes: m, setor: p.porMes[m] })) };
+          });
+          const hist = mesesCalc.map((m) => p.porMes[m]).filter(Boolean);
+          const trocou = [...new Set(hist)];
+          return { setor: p.porMes[ultimo], nome: p.nome, kpis, setoresTri: trocou, porCpf: true };
+        });
+    }
+
+    const linhas = linhasPessoa ? linhasPessoa.map((l) => {
+      const { kpis } = l;
+      const comMeta = kpis.filter((k) => k.meta != null && k.meta > 0);
+      const linha = { ...l };
+      const pts = (campo) => inc.kpis.reduce((s, k, i) => s + (kpis[i][campo] ? k.pts : 0), 0);
+      linha.pontos = pts("bateu"); linha.pontosTend = pts("bateTend");
+      const med = (campo) => (comMeta.length ? Math.round(comMeta.reduce((s, k) => s + (k[campo] || 0), 0) / comMeta.length * 10) / 10 : 0);
+      linha.atingMedio = med("ating"); linha.atingMedioTend = med("atingTend");
+      linha.elegivel = linha.pontos >= inc.minPts; linha.elegivelTend = linha.pontosTend >= inc.minPts;
+      return linha;
+    }) : setores.map((setor) => {
       const kpis = inc.kpis.map((k) => {
         // meses com meta lançada p/ este setor/KPI (no tri: só os já iniciados)
         const ms = mesesCalc.filter((m) => metas[m]?.[setor]?.[k.key] != null);
